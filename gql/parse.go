@@ -9,6 +9,26 @@ import (
 	"github.com/graphql-go/graphql/language/parser"
 )
 
+func buildGraphQLTypes(doc *ast.Document) map[string]map[string]*ast.FieldDefinition {
+	types := make(map[string]map[string]*ast.FieldDefinition)
+
+	for _, def := range doc.Definitions {
+		switch typeDef := def.(type) {
+		case *ast.ObjectDefinition:
+			if typeDef.Name.Value == "Query" {
+				queryMap := make(map[string]*ast.FieldDefinition)
+				for _, field := range typeDef.Fields {
+					queryMap[field.Name.Value] = field
+				}
+				types["Query"] = queryMap
+				break
+			}
+		}
+	}
+
+	return types
+}
+
 func ParseSchema(schemaContent []byte) {
 	// Clean up the schema content to remove problematic syntax
 	// Nullable values are null by default, and explicit defaults results in parsing error
@@ -22,23 +42,16 @@ func ParseSchema(schemaContent []byte) {
 		log.Fatalf("Failed to parse schema: %v", err)
 	}
 
-	// Find the Query type and extract its fields
-	var queryFields []*ast.FieldDefinition
-	for _, def := range doc.Definitions {
-		switch typeDef := def.(type) {
-		case *ast.ObjectDefinition:
-			if typeDef.Name.Value == "Query" {
-				queryFields = typeDef.Fields
-				break
-			}
-		}
-	}
+	// Build the GraphQL types map
+	types := buildGraphQLTypes(doc)
 
+	queryFields := types["Query"]
 	fmt.Printf("Found %d queries in the GitHub GraphQL schema:\n\n", len(queryFields))
 
 	// Print all query fields
-	for i, field := range queryFields {
-		fmt.Printf("%2d. %-30s", i+1, field.Name.Value)
+	i := 1
+	for fieldName, field := range queryFields {
+		fmt.Printf("%2d. %-30s", i, fieldName)
 
 		// Print arguments if any
 		if len(field.Arguments) > 0 {
@@ -64,6 +77,7 @@ func ParseSchema(schemaContent []byte) {
 		}
 
 		fmt.Println()
+		i++
 	}
 }
 
