@@ -27,48 +27,11 @@ func ParseSchema(schemaContent []byte) {
 	for _, def := range doc.Definitions {
 		switch typeDef := def.(type) {
 		case *ast.ObjectDefinition:
-			fmt.Println(typeDef.Name.Value)
 			if typeDef.Name.Value == "Query" {
 				queryFields = typeDef.Fields
 				break
 			}
 		}
-	}
-
-	if len(queryFields) == 0 {
-		// Let's see what types we actually have
-		fmt.Println("Available types in schema:")
-		count := 0
-		for _, def := range doc.Definitions {
-			if count > 20 { // Limit output to first 20 types
-				fmt.Println("... (truncated)")
-				break
-			}
-			switch typeDef := def.(type) {
-			case *ast.ObjectDefinition:
-				fmt.Printf("ObjectDefinition: %s\n", typeDef.Name.Value)
-				count++
-			case *ast.InterfaceDefinition:
-				fmt.Printf("InterfaceDefinition: %s\n", typeDef.Name.Value)
-				count++
-			case *ast.UnionDefinition:
-				fmt.Printf("UnionDefinition: %s\n", typeDef.Name.Value)
-				count++
-			case *ast.EnumDefinition:
-				fmt.Printf("EnumDefinition: %s\n", typeDef.Name.Value)
-				count++
-			case *ast.InputObjectDefinition:
-				fmt.Printf("InputObjectDefinition: %s\n", typeDef.Name.Value)
-				count++
-			case *ast.ScalarDefinition:
-				fmt.Printf("ScalarDefinition: %s\n", typeDef.Name.Value)
-				count++
-			default:
-				fmt.Printf("Unknown definition type: %T\n", def)
-				count++
-			}
-		}
-		log.Fatal("Query type not found in schema")
 	}
 
 	fmt.Printf("Found %d queries in the GitHub GraphQL schema:\n\n", len(queryFields))
