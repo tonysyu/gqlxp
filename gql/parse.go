@@ -46,39 +46,47 @@ func ParseSchema(schemaContent []byte) {
 	types := buildGraphQLTypes(doc)
 
 	queryFields := types["Query"]
+	printQueries(queryFields)
+}
+
+func printQueries(queryFields map[string]*ast.FieldDefinition) {
 	fmt.Printf("Found %d queries in the GitHub GraphQL schema:\n\n", len(queryFields))
 
 	// Print all query fields
 	i := 1
 	for fieldName, field := range queryFields {
-		fmt.Printf("%2d. %-30s", i, fieldName)
-
-		// Print arguments if any
-		if len(field.Arguments) > 0 {
-			fmt.Print("(")
-			argStrs := make([]string, len(field.Arguments))
-			for j, arg := range field.Arguments {
-				argStrs[j] = arg.Name.Value + ": " + getTypeString(arg.Type)
-			}
-			fmt.Print(strings.Join(argStrs, ", "))
-			fmt.Print(")")
-		}
-
-		// Print return type
-		fmt.Printf(" -> %s", getTypeString(field.Type))
-
-		// Print description if available
-		if field.Description != nil {
-			description := strings.ReplaceAll(field.Description.Value, "\n", " ")
-			if len(description) > 80 {
-				description = description[:77] + "..."
-			}
-			fmt.Printf("\n    %s", description)
-		}
-
-		fmt.Println()
+		printFieldDefinition(i, fieldName, field)
 		i++
 	}
+}
+
+func printFieldDefinition(index int, fieldName string, field *ast.FieldDefinition) {
+	fmt.Printf("%2d. %-30s", index, fieldName)
+
+	// Print arguments if any
+	if len(field.Arguments) > 0 {
+		fmt.Print("(")
+		argStrs := make([]string, len(field.Arguments))
+		for j, arg := range field.Arguments {
+			argStrs[j] = arg.Name.Value + ": " + getTypeString(arg.Type)
+		}
+		fmt.Print(strings.Join(argStrs, ", "))
+		fmt.Print(")")
+	}
+
+	// Print return type
+	fmt.Printf(" -> %s", getTypeString(field.Type))
+
+	// Print description if available
+	if field.Description != nil {
+		description := strings.ReplaceAll(field.Description.Value, "\n", " ")
+		if len(description) > 80 {
+			description = description[:77] + "..."
+		}
+		fmt.Printf("\n    %s", description)
+	}
+
+	fmt.Println()
 }
 
 // Helper function to convert AST type to string representation
