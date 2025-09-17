@@ -18,7 +18,7 @@ func NewModel(choices []item) model {
 		items[i] = choice
 	}
 	return model{
-		list: list.New(items, list.NewDefaultDelegate(), 0, 0),
+		list: list.New(items, itemDelegate{}, 0, 0),
 	}
 }
 
