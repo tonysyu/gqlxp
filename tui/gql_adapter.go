@@ -26,3 +26,11 @@ type item struct {
 func (i item) Title() string {
 	return i.gqlField.Name.Value
 }
+
+func (i item) FilterValue() string {
+	return i.Title()
+}
+
+func (i item) Description() string {
+	return ""
+}
