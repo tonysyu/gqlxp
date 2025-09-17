@@ -6,24 +6,24 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type Model struct {
-	choices  []string
+type model struct {
+	choices  []item
 	cursor   int
 	selected map[int]struct{}
 }
 
-func NewModel(choices []string) Model {
-	return Model{
+func NewModel(choices []item) model {
+	return model{
 		choices:  choices,
 		selected: make(map[int]struct{}),
 	}
 }
 
-func (m Model) Init() tea.Cmd {
+func (m model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -49,7 +49,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) View() string {
+func (m model) View() string {
 	s := "What should we buy at the market?\n\n"
 
 	for i, choice := range m.choices {
@@ -58,12 +58,7 @@ func (m Model) View() string {
 			cursor = ">"
 		}
 
-		checked := " "
-		if _, ok := m.selected[i]; ok {
-			checked = "x"
-		}
-
-		s += fmt.Sprintf("%s [%s] %s\n", cursor, checked, choice)
+		s += fmt.Sprintf("%s %s\n", cursor, choice.Title())
 	}
 
 	s += "\nPress q to quit.\n"

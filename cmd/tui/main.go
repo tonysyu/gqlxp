@@ -20,14 +20,9 @@ func main() {
 
 	// Parse schema and get query fields
 	queryFields := gql.ParseSchema(schemaContent)
+	items := tui.AdaptGraphQLItems(queryFields)
 
-	// Extract field names for the TUI
-	fieldNames := make([]string, 0, len(queryFields))
-	for fieldName := range queryFields {
-		fieldNames = append(fieldNames, fieldName)
-	}
-
-	p := tea.NewProgram(tui.NewModel(fieldNames))
+	p := tea.NewProgram(tui.NewModel(items))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
