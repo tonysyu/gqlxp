@@ -12,9 +12,9 @@ type Model struct {
 	selected map[int]struct{}
 }
 
-func NewModel() Model {
+func NewModel(choices []string) Model {
 	return Model{
-		choices:  []string{"Buy carrots", "Buy celery", "Buy kohlrabi"},
+		choices:  choices,
 		selected: make(map[int]struct{}),
 	}
 }

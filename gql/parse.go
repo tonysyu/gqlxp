@@ -29,7 +29,7 @@ func buildGraphQLTypes(doc *ast.Document) map[string]map[string]*ast.FieldDefini
 	return types
 }
 
-func ParseSchema(schemaContent []byte) {
+func ParseSchema(schemaContent []byte) map[string]*ast.FieldDefinition {
 	// Clean up the schema content to remove problematic syntax
 	// Nullable values are null by default, and explicit defaults results in parsing error
 	cleanedSchema := strings.ReplaceAll(string(schemaContent), " = null", "")
@@ -45,8 +45,7 @@ func ParseSchema(schemaContent []byte) {
 	// Build the GraphQL types map
 	types := buildGraphQLTypes(doc)
 
-	queryFields := types["Query"]
-	printQueries(queryFields)
+	return types["Query"]
 }
 
 func printQueries(queryFields map[string]*ast.FieldDefinition) {
