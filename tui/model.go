@@ -54,7 +54,7 @@ type mainModel struct {
 	focus  int
 }
 
-func newListModel(choices []item) list.Model {
+func newListModel[T list.Item](choices []T) list.Model {
 	items := make([]list.Item, len(choices))
 	for i, choice := range choices {
 		items[i] = choice
@@ -62,7 +62,7 @@ func newListModel(choices []item) list.Model {
 	return list.New(items, list.NewDefaultDelegate(), 0, 0)
 }
 
-func NewModel(items []item) mainModel {
+func NewModel[T list.Item](items []T) mainModel {
 	m := mainModel{
 		panels: make([]list.Model, intialPanels),
 		help:   help.New(),
@@ -91,7 +91,7 @@ func NewModel(items []item) mainModel {
 	}
 	// Initialize panels with empty list models
 	for i := range intialPanels {
-		m.panels[i] = newListModel([]item{})
+		m.panels[i] = newListModel([]list.Item{})
 	}
 
 	m.panels[0] = newListModel(items)
