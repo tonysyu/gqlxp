@@ -19,6 +19,8 @@ func newItem(gqlField *ast.FieldDefinition) item {
 	}
 }
 
+// Adapter for DefaultItem interface used by charmbracelet/bubbles/list
+// https://pkg.go.dev/github.com/charmbracelet/bubbles@v0.21.0/list#DefaultItem
 type item struct {
 	gqlField *ast.FieldDefinition
 }
@@ -32,5 +34,5 @@ func (i item) FilterValue() string {
 }
 
 func (i item) Description() string {
-	return ""
+	return i.gqlField.GetDescription().Value
 }
