@@ -36,3 +36,8 @@ func (i item) FilterValue() string {
 func (i item) Description() string {
 	return i.gqlField.GetDescription().Value
 }
+
+// Implement ExpandableListItem interface
+func (i item) Expand() Panel {
+	return newStringPanel(i.Description())
+}

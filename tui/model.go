@@ -17,6 +17,7 @@ const (
 	helpHeight   = 5
 )
 
+
 var (
 	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
 
@@ -53,8 +54,8 @@ type mainModel struct {
 	panels []Panel
 	focus  int
 }
-
-func NewModel[T list.Item](items []T) mainModel {
+// NewModel creates a model specifically for ExpandableListItem
+func NewModel[T ExpandableListItem](items []T) mainModel {
 	m := mainModel{
 		panels: make([]Panel, intialPanels),
 		help:   help.New(),
@@ -86,7 +87,8 @@ func NewModel[T list.Item](items []T) mainModel {
 		m.panels[i] = newListPanel([]list.Item{})
 	}
 
-	m.panels[0] = newListPanel(items)
+	// Create expandable list panel
+	m.panels[0] = newExpandableListPanel(items)
 	m.updateKeybindings()
 	return m
 }
@@ -121,6 +123,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = len(m.panels) - 1
 			}
 		}
+	case expandMsg:
+		m.handleExpansion(msg.panel)
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
 		m.width = msg.Width
@@ -169,6 +173,21 @@ func (m *mainModel) addStringPanel(content string) {
 // addListPanel is a convenience method to add a list panel with list.Item interface
 func (m *mainModel) addListPanel(items []list.Item) {
 	m.addPanel(newListPanel(items))
+}
+
+// handleExpansion handles when an expandable item is expanded
+func (m *mainModel) handleExpansion(expandedPanel Panel) {
+	nextPanelIndex := m.focus + 1
+
+	// If there's a next panel, replace it
+	if nextPanelIndex < len(m.panels) {
+		m.panels[nextPanelIndex] = expandedPanel
+	} else if len(m.panels) < maxPanes {
+		// Add a new panel if we haven't reached the max
+		m.addPanel(expandedPanel)
+	}
+
+	m.sizePanels()
 }
 
 func (m mainModel) View() string {
