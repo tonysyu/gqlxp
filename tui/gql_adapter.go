@@ -37,7 +37,7 @@ func (i item) Description() string {
 	return i.gqlField.GetDescription().Value
 }
 
-// Implement ExpandableListItem interface
-func (i item) Expand() Panel {
+// Implement InteractiveListItem interface
+func (i item) Open() Panel {
 	return newStringPanel(i.Description())
 }

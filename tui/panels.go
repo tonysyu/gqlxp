@@ -6,8 +6,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// expandMsg is sent when an item should be expanded
-type expandMsg struct {
+// openPanelMsg is sent when an item should be opened
+type openPanelMsg struct {
 	panel Panel
 }
 
@@ -20,7 +20,7 @@ type Panel interface {
 // listPanel wraps a list.Model to implement the Panel interface
 type listPanel struct {
 	list.Model
-	expandable bool // whether this panel contains expandable items
+	isInteractive bool // whether this panel contains interactive items
 }
 
 func newListPanel[T list.Item](choices []T) *listPanel {
@@ -33,15 +33,15 @@ func newListPanel[T list.Item](choices []T) *listPanel {
 	}
 }
 
-// newExpandableListPanel creates a list panel specifically for ExpandableListItem
-func newExpandableListPanel[T ExpandableListItem](choices []T) *listPanel {
+// newInteractiveListPanel creates a list panel specifically for InteractiveListItem
+func newInteractiveListPanel[T InteractiveListItem](choices []T) *listPanel {
 	items := make([]list.Item, len(choices))
 	for i, choice := range choices {
 		items[i] = choice
 	}
 	return &listPanel{
 		Model:      list.New(items, list.NewDefaultDelegate(), 0, 0),
-		expandable: true,
+		isInteractive: true,
 	}
 }
 
@@ -52,13 +52,13 @@ func (lp *listPanel) Init() tea.Cmd {
 func (lp *listPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
-	// Handle enter key for expandable items
-	if keyMsg, ok := msg.(tea.KeyMsg); ok && keyMsg.String() == "enter" && lp.expandable {
+	// Handle enter key for interactive items
+	if keyMsg, ok := msg.(tea.KeyMsg); ok && keyMsg.String() == "enter" && lp.isInteractive {
 		if selectedItem := lp.Model.SelectedItem(); selectedItem != nil {
-			if expandableItem, ok := selectedItem.(ExpandableListItem); ok {
-				expandedPanel := expandableItem.Expand()
+			if interactiveItem, ok := selectedItem.(InteractiveListItem); ok {
+				newPanel := interactiveItem.Open()
 				return lp, func() tea.Msg {
-					return expandMsg{panel: expandedPanel}
+					return openPanelMsg{panel: newPanel}
 				}
 			}
 		}

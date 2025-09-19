@@ -54,8 +54,8 @@ type mainModel struct {
 	panels []Panel
 	focus  int
 }
-// NewModel creates a model specifically for ExpandableListItem
-func NewModel[T ExpandableListItem](items []T) mainModel {
+// NewModel creates a model specifically for InteractiveListItem
+func NewModel[T InteractiveListItem](items []T) mainModel {
 	m := mainModel{
 		panels: make([]Panel, intialPanels),
 		help:   help.New(),
@@ -87,8 +87,8 @@ func NewModel[T ExpandableListItem](items []T) mainModel {
 		m.panels[i] = newListPanel([]list.Item{})
 	}
 
-	// Create expandable list panel
-	m.panels[0] = newExpandableListPanel(items)
+	// Create interactive list panel
+	m.panels[0] = newInteractiveListPanel(items)
 	m.updateKeybindings()
 	return m
 }
@@ -123,8 +123,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = len(m.panels) - 1
 			}
 		}
-	case expandMsg:
-		m.handleExpansion(msg.panel)
+	case openPanelMsg:
+		m.handleOpenPanel(msg.panel)
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
 		m.width = msg.Width
@@ -175,16 +175,16 @@ func (m *mainModel) addListPanel(items []list.Item) {
 	m.addPanel(newListPanel(items))
 }
 
-// handleExpansion handles when an expandable item is expanded
-func (m *mainModel) handleExpansion(expandedPanel Panel) {
+// handleOpenPanel handles when an interactive item is opened
+func (m *mainModel) handleOpenPanel(newPanel Panel) {
 	nextPanelIndex := m.focus + 1
 
 	// If there's a next panel, replace it
 	if nextPanelIndex < len(m.panels) {
-		m.panels[nextPanelIndex] = expandedPanel
+		m.panels[nextPanelIndex] = newPanel
 	} else if len(m.panels) < maxPanes {
 		// Add a new panel if we haven't reached the max
-		m.addPanel(expandedPanel)
+		m.addPanel(newPanel)
 	}
 
 	m.sizePanels()
