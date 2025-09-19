@@ -50,21 +50,13 @@ type mainModel struct {
 	height int
 	keymap keymap
 	help   help.Model
-	panels []list.Model
+	panels []Panel
 	focus  int
-}
-
-func newListModel[T list.Item](choices []T) list.Model {
-	items := make([]list.Item, len(choices))
-	for i, choice := range choices {
-		items[i] = choice
-	}
-	return list.New(items, list.NewDefaultDelegate(), 0, 0)
 }
 
 func NewModel[T list.Item](items []T) mainModel {
 	m := mainModel{
-		panels: make([]list.Model, intialPanels),
+		panels: make([]Panel, intialPanels),
 		help:   help.New(),
 		keymap: keymap{
 			next: key.NewBinding(
@@ -91,10 +83,10 @@ func NewModel[T list.Item](items []T) mainModel {
 	}
 	// Initialize panels with empty list models
 	for i := range intialPanels {
-		m.panels[i] = newListModel([]list.Item{})
+		m.panels[i] = newListPanel([]list.Item{})
 	}
 
-	m.panels[0] = newListModel(items)
+	m.panels[0] = newListPanel(items)
 	m.updateKeybindings()
 	return m
 }
@@ -140,7 +132,9 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Update all panels
 	for i := range m.panels {
 		newModel, cmd := m.panels[i].Update(msg)
-		m.panels[i] = newModel
+		if panel, ok := newModel.(Panel); ok {
+			m.panels[i] = panel
+		}
 		cmds = append(cmds, cmd)
 	}
 
@@ -149,14 +143,32 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *mainModel) sizePanels() {
 	for i := range m.panels {
-		m.panels[i].SetWidth(m.width / len(m.panels))
-		m.panels[i].SetHeight(m.height - helpHeight)
+		m.panels[i].SetSize(m.width/len(m.panels), m.height-helpHeight)
 	}
 }
 
 func (m *mainModel) updateKeybindings() {
 	m.keymap.add.SetEnabled(len(m.panels) < maxPanes)
 	m.keymap.remove.SetEnabled(len(m.panels) > minPanes)
+}
+
+// addPanel adds a new panel to the model
+func (m *mainModel) addPanel(panel Panel) {
+	if len(m.panels) < maxPanes {
+		m.panels = append(m.panels, panel)
+		m.updateKeybindings()
+		m.sizePanels()
+	}
+}
+
+// addStringPanel is a convenience method to add a string panel
+func (m *mainModel) addStringPanel(content string) {
+	m.addPanel(newStringPanel(content))
+}
+
+// addListPanel is a convenience method to add a list panel with list.Item interface
+func (m *mainModel) addListPanel(items []list.Item) {
+	m.addPanel(newListPanel(items))
 }
 
 func (m mainModel) View() string {
