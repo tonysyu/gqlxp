@@ -24,6 +24,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - If tests fail, fix the issues before considering the task complete
 - This helps catch compilation errors, type mismatches, and regression issues early
 
+## BUILD SYSTEM RULE
+
+**Use just commands instead of direct Go commands:**
+- Use `just build` instead of `go build`
+- Use `just run` instead of `go run`
+- The project uses justfile for standardized build commands
+
+## DOCUMENTATION STYLE RULE
+
+**Keep documentation concise and avoid repetition:**
+- Write clear, focused content that gets to the point quickly
+- Eliminate redundant information between sections and files
+- Maintain readability while prioritizing brevity
+- Use cross-references instead of duplicating content
+
 ## Project Information
 
 For project overview, development commands, and architecture details, refer to:
