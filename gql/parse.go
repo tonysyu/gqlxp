@@ -9,14 +9,16 @@ import (
 	"github.com/graphql-go/graphql/language/parser"
 )
 
-// GraphQLSchema represents the GraphQL schema with Query field definitions
+// GraphQLSchema represents the GraphQL schema with Query and Mutation field definitions
 type GraphQLSchema struct {
-	Query map[string]*ast.FieldDefinition
+	Query    map[string]*ast.FieldDefinition
+	Mutation map[string]*ast.FieldDefinition
 }
 
 func buildGraphQLTypes(doc *ast.Document) GraphQLSchema {
 	gqlSchema := GraphQLSchema{
-		Query: make(map[string]*ast.FieldDefinition),
+		Query:    make(map[string]*ast.FieldDefinition),
+		Mutation: make(map[string]*ast.FieldDefinition),
 	}
 
 	for _, def := range doc.Definitions {
@@ -26,7 +28,10 @@ func buildGraphQLTypes(doc *ast.Document) GraphQLSchema {
 				for _, field := range typeDef.Fields {
 					gqlSchema.Query[field.Name.Value] = field
 				}
-				break
+			} else if typeDef.Name.Value == "Mutation" {
+				for _, field := range typeDef.Fields {
+					gqlSchema.Mutation[field.Name.Value] = field
+				}
 			}
 		}
 	}
