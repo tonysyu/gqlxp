@@ -120,7 +120,7 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 	}
 	// Initialize panels with empty list models
 	for i := range intialPanels {
-		m.panels[i] = newListPanel([]list.Item{})
+		m.panels[i] = newListPanel([]list.Item{}, "")
 	}
 
 	// Load initial fields based on field type
@@ -210,7 +210,7 @@ func (m *mainModel) addStringPanel(content string) {
 
 // addListPanel is a convenience method to add a list panel with list.Item interface
 func (m *mainModel) addListPanel(items []list.Item) {
-	m.addPanel(newListPanel(items))
+	m.addPanel(newListPanel(items, ""))
 }
 
 // handleOpenPanel handles when an item is opened
@@ -241,7 +241,7 @@ func (m *mainModel) loadFieldsPanel() {
 
 	title := fmt.Sprintf("%s Fields", string(m.fieldType))
 	items := AdaptGraphQLItems(fields)
-	m.panels[0] = newListPanelWithTitle(items, title)
+	m.panels[0] = newListPanel(items, title)
 }
 
 // toggleFieldType cycles through available field types with wraparound

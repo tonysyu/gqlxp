@@ -22,17 +22,7 @@ type listPanel struct {
 	list.Model
 }
 
-func newListPanel[T list.Item](choices []T) *listPanel {
-	items := make([]list.Item, len(choices))
-	for i, choice := range choices {
-		items[i] = choice
-	}
-	return &listPanel{
-		Model: list.New(items, list.NewDefaultDelegate(), 0, 0),
-	}
-}
-
-func newListPanelWithTitle[T list.Item](choices []T, title string) *listPanel {
+func newListPanel[T list.Item](choices []T, title string) *listPanel {
 	items := make([]list.Item, len(choices))
 	for i, choice := range choices {
 		items[i] = choice
