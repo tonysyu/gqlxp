@@ -1,1 +1,6 @@
+# Build files
+dist/
+
+# Personal files for AI Assistants
 .claude/settings.local.json
+
