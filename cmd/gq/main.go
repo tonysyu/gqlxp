@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tonysyu/gq/gql"
 	"github.com/tonysyu/gq/tui"
 )
@@ -20,8 +19,7 @@ func main() {
 
 	schema := gql.ParseSchema(schemaContent)
 
-	p := tea.NewProgram(tui.NewModel(schema))
-	if _, err := p.Run(); err != nil {
+	if _, err := tui.Start(schema); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
 	}
