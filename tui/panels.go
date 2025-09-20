@@ -20,7 +20,6 @@ type Panel interface {
 // listPanel wraps a list.Model to implement the Panel interface
 type listPanel struct {
 	list.Model
-	isInteractive bool // whether this panel contains interactive items
 }
 
 func newListPanel[T list.Item](choices []T) *listPanel {
@@ -33,18 +32,6 @@ func newListPanel[T list.Item](choices []T) *listPanel {
 	}
 }
 
-// newInteractiveListPanel creates a list panel specifically for InteractiveListItem
-func newInteractiveListPanel[T InteractiveListItem](choices []T) *listPanel {
-	items := make([]list.Item, len(choices))
-	for i, choice := range choices {
-		items[i] = choice
-	}
-	return &listPanel{
-		Model:      list.New(items, list.NewDefaultDelegate(), 0, 0),
-		isInteractive: true,
-	}
-}
-
 func (lp *listPanel) Init() tea.Cmd {
 	return nil
 }
@@ -53,10 +40,10 @@ func (lp *listPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	// Handle enter key for interactive items
-	if keyMsg, ok := msg.(tea.KeyMsg); ok && keyMsg.String() == "enter" && lp.isInteractive {
+	if keyMsg, ok := msg.(tea.KeyMsg); ok && keyMsg.String() == "enter" {
 		if selectedItem := lp.Model.SelectedItem(); selectedItem != nil {
-			if interactiveItem, ok := selectedItem.(InteractiveListItem); ok {
-				newPanel := interactiveItem.Open()
+			if listItem, ok := selectedItem.(ListItem); ok {
+				newPanel := listItem.Open()
 				return lp, func() tea.Msg {
 					return openPanelMsg{panel: newPanel}
 				}

@@ -17,7 +17,6 @@ const (
 	helpHeight   = 5
 )
 
-
 var (
 	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
 
@@ -54,8 +53,9 @@ type mainModel struct {
 	panels []Panel
 	focus  int
 }
-// NewModel creates a model specifically for InteractiveListItem
-func NewModel[T InteractiveListItem](items []T) mainModel {
+
+// NewModel creates a model specifically for ListItem
+func NewModel[T ListItem](items []T) mainModel {
 	m := mainModel{
 		panels: make([]Panel, intialPanels),
 		help:   help.New(),
@@ -87,8 +87,8 @@ func NewModel[T InteractiveListItem](items []T) mainModel {
 		m.panels[i] = newListPanel([]list.Item{})
 	}
 
-	// Create interactive list panel
-	m.panels[0] = newInteractiveListPanel(items)
+	// Create list panel with initial items
+	m.panels[0] = newListPanel(items)
 	m.updateKeybindings()
 	return m
 }
@@ -175,7 +175,7 @@ func (m *mainModel) addListPanel(items []list.Item) {
 	m.addPanel(newListPanel(items))
 }
 
-// handleOpenPanel handles when an interactive item is opened
+// handleOpenPanel handles when an item is opened
 func (m *mainModel) handleOpenPanel(newPanel Panel) {
 	nextPanelIndex := m.focus + 1
 
