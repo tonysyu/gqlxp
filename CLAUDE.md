@@ -9,17 +9,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Building and Running
-- `go build -o gq ./cmd/gq` - Build the application
-- `go run ./cmd/gq` - Run the application (requires `examples/github.graphqls` schema file)
+- `just build` - Build the application
+- `just run` - Run the application
 
 ### Testing
-- `go test ./... -v` - Run all tests with verbose output
-- `go test ./gql -v` - Run only GraphQL parsing tests
+- `just test` - Run all tests
+- `just "test -v"` - Run all tests with verbose output
+- `just test ./gql` - Run only GraphQL parsing tests
+- `just test "./gql -v"` - Run GraphQL tests with verbose output
 
 ### Code Quality
-- `go fmt ./...` - Format Go code
-- `go vet ./...` - Run Go static analysis
-- `go mod tidy` - Clean up module dependencies
+- `just lint-fix` - Format code, tidy modules, and run static analysis
 
 ## Architecture
 
