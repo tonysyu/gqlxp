@@ -17,6 +17,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Proactively identify outdated information in documentation during code analysis
 - Suggest specific documentation updates rather than just noting the inconsistency
 
+## CODE VALIDATION RULE
+
+**ALWAYS validate code changes by running tests:**
+- After making any code changes, run `just test` to ensure all tests pass
+- If tests fail, fix the issues before considering the task complete
+- This helps catch compilation errors, type mismatches, and regression issues early
+
 ## Project Information
 
 For project overview, development commands, and architecture details, refer to:

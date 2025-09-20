@@ -3,12 +3,19 @@ package gql_test
 import (
 	"testing"
 
+	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
 	. "github.com/tonysyu/gq/gql"
 )
 
 func TestMain(t *testing.T) {
 	is := is.New(t)
+
+	assertArgumentNameAndType := func(arg *ast.InputValueDefinition, expectedName, expectedType string) {
+		is.Equal(arg.Name.Value, expectedName)
+		is.Equal(GetTypeString(arg.Type), expectedType)
+	}
+
 	schemaString := `
 		type User {
 		  id: ID!
@@ -62,8 +69,7 @@ func TestMain(t *testing.T) {
 		is.True(ok)
 
 		is.Equal(len(gqlField.Arguments), 1)
-		idArg := gqlField.Arguments[0]
-		is.Equal(idArg.Name.Value, "id")
+		assertArgumentNameAndType(gqlField.Arguments[0], "id", "ID!")
 
 		is.Equal(GetTypeString(gqlField.Type), "Post")
 	})
@@ -79,17 +85,9 @@ func TestMain(t *testing.T) {
 
 		is.Equal(len(gqlField.Arguments), 3)
 
-		titleArg := gqlField.Arguments[0]
-		is.Equal(titleArg.Name.Value, "title")
-		is.Equal(GetTypeString(titleArg.Type), "String!")
-
-		contentArg := gqlField.Arguments[1]
-		is.Equal(contentArg.Name.Value, "content")
-		is.Equal(GetTypeString(contentArg.Type), "String!")
-
-		authorIdArg := gqlField.Arguments[2]
-		is.Equal(authorIdArg.Name.Value, "authorId")
-		is.Equal(GetTypeString(authorIdArg.Type), "ID!")
+		assertArgumentNameAndType(gqlField.Arguments[0], "title", "String!")
+		assertArgumentNameAndType(gqlField.Arguments[1], "content", "String!")
+		assertArgumentNameAndType(gqlField.Arguments[2], "authorId", "ID!")
 
 		is.Equal(GetTypeString(gqlField.Type), "Post!")
 	})
