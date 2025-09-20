@@ -17,13 +17,14 @@ const (
 	maxPanes     = 6
 	minPanes     = 1
 	helpHeight   = 5
+	navbarHeight = 3
 )
 
 type FieldType string
 
 const (
-	QueryFields    FieldType = "Query"
-	MutationFields FieldType = "Mutation"
+	QueryType    FieldType = "Query"
+	MutationType FieldType = "Mutation"
 )
 
 var (
@@ -48,6 +49,21 @@ var (
 
 	blurredBorderStyle = lipgloss.NewStyle().
 				Border(lipgloss.HiddenBorder())
+
+	// Navbar styles
+	navbarStyle = lipgloss.NewStyle().
+			Padding(0, 1).
+			Margin(0, 0, 1, 0)
+
+	activeTabStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("230")).
+			Background(lipgloss.Color("57")).
+			Padding(0, 2).
+			Bold(true)
+
+	inactiveTabStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("244")).
+				Padding(0, 2)
 )
 
 type keymap = struct {
@@ -55,14 +71,14 @@ type keymap = struct {
 }
 
 type mainModel struct {
-	width      int
-	height     int
-	keymap     keymap
-	help       help.Model
-	panels     []Panel
-	focus      int
-	schema     gql.GraphQLSchema
-	fieldType  FieldType
+	width     int
+	height    int
+	keymap    keymap
+	help      help.Model
+	panels    []Panel
+	focus     int
+	schema    gql.GraphQLSchema
+	fieldType FieldType
 }
 
 func NewModel(schema gql.GraphQLSchema) mainModel {
@@ -70,7 +86,7 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 		panels:    make([]Panel, intialPanels),
 		help:      help.New(),
 		schema:    schema,
-		fieldType: QueryFields,
+		fieldType: QueryType,
 		keymap: keymap{
 			next: key.NewBinding(
 				key.WithKeys("tab"),
@@ -165,7 +181,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *mainModel) sizePanels() {
 	for i := range m.panels {
-		m.panels[i].SetSize(m.width/len(m.panels), m.height-helpHeight)
+		m.panels[i].SetSize(m.width/len(m.panels), m.height-helpHeight-navbarHeight)
 	}
 }
 
@@ -213,9 +229,9 @@ func (m *mainModel) loadFieldsPanel() {
 	var fields map[string]*ast.FieldDefinition
 
 	switch m.fieldType {
-	case QueryFields:
+	case QueryType:
 		fields = m.schema.Query
-	case MutationFields:
+	case MutationType:
 		fields = m.schema.Mutation
 	}
 
@@ -227,14 +243,33 @@ func (m *mainModel) loadFieldsPanel() {
 // toggleFieldType switches between Query and Mutation fields
 func (m *mainModel) toggleFieldType() {
 	switch m.fieldType {
-	case QueryFields:
-		m.fieldType = MutationFields
-	case MutationFields:
-		m.fieldType = QueryFields
+	case QueryType:
+		m.fieldType = MutationType
+	case MutationType:
+		m.fieldType = QueryType
 	}
 
 	m.loadFieldsPanel()
 	m.sizePanels()
+}
+
+// renderFieldTypeNavbar creates the navbar showing field types
+func (m *mainModel) renderFieldTypeNavbar() string {
+	var tabs []string
+	fieldTypes := []FieldType{QueryType, MutationType}
+
+	for _, fieldType := range fieldTypes {
+		var style lipgloss.Style
+		if m.fieldType == fieldType {
+			style = activeTabStyle
+		} else {
+			style = inactiveTabStyle
+		}
+		tabs = append(tabs, style.Render(string(fieldType)))
+	}
+
+	navbar := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
+	return navbarStyle.Render(navbar)
 }
 
 func (m mainModel) View() string {
@@ -252,5 +287,8 @@ func (m mainModel) View() string {
 		views = append(views, m.panels[i].View())
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, views...) + "\n\n" + fmt.Sprintf("Fields: %s", string(m.fieldType)) + "\n" + help
+	navbar := m.renderFieldTypeNavbar()
+	panels := lipgloss.JoinHorizontal(lipgloss.Top, views...)
+
+	return navbar + "\n" + panels + "\n\n" + help
 }
