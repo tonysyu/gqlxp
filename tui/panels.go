@@ -17,6 +17,9 @@ type Panel interface {
 	SetSize(width, height int)
 }
 
+var _ Panel = (*listPanel)(nil)
+var _ Panel = (*stringPanel)(nil)
+
 // listPanel wraps a list.Model to implement the Panel interface
 type listPanel struct {
 	list.Model

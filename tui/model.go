@@ -240,7 +240,7 @@ func (m *mainModel) loadFieldsPanel() {
 	}
 
 	title := fmt.Sprintf("%s Fields", string(m.fieldType))
-	items := AdaptGraphQLItems(fields)
+	items := adaptGraphQLItems(fields)
 	m.panels[0] = newListPanel(items, title)
 }
 
