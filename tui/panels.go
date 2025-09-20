@@ -32,6 +32,18 @@ func newListPanel[T list.Item](choices []T) *listPanel {
 	}
 }
 
+func newListPanelWithTitle[T list.Item](choices []T, title string) *listPanel {
+	items := make([]list.Item, len(choices))
+	for i, choice := range choices {
+		items[i] = choice
+	}
+	l := list.New(items, list.NewDefaultDelegate(), 0, 0)
+	l.Title = title
+	return &listPanel{
+		Model: l,
+	}
+}
+
 func (lp *listPanel) Init() tea.Cmd {
 	return nil
 }
@@ -58,6 +70,10 @@ func (lp *listPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (lp *listPanel) SetSize(width, height int) {
 	lp.Model.SetWidth(width)
 	lp.Model.SetHeight(height)
+}
+
+func (lp *listPanel) SetTitle(title string) {
+	lp.Model.Title = title
 }
 
 // stringPanel displays a simple string content

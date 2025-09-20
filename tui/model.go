@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/graphql-go/graphql/language/ast"
 	"github.com/tonysyu/gq/gql"
 )
 
@@ -16,6 +17,13 @@ const (
 	maxPanes     = 6
 	minPanes     = 1
 	helpHeight   = 5
+)
+
+type FieldType string
+
+const (
+	QueryFields    FieldType = "Query"
+	MutationFields FieldType = "Mutation"
 )
 
 var (
@@ -43,22 +51,26 @@ var (
 )
 
 type keymap = struct {
-	next, prev, add, remove, quit key.Binding
+	next, prev, add, remove, quit, toggle key.Binding
 }
 
 type mainModel struct {
-	width  int
-	height int
-	keymap keymap
-	help   help.Model
-	panels []Panel
-	focus  int
+	width      int
+	height     int
+	keymap     keymap
+	help       help.Model
+	panels     []Panel
+	focus      int
+	schema     gql.GraphQLSchema
+	fieldType  FieldType
 }
 
 func NewModel(schema gql.GraphQLSchema) mainModel {
 	m := mainModel{
-		panels: make([]Panel, intialPanels),
-		help:   help.New(),
+		panels:    make([]Panel, intialPanels),
+		help:      help.New(),
+		schema:    schema,
+		fieldType: QueryFields,
 		keymap: keymap{
 			next: key.NewBinding(
 				key.WithKeys("tab"),
@@ -80,6 +92,10 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 				key.WithKeys("esc", "ctrl+c"),
 				key.WithHelp("esc", "quit"),
 			),
+			toggle: key.NewBinding(
+				key.WithKeys("ctrl+t"),
+				key.WithHelp("ctrl+t", "toggle Query/Mutation"),
+			),
 		},
 	}
 	// Initialize panels with empty list models
@@ -87,12 +103,8 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 		m.panels[i] = newListPanel([]list.Item{})
 	}
 
-	// Extract Query fields and adapt them to list items
-	queryFields := schema.Query
-	items := AdaptGraphQLItems(queryFields)
-
-	// Create list panel with initial items
-	m.panels[0] = newListPanel(items)
+	// Load initial fields based on field type
+	m.loadFieldsPanel()
 	m.updateKeybindings()
 	return m
 }
@@ -126,6 +138,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus > len(m.panels)-1 {
 				m.focus = len(m.panels) - 1
 			}
+		case key.Matches(msg, m.keymap.toggle):
+			m.toggleFieldType()
 		}
 	case openPanelMsg:
 		m.handleOpenPanel(msg.panel)
@@ -194,12 +208,42 @@ func (m *mainModel) handleOpenPanel(newPanel Panel) {
 	m.sizePanels()
 }
 
+// loadFieldsPanel loads the appropriate fields based on the current field type
+func (m *mainModel) loadFieldsPanel() {
+	var fields map[string]*ast.FieldDefinition
+
+	switch m.fieldType {
+	case QueryFields:
+		fields = m.schema.Query
+	case MutationFields:
+		fields = m.schema.Mutation
+	}
+
+	title := fmt.Sprintf("%s Fields", string(m.fieldType))
+	items := AdaptGraphQLItems(fields)
+	m.panels[0] = newListPanelWithTitle(items, title)
+}
+
+// toggleFieldType switches between Query and Mutation fields
+func (m *mainModel) toggleFieldType() {
+	switch m.fieldType {
+	case QueryFields:
+		m.fieldType = MutationFields
+	case MutationFields:
+		m.fieldType = QueryFields
+	}
+
+	m.loadFieldsPanel()
+	m.sizePanels()
+}
+
 func (m mainModel) View() string {
 	help := m.help.ShortHelpView([]key.Binding{
 		m.keymap.next,
 		m.keymap.prev,
 		m.keymap.add,
 		m.keymap.remove,
+		m.keymap.toggle,
 		m.keymap.quit,
 	})
 
@@ -208,5 +252,5 @@ func (m mainModel) View() string {
 		views = append(views, m.panels[i].View())
 	}
 
-	return lipgloss.JoinHorizontal(lipgloss.Top, views...) + "\n\n" + help
+	return lipgloss.JoinHorizontal(lipgloss.Top, views...) + "\n\n" + fmt.Sprintf("Fields: %s", string(m.fieldType)) + "\n" + help
 }
