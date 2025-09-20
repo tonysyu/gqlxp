@@ -34,7 +34,7 @@ func TestMain(t *testing.T) {
 	`
 
 	schema := ParseSchema([]byte(schemaString))
-	queryFields := schema["Query"]
+	queryFields := schema.Query
 
 	t.Run("Query: getAllPosts", func(t *testing.T) {
 		gqlField, ok := queryFields["getAllPosts"]

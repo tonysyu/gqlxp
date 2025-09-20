@@ -88,7 +88,7 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 	}
 
 	// Extract Query fields and adapt them to list items
-	queryFields := schema["Query"]
+	queryFields := schema.Query
 	items := AdaptGraphQLItems(queryFields)
 
 	// Create list panel with initial items

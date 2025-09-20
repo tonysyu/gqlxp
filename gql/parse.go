@@ -9,21 +9,23 @@ import (
 	"github.com/graphql-go/graphql/language/parser"
 )
 
-// GraphQLSchema represents the mapping of GraphQL type names to their field definitions
-type GraphQLSchema map[string]map[string]*ast.FieldDefinition
+// GraphQLSchema represents the GraphQL schema with Query field definitions
+type GraphQLSchema struct {
+	Query map[string]*ast.FieldDefinition
+}
 
 func buildGraphQLTypes(doc *ast.Document) GraphQLSchema {
-	gqlSchema := make(GraphQLSchema)
+	gqlSchema := GraphQLSchema{
+		Query: make(map[string]*ast.FieldDefinition),
+	}
 
 	for _, def := range doc.Definitions {
 		switch typeDef := def.(type) {
 		case *ast.ObjectDefinition:
 			if typeDef.Name.Value == "Query" {
-				queryMap := make(map[string]*ast.FieldDefinition)
 				for _, field := range typeDef.Fields {
-					queryMap[field.Name.Value] = field
+					gqlSchema.Query[field.Name.Value] = field
 				}
-				gqlSchema["Query"] = queryMap
 				break
 			}
 		}
