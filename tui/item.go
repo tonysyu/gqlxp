@@ -12,3 +12,6 @@ type ListItem interface {
 	// Open Panel to show additional information.
 	Open() Panel
 }
+
+// Ensure that all item types implements ListItem interface
+var _ ListItem = (*item)(nil)

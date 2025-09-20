@@ -18,10 +18,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Parse schema and get types
-	types := gql.ParseSchema(schemaContent)
+	schema := gql.ParseSchema(schemaContent)
 
-	p := tea.NewProgram(tui.NewModel(types))
+	p := tea.NewProgram(tui.NewModel(schema))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)

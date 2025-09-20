@@ -9,7 +9,7 @@ import (
 
 func TestMain(t *testing.T) {
 	is := is.New(t)
-	schema := `
+	schemaString := `
 		type User {
 		  id: ID!
 		  name: String!
@@ -33,8 +33,8 @@ func TestMain(t *testing.T) {
 		}
 	`
 
-	types := ParseSchema([]byte(schema))
-	queryFields := types["Query"]
+	schema := ParseSchema([]byte(schemaString))
+	queryFields := schema["Query"]
 
 	t.Run("Query: getAllPosts", func(t *testing.T) {
 		gqlField, ok := queryFields["getAllPosts"]

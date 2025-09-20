@@ -9,11 +9,11 @@ import (
 	"github.com/graphql-go/graphql/language/parser"
 )
 
-// GraphQLTypes represents the mapping of GraphQL type names to their field definitions
-type GraphQLTypes map[string]map[string]*ast.FieldDefinition
+// GraphQLSchema represents the mapping of GraphQL type names to their field definitions
+type GraphQLSchema map[string]map[string]*ast.FieldDefinition
 
-func buildGraphQLTypes(doc *ast.Document) GraphQLTypes {
-	types := make(map[string]map[string]*ast.FieldDefinition)
+func buildGraphQLTypes(doc *ast.Document) GraphQLSchema {
+	gqlSchema := make(GraphQLSchema)
 
 	for _, def := range doc.Definitions {
 		switch typeDef := def.(type) {
@@ -23,16 +23,16 @@ func buildGraphQLTypes(doc *ast.Document) GraphQLTypes {
 				for _, field := range typeDef.Fields {
 					queryMap[field.Name.Value] = field
 				}
-				types["Query"] = queryMap
+				gqlSchema["Query"] = queryMap
 				break
 			}
 		}
 	}
 
-	return types
+	return gqlSchema
 }
 
-func ParseSchema(schemaContent []byte) GraphQLTypes {
+func ParseSchema(schemaContent []byte) GraphQLSchema {
 	// Clean up the schema content to remove problematic syntax
 	// Nullable values are null by default, and explicit defaults results in parsing error
 	cleanedSchema := strings.ReplaceAll(string(schemaContent), " = null", "")
@@ -45,10 +45,8 @@ func ParseSchema(schemaContent []byte) GraphQLTypes {
 		log.Fatalf("Failed to parse schema: %v", err)
 	}
 
-	// Build the GraphQL types map
-	types := buildGraphQLTypes(doc)
-
-	return types
+	gqlSchema := buildGraphQLTypes(doc)
+	return gqlSchema
 }
 
 func printQueries(queryFields map[string]*ast.FieldDefinition) {

@@ -55,8 +55,7 @@ type mainModel struct {
 	focus  int
 }
 
-// NewModel creates a model from GraphQL types
-func NewModel(types gql.GraphQLTypes) mainModel {
+func NewModel(schema gql.GraphQLSchema) mainModel {
 	m := mainModel{
 		panels: make([]Panel, intialPanels),
 		help:   help.New(),
@@ -89,7 +88,7 @@ func NewModel(types gql.GraphQLTypes) mainModel {
 	}
 
 	// Extract Query fields and adapt them to list items
-	queryFields := types["Query"]
+	queryFields := schema["Query"]
 	items := AdaptGraphQLItems(queryFields)
 
 	// Create list panel with initial items
