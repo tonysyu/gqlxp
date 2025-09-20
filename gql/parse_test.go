@@ -33,7 +33,8 @@ func TestMain(t *testing.T) {
 		}
 	`
 
-	queryFields := ParseSchema([]byte(schema))
+	types := ParseSchema([]byte(schema))
+	queryFields := types["Query"]
 
 	t.Run("Query: getAllPosts", func(t *testing.T) {
 		gqlField, ok := queryFields["getAllPosts"]

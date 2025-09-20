@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tonysyu/gq/gql"
 )
 
 const (
@@ -54,8 +55,8 @@ type mainModel struct {
 	focus  int
 }
 
-// NewModel creates a model specifically for ListItem
-func NewModel[T ListItem](items []T) mainModel {
+// NewModel creates a model from GraphQL types
+func NewModel(types gql.GraphQLTypes) mainModel {
 	m := mainModel{
 		panels: make([]Panel, intialPanels),
 		help:   help.New(),
@@ -86,6 +87,10 @@ func NewModel[T ListItem](items []T) mainModel {
 	for i := range intialPanels {
 		m.panels[i] = newListPanel([]list.Item{})
 	}
+
+	// Extract Query fields and adapt them to list items
+	queryFields := types["Query"]
+	items := AdaptGraphQLItems(queryFields)
 
 	// Create list panel with initial items
 	m.panels[0] = newListPanel(items)

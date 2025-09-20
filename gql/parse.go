@@ -9,7 +9,10 @@ import (
 	"github.com/graphql-go/graphql/language/parser"
 )
 
-func buildGraphQLTypes(doc *ast.Document) map[string]map[string]*ast.FieldDefinition {
+// GraphQLTypes represents the mapping of GraphQL type names to their field definitions
+type GraphQLTypes map[string]map[string]*ast.FieldDefinition
+
+func buildGraphQLTypes(doc *ast.Document) GraphQLTypes {
 	types := make(map[string]map[string]*ast.FieldDefinition)
 
 	for _, def := range doc.Definitions {
@@ -29,7 +32,7 @@ func buildGraphQLTypes(doc *ast.Document) map[string]map[string]*ast.FieldDefini
 	return types
 }
 
-func ParseSchema(schemaContent []byte) map[string]*ast.FieldDefinition {
+func ParseSchema(schemaContent []byte) GraphQLTypes {
 	// Clean up the schema content to remove problematic syntax
 	// Nullable values are null by default, and explicit defaults results in parsing error
 	cleanedSchema := strings.ReplaceAll(string(schemaContent), " = null", "")
@@ -45,7 +48,7 @@ func ParseSchema(schemaContent []byte) map[string]*ast.FieldDefinition {
 	// Build the GraphQL types map
 	types := buildGraphQLTypes(doc)
 
-	return types["Query"]
+	return types
 }
 
 func printQueries(queryFields map[string]*ast.FieldDefinition) {
