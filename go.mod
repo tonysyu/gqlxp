@@ -7,6 +7,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.9
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/graphql-go/graphql v0.8.1
+	github.com/matryer/is v1.4.1
 )
 
 require (

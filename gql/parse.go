@@ -67,14 +67,14 @@ func printFieldDefinition(index int, fieldName string, field *ast.FieldDefinitio
 		fmt.Print("(")
 		argStrs := make([]string, len(field.Arguments))
 		for j, arg := range field.Arguments {
-			argStrs[j] = arg.Name.Value + ": " + getTypeString(arg.Type)
+			argStrs[j] = arg.Name.Value + ": " + GetTypeString(arg.Type)
 		}
 		fmt.Print(strings.Join(argStrs, ", "))
 		fmt.Print(")")
 	}
 
 	// Print return type
-	fmt.Printf(" -> %s", getTypeString(field.Type))
+	fmt.Printf(" -> %s", GetTypeString(field.Type))
 
 	// Print description if available
 	if field.Description != nil {
@@ -89,14 +89,14 @@ func printFieldDefinition(index int, fieldName string, field *ast.FieldDefinitio
 }
 
 // Helper function to convert AST type to string representation
-func getTypeString(t ast.Type) string {
+func GetTypeString(t ast.Type) string {
 	switch typ := t.(type) {
 	case *ast.Named:
 		return typ.Name.Value
 	case *ast.List:
-		return "[" + getTypeString(typ.Type) + "]"
+		return "[" + GetTypeString(typ.Type) + "]"
 	case *ast.NonNull:
-		return getTypeString(typ.Type) + "!"
+		return GetTypeString(typ.Type) + "!"
 	default:
 		return "Unknown"
 	}
