@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -26,6 +27,9 @@ const (
 	QueryType    FieldType = "Query"
 	MutationType FieldType = "Mutation"
 )
+
+// availableFieldTypes defines the ordered list of field types for navigation
+var availableFieldTypes = []FieldType{QueryType, MutationType}
 
 var (
 	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
@@ -240,14 +244,16 @@ func (m *mainModel) loadFieldsPanel() {
 	m.panels[0] = newListPanelWithTitle(items, title)
 }
 
-// toggleFieldType switches between Query and Mutation fields
+// toggleFieldType cycles through available field types with wraparound
 func (m *mainModel) toggleFieldType() {
-	switch m.fieldType {
-	case QueryType:
-		m.fieldType = MutationType
-	case MutationType:
-		m.fieldType = QueryType
-	}
+	// Find current field type index
+	currentIndex := slices.IndexFunc(availableFieldTypes, func(fieldType FieldType) bool {
+		return m.fieldType == fieldType
+	})
+
+	// Cycle to next field type with wraparound
+	nextIndex := (currentIndex + 1) % len(availableFieldTypes)
+	m.fieldType = availableFieldTypes[nextIndex]
 
 	m.loadFieldsPanel()
 	m.sizePanels()
@@ -256,9 +262,8 @@ func (m *mainModel) toggleFieldType() {
 // renderFieldTypeNavbar creates the navbar showing field types
 func (m *mainModel) renderFieldTypeNavbar() string {
 	var tabs []string
-	fieldTypes := []FieldType{QueryType, MutationType}
 
-	for _, fieldType := range fieldTypes {
+	for _, fieldType := range availableFieldTypes {
 		var style lipgloss.Style
 		if m.fieldType == fieldType {
 			style = activeTabStyle
