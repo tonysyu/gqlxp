@@ -1,5 +1,10 @@
 # Development Commands
 
+For project architecture and feature details, see [Architecture](architecture.md).
+
+## Available Commands
+Use `just` to see all available commands defined in the justfile.
+
 ## Building and Running
 - `just build` - Build the application
 - `just run` - Run the application

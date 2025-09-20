@@ -6,7 +6,9 @@ This directory contains technical documentation for the `gq` GraphQL query explo
 ## Available Documentation
 
 - **[Development Commands and Guidelines](development.md)**: Build, test, and code quality commands
-- **[Architecture](architecture.md)**: Package structure, interfaces, and navigation flow
+- **[Architecture](architecture.md)**: Package structure, interfaces, navigation flow, and feature documentation
+  - Query and Mutation type support
+  - Interactive field type toggling (Ctrl+T)
 
 ## Additional Resources
 

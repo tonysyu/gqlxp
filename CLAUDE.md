@@ -38,6 +38,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Eliminate redundant information between sections and files
 - Maintain readability while prioritizing brevity
 - Use cross-references instead of duplicating content
+- Avoid referencing specific code locations (file:line) in documentation to prevent maintenance overhead
 
 ## Project Information
 
