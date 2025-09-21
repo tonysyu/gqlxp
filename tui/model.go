@@ -71,7 +71,7 @@ var (
 )
 
 type keymap = struct {
-	next, prev, quit, toggle key.Binding
+	nextPanel, prevPanel, quit, toggleFieldType key.Binding
 }
 
 type mainModel struct {
@@ -92,11 +92,11 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 		schema:    schema,
 		fieldType: QueryType,
 		keymap: keymap{
-			next: key.NewBinding(
+			nextPanel: key.NewBinding(
 				key.WithKeys("tab"),
 				key.WithHelp("tab", "next"),
 			),
-			prev: key.NewBinding(
+			prevPanel: key.NewBinding(
 				key.WithKeys("shift+tab"),
 				key.WithHelp("shift+tab", "prev"),
 			),
@@ -104,9 +104,9 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 				key.WithKeys("esc", "ctrl+c"),
 				key.WithHelp("esc", "quit"),
 			),
-			toggle: key.NewBinding(
+			toggleFieldType: key.NewBinding(
 				key.WithKeys("ctrl+t"),
-				key.WithHelp("ctrl+t", "toggle Query/Mutation"),
+				key.WithHelp("ctrl+t", "toggle GQL type"),
 			),
 		},
 	}
@@ -132,17 +132,17 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keymap.quit):
 			return m, tea.Quit
-		case key.Matches(msg, m.keymap.next):
+		case key.Matches(msg, m.keymap.nextPanel):
 			m.focus++
 			if m.focus > len(m.panels)-1 {
 				m.focus = 0
 			}
-		case key.Matches(msg, m.keymap.prev):
+		case key.Matches(msg, m.keymap.prevPanel):
 			m.focus--
 			if m.focus < 0 {
 				m.focus = len(m.panels) - 1
 			}
-		case key.Matches(msg, m.keymap.toggle):
+		case key.Matches(msg, m.keymap.toggleFieldType):
 			m.toggleFieldType()
 		}
 	case openPanelMsg:
@@ -154,9 +154,20 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.sizePanels()
 
-	// Update all panels
+	// Update panels based on message type and focus
 	for i := range m.panels {
-		newModel, cmd := m.panels[i].Update(msg)
+		var newModel tea.Model
+		var cmd tea.Cmd
+
+		shouldReceiveMsg := m.shouldPanelReceiveMessage(i, msg)
+		if shouldReceiveMsg {
+			newModel, cmd = m.panels[i].Update(msg)
+		} else {
+			// Panel stays unchanged
+			newModel = m.panels[i]
+			cmd = nil
+		}
+
 		if panel, ok := newModel.(Panel); ok {
 			m.panels[i] = panel
 		}
@@ -164,6 +175,32 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+// shouldPanelReceiveMessage determines if a panel should receive a message
+// based on the panel index, current focus, and message type
+func (m *mainModel) shouldPanelReceiveMessage(panelIndex int, msg tea.Msg) bool {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		// Global navigation keys handled by main model should not go to panels
+		if key.Matches(msg, m.keymap.nextPanel) ||
+			key.Matches(msg, m.keymap.prevPanel) ||
+			key.Matches(msg, m.keymap.quit) ||
+			key.Matches(msg, m.keymap.toggleFieldType) {
+			return false
+		}
+		// All other key messages should only go to the focused panel
+		return panelIndex == m.focus
+	case tea.WindowSizeMsg:
+		// All panels need resize messages
+		return true
+	case openPanelMsg:
+		// openPanelMsg is handled by main model, not individual panels
+		return false
+	default:
+		// Unknown message types go to all panels (safe default)
+		return true
+	}
 }
 
 func (m *mainModel) sizePanels() {
@@ -256,9 +293,9 @@ func (m *mainModel) renderFieldTypeNavbar() string {
 
 func (m mainModel) View() string {
 	help := m.help.ShortHelpView([]key.Binding{
-		m.keymap.next,
-		m.keymap.prev,
-		m.keymap.toggle,
+		m.keymap.nextPanel,
+		m.keymap.prevPanel,
+		m.keymap.toggleFieldType,
 		m.keymap.quit,
 	})
 

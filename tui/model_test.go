@@ -43,8 +43,8 @@ func TestNewModel(t *testing.T) {
 	is.True(firstPanel != nil)
 
 	// Test keybindings are properly set
-	is.True(model.keymap.next.Enabled())
-	is.True(model.keymap.prev.Enabled())
+	is.True(model.keymap.nextPanel.Enabled())
+	is.True(model.keymap.prevPanel.Enabled())
 	is.True(model.keymap.quit.Enabled())
-	is.True(model.keymap.toggle.Enabled())
+	is.True(model.keymap.toggleFieldType.Enabled())
 }
