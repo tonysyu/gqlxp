@@ -21,9 +21,7 @@ type ListItem interface {
 var _ ListItem = (*fieldItem)(nil)
 var _ ListItem = (*typeDefItem)(nil)
 var _ ListItem = (*argumentItem)(nil)
-var _ ListItem = (*directiveDefinitionItem)(nil)
-var _ ListItem = (*resultTypeItem)(nil)
-var _ ListItem = (*sectionHeaderItem)(nil)
+var _ ListItem = (*simpleItem)(nil)
 
 func adaptFieldDefinitions(queryFields []*ast.FieldDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(queryFields))
@@ -84,7 +82,7 @@ func adaptUnionDefinitions(unions []*ast.UnionDefinition) []ListItem {
 func adaptDirectiveDefinitions(directives []*ast.DirectiveDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(directives))
 	for _, directive := range directives {
-		adaptedItems = append(adaptedItems, directiveDefinitionItem{directive})
+		adaptedItems = append(adaptedItems, newDirectiveDefinitionItem(directive))
 	}
 	return adaptedItems
 }
@@ -123,21 +121,18 @@ func (i fieldItem) Open() (Panel, bool) {
 
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
-		detailItems = append(detailItems, descriptionItem{content: desc})
+		detailItems = append(detailItems, simpleItem{title: desc})
 	}
 
 	inputValueItems := adaptInputValueDefinitions(i.gqlField.Arguments)
 	if len(inputValueItems) > 0 {
-		detailItems = append(detailItems, sectionHeaderItem{title: "Input Arguments"})
+		detailItems = append(detailItems, newSectionHeader("Input Arguments"))
 		detailItems = append(detailItems, inputValueItems...)
 	}
 
 	// Add result type section
-	detailItems = append(detailItems, sectionHeaderItem{title: "Result Type"})
-	detailItems = append(detailItems, resultTypeItem{
-		typeName: gql.GetTypeString(i.gqlField.Type),
-	})
-
+	detailItems = append(detailItems, newSectionHeader("Result Type"))
+	detailItems = append(detailItems, newTypeItem(i.gqlField.Type))
 	return newListPanel(detailItems, i.Title()), true
 }
 
@@ -212,7 +207,7 @@ func (i typeDefItem) Open() (Panel, bool) {
 
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
-		detailItems = append(detailItems, descriptionItem{content: desc})
+		detailItems = append(detailItems, simpleItem{title: desc})
 	}
 
 	// TODO: Update definitions with details
@@ -221,9 +216,11 @@ func (i typeDefItem) Open() (Panel, bool) {
 		detailItems = append(detailItems, adaptFieldDefinitions(typeDef.Fields)...)
 	case *ast.ScalarDefinition:
 	case *ast.InterfaceDefinition:
+		detailItems = append(detailItems, adaptFieldDefinitions(typeDef.Fields)...)
 	case *ast.UnionDefinition:
+		// TODO: This probably requires a reference to the schema
 	case *ast.EnumDefinition:
-		// pass
+		// TODO: This probably requires a reference to the schema
 	case *ast.InputObjectDefinition:
 		detailItems = append(detailItems, adaptInputValueDefinitions(typeDef.Fields)...)
 	}
@@ -231,25 +228,19 @@ func (i typeDefItem) Open() (Panel, bool) {
 	return newListPanel(detailItems, i.Title()), true
 }
 
-// descriptionItem displays field description
-type descriptionItem struct {
-	content string
+// simpleItem displays title and description and has a no-op Open() function
+type simpleItem struct {
+	title, description string
 }
 
-func (di descriptionItem) Title() string       { return di.content }
-func (di descriptionItem) Description() string { return "" }
-func (di descriptionItem) FilterValue() string { return di.content }
-func (di descriptionItem) Open() (Panel, bool) { return nil, false }
+func (di simpleItem) Title() string       { return di.title }
+func (di simpleItem) Description() string { return di.description }
+func (di simpleItem) FilterValue() string { return di.title }
+func (di simpleItem) Open() (Panel, bool) { return nil, false }
 
-// sectionHeaderItem displays section headers
-type sectionHeaderItem struct {
-	title string
+func newSectionHeader(title string) simpleItem {
+	return simpleItem{title: "======== " + title + " ========"}
 }
-
-func (shi sectionHeaderItem) Title() string       { return "======== " + shi.title + " ========" }
-func (shi sectionHeaderItem) Description() string { return "" }
-func (shi sectionHeaderItem) FilterValue() string { return "" }
-func (shi sectionHeaderItem) Open() (Panel, bool) { return nil, false }
 
 // argumentItem displays argument information
 type argumentItem struct {
@@ -270,27 +261,14 @@ func (ai argumentItem) Description() string {
 func (ai argumentItem) FilterValue() string { return ai.name }
 func (ai argumentItem) Open() (Panel, bool) { return nil, false }
 
-// resultTypeItem displays result type information
-type resultTypeItem struct {
-	typeName string
+func newTypeItem(t ast.Type) simpleItem {
+	// TODO: This probably requires a reference to the schema to return full type when opening
+	return simpleItem{title: gql.GetTypeString(t)}
 }
 
-func (rti resultTypeItem) Title() string       { return rti.typeName }
-func (rti resultTypeItem) Description() string { return "" }
-func (rti resultTypeItem) FilterValue() string { return rti.typeName }
-func (rti resultTypeItem) Open() (Panel, bool) { return nil, false }
-
-// directiveDefinitionItem displays directive type information
-type directiveDefinitionItem struct {
-	directive *ast.DirectiveDefinition
-}
-
-func (ddi directiveDefinitionItem) Title() string { return ddi.directive.Name.Value }
-func (ddi directiveDefinitionItem) Description() string {
-	if ddi.directive.Description != nil {
-		return ddi.directive.Description.Value
+func newDirectiveDefinitionItem(directive *ast.DirectiveDefinition) simpleItem {
+	return simpleItem{
+		title:       directive.Name.Value,
+		description: directive.Description.Value,
 	}
-	return ""
 }
-func (ddi directiveDefinitionItem) FilterValue() string { return ddi.directive.Name.Value }
-func (ddi directiveDefinitionItem) Open() (Panel, bool) { return nil, false }
