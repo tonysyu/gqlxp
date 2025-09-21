@@ -20,7 +20,6 @@ type ListItem interface {
 // Ensure that all item types implements ListItem interface
 var _ ListItem = (*fieldItem)(nil)
 var _ ListItem = (*typeDefItem)(nil)
-var _ ListItem = (*argumentItem)(nil)
 var _ ListItem = (*simpleItem)(nil)
 
 func adaptFieldDefinitions(queryFields []*ast.FieldDefinition) []ListItem {
@@ -139,20 +138,10 @@ func (i fieldItem) Open() (Panel, bool) {
 // Create an array of ListItem instances given InputValueDefinition. This is used for
 // `ast.FieldDefinition.Arguments` and `ast.InputObjectDefinition.Fields`
 func adaptInputValueDefinitions(inputValues []*ast.InputValueDefinition) []ListItem {
-	// Add arguments section if any
 	var items []ListItem
 	if len(inputValues) > 0 {
 		for _, arg := range inputValues {
-			argDesc := ""
-			if arg.Description != nil && arg.Description.Value != "" {
-				argDesc = arg.Description.Value
-			}
-			// TODO: Update argumentItem to support proper Open and use custom display string
-			items = append(items, argumentItem{
-				name:        arg.Name.Value,
-				argType:     gql.GetTypeString(arg.Type),
-				description: argDesc,
-			})
+			items = append(items, newInputValueItem(arg))
 		}
 	}
 	return items
@@ -242,28 +231,23 @@ func newSectionHeader(title string) simpleItem {
 	return simpleItem{title: "======== " + title + " ========"}
 }
 
-// argumentItem displays argument information
-type argumentItem struct {
-	name        string
-	argType     string
-	description string
-}
-
-func (ai argumentItem) Title() string {
-	return fmt.Sprintf("%s: %s", ai.name, ai.argType)
-}
-func (ai argumentItem) Description() string {
-	if ai.description != "" {
-		return ai.description
-	}
-	return ""
-}
-func (ai argumentItem) FilterValue() string { return ai.name }
-func (ai argumentItem) Open() (Panel, bool) { return nil, false }
-
 func newTypeItem(t ast.Type) simpleItem {
 	// TODO: This probably requires a reference to the schema to return full type when opening
 	return simpleItem{title: gql.GetTypeString(t)}
+}
+
+func newInputValueItem(inputValue *ast.InputValueDefinition) simpleItem {
+	// TODO: Update item to support proper Open and use custom display string
+	fieldName := inputValue.Name.Value
+	fieldType := gql.GetTypeString(inputValue.Type)
+	description := ""
+	if inputValue.Description != nil {
+		description = inputValue.Description.Value
+	}
+	return simpleItem{
+		title:       fmt.Sprintf("%s: %s", fieldName, fieldType),
+		description: description,
+	}
 }
 
 func newDirectiveDefinitionItem(directive *ast.DirectiveDefinition) simpleItem {
