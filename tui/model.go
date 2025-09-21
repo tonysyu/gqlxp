@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"slices"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -9,7 +8,6 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/graphql-go/graphql/language/ast"
 	"github.com/tonysyu/gq/gql"
 )
 
@@ -24,12 +22,19 @@ const (
 type FieldType string
 
 const (
-	QueryType    FieldType = "Query"
-	MutationType FieldType = "Mutation"
+	QueryType     FieldType = "Query"
+	MutationType  FieldType = "Mutation"
+	ObjectType    FieldType = "Object"
+	InputType     FieldType = "Input"
+	EnumType      FieldType = "Enum"
+	ScalarType    FieldType = "Scalar"
+	InterfaceType FieldType = "Interface"
+	UnionType     FieldType = "Union"
+	DirectiveType FieldType = "Directive"
 )
 
 // availableFieldTypes defines the ordered list of field types for navigation
-var availableFieldTypes = []FieldType{QueryType, MutationType}
+var availableFieldTypes = []FieldType{QueryType, MutationType, ObjectType, InputType, EnumType, ScalarType, InterfaceType, UnionType, DirectiveType}
 
 var (
 	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
@@ -71,7 +76,7 @@ var (
 )
 
 type keymap = struct {
-	nextPanel, prevPanel, quit, toggleFieldType key.Binding
+	nextPanel, prevPanel, quit, toggleFieldType, reverseToggleFieldType key.Binding
 }
 
 type mainModel struct {
@@ -106,7 +111,11 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 			),
 			toggleFieldType: key.NewBinding(
 				key.WithKeys("ctrl+t"),
-				key.WithHelp("ctrl+t", "toggle GQL type"),
+				key.WithHelp("ctrl+t", "toggle type "),
+			),
+			reverseToggleFieldType: key.NewBinding(
+				key.WithKeys("ctrl+r"),
+				key.WithHelp("ctrl+r", "reverse toggle type"),
 			),
 		},
 	}
@@ -143,7 +152,9 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.focus = len(m.panels) - 1
 			}
 		case key.Matches(msg, m.keymap.toggleFieldType):
-			m.toggleFieldType()
+			m.incrementFieldTypeIndex(1)
+		case key.Matches(msg, m.keymap.reverseToggleFieldType):
+			m.incrementFieldTypeIndex(-1)
 		}
 	case openPanelMsg:
 		m.handleOpenPanel(msg.panel)
@@ -226,30 +237,67 @@ func (m *mainModel) handleOpenPanel(newPanel Panel) {
 
 // loadFieldsPanel loads the appropriate fields based on the current field type
 func (m *mainModel) loadFieldsPanel() {
-	var fields map[string]*ast.FieldDefinition
+	var items []list.Item
+	var title string
 
 	switch m.fieldType {
 	case QueryType:
-		fields = m.schema.Query
+		fields := adaptFieldDefinitions(m.schema.Query)
+		items = make([]list.Item, len(fields))
+		for i, field := range fields {
+			items[i] = field
+		}
+		title = "Query Fields"
 	case MutationType:
-		fields = m.schema.Mutation
+		fields := adaptFieldDefinitions(m.schema.Mutation)
+		items = make([]list.Item, len(fields))
+		for i, field := range fields {
+			items[i] = field
+		}
+		title = "Mutation Fields"
+	case ObjectType:
+		items = adaptObjectDefinitions(m.schema.Object)
+		title = "Object Types"
+	case InputType:
+		items = adaptInputDefinitions(m.schema.Input)
+		title = "Input Types"
+	case EnumType:
+		items = adaptEnumDefinitions(m.schema.Enum)
+		title = "Enum Types"
+	case ScalarType:
+		items = adaptScalarDefinitions(m.schema.Scalar)
+		title = "Scalar Types"
+	case InterfaceType:
+		items = adaptInterfaceDefinitions(m.schema.Interface)
+		title = "Interface Types"
+	case UnionType:
+		items = adaptUnionDefinitions(m.schema.Union)
+		title = "Union Types"
+	case DirectiveType:
+		items = adaptDirectiveDefinitions(m.schema.Directive)
+		title = "Directive Types"
 	}
 
-	title := fmt.Sprintf("%s Fields", string(m.fieldType))
-	items := adaptGraphQLItems(fields)
 	m.panels[0] = newListPanel(items, title)
+	// Move focus to the main panel when switching fields.
+	m.focus = 0
 }
 
-// toggleFieldType cycles through available field types with wraparound
-func (m *mainModel) toggleFieldType() {
+// incrementFieldTypeIndex cycles through available field types with wraparound
+func (m *mainModel) incrementFieldTypeIndex(offset int) {
 	// Find current field type index
 	currentIndex := slices.IndexFunc(availableFieldTypes, func(fieldType FieldType) bool {
 		return m.fieldType == fieldType
 	})
 
-	// Cycle to next field type with wraparound
-	nextIndex := (currentIndex + 1) % len(availableFieldTypes)
-	m.fieldType = availableFieldTypes[nextIndex]
+	newIndex := (currentIndex + offset)
+	// Force new index to wraparound, if is out-of-bounds on either the beginning or end:
+	if newIndex < 0 {
+		newIndex = len(availableFieldTypes) - 1
+	} else if newIndex >= len(availableFieldTypes) {
+		newIndex = 0
+	}
+	m.fieldType = availableFieldTypes[newIndex]
 
 	m.loadFieldsPanel()
 	m.sizePanels()
