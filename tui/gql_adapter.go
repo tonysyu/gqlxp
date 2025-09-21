@@ -14,98 +14,102 @@ type ListItem interface {
 	list.DefaultItem
 
 	// Open Panel to show additional information.
-	Open() Panel
+	Open() (Panel, bool)
 }
 
 // Ensure that all item types implements ListItem interface
-var _ ListItem = (*item)(nil)
+var _ ListItem = (*fieldItem)(nil)
+var _ ListItem = (*typeDefItem)(nil)
+var _ ListItem = (*argumentItem)(nil)
+var _ ListItem = (*directiveDefinitionItem)(nil)
+var _ ListItem = (*resultTypeItem)(nil)
+var _ ListItem = (*sectionHeaderItem)(nil)
 
-func adaptFieldDefinitions(queryFields map[string]*ast.FieldDefinition) []item {
-	adaptedItems := make([]item, 0, len(queryFields))
+func adaptFieldDefinitions(queryFields []*ast.FieldDefinition) []ListItem {
+	adaptedItems := make([]ListItem, 0, len(queryFields))
 	for _, f := range queryFields {
-		adaptedItems = append(adaptedItems, newItem(f))
+		adaptedItems = append(adaptedItems, newFieldDefItem(f))
 	}
-
 	return adaptedItems
 }
 
-func adaptObjectDefinitions(objects map[string]*ast.ObjectDefinition) []list.Item {
-	adaptedItems := make([]list.Item, 0, len(objects))
+func adaptObjectDefinitions(objects []*ast.ObjectDefinition) []ListItem {
+	adaptedItems := make([]ListItem, 0, len(objects))
 	for _, obj := range objects {
-		adaptedItems = append(adaptedItems, objectDefinitionItem{obj})
+		adaptedItems = append(adaptedItems, newTypeDefItem(obj))
 	}
 	return adaptedItems
 }
 
-func adaptInputDefinitions(inputs map[string]*ast.InputObjectDefinition) []list.Item {
-	adaptedItems := make([]list.Item, 0, len(inputs))
+func adaptInputDefinitions(inputs []*ast.InputObjectDefinition) []ListItem {
+	adaptedItems := make([]ListItem, 0, len(inputs))
 	for _, input := range inputs {
-		adaptedItems = append(adaptedItems, inputDefinitionItem{input})
+		adaptedItems = append(adaptedItems, newTypeDefItem(input))
 	}
 	return adaptedItems
 }
 
-func adaptEnumDefinitions(enums map[string]*ast.EnumDefinition) []list.Item {
-	adaptedItems := make([]list.Item, 0, len(enums))
+func adaptEnumDefinitions(enums []*ast.EnumDefinition) []ListItem {
+	adaptedItems := make([]ListItem, 0, len(enums))
 	for _, enum := range enums {
-		adaptedItems = append(adaptedItems, enumDefinitionItem{enum})
+		adaptedItems = append(adaptedItems, newTypeDefItem(enum))
 	}
 	return adaptedItems
 }
 
-func adaptScalarDefinitions(scalars map[string]*ast.ScalarDefinition) []list.Item {
-	adaptedItems := make([]list.Item, 0, len(scalars))
+func adaptScalarDefinitions(scalars []*ast.ScalarDefinition) []ListItem {
+	adaptedItems := make([]ListItem, 0, len(scalars))
 	for _, scalar := range scalars {
-		adaptedItems = append(adaptedItems, scalarDefinitionItem{scalar})
+		adaptedItems = append(adaptedItems, newTypeDefItem(scalar))
 	}
 	return adaptedItems
 }
 
-func adaptInterfaceDefinitions(interfaces map[string]*ast.InterfaceDefinition) []list.Item {
-	adaptedItems := make([]list.Item, 0, len(interfaces))
+func adaptInterfaceDefinitions(interfaces []*ast.InterfaceDefinition) []ListItem {
+	adaptedItems := make([]ListItem, 0, len(interfaces))
 	for _, iface := range interfaces {
-		adaptedItems = append(adaptedItems, interfaceDefinitionItem{iface})
+		adaptedItems = append(adaptedItems, newTypeDefItem(iface))
 	}
 	return adaptedItems
 }
 
-func adaptUnionDefinitions(unions map[string]*ast.UnionDefinition) []list.Item {
-	adaptedItems := make([]list.Item, 0, len(unions))
+func adaptUnionDefinitions(unions []*ast.UnionDefinition) []ListItem {
+	adaptedItems := make([]ListItem, 0, len(unions))
 	for _, union := range unions {
-		adaptedItems = append(adaptedItems, unionDefinitionItem{union})
+		adaptedItems = append(adaptedItems, newTypeDefItem(union))
 	}
 	return adaptedItems
 }
 
-func adaptDirectiveDefinitions(directives map[string]*ast.DirectiveDefinition) []list.Item {
-	adaptedItems := make([]list.Item, 0, len(directives))
+func adaptDirectiveDefinitions(directives []*ast.DirectiveDefinition) []ListItem {
+	adaptedItems := make([]ListItem, 0, len(directives))
 	for _, directive := range directives {
 		adaptedItems = append(adaptedItems, directiveDefinitionItem{directive})
 	}
 	return adaptedItems
 }
 
-func newItem(gqlField *ast.FieldDefinition) item {
-	return item{
+func newFieldDefItem(gqlField *ast.FieldDefinition) ListItem {
+	return fieldItem{
 		gqlField: gqlField,
 	}
 }
 
 // Adapter for DefaultItem interface used by charmbracelet/bubbles/list
 // https://pkg.go.dev/github.com/charmbracelet/bubbles@v0.21.0/list#DefaultItem
-type item struct {
+type fieldItem struct {
 	gqlField *ast.FieldDefinition
 }
 
-func (i item) Title() string {
+func (i fieldItem) Title() string {
 	return i.gqlField.Name.Value
 }
 
-func (i item) FilterValue() string {
+func (i fieldItem) FilterValue() string {
 	return i.Title()
 }
 
-func (i item) Description() string {
+func (i fieldItem) Description() string {
 	if desc := i.gqlField.GetDescription(); desc != nil {
 		return desc.Value
 	}
@@ -113,29 +117,19 @@ func (i item) Description() string {
 }
 
 // Implement ListItem interface
-func (i item) Open() Panel {
+func (i fieldItem) Open() (Panel, bool) {
 	// Create list items for the detail view
-	var detailItems []list.Item
+	var detailItems []ListItem
 
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
 		detailItems = append(detailItems, descriptionItem{content: desc})
 	}
 
-	// Add arguments section if any
-	if len(i.gqlField.Arguments) > 0 {
+	inputValueItems := adaptInputValueDefinitions(i.gqlField.Arguments)
+	if len(inputValueItems) > 0 {
 		detailItems = append(detailItems, sectionHeaderItem{title: "Input Arguments"})
-		for _, arg := range i.gqlField.Arguments {
-			argDesc := ""
-			if arg.Description != nil && arg.Description.Value != "" {
-				argDesc = arg.Description.Value
-			}
-			detailItems = append(detailItems, argumentItem{
-				name:        arg.Name.Value,
-				argType:     gql.GetTypeString(arg.Type),
-				description: argDesc,
-			})
-		}
+		detailItems = append(detailItems, inputValueItems...)
 	}
 
 	// Add result type section
@@ -144,7 +138,97 @@ func (i item) Open() Panel {
 		typeName: gql.GetTypeString(i.gqlField.Type),
 	})
 
-	return newListPanel(detailItems, i.Title()+" Details")
+	return newListPanel(detailItems, i.Title()), true
+}
+
+// Create an array of ListItem instances given InputValueDefinition. This is used for
+// `ast.FieldDefinition.Arguments` and `ast.InputObjectDefinition.Fields`
+func adaptInputValueDefinitions(inputValues []*ast.InputValueDefinition) []ListItem {
+	// Add arguments section if any
+	var items []ListItem
+	if len(inputValues) > 0 {
+		for _, arg := range inputValues {
+			argDesc := ""
+			if arg.Description != nil && arg.Description.Value != "" {
+				argDesc = arg.Description.Value
+			}
+			// TODO: Update argumentItem to support proper Open and use custom display string
+			items = append(items, argumentItem{
+				name:        arg.Name.Value,
+				argType:     gql.GetTypeString(arg.Type),
+				description: argDesc,
+			})
+		}
+	}
+	return items
+
+}
+
+func newTypeDefItem(typeDef ast.TypeDefinition) typeDefItem {
+	return typeDefItem{
+		typeDef: typeDef,
+	}
+}
+
+// Adapter for DefaultItem interface used by charmbracelet/bubbles/list
+// https://pkg.go.dev/github.com/charmbracelet/bubbles@v0.21.0/list#DefaultItem
+type typeDefItem struct {
+	typeDef ast.TypeDefinition
+}
+
+func (i typeDefItem) Title() string {
+	switch typeDef := (i.typeDef).(type) {
+	case *ast.ScalarDefinition:
+		return typeDef.Name.Value
+	case *ast.ObjectDefinition:
+		return typeDef.Name.Value
+	case *ast.InterfaceDefinition:
+		return typeDef.Name.Value
+	case *ast.UnionDefinition:
+		return typeDef.Name.Value
+	case *ast.EnumDefinition:
+		return typeDef.Name.Value
+	case *ast.InputObjectDefinition:
+		return typeDef.Name.Value
+	}
+	return "UNKNOWN"
+}
+
+func (i typeDefItem) FilterValue() string {
+	return i.Title()
+}
+
+func (i typeDefItem) Description() string {
+	if desc := (i.typeDef).GetDescription(); desc != nil {
+		return desc.Value
+	}
+	return ""
+}
+
+// Implement ListItem interface
+func (i typeDefItem) Open() (Panel, bool) {
+	// Create list items for the detail view
+	var detailItems []ListItem
+
+	// Add description as a header if available
+	if desc := i.Description(); desc != "" {
+		detailItems = append(detailItems, descriptionItem{content: desc})
+	}
+
+	// TODO: Update definitions with details
+	switch typeDef := (i.typeDef).(type) {
+	case *ast.ObjectDefinition:
+		detailItems = append(detailItems, adaptFieldDefinitions(typeDef.Fields)...)
+	case *ast.ScalarDefinition:
+	case *ast.InterfaceDefinition:
+	case *ast.UnionDefinition:
+	case *ast.EnumDefinition:
+		// pass
+	case *ast.InputObjectDefinition:
+		detailItems = append(detailItems, adaptInputValueDefinitions(typeDef.Fields)...)
+	}
+
+	return newListPanel(detailItems, i.Title()), true
 }
 
 // descriptionItem displays field description
@@ -155,6 +239,7 @@ type descriptionItem struct {
 func (di descriptionItem) Title() string       { return di.content }
 func (di descriptionItem) Description() string { return "" }
 func (di descriptionItem) FilterValue() string { return di.content }
+func (di descriptionItem) Open() (Panel, bool) { return nil, false }
 
 // sectionHeaderItem displays section headers
 type sectionHeaderItem struct {
@@ -164,6 +249,7 @@ type sectionHeaderItem struct {
 func (shi sectionHeaderItem) Title() string       { return "======== " + shi.title + " ========" }
 func (shi sectionHeaderItem) Description() string { return "" }
 func (shi sectionHeaderItem) FilterValue() string { return "" }
+func (shi sectionHeaderItem) Open() (Panel, bool) { return nil, false }
 
 // argumentItem displays argument information
 type argumentItem struct {
@@ -173,17 +259,16 @@ type argumentItem struct {
 }
 
 func (ai argumentItem) Title() string {
-	return fmt.Sprintf("• %s: %s", ai.name, ai.argType)
+	return fmt.Sprintf("%s: %s", ai.name, ai.argType)
 }
-
 func (ai argumentItem) Description() string {
 	if ai.description != "" {
 		return ai.description
 	}
 	return ""
 }
-
 func (ai argumentItem) FilterValue() string { return ai.name }
+func (ai argumentItem) Open() (Panel, bool) { return nil, false }
 
 // resultTypeItem displays result type information
 type resultTypeItem struct {
@@ -193,90 +278,7 @@ type resultTypeItem struct {
 func (rti resultTypeItem) Title() string       { return rti.typeName }
 func (rti resultTypeItem) Description() string { return "" }
 func (rti resultTypeItem) FilterValue() string { return rti.typeName }
-
-// objectDefinitionItem displays object type information
-type objectDefinitionItem struct {
-	obj *ast.ObjectDefinition
-}
-
-func (odi objectDefinitionItem) Title() string { return odi.obj.Name.Value }
-func (odi objectDefinitionItem) Description() string {
-	if odi.obj.Description != nil {
-		return odi.obj.Description.Value
-	}
-	return ""
-}
-func (odi objectDefinitionItem) FilterValue() string { return odi.obj.Name.Value }
-
-// inputDefinitionItem displays input type information
-type inputDefinitionItem struct {
-	input *ast.InputObjectDefinition
-}
-
-func (idi inputDefinitionItem) Title() string { return idi.input.Name.Value }
-func (idi inputDefinitionItem) Description() string {
-	if idi.input.Description != nil {
-		return idi.input.Description.Value
-	}
-	return ""
-}
-func (idi inputDefinitionItem) FilterValue() string { return idi.input.Name.Value }
-
-// enumDefinitionItem displays enum type information
-type enumDefinitionItem struct {
-	enum *ast.EnumDefinition
-}
-
-func (edi enumDefinitionItem) Title() string { return edi.enum.Name.Value }
-func (edi enumDefinitionItem) Description() string {
-	if edi.enum.Description != nil {
-		return edi.enum.Description.Value
-	}
-	return ""
-}
-func (edi enumDefinitionItem) FilterValue() string { return edi.enum.Name.Value }
-
-// scalarDefinitionItem displays scalar type information
-type scalarDefinitionItem struct {
-	scalar *ast.ScalarDefinition
-}
-
-func (sdi scalarDefinitionItem) Title() string { return sdi.scalar.Name.Value }
-func (sdi scalarDefinitionItem) Description() string {
-	if sdi.scalar.Description != nil {
-		return sdi.scalar.Description.Value
-	}
-	return ""
-}
-func (sdi scalarDefinitionItem) FilterValue() string { return sdi.scalar.Name.Value }
-
-// interfaceDefinitionItem displays interface type information
-type interfaceDefinitionItem struct {
-	iface *ast.InterfaceDefinition
-}
-
-func (idi interfaceDefinitionItem) Title() string { return idi.iface.Name.Value }
-func (idi interfaceDefinitionItem) Description() string {
-	if idi.iface.Description != nil {
-		return idi.iface.Description.Value
-	}
-	return ""
-}
-func (idi interfaceDefinitionItem) FilterValue() string { return idi.iface.Name.Value }
-
-// unionDefinitionItem displays union type information
-type unionDefinitionItem struct {
-	union *ast.UnionDefinition
-}
-
-func (udi unionDefinitionItem) Title() string { return udi.union.Name.Value }
-func (udi unionDefinitionItem) Description() string {
-	if udi.union.Description != nil {
-		return udi.union.Description.Value
-	}
-	return ""
-}
-func (udi unionDefinitionItem) FilterValue() string { return udi.union.Name.Value }
+func (rti resultTypeItem) Open() (Panel, bool) { return nil, false }
 
 // directiveDefinitionItem displays directive type information
 type directiveDefinitionItem struct {
@@ -291,3 +293,4 @@ func (ddi directiveDefinitionItem) Description() string {
 	return ""
 }
 func (ddi directiveDefinitionItem) FilterValue() string { return ddi.directive.Name.Value }
+func (ddi directiveDefinitionItem) Open() (Panel, bool) { return nil, false }

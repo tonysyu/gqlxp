@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"maps"
 	"slices"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -237,44 +238,44 @@ func (m *mainModel) handleOpenPanel(newPanel Panel) {
 
 // loadFieldsPanel loads the appropriate fields based on the current field type
 func (m *mainModel) loadFieldsPanel() {
-	var items []list.Item
+	var items []ListItem
 	var title string
 
 	switch m.fieldType {
 	case QueryType:
-		fields := adaptFieldDefinitions(m.schema.Query)
-		items = make([]list.Item, len(fields))
+		fields := adaptFieldDefinitions(slices.Collect(maps.Values(m.schema.Query)))
+		items = make([]ListItem, len(fields))
 		for i, field := range fields {
 			items[i] = field
 		}
 		title = "Query Fields"
 	case MutationType:
-		fields := adaptFieldDefinitions(m.schema.Mutation)
-		items = make([]list.Item, len(fields))
+		fields := adaptFieldDefinitions(slices.Collect(maps.Values(m.schema.Mutation)))
+		items = make([]ListItem, len(fields))
 		for i, field := range fields {
 			items[i] = field
 		}
 		title = "Mutation Fields"
 	case ObjectType:
-		items = adaptObjectDefinitions(m.schema.Object)
+		items = adaptObjectDefinitions(slices.Collect(maps.Values(m.schema.Object)))
 		title = "Object Types"
 	case InputType:
-		items = adaptInputDefinitions(m.schema.Input)
+		items = adaptInputDefinitions(slices.Collect(maps.Values(m.schema.Input)))
 		title = "Input Types"
 	case EnumType:
-		items = adaptEnumDefinitions(m.schema.Enum)
+		items = adaptEnumDefinitions(slices.Collect(maps.Values(m.schema.Enum)))
 		title = "Enum Types"
 	case ScalarType:
-		items = adaptScalarDefinitions(m.schema.Scalar)
+		items = adaptScalarDefinitions(slices.Collect(maps.Values(m.schema.Scalar)))
 		title = "Scalar Types"
 	case InterfaceType:
-		items = adaptInterfaceDefinitions(m.schema.Interface)
+		items = adaptInterfaceDefinitions(slices.Collect(maps.Values(m.schema.Interface)))
 		title = "Interface Types"
 	case UnionType:
-		items = adaptUnionDefinitions(m.schema.Union)
+		items = adaptUnionDefinitions(slices.Collect(maps.Values(m.schema.Union)))
 		title = "Union Types"
 	case DirectiveType:
-		items = adaptDirectiveDefinitions(m.schema.Directive)
+		items = adaptDirectiveDefinitions(slices.Collect(maps.Values(m.schema.Directive)))
 		title = "Directive Types"
 	}
 

@@ -38,8 +38,8 @@ func TestItemOpenPanel(t *testing.T) {
 
 	t.Run("Query field with no arguments shows description and result type", func(t *testing.T) {
 		field := schema.Query["getAllPosts"]
-		item := newItem(field)
-		panel := item.Open()
+		item := newFieldDefItem(field)
+		panel, _ := item.Open()
 
 		// Set a reasonable size for testing
 		panel.SetSize(80, 20)
@@ -55,8 +55,8 @@ func TestItemOpenPanel(t *testing.T) {
 
 	t.Run("Query field with arguments shows all sections", func(t *testing.T) {
 		field := schema.Query["getPostById"]
-		item := newItem(field)
-		panel := item.Open()
+		item := newFieldDefItem(field)
+		panel, _ := item.Open()
 
 		// Set a reasonable size for testing
 		panel.SetSize(80, 20)
@@ -64,15 +64,15 @@ func TestItemOpenPanel(t *testing.T) {
 		content := panel.View()
 
 		is.True(strings.Contains(content, "======== Input Arguments ========"))
-		is.True(strings.Contains(content, "• id: ID!"))
+		is.True(strings.Contains(content, "id: ID!"))
 		is.True(strings.Contains(content, "======== Result Type ========"))
 		is.True(strings.Contains(content, "Post"))
 	})
 
 	t.Run("Mutation field with multiple arguments shows all sections", func(t *testing.T) {
 		field := schema.Mutation["createPost"]
-		item := newItem(field)
-		panel := item.Open()
+		item := newFieldDefItem(field)
+		panel, _ := item.Open()
 
 		// Set a reasonable size for testing
 		panel.SetSize(80, 20)
@@ -81,7 +81,7 @@ func TestItemOpenPanel(t *testing.T) {
 
 		is.True(strings.Contains(content, "Create a new post"))
 		is.True(strings.Contains(content, "======== Input Arguments ========"))
-		is.True(strings.Contains(content, "• title: String!"))
+		is.True(strings.Contains(content, "title: String!"))
 		// The content shows "7 items" which means our list structure is correct
 		// Since this is a list with pagination, not all items may be visible
 		is.True(strings.Contains(content, "7 items")) // Verifies all items are present

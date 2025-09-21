@@ -49,9 +49,10 @@ func (lp *listPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok && keyMsg.String() == "enter" {
 		if selectedItem := lp.Model.SelectedItem(); selectedItem != nil {
 			if listItem, ok := selectedItem.(ListItem); ok {
-				newPanel := listItem.Open()
-				return lp, func() tea.Msg {
-					return openPanelMsg{panel: newPanel}
+				if newPanel, ok := listItem.Open(); ok {
+					return lp, func() tea.Msg {
+						return openPanelMsg{panel: newPanel}
+					}
 				}
 			}
 		}
