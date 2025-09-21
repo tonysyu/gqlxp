@@ -30,10 +30,11 @@ func newListPanel[T list.Item](choices []T, title string) *listPanel {
 	for i, choice := range choices {
 		items[i] = choice
 	}
-	l := list.New(items, list.NewDefaultDelegate(), 0, 0)
-	l.Title = title
+	m := list.New(items, list.NewDefaultDelegate(), 0, 0)
+	m.DisableQuitKeybindings()
+	m.Title = title
 	return &listPanel{
-		Model: l,
+		Model: m,
 	}
 }
 

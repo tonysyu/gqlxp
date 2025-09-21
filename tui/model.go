@@ -101,8 +101,8 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 				key.WithHelp("shift+tab", "prev"),
 			),
 			quit: key.NewBinding(
-				key.WithKeys("esc", "ctrl+c"),
-				key.WithHelp("esc", "quit"),
+				key.WithKeys("ctrl+c", "ctrl+d"),
+				key.WithHelp("ctrl+c", "quit"),
 			),
 			toggleFieldType: key.NewBinding(
 				key.WithKeys("ctrl+t"),
@@ -209,16 +209,6 @@ func (m *mainModel) addPanel(panel Panel) {
 	}
 }
 
-// addStringPanel is a convenience method to add a string panel
-func (m *mainModel) addStringPanel(content string) {
-	m.addPanel(newStringPanel(content))
-}
-
-// addListPanel is a convenience method to add a list panel with list.Item interface
-func (m *mainModel) addListPanel(items []list.Item) {
-	m.addPanel(newListPanel(items, ""))
-}
-
 // handleOpenPanel handles when an item is opened
 func (m *mainModel) handleOpenPanel(newPanel Panel) {
 	nextPanelIndex := m.focus + 1
@@ -293,7 +283,13 @@ func (m mainModel) View() string {
 
 	var views []string
 	for i := range m.panels {
-		views = append(views, m.panels[i].View())
+		panelView := m.panels[i].View()
+		if i == m.focus {
+			panelView = focusedBorderStyle.Render(panelView)
+		} else {
+			panelView = blurredBorderStyle.Render(panelView)
+		}
+		views = append(views, panelView)
 	}
 
 	navbar := m.renderFieldTypeNavbar()
