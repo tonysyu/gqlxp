@@ -71,7 +71,7 @@ var (
 )
 
 type keymap = struct {
-	next, prev, add, remove, quit, toggle key.Binding
+	next, prev, quit, toggle key.Binding
 }
 
 type mainModel struct {
@@ -100,14 +100,6 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 				key.WithKeys("shift+tab"),
 				key.WithHelp("shift+tab", "prev"),
 			),
-			add: key.NewBinding(
-				key.WithKeys("ctrl+n"),
-				key.WithHelp("ctrl+n", "add an editor"),
-			),
-			remove: key.NewBinding(
-				key.WithKeys("ctrl+w"),
-				key.WithHelp("ctrl+w", "remove an editor"),
-			),
 			quit: key.NewBinding(
 				key.WithKeys("esc", "ctrl+c"),
 				key.WithHelp("esc", "quit"),
@@ -125,7 +117,6 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 
 	// Load initial fields based on field type
 	m.loadFieldsPanel()
-	m.updateKeybindings()
 	return m
 }
 
@@ -151,13 +142,6 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus < 0 {
 				m.focus = len(m.panels) - 1
 			}
-		case key.Matches(msg, m.keymap.add):
-			fmt.Println("TODO")
-		case key.Matches(msg, m.keymap.remove):
-			m.panels = m.panels[:len(m.panels)-1]
-			if m.focus > len(m.panels)-1 {
-				m.focus = len(m.panels) - 1
-			}
 		case key.Matches(msg, m.keymap.toggle):
 			m.toggleFieldType()
 		}
@@ -168,7 +152,6 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 	}
 
-	m.updateKeybindings()
 	m.sizePanels()
 
 	// Update all panels
@@ -189,16 +172,10 @@ func (m *mainModel) sizePanels() {
 	}
 }
 
-func (m *mainModel) updateKeybindings() {
-	m.keymap.add.SetEnabled(len(m.panels) < maxPanes)
-	m.keymap.remove.SetEnabled(len(m.panels) > minPanes)
-}
-
 // addPanel adds a new panel to the model
 func (m *mainModel) addPanel(panel Panel) {
 	if len(m.panels) < maxPanes {
 		m.panels = append(m.panels, panel)
-		m.updateKeybindings()
 		m.sizePanels()
 	}
 }
@@ -281,8 +258,6 @@ func (m mainModel) View() string {
 	help := m.help.ShortHelpView([]key.Binding{
 		m.keymap.next,
 		m.keymap.prev,
-		m.keymap.add,
-		m.keymap.remove,
 		m.keymap.toggle,
 		m.keymap.quit,
 	})

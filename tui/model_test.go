@@ -47,9 +47,4 @@ func TestNewModel(t *testing.T) {
 	is.True(model.keymap.prev.Enabled())
 	is.True(model.keymap.quit.Enabled())
 	is.True(model.keymap.toggle.Enabled())
-
-	// Initially we should be able to add panels (less than maxPanes)
-	is.True(model.keymap.add.Enabled())
-	// Initially we should be able to remove panels (more than minPanes: 2 > 1)
-	is.True(model.keymap.remove.Enabled())
 }
