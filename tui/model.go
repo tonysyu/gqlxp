@@ -162,16 +162,11 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		shouldReceiveMsg := m.shouldPanelReceiveMessage(i, msg)
 		if shouldReceiveMsg {
 			newModel, cmd = m.panels[i].Update(msg)
-		} else {
-			// Panel stays unchanged
-			newModel = m.panels[i]
-			cmd = nil
+			if panel, ok := newModel.(Panel); ok {
+				m.panels[i] = panel
+			}
+			cmds = append(cmds, cmd)
 		}
-
-		if panel, ok := newModel.(Panel); ok {
-			m.panels[i] = panel
-		}
-		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -191,9 +186,6 @@ func (m *mainModel) shouldPanelReceiveMessage(panelIndex int, msg tea.Msg) bool 
 		}
 		// All other key messages should only go to the focused panel
 		return panelIndex == m.focus
-	case tea.WindowSizeMsg:
-		// All panels need resize messages
-		return true
 	case openPanelMsg:
 		// openPanelMsg is handled by main model, not individual panels
 		return false
