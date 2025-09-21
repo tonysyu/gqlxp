@@ -86,16 +86,34 @@ func adaptDirectiveDefinitions(directives []*ast.DirectiveDefinition) []ListItem
 	return adaptedItems
 }
 
+func adaptNamedItems(namedNodes []*ast.Named) []ListItem {
+	adaptedItems := make([]ListItem, 0, len(namedNodes))
+	for _, node := range namedNodes {
+		adaptedItems = append(adaptedItems, newNamedItem(node))
+	}
+	return adaptedItems
+}
+
+func adaptEnumValueDefinitions(enumNodes []*ast.EnumValueDefinition) []ListItem {
+	adaptedItems := make([]ListItem, 0, len(enumNodes))
+	for _, node := range enumNodes {
+		adaptedItems = append(adaptedItems, simpleItem{
+			title:       node.Name.Value,
+			description: node.Description.Value,
+		})
+	}
+	return adaptedItems
+}
+
+// Adapter/delegate for ast.FieldDefinition to support ListItem interface
+type fieldItem struct {
+	gqlField *ast.FieldDefinition
+}
+
 func newFieldDefItem(gqlField *ast.FieldDefinition) ListItem {
 	return fieldItem{
 		gqlField: gqlField,
 	}
-}
-
-// Adapter for DefaultItem interface used by charmbracelet/bubbles/list
-// https://pkg.go.dev/github.com/charmbracelet/bubbles@v0.21.0/list#DefaultItem
-type fieldItem struct {
-	gqlField *ast.FieldDefinition
 }
 
 func (i fieldItem) Title() string {
@@ -148,16 +166,15 @@ func adaptInputValueDefinitions(inputValues []*ast.InputValueDefinition) []ListI
 
 }
 
+// Adapter/delegate for ast.TypeDefinition to support ListItem interface
+type typeDefItem struct {
+	typeDef ast.TypeDefinition
+}
+
 func newTypeDefItem(typeDef ast.TypeDefinition) typeDefItem {
 	return typeDefItem{
 		typeDef: typeDef,
 	}
-}
-
-// Adapter for DefaultItem interface used by charmbracelet/bubbles/list
-// https://pkg.go.dev/github.com/charmbracelet/bubbles@v0.21.0/list#DefaultItem
-type typeDefItem struct {
-	typeDef ast.TypeDefinition
 }
 
 func (i typeDefItem) Title() string {
@@ -199,7 +216,6 @@ func (i typeDefItem) Open() (Panel, bool) {
 		detailItems = append(detailItems, simpleItem{title: desc})
 	}
 
-	// TODO: Update definitions with details
 	switch typeDef := (i.typeDef).(type) {
 	case *ast.ObjectDefinition:
 		detailItems = append(detailItems, adaptFieldDefinitions(typeDef.Fields)...)
@@ -207,9 +223,9 @@ func (i typeDefItem) Open() (Panel, bool) {
 	case *ast.InterfaceDefinition:
 		detailItems = append(detailItems, adaptFieldDefinitions(typeDef.Fields)...)
 	case *ast.UnionDefinition:
-		// TODO: This probably requires a reference to the schema
+		detailItems = append(detailItems, adaptNamedItems(typeDef.Types)...)
 	case *ast.EnumDefinition:
-		// TODO: This probably requires a reference to the schema
+		detailItems = append(detailItems, adaptEnumValueDefinitions(typeDef.Values)...)
 	case *ast.InputObjectDefinition:
 		detailItems = append(detailItems, adaptInputValueDefinitions(typeDef.Fields)...)
 	}
@@ -217,7 +233,7 @@ func (i typeDefItem) Open() (Panel, bool) {
 	return newListPanel(detailItems, i.Title()), true
 }
 
-// simpleItem displays title and description and has a no-op Open() function
+// ListItem interface with arbitrary title and description and no-op Open() function.
 type simpleItem struct {
 	title, description string
 }
@@ -229,6 +245,11 @@ func (di simpleItem) Open() (Panel, bool) { return nil, false }
 
 func newSectionHeader(title string) simpleItem {
 	return simpleItem{title: "======== " + title + " ========"}
+}
+
+func newNamedItem(node *ast.Named) simpleItem {
+	// TODO: This probably requires a reference to the schema to return full type when opening
+	return simpleItem{title: node.Name.Value}
 }
 
 func newTypeItem(t ast.Type) simpleItem {
