@@ -97,9 +97,13 @@ func adaptNamedItems(namedNodes []*ast.Named) []ListItem {
 func adaptEnumValueDefinitions(enumNodes []*ast.EnumValueDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(enumNodes))
 	for _, node := range enumNodes {
+		description := ""
+		if node.Description != nil {
+			description = node.Description.Value
+		}
 		adaptedItems = append(adaptedItems, simpleItem{
 			title:       node.Name.Value,
-			description: node.Description.Value,
+			description: description,
 		})
 	}
 	return adaptedItems
@@ -275,8 +279,12 @@ func newInputValueItem(inputValue *ast.InputValueDefinition) simpleItem {
 }
 
 func newDirectiveDefinitionItem(directive *ast.DirectiveDefinition) simpleItem {
+	description := ""
+	if directive.Description != nil {
+		description = directive.Description.Value
+	}
 	return simpleItem{
 		title:       directive.Name.Value,
-		description: directive.Description.Value,
+		description: description,
 	}
 }
