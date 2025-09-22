@@ -18,22 +18,22 @@ const (
 	navbarHeight = 3
 )
 
-type FieldType string
+type GQLType string
 
 const (
-	QueryType     FieldType = "Query"
-	MutationType  FieldType = "Mutation"
-	ObjectType    FieldType = "Object"
-	InputType     FieldType = "Input"
-	EnumType      FieldType = "Enum"
-	ScalarType    FieldType = "Scalar"
-	InterfaceType FieldType = "Interface"
-	UnionType     FieldType = "Union"
-	DirectiveType FieldType = "Directive"
+	QueryType     GQLType = "Query"
+	MutationType  GQLType = "Mutation"
+	ObjectType    GQLType = "Object"
+	InputType     GQLType = "Input"
+	EnumType      GQLType = "Enum"
+	ScalarType    GQLType = "Scalar"
+	InterfaceType GQLType = "Interface"
+	UnionType     GQLType = "Union"
+	DirectiveType GQLType = "Directive"
 )
 
-// availableFieldTypes defines the ordered list of field types for navigation
-var availableFieldTypes = []FieldType{QueryType, MutationType, ObjectType, InputType, EnumType, ScalarType, InterfaceType, UnionType, DirectiveType}
+// availableGQLTypes defines the ordered list of GQL types for navigation
+var availableGQLTypes = []GQLType{QueryType, MutationType, ObjectType, InputType, EnumType, ScalarType, InterfaceType, UnionType, DirectiveType}
 
 var (
 	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
@@ -75,7 +75,7 @@ var (
 )
 
 type keymap = struct {
-	nextPanel, prevPanel, quit, toggleFieldType, reverseToggleFieldType key.Binding
+	nextPanel, prevPanel, quit, toggleGQLType, reverseToggleGQLType key.Binding
 }
 
 type mainModel struct {
@@ -86,7 +86,7 @@ type mainModel struct {
 	panels    []Panel
 	focus     int
 	schema    gql.GraphQLSchema
-	fieldType FieldType
+	fieldType GQLType
 }
 
 func NewModel(schema gql.GraphQLSchema) mainModel {
@@ -108,11 +108,11 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 				key.WithKeys("ctrl+c", "ctrl+d"),
 				key.WithHelp("ctrl+c", "quit"),
 			),
-			toggleFieldType: key.NewBinding(
+			toggleGQLType: key.NewBinding(
 				key.WithKeys("ctrl+t"),
 				key.WithHelp("ctrl+t", "toggle type "),
 			),
-			reverseToggleFieldType: key.NewBinding(
+			reverseToggleGQLType: key.NewBinding(
 				key.WithKeys("ctrl+r"),
 				key.WithHelp("ctrl+r", "reverse toggle type"),
 			),
@@ -123,8 +123,8 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 		m.panels[i] = newStringPanel("")
 	}
 
-	// Load initial fields based on field type
-	m.loadFieldsPanel()
+	// Load initial fields based on GQL type
+	m.loadGQLTypesPanel()
 	return m
 }
 
@@ -150,10 +150,10 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus < 0 {
 				m.focus = len(m.panels) - 1
 			}
-		case key.Matches(msg, m.keymap.toggleFieldType):
-			m.incrementFieldTypeIndex(1)
-		case key.Matches(msg, m.keymap.reverseToggleFieldType):
-			m.incrementFieldTypeIndex(-1)
+		case key.Matches(msg, m.keymap.toggleGQLType):
+			m.incrementGQLTypeIndex(1)
+		case key.Matches(msg, m.keymap.reverseToggleGQLType):
+			m.incrementGQLTypeIndex(-1)
 		}
 	case openPanelMsg:
 		m.handleOpenPanel(msg.panel)
@@ -191,7 +191,7 @@ func (m *mainModel) shouldPanelReceiveMessage(panelIndex int, msg tea.Msg) bool 
 		if key.Matches(msg, m.keymap.nextPanel) ||
 			key.Matches(msg, m.keymap.prevPanel) ||
 			key.Matches(msg, m.keymap.quit) ||
-			key.Matches(msg, m.keymap.toggleFieldType) {
+			key.Matches(msg, m.keymap.toggleGQLType) {
 			return false
 		}
 		// All other key messages should only go to the focused panel
@@ -234,25 +234,17 @@ func (m *mainModel) handleOpenPanel(newPanel Panel) {
 	m.sizePanels()
 }
 
-// loadFieldsPanel loads the appropriate fields based on the current field type
-func (m *mainModel) loadFieldsPanel() {
+// loadGQLTypesPanel loads the appropriate fields based on the current GQL type
+func (m *mainModel) loadGQLTypesPanel() {
 	var items []ListItem
 	var title string
 
 	switch m.fieldType {
 	case QueryType:
-		fields := adaptFieldDefinitions(gql.CollectAndSortMapValues(m.schema.Query))
-		items = make([]ListItem, len(fields))
-		for i, field := range fields {
-			items[i] = field
-		}
+		items = adaptFieldDefinitions(gql.CollectAndSortMapValues(m.schema.Query))
 		title = "Query Fields"
 	case MutationType:
-		fields := adaptFieldDefinitions(gql.CollectAndSortMapValues(m.schema.Mutation))
-		items = make([]ListItem, len(fields))
-		for i, field := range fields {
-			items[i] = field
-		}
+		items = adaptFieldDefinitions(gql.CollectAndSortMapValues(m.schema.Mutation))
 		title = "Mutation Fields"
 	case ObjectType:
 		items = adaptObjectDefinitions(gql.CollectAndSortMapValues(m.schema.Object))
@@ -282,31 +274,31 @@ func (m *mainModel) loadFieldsPanel() {
 	m.focus = 0
 }
 
-// incrementFieldTypeIndex cycles through available field types with wraparound
-func (m *mainModel) incrementFieldTypeIndex(offset int) {
-	// Find current field type index
-	currentIndex := slices.IndexFunc(availableFieldTypes, func(fieldType FieldType) bool {
+// incrementGQLTypeIndex cycles through available GQL types with wraparound
+func (m *mainModel) incrementGQLTypeIndex(offset int) {
+	// Find current GQL type index
+	currentIndex := slices.IndexFunc(availableGQLTypes, func(fieldType GQLType) bool {
 		return m.fieldType == fieldType
 	})
 
 	newIndex := (currentIndex + offset)
 	// Force new index to wraparound, if is out-of-bounds on either the beginning or end:
 	if newIndex < 0 {
-		newIndex = len(availableFieldTypes) - 1
-	} else if newIndex >= len(availableFieldTypes) {
+		newIndex = len(availableGQLTypes) - 1
+	} else if newIndex >= len(availableGQLTypes) {
 		newIndex = 0
 	}
-	m.fieldType = availableFieldTypes[newIndex]
+	m.fieldType = availableGQLTypes[newIndex]
 
-	m.loadFieldsPanel()
+	m.loadGQLTypesPanel()
 	m.sizePanels()
 }
 
-// renderFieldTypeNavbar creates the navbar showing field types
-func (m *mainModel) renderFieldTypeNavbar() string {
+// renderGQLTypeNavbar creates the navbar showing GQL types
+func (m *mainModel) renderGQLTypeNavbar() string {
 	var tabs []string
 
-	for _, fieldType := range availableFieldTypes {
+	for _, fieldType := range availableGQLTypes {
 		var style lipgloss.Style
 		if m.fieldType == fieldType {
 			style = activeTabStyle
@@ -324,7 +316,7 @@ func (m mainModel) View() string {
 	help := m.help.ShortHelpView([]key.Binding{
 		m.keymap.nextPanel,
 		m.keymap.prevPanel,
-		m.keymap.toggleFieldType,
+		m.keymap.toggleGQLType,
 		m.keymap.quit,
 	})
 
@@ -339,7 +331,7 @@ func (m mainModel) View() string {
 		views = append(views, panelView)
 	}
 
-	navbar := m.renderFieldTypeNavbar()
+	navbar := m.renderGQLTypeNavbar()
 	panels := lipgloss.JoinHorizontal(lipgloss.Top, views...)
 
 	return navbar + "\n" + panels + "\n\n" + help

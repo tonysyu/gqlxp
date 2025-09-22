@@ -46,5 +46,5 @@ func TestNewModel(t *testing.T) {
 	is.True(model.keymap.nextPanel.Enabled())
 	is.True(model.keymap.prevPanel.Enabled())
 	is.True(model.keymap.quit.Enabled())
-	is.True(model.keymap.toggleFieldType.Enabled())
+	is.True(model.keymap.toggleGQLType.Enabled())
 }
