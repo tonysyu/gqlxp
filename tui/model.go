@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gq/gql"
@@ -122,7 +121,7 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 	}
 	// Initialize panels with empty list models
 	for i := range intialPanels {
-		m.panels[i] = newListPanel([]list.Item{}, "")
+		m.panels[i] = newStringPanel("")
 	}
 
 	// Load initial fields based on field type
