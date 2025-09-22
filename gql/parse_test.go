@@ -1,6 +1,8 @@
 package gql_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/graphql-go/graphql/language/ast"
@@ -245,10 +247,11 @@ func TestMain(t *testing.T) {
 	})
 }
 
+// Test that the schema parser handles "= null" default values correctly
+// These null defaults aren't handled by default by `graphql-go/graphql`
 func TestParseSchemaWithNullDefaults(t *testing.T) {
 	is := is.New(t)
 
-	// Test that the schema parser handles "= null" default values correctly
 	schemaString := `
 		input TestInput {
 		  name: String!
@@ -268,4 +271,139 @@ func TestParseSchemaWithNullDefaults(t *testing.T) {
 	is.True(ok)
 	is.Equal(testInput.Name.Value, "TestInput")
 	is.Equal(len(testInput.Fields), 3)
+}
+
+func TestParseEmptySchema(t *testing.T) {
+	is := is.New(t)
+
+	// Test parsing completely empty schema
+	emptySchema := ParseSchema([]byte(""))
+	is.Equal(len(emptySchema.Query), 0)
+	is.Equal(len(emptySchema.Mutation), 0)
+	is.Equal(len(emptySchema.Object), 0)
+
+	// Test schema with only comments
+	commentOnlySchema := `
+		# This is just a comment
+		# Another comment
+	`
+	schema := ParseSchema([]byte(commentOnlySchema))
+	is.Equal(len(schema.Query), 0)
+	is.Equal(len(schema.Mutation), 0)
+}
+
+func TestParseSchemaWithOnlyQuery(t *testing.T) {
+	is := is.New(t)
+
+	schemaString := `
+		type Query {
+		  hello: String
+		}
+	`
+	schema := ParseSchema([]byte(schemaString))
+	is.Equal(len(schema.Query), 1)
+	is.Equal(len(schema.Mutation), 0)
+
+	hello, ok := schema.Query["hello"]
+	is.True(ok)
+	is.Equal(hello.Name.Value, "hello")
+}
+
+func TestParseSchemaWithOnlyMutation(t *testing.T) {
+	is := is.New(t)
+
+	schemaString := `
+		type Mutation {
+		  createUser(name: String!): User
+		}
+
+		type User {
+		  id: ID!
+		  name: String!
+		}
+	`
+	schema := ParseSchema([]byte(schemaString))
+	is.Equal(len(schema.Query), 0)
+	is.Equal(len(schema.Mutation), 1)
+	is.Equal(len(schema.Object), 1)
+
+	createUser, ok := schema.Mutation["createUser"]
+	is.True(ok)
+	is.Equal(createUser.Name.Value, "createUser")
+}
+
+func TestParseSchemaWithComplexDefaultValues(t *testing.T) {
+	is := is.New(t)
+
+	schemaString := `
+		enum Priority {
+		  LOW
+		  MEDIUM
+		  HIGH
+		}
+
+		input TaskInput {
+		  title: String!
+		  priority: Priority = MEDIUM
+		  tags: [String!] = []
+		  metadata: String = null
+		}
+
+		type Query {
+		  getTasks(input: TaskInput = null): [Task!]!
+		}
+
+		type Task {
+		  id: ID!
+		  title: String!
+		  priority: Priority!
+		}
+	`
+
+	// Should parse without errors even with complex defaults
+	schema := ParseSchema([]byte(schemaString))
+
+	taskInput, ok := schema.Input["TaskInput"]
+	is.True(ok)
+	is.Equal(len(taskInput.Fields), 4)
+
+	priority, ok := schema.Enum["Priority"]
+	is.True(ok)
+	is.Equal(len(priority.Values), 3)
+}
+
+func TestParseLargeSchema(t *testing.T) {
+	is := is.New(t)
+
+	// Generate a large schema programmatically
+	var schemaBuilder []string
+	schemaBuilder = append(schemaBuilder, "type Query {")
+
+	// Add 100 query fields
+	for i := 0; i < 100; i++ {
+		schemaBuilder = append(schemaBuilder, fmt.Sprintf("  field%d(arg1: String, arg2: Int): String", i))
+	}
+	schemaBuilder = append(schemaBuilder, "}")
+
+	schemaBuilder = append(schemaBuilder, "type Mutation {")
+	// Add 50 mutation fields
+	for i := 0; i < 50; i++ {
+		schemaBuilder = append(schemaBuilder, fmt.Sprintf("  mutation%d(input: String!): Boolean", i))
+	}
+	schemaBuilder = append(schemaBuilder, "}")
+
+	// Add 20 object types
+	for i := 0; i < 20; i++ {
+		schemaBuilder = append(schemaBuilder, fmt.Sprintf("type Object%d {", i))
+		schemaBuilder = append(schemaBuilder, "  id: ID!")
+		schemaBuilder = append(schemaBuilder, fmt.Sprintf("  name: String"))
+		schemaBuilder = append(schemaBuilder, "}")
+	}
+
+	largeSchemaString := strings.Join(schemaBuilder, "\n")
+	schema := ParseSchema([]byte(largeSchemaString))
+
+	is.Equal(len(schema.Query), 100)
+	is.Equal(len(schema.Mutation), 50)
+	is.Equal(len(schema.Object), 20)
 }
