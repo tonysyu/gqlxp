@@ -178,6 +178,8 @@ func newTypeDefItem(typeDef ast.TypeDefinition) typeDefItem {
 }
 
 func (i typeDefItem) Title() string {
+	// TODO: Can this reuse gql.GetTypeName? The fact that `i.typeDef` is the interface seems to
+	// cause problems using it directly.
 	switch typeDef := (i.typeDef).(type) {
 	case *ast.ScalarDefinition:
 		return typeDef.Name.Value
@@ -220,6 +222,7 @@ func (i typeDefItem) Open() (Panel, bool) {
 	case *ast.ObjectDefinition:
 		detailItems = append(detailItems, adaptFieldDefinitions(typeDef.Fields)...)
 	case *ast.ScalarDefinition:
+		// No details needed
 	case *ast.InterfaceDefinition:
 		detailItems = append(detailItems, adaptFieldDefinitions(typeDef.Fields)...)
 	case *ast.UnionDefinition:

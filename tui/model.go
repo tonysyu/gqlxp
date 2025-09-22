@@ -118,13 +118,7 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 			),
 		},
 	}
-	// Initialize panels with empty list models
-	for i := range intialPanels {
-		m.panels[i] = newStringPanel("")
-	}
-
-	// Load initial fields based on GQL type
-	m.loadGQLTypesPanel()
+	m.resetAndLoadMainPanel()
 	return m
 }
 
@@ -234,8 +228,21 @@ func (m *mainModel) handleOpenPanel(newPanel Panel) {
 	m.sizePanels()
 }
 
-// loadGQLTypesPanel loads the appropriate fields based on the current GQL type
-func (m *mainModel) loadGQLTypesPanel() {
+// resetAndLoadMainPanel defines initial panels and loads currently selected GQL type.
+// This method is called on initilization and when switching types, so that detail panels get
+// cleared out to avoid inconsistencies across panels.
+func (m *mainModel) resetAndLoadMainPanel() {
+	// Initialize panels with empty list models
+	for i := range intialPanels {
+		m.panels[i] = newStringPanel("")
+	}
+
+	// Load initial fields based on currently selected GQL type
+	m.loadMainPanel()
+}
+
+// loadMainPanel loads the the currently selected GQL type in the main (left-most) panel
+func (m *mainModel) loadMainPanel() {
 	var items []ListItem
 	var title string
 
@@ -290,7 +297,7 @@ func (m *mainModel) incrementGQLTypeIndex(offset int) {
 	}
 	m.fieldType = availableGQLTypes[newIndex]
 
-	m.loadGQLTypesPanel()
+	m.resetAndLoadMainPanel()
 	m.sizePanels()
 }
 
