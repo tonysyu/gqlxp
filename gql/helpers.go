@@ -8,6 +8,15 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 )
 
+// GetStringValue converts ast.StringValue to string representation
+// Note that StringValue pointers are nullable, so this avoids
+func GetStringValue(s *ast.StringValue) string {
+	if s == nil {
+		return ""
+	}
+	return s.Value
+}
+
 // NamedType interface for types that have a Name field
 type NamedType interface {
 	*ast.FieldDefinition | *ast.ObjectDefinition | *ast.InputObjectDefinition |

@@ -97,13 +97,9 @@ func adaptNamedItems(namedNodes []*ast.Named) []ListItem {
 func adaptEnumValueDefinitions(enumNodes []*ast.EnumValueDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(enumNodes))
 	for _, node := range enumNodes {
-		description := ""
-		if node.Description != nil {
-			description = node.Description.Value
-		}
 		adaptedItems = append(adaptedItems, simpleItem{
 			title:       node.Name.Value,
-			description: description,
+			description: gql.GetStringValue(node.Description),
 		})
 	}
 	return adaptedItems
@@ -129,10 +125,7 @@ func (i fieldItem) FilterValue() string {
 }
 
 func (i fieldItem) Description() string {
-	if desc := i.gqlField.GetDescription(); desc != nil {
-		return desc.Value
-	}
-	return ""
+	return gql.GetStringValue(i.gqlField.GetDescription())
 }
 
 // Implement ListItem interface
@@ -268,23 +261,15 @@ func newInputValueItem(inputValue *ast.InputValueDefinition) simpleItem {
 	// TODO: Update item to support proper Open and use custom display string
 	fieldName := inputValue.Name.Value
 	fieldType := gql.GetTypeString(inputValue.Type)
-	description := ""
-	if inputValue.Description != nil {
-		description = inputValue.Description.Value
-	}
 	return simpleItem{
 		title:       fmt.Sprintf("%s: %s", fieldName, fieldType),
-		description: description,
+		description: gql.GetStringValue(inputValue.Description),
 	}
 }
 
 func newDirectiveDefinitionItem(directive *ast.DirectiveDefinition) simpleItem {
-	description := ""
-	if directive.Description != nil {
-		description = directive.Description.Value
-	}
 	return simpleItem{
 		title:       directive.Name.Value,
-		description: description,
+		description: gql.GetStringValue(directive.Description),
 	}
 }
