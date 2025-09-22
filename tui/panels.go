@@ -23,6 +23,7 @@ var _ Panel = (*stringPanel)(nil)
 // listPanel wraps a list.Model to implement the Panel interface
 type listPanel struct {
 	list.Model
+	lastSelectedIndex int // Track the last selected index to detect changes
 }
 
 func newListPanel[T list.Item](choices []T, title string) *listPanel {
@@ -34,7 +35,8 @@ func newListPanel[T list.Item](choices []T, title string) *listPanel {
 	m.DisableQuitKeybindings()
 	m.Title = title
 	return &listPanel{
-		Model: m,
+		Model:             m,
+		lastSelectedIndex: -1, // Initialize to -1 to trigger opening on first selection
 	}
 }
 
@@ -45,20 +47,24 @@ func (lp *listPanel) Init() tea.Cmd {
 func (lp *listPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
-	// Handle enter key for interactive items
-	if keyMsg, ok := msg.(tea.KeyMsg); ok && keyMsg.String() == "enter" {
+	// Update the list model first
+	lp.Model, cmd = lp.Model.Update(msg)
+
+	// Check if selection has changed and auto-open detail panel
+	currentIndex := lp.Model.Index()
+	if currentIndex != lp.lastSelectedIndex && currentIndex >= 0 {
+		lp.lastSelectedIndex = currentIndex
 		if selectedItem := lp.Model.SelectedItem(); selectedItem != nil {
 			if listItem, ok := selectedItem.(ListItem); ok {
 				if newPanel, ok := listItem.Open(); ok {
-					return lp, func() tea.Msg {
+					return lp, tea.Batch(cmd, func() tea.Msg {
 						return openPanelMsg{panel: newPanel}
-					}
+					})
 				}
 			}
 		}
 	}
 
-	lp.Model, cmd = lp.Model.Update(msg)
 	return lp, cmd
 }
 
