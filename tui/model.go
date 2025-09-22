@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"maps"
 	"slices"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -242,39 +241,39 @@ func (m *mainModel) loadFieldsPanel() {
 
 	switch m.fieldType {
 	case QueryType:
-		fields := adaptFieldDefinitions(slices.Collect(maps.Values(m.schema.Query)))
+		fields := adaptFieldDefinitions(gql.CollectAndSortMapValues(m.schema.Query))
 		items = make([]ListItem, len(fields))
 		for i, field := range fields {
 			items[i] = field
 		}
 		title = "Query Fields"
 	case MutationType:
-		fields := adaptFieldDefinitions(slices.Collect(maps.Values(m.schema.Mutation)))
+		fields := adaptFieldDefinitions(gql.CollectAndSortMapValues(m.schema.Mutation))
 		items = make([]ListItem, len(fields))
 		for i, field := range fields {
 			items[i] = field
 		}
 		title = "Mutation Fields"
 	case ObjectType:
-		items = adaptObjectDefinitions(slices.Collect(maps.Values(m.schema.Object)))
+		items = adaptObjectDefinitions(gql.CollectAndSortMapValues(m.schema.Object))
 		title = "Object Types"
 	case InputType:
-		items = adaptInputDefinitions(slices.Collect(maps.Values(m.schema.Input)))
+		items = adaptInputDefinitions(gql.CollectAndSortMapValues(m.schema.Input))
 		title = "Input Types"
 	case EnumType:
-		items = adaptEnumDefinitions(slices.Collect(maps.Values(m.schema.Enum)))
+		items = adaptEnumDefinitions(gql.CollectAndSortMapValues(m.schema.Enum))
 		title = "Enum Types"
 	case ScalarType:
-		items = adaptScalarDefinitions(slices.Collect(maps.Values(m.schema.Scalar)))
+		items = adaptScalarDefinitions(gql.CollectAndSortMapValues(m.schema.Scalar))
 		title = "Scalar Types"
 	case InterfaceType:
-		items = adaptInterfaceDefinitions(slices.Collect(maps.Values(m.schema.Interface)))
+		items = adaptInterfaceDefinitions(gql.CollectAndSortMapValues(m.schema.Interface))
 		title = "Interface Types"
 	case UnionType:
-		items = adaptUnionDefinitions(slices.Collect(maps.Values(m.schema.Union)))
+		items = adaptUnionDefinitions(gql.CollectAndSortMapValues(m.schema.Union))
 		title = "Union Types"
 	case DirectiveType:
-		items = adaptDirectiveDefinitions(slices.Collect(maps.Values(m.schema.Directive)))
+		items = adaptDirectiveDefinitions(gql.CollectAndSortMapValues(m.schema.Directive))
 		title = "Directive Types"
 	}
 

@@ -87,17 +87,3 @@ func ParseSchema(schemaContent []byte) GraphQLSchema {
 	gqlSchema := buildGraphQLTypes(doc)
 	return gqlSchema
 }
-
-// Helper function to convert AST type to string representation
-func GetTypeString(t ast.Type) string {
-	switch typ := t.(type) {
-	case *ast.Named:
-		return typ.Name.Value
-	case *ast.List:
-		return "[" + GetTypeString(typ.Type) + "]"
-	case *ast.NonNull:
-		return GetTypeString(typ.Type) + "!"
-	default:
-		return "Unknown"
-	}
-}
