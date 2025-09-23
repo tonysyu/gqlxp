@@ -1,4 +1,4 @@
-module github.com/tonysyu/gq
+module github.com/tonysyu/igq
 
 go 1.25.1
 

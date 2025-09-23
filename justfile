@@ -3,10 +3,10 @@ default:
     @echo 'Usage: just [OPTIONS] [ARGUMENTS]...'
     @just -l
 
-# Run the gq tui
+# Run the igq tui
 [group('app')]
 run:
-    go run ./cmd/gq
+    go run ./cmd/igq
 
 # Run tests (defaults to all tests in projects)
 [group('code')]
@@ -24,4 +24,4 @@ lint-fix:
 # Build executable
 [group('deploy')]
 build:
-    go build -o dist/gq ./cmd/gq
+    go build -o dist/igq ./cmd/igq

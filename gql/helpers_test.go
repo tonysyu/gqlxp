@@ -5,7 +5,7 @@ import (
 
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
-	. "github.com/tonysyu/gq/gql"
+	. "github.com/tonysyu/igq/gql"
 )
 
 // Test GetTypeString handles types wrapped in non-nulls and lists
@@ -27,7 +27,7 @@ func TestGetTypeString(t *testing.T) {
 		}
 	`
 
-	schema := ParseSchema([]byte(schemaString))
+	schema, _ := ParseSchema([]byte(schemaString))
 
 	testCases := []struct {
 		fieldName    string
@@ -76,7 +76,7 @@ func TestCollectAndSortMapValuesSorting(t *testing.T) {
 		}
 	`
 
-	schema := ParseSchema([]byte(schemaString))
+	schema, _ := ParseSchema([]byte(schemaString))
 	sortedFields := CollectAndSortMapValues(schema.Query)
 
 	is.Equal(len(sortedFields), 4)
@@ -117,7 +117,7 @@ func TestGetTypeNameAllTypes(t *testing.T) {
 		  testField: String
 		}
 	`
-	schema := ParseSchema([]byte(schemaString))
+	schema, _ := ParseSchema([]byte(schemaString))
 
 	testField := schema.Query["testField"]
 	is.Equal(GetTypeName(testField), "testField")

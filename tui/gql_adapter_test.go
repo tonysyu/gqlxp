@@ -6,7 +6,7 @@ import (
 
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
-	"github.com/tonysyu/gq/gql"
+	"github.com/tonysyu/igq/gql"
 )
 
 func TestQueryAndMutationItemOpenPanel(t *testing.T) {
@@ -35,7 +35,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		}
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	t.Run("Query field with no arguments shows description and result type", func(t *testing.T) {
 		field := schema.Query["getAllPosts"]
@@ -101,7 +101,7 @@ func TestObjectDefinitionItemOpenPanel(t *testing.T) {
 		}
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	userObj := schema.Object["User"]
 	item := newTypeDefItem(userObj)
@@ -131,7 +131,7 @@ func TestInputDefinitionItemOpenPanel(t *testing.T) {
 		}
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	inputObj := schema.Input["CreateUserInput"]
 	item := newTypeDefItem(inputObj)
@@ -157,7 +157,7 @@ func TestEnumDefinitionItemOpenPanel(t *testing.T) {
 		}
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	enumObj := schema.Enum["Status"]
 	item := newTypeDefItem(enumObj)
@@ -177,7 +177,7 @@ func TestScalarDefinitionItemOpenPanel(t *testing.T) {
 
 	schemaString := "scalar Date"
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	scalarObj := schema.Scalar["Date"]
 	item := newTypeDefItem(scalarObj)
@@ -201,7 +201,7 @@ func TestInterfaceDefinitionItemOpenPanel(t *testing.T) {
 		}
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	interfaceObj := schema.Interface["Node"]
 	item := newTypeDefItem(interfaceObj)
@@ -232,7 +232,7 @@ func TestUnionDefinitionItemOpenPanel(t *testing.T) {
 		union SearchResult = User | Post
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	unionObj := schema.Union["SearchResult"]
 	item := newTypeDefItem(unionObj)
@@ -255,7 +255,7 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 		}
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	field := schema.Query["simpleField"]
 	item := newFieldDefItem(field)
@@ -293,7 +293,7 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 		}
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	field := schema.Query["complexField"]
 	item := newFieldDefItem(field)
@@ -348,7 +348,7 @@ func TestAdapterFunctions(t *testing.T) {
 		directive @testDirective on FIELD_DEFINITION
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	// Test all adapter functions
 	queryItems := adaptFieldDefinitions(gql.CollectAndSortMapValues(schema.Query))
@@ -449,7 +449,7 @@ func TestInputValueItemCreation(t *testing.T) {
 		}
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 	field := schema.Query["testField"]
 
 	// Test input value items creation
@@ -484,7 +484,7 @@ func TestTypeItemCreation(t *testing.T) {
 		}
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	// Test type items for different field types
 	simpleField := schema.Query["simpleField"]
@@ -507,7 +507,7 @@ func TestDirectiveDefinitionItemCreation(t *testing.T) {
 		directive @deprecated(reason: String = "No longer supported") on FIELD_DEFINITION | ENUM_VALUE
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 	directive := schema.Directive["deprecated"]
 
 	item := newDirectiveDefinitionItem(directive)

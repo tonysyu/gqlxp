@@ -7,7 +7,7 @@ import (
 
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
-	. "github.com/tonysyu/gq/gql"
+	. "github.com/tonysyu/igq/gql"
 )
 
 func TestMain(t *testing.T) {
@@ -77,7 +77,7 @@ func TestMain(t *testing.T) {
 		}
 	`
 
-	schema := ParseSchema([]byte(schemaString))
+	schema, _ := ParseSchema([]byte(schemaString))
 	queryFields := schema.Query
 	mutationFields := schema.Mutation
 
@@ -265,7 +265,7 @@ func TestParseSchemaWithNullDefaults(t *testing.T) {
 	`
 
 	// This should not panic or fail to parse
-	schema := ParseSchema([]byte(schemaString))
+	schema, _ := ParseSchema([]byte(schemaString))
 
 	testInput, ok := schema.Input["TestInput"]
 	is.True(ok)
@@ -277,7 +277,7 @@ func TestParseEmptySchema(t *testing.T) {
 	is := is.New(t)
 
 	// Test parsing completely empty schema
-	emptySchema := ParseSchema([]byte(""))
+	emptySchema, _ := ParseSchema([]byte(""))
 	is.Equal(len(emptySchema.Query), 0)
 	is.Equal(len(emptySchema.Mutation), 0)
 	is.Equal(len(emptySchema.Object), 0)
@@ -287,7 +287,7 @@ func TestParseEmptySchema(t *testing.T) {
 		# This is just a comment
 		# Another comment
 	`
-	schema := ParseSchema([]byte(commentOnlySchema))
+	schema, _ := ParseSchema([]byte(commentOnlySchema))
 	is.Equal(len(schema.Query), 0)
 	is.Equal(len(schema.Mutation), 0)
 }
@@ -300,7 +300,7 @@ func TestParseSchemaWithOnlyQuery(t *testing.T) {
 		  hello: String
 		}
 	`
-	schema := ParseSchema([]byte(schemaString))
+	schema, _ := ParseSchema([]byte(schemaString))
 	is.Equal(len(schema.Query), 1)
 	is.Equal(len(schema.Mutation), 0)
 
@@ -322,7 +322,7 @@ func TestParseSchemaWithOnlyMutation(t *testing.T) {
 		  name: String!
 		}
 	`
-	schema := ParseSchema([]byte(schemaString))
+	schema, _ := ParseSchema([]byte(schemaString))
 	is.Equal(len(schema.Query), 0)
 	is.Equal(len(schema.Mutation), 1)
 	is.Equal(len(schema.Object), 1)
@@ -361,7 +361,7 @@ func TestParseSchemaWithComplexDefaultValues(t *testing.T) {
 	`
 
 	// Should parse without errors even with complex defaults
-	schema := ParseSchema([]byte(schemaString))
+	schema, _ := ParseSchema([]byte(schemaString))
 
 	taskInput, ok := schema.Input["TaskInput"]
 	is.True(ok)
@@ -401,7 +401,7 @@ func TestParseLargeSchema(t *testing.T) {
 	}
 
 	largeSchemaString := strings.Join(schemaBuilder, "\n")
-	schema := ParseSchema([]byte(largeSchemaString))
+	schema, _ := ParseSchema([]byte(largeSchemaString))
 
 	is.Equal(len(schema.Query), 100)
 	is.Equal(len(schema.Mutation), 50)

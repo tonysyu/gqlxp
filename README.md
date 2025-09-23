@@ -1,6 +1,6 @@
-# gq
+# igq
 
-`gq` is a GraphQL query explorer TUI (Terminal User Interface) application that parses GraphQL schema files and provides an interactive terminal interface for exploring GraphQL queries and mutations. The application uses the Bubble Tea framework to create a multi-panel interface where users can navigate through GraphQL schema definitions and toggle between Query and Mutation fields.
+`igq` is an interactive GraphQL query explorer TUI (Terminal User Interface) application that parses GraphQL schema files and provides an interactive terminal interface for exploring GraphQL queries and mutations. The application uses the Bubble Tea framework to create a multi-panel interface where users can navigate through GraphQL schema definitions and toggle between Query and Mutation fields.
 
 ## Schema Requirements
 

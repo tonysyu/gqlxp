@@ -3,7 +3,7 @@
 For build and development commands, see [Development Commands](development.md).
 
 ## Package Structure
-- **`cmd/gq`**: Main application entry point that reads schema file and initializes TUI
+- **`cmd/igq`**: Main application entry point that reads schema file and initializes TUI
   - `main()` - Entry point that reads schema and starts TUI
 - **`gql`**: GraphQL schema parsing and type extraction
   - `ParseSchema()` - Main function to parse GraphQL schema and extract Query and Mutation fields

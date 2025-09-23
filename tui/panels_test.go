@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/matryer/is"
-	"github.com/tonysyu/gq/gql"
+	"github.com/tonysyu/igq/gql"
 )
 
 func TestStringPanelBasic(t *testing.T) {
@@ -110,7 +110,7 @@ func TestListPanelSelectionChange(t *testing.T) {
 	is := is.New(t)
 
 	// Create items with Open capability
-	schema := gql.ParseSchema([]byte(`
+	schema, _ := gql.ParseSchema([]byte(`
 		type Query {
 			field1: String
 			field2: String
@@ -132,7 +132,7 @@ func TestListPanelAutoOpen(t *testing.T) {
 	is := is.New(t)
 
 	// Create schema with field that can be opened
-	schema := gql.ParseSchema([]byte(`
+	schema, _ := gql.ParseSchema([]byte(`
 		type Query {
 			testField(arg: String): String
 		}

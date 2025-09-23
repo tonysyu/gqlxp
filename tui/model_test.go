@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
-	"github.com/tonysyu/gq/gql"
+	"github.com/tonysyu/igq/gql"
 )
 
 func TestNewModel(t *testing.T) {
@@ -29,7 +29,7 @@ func TestNewModel(t *testing.T) {
 		}
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 	model := NewModel(schema)
 
 	// Test initial state
@@ -122,7 +122,7 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 		directive @deprecated on FIELD_DEFINITION
 	`
 
-	schema := gql.ParseSchema([]byte(schemaString))
+	schema, _ := gql.ParseSchema([]byte(schemaString))
 	model := NewModel(schema)
 
 	// Test initial type

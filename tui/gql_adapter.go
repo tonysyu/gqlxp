@@ -5,7 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/graphql-go/graphql/language/ast"
-	"github.com/tonysyu/gq/gql"
+	"github.com/tonysyu/igq/gql"
 )
 
 // list item that can be "opened" to provide additional information about the item.

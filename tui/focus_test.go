@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
-	"github.com/tonysyu/gq/gql"
+	"github.com/tonysyu/igq/gql"
 )
 
 func TestShouldPanelReceiveMessage(t *testing.T) {
