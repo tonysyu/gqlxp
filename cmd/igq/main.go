@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/tonysyu/igq/gql"
@@ -11,7 +10,7 @@ import (
 
 func main() {
 	// Read schema file (assuming it's in the project root or data directory)
-	schemaContent, err := ioutil.ReadFile("examples/github.graphqls")
+	schemaContent, err := os.ReadFile("examples/github.graphqls")
 	if err != nil {
 		abort(fmt.Sprintf("Error reading schema file: %v\n", err))
 	}
