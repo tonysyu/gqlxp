@@ -10,7 +10,7 @@ source using:
 ```sh
 $ git clone https://github.com/tonysyu/igq
 $ go build -o dist/igq ./cmd/igq
-$ dist/igq {{PATH_TO_GRAPHQL_SCHEMA_FILE}}
+$ ./dist/igq examples/github.graphqls
 ```
 
 For local development, use [justfile](https://just.systems/man/en/introduction.html) to
@@ -20,7 +20,7 @@ $ just build  # creates `dist/igq`, like command above
 $ just run {{PATH_TO_GRAPHQL_SCHEMA_FILE}}
 ```
 
-## Documentation
+## Developer Documentation
 
 - [Documentation Index](docs/index.md)
     - [Development Commands](docs/development.md)

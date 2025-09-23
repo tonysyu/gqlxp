@@ -21,6 +21,11 @@ lint-fix:
     go mod tidy
     go vet ./...
 
+# Run tests tests, lint, and fix
+[group('code')]
+verify: && test lint-fix
+    @echo "Testing, linting, and fixing"
+
 # Build executable
 [group('deploy')]
 build:

@@ -9,6 +9,23 @@ import (
 	"github.com/tonysyu/igq/gql"
 )
 
+// normalizeView strips leading/trailing whitespace and empty lines from multi-line strings
+// This is useful for testing bubble-tea views which may have empty-lines for spacing.
+func normalizeView(s string) string {
+	lines := strings.Split(s, "\n")
+	var result []string
+
+	// Trim whitespace from each line and skip empty lines
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+
+	return strings.Join(result, "\n")
+}
+
 func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 	is := is.New(t)
 
@@ -45,11 +62,16 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		// Set a reasonable size for testing
 		panel.SetSize(80, 40)
 
-		content := panel.View()
+		content := normalizeView(panel.View())
 
-		is.True(strings.Contains(content, "Return all posts"))
-		is.True(strings.Contains(content, "======== Result Type ========"))
-		is.True(strings.Contains(content, "[Post!]!"))
+		expected := normalizeView(`
+			│ Return all posts
+			│
+			  ======== Result Type ========
+			  [Post!]!
+		`)
+
+		is.True(strings.Contains(content, expected))
 		is.True(!strings.Contains(content, "======== Input Arguments ========")) // Should not have arguments section
 	})
 
@@ -61,12 +83,17 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		// Set a reasonable size for testing
 		panel.SetSize(80, 40)
 
-		content := panel.View()
+		content := normalizeView(panel.View())
 
-		is.True(strings.Contains(content, "======== Input Arguments ========"))
-		is.True(strings.Contains(content, "id: ID!"))
-		is.True(strings.Contains(content, "======== Result Type ========"))
-		is.True(strings.Contains(content, "Post"))
+		expected := normalizeView(`
+			│ ======== Input Arguments ========
+			│
+			  id: ID!
+			  ======== Result Type ========
+			  Post
+		`)
+
+		is.True(strings.Contains(content, expected))
 	})
 
 	t.Run("Mutation field with multiple arguments shows all sections", func(t *testing.T) {
@@ -77,15 +104,20 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		// Set a reasonable size for testing
 		panel.SetSize(80, 40)
 
-		content := panel.View()
+		content := normalizeView(panel.View())
 
-		is.True(strings.Contains(content, "Create a new post"))
-		is.True(strings.Contains(content, "======== Input Arguments ========"))
-		is.True(strings.Contains(content, "title: String!"))
-		is.True(strings.Contains(content, "content: String!"))
-		is.True(strings.Contains(content, "authorId: ID!"))
-		is.True(strings.Contains(content, "======== Result Type ========"))
-		is.True(strings.Contains(content, "Post"))
+		expected := normalizeView(`
+			│ Create a new post
+			│
+			  ======== Input Arguments ========
+			  title: String!
+			  content: String!
+			  authorId: ID!
+			  ======== Result Type ========
+			  Post!
+		`)
+
+		is.True(strings.Contains(content, expected))
 	})
 }
 
@@ -110,14 +142,14 @@ func TestObjectDefinitionItemOpenPanel(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := panel.View()
+	content := normalizeView(panel.View())
 
 	// Object panels show field names, not their types (types are shown when opening individual fields)
 	is.True(strings.Contains(content, "id"))
 	is.True(strings.Contains(content, "name"))
 	is.True(strings.Contains(content, "email"))
 	is.True(strings.Contains(content, "posts"))
-	is.True(strings.Contains(content, "4 items")) // Should show 4 fields
+	is.True(strings.Contains(content, "4 items"))
 }
 
 func TestInputDefinitionItemOpenPanel(t *testing.T) {
@@ -140,7 +172,8 @@ func TestInputDefinitionItemOpenPanel(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := panel.View()
+	content := normalizeView(panel.View())
+
 	is.True(strings.Contains(content, "name: String!"))
 	is.True(strings.Contains(content, "email: String!"))
 	is.True(strings.Contains(content, "age: Int"))
@@ -166,7 +199,8 @@ func TestEnumDefinitionItemOpenPanel(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := panel.View()
+	content := normalizeView(panel.View())
+
 	is.True(strings.Contains(content, "ACTIVE"))
 	is.True(strings.Contains(content, "INACTIVE"))
 	is.True(strings.Contains(content, "PENDING"))
@@ -210,11 +244,12 @@ func TestInterfaceDefinitionItemOpenPanel(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := panel.View()
+	content := normalizeView(panel.View())
+
 	// Interface panels show field names, not their types (types are shown when opening individual fields)
 	is.True(strings.Contains(content, "id"))
 	is.True(strings.Contains(content, "createdAt"))
-	is.True(strings.Contains(content, "2 items")) // Should show 2 fields
+	is.True(strings.Contains(content, "2 items"))
 }
 
 func TestUnionDefinitionItemOpenPanel(t *testing.T) {
@@ -241,7 +276,8 @@ func TestUnionDefinitionItemOpenPanel(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := panel.View()
+	content := normalizeView(panel.View())
+
 	is.True(strings.Contains(content, "User"))
 	is.True(strings.Contains(content, "Post"))
 }
@@ -268,9 +304,15 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := panel.View()
-	is.True(strings.Contains(content, "======== Result Type ========"))
-	is.True(strings.Contains(content, "String"))
+	content := normalizeView(panel.View())
+
+	expected := normalizeView(`
+		│ ======== Result Type ========
+		│
+		  String
+	`)
+
+	is.True(strings.Contains(content, expected))
 	is.True(!strings.Contains(content, "======== Input Arguments ========"))
 }
 
@@ -302,14 +344,20 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := panel.View()
-	is.True(strings.Contains(content, "======== Input Arguments ========"))
-	is.True(strings.Contains(content, "id: ID!"))
-	is.True(strings.Contains(content, "filters: FilterInput"))
-	is.True(strings.Contains(content, "tags: [String!]!"))
-	is.True(strings.Contains(content, "metadata: [String]"))
-	is.True(strings.Contains(content, "======== Result Type ========"))
-	is.True(strings.Contains(content, "[String!]!"))
+	content := normalizeView(panel.View())
+
+	expected := normalizeView(`
+		│ ======== Input Arguments ========
+		│
+		  id: ID!
+		  filters: FilterInput
+		  tags: [String!]!
+		  metadata: [String]
+		  ======== Result Type ========
+		  [String!]!
+	`)
+
+	is.True(strings.Contains(content, expected))
 }
 
 func TestAdapterFunctions(t *testing.T) {

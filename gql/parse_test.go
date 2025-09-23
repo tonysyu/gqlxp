@@ -380,20 +380,20 @@ func TestParseLargeSchema(t *testing.T) {
 	schemaBuilder = append(schemaBuilder, "type Query {")
 
 	// Add 100 query fields
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		schemaBuilder = append(schemaBuilder, fmt.Sprintf("  field%d(arg1: String, arg2: Int): String", i))
 	}
 	schemaBuilder = append(schemaBuilder, "}")
 
 	schemaBuilder = append(schemaBuilder, "type Mutation {")
 	// Add 50 mutation fields
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		schemaBuilder = append(schemaBuilder, fmt.Sprintf("  mutation%d(input: String!): Boolean", i))
 	}
 	schemaBuilder = append(schemaBuilder, "}")
 
 	// Add 20 object types
-	for i := 0; i < 20; i++ {
+	for i := range 20 {
 		schemaBuilder = append(schemaBuilder, fmt.Sprintf("type Object%d {", i))
 		schemaBuilder = append(schemaBuilder, "  id: ID!")
 		schemaBuilder = append(schemaBuilder, fmt.Sprintf("  name: String"))
