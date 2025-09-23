@@ -9,10 +9,14 @@ import (
 )
 
 func main() {
-	// Read schema file (assuming it's in the project root or data directory)
-	schemaContent, err := os.ReadFile("examples/github.graphqls")
+	if len(os.Args) < 2 {
+		abort("Usage: igq <schema-file>")
+	}
+
+	schemaFile := os.Args[1]
+	schemaContent, err := os.ReadFile(schemaFile)
 	if err != nil {
-		abort(fmt.Sprintf("Error reading schema file: %v\n", err))
+		abort(fmt.Sprintf("Error reading schema file '%s': %v\n", schemaFile, err))
 	}
 
 	schema, err := gql.ParseSchema(schemaContent)

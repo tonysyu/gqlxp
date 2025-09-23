@@ -2,9 +2,23 @@
 
 `igq` is an interactive GraphQL query explorer TUI (Terminal User Interface) application that parses GraphQL schema files and provides an interactive terminal interface for exploring GraphQL queries and mutations. The application uses the Bubble Tea framework to create a multi-panel interface where users can navigate through GraphQL schema definitions and toggle between Query and Mutation fields.
 
-## Schema Requirements
+## Usage
 
-The application expects a GraphQL schema file at `examples/github.graphqls`. The parser extracts both Query and Mutation type definitions, including field information such as arguments, return types, and descriptions.
+Currently, there's no installer or executable distribution. You'll have to build from
+source using:
+
+```sh
+$ git clone https://github.com/tonysyu/igq
+$ go build -o dist/igq ./cmd/igq
+$ dist/igq {{PATH_TO_GRAPHQL_SCHEMA_FILE}}
+```
+
+For local development, use [justfile](https://just.systems/man/en/introduction.html) to
+run dev commands:
+```sh
+$ just build  # creates `dist/igq`, like command above
+$ just run {{PATH_TO_GRAPHQL_SCHEMA_FILE}}
+```
 
 ## Documentation
 

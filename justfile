@@ -5,8 +5,8 @@ default:
 
 # Run the igq tui
 [group('app')]
-run:
-    go run ./cmd/igq
+run schemaPath:
+    go run ./cmd/igq {{schemaPath}}
 
 # Run tests (defaults to all tests in projects)
 [group('code')]
