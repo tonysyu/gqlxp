@@ -58,7 +58,6 @@ var (
 	blurredBorderStyle = lipgloss.NewStyle().
 				Border(lipgloss.HiddenBorder())
 
-	// Navbar styles
 	navbarStyle = lipgloss.NewStyle().
 			Padding(0, 1).
 			Margin(0, 0, 1, 0)
@@ -72,21 +71,29 @@ var (
 	inactiveTabStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("244")).
 				Padding(0, 2)
+
+	overlayStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("238")).
+			Padding(1).
+			Margin(2)
 )
 
 type keymap = struct {
-	nextPanel, prevPanel, quit, toggleGQLType, reverseToggleGQLType key.Binding
+	nextPanel, prevPanel, quit, toggleGQLType, reverseToggleGQLType, toggleOverlay key.Binding
 }
 
 type mainModel struct {
-	width     int
-	height    int
-	keymap    keymap
-	help      help.Model
-	panels    []Panel
-	focus     int
-	schema    gql.GraphQLSchema
-	fieldType GQLType
+	width        int
+	height       int
+	keymap       keymap
+	help         help.Model
+	panels       []Panel
+	focus        int
+	schema       gql.GraphQLSchema
+	fieldType    GQLType
+	showOverlay  bool
+	overlayPanel Panel
 }
 
 func NewModel(schema gql.GraphQLSchema) mainModel {
@@ -116,6 +123,10 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 				key.WithKeys("ctrl+r"),
 				key.WithHelp("ctrl+r", "reverse toggle type"),
 			),
+			toggleOverlay: key.NewBinding(
+				key.WithKeys(" "),
+				key.WithHelp("space", "overlay"),
+			),
 		},
 	}
 	m.resetAndLoadMainPanel()
@@ -134,20 +145,36 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keymap.quit):
 			return m, tea.Quit
+		case key.Matches(msg, m.keymap.toggleOverlay):
+			if m.showOverlay {
+				m.showOverlay = false
+			} else {
+				m.showOverlay = true
+				m.overlayPanel = newViewportPanel("This is a placeholder overlay content!\n\nUse arrow keys to scroll.\nPress Enter again to close.")
+				m.overlayPanel.SetSize(m.width-4, m.height-8) // Leave some margin
+			}
 		case key.Matches(msg, m.keymap.nextPanel):
-			m.focus++
-			if m.focus > len(m.panels)-1 {
-				m.focus = 0
+			if !m.showOverlay {
+				m.focus++
+				if m.focus > len(m.panels)-1 {
+					m.focus = 0
+				}
 			}
 		case key.Matches(msg, m.keymap.prevPanel):
-			m.focus--
-			if m.focus < 0 {
-				m.focus = len(m.panels) - 1
+			if !m.showOverlay {
+				m.focus--
+				if m.focus < 0 {
+					m.focus = len(m.panels) - 1
+				}
 			}
 		case key.Matches(msg, m.keymap.toggleGQLType):
-			m.incrementGQLTypeIndex(1)
+			if !m.showOverlay {
+				m.incrementGQLTypeIndex(1)
+			}
 		case key.Matches(msg, m.keymap.reverseToggleGQLType):
-			m.incrementGQLTypeIndex(-1)
+			if !m.showOverlay {
+				m.incrementGQLTypeIndex(-1)
+			}
 		}
 	case openPanelMsg:
 		m.handleOpenPanel(msg.panel)
@@ -158,18 +185,29 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.sizePanels()
 
-	// Update panels based on message type and focus
-	for i := range m.panels {
+	// Update overlay panel if shown
+	if m.showOverlay && m.overlayPanel != nil {
 		var newModel tea.Model
 		var cmd tea.Cmd
+		newModel, cmd = m.overlayPanel.Update(msg)
+		if panel, ok := newModel.(Panel); ok {
+			m.overlayPanel = panel
+		}
+		cmds = append(cmds, cmd)
+	} else {
+		// Update panels based on message type and focus
+		for i := range m.panels {
+			var newModel tea.Model
+			var cmd tea.Cmd
 
-		shouldReceiveMsg := m.shouldPanelReceiveMessage(i, msg)
-		if shouldReceiveMsg {
-			newModel, cmd = m.panels[i].Update(msg)
-			if panel, ok := newModel.(Panel); ok {
-				m.panels[i] = panel
+			shouldReceiveMsg := m.shouldPanelReceiveMessage(i, msg)
+			if shouldReceiveMsg {
+				newModel, cmd = m.panels[i].Update(msg)
+				if panel, ok := newModel.(Panel); ok {
+					m.panels[i] = panel
+				}
+				cmds = append(cmds, cmd)
 			}
-			cmds = append(cmds, cmd)
 		}
 	}
 
@@ -185,6 +223,7 @@ func (m *mainModel) shouldPanelReceiveMessage(panelIndex int, msg tea.Msg) bool 
 		if key.Matches(msg, m.keymap.nextPanel) ||
 			key.Matches(msg, m.keymap.prevPanel) ||
 			key.Matches(msg, m.keymap.quit) ||
+			key.Matches(msg, m.keymap.toggleOverlay) ||
 			key.Matches(msg, m.keymap.toggleGQLType) {
 			return false
 		}
@@ -333,13 +372,14 @@ func (m mainModel) View() string {
 		m.keymap.nextPanel,
 		m.keymap.prevPanel,
 		m.keymap.toggleGQLType,
+		m.keymap.toggleOverlay,
 		m.keymap.quit,
 	})
 
 	var views []string
 	for i := range m.panels {
 		panelView := m.panels[i].View()
-		if i == m.focus {
+		if i == m.focus && !m.showOverlay {
 			panelView = focusedBorderStyle.Render(panelView)
 		} else {
 			panelView = blurredBorderStyle.Render(panelView)
@@ -349,6 +389,35 @@ func (m mainModel) View() string {
 
 	navbar := m.renderGQLTypeNavbar()
 	panels := lipgloss.JoinHorizontal(lipgloss.Top, views...)
+	mainView := navbar + "\n" + panels + "\n\n" + help
 
-	return navbar + "\n" + panels + "\n\n" + help
+	// Show overlay if active
+	if m.showOverlay && m.overlayPanel != nil {
+		overlayContent := m.overlayPanel.View()
+		overlay := overlayStyle.Render(overlayContent)
+
+		// Center the overlay on screen
+		overlayHeight := lipgloss.Height(overlay)
+		overlayWidth := lipgloss.Width(overlay)
+
+		verticalMargin := (m.height - overlayHeight) / 2
+		horizontalMargin := (m.width - overlayWidth) / 2
+
+		if verticalMargin < 0 {
+			verticalMargin = 0
+		}
+		if horizontalMargin < 0 {
+			horizontalMargin = 0
+		}
+
+		// Position the overlay over the main view
+		positionedOverlay := lipgloss.NewStyle().
+			MarginTop(verticalMargin).
+			MarginLeft(horizontalMargin).
+			Render(overlay)
+
+		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, positionedOverlay)
+	}
+
+	return mainView
 }

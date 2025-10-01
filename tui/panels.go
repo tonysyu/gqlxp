@@ -2,6 +2,7 @@ package tui
 
 import (
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -19,6 +20,7 @@ type Panel interface {
 
 var _ Panel = (*listPanel)(nil)
 var _ Panel = (*stringPanel)(nil)
+var _ Panel = (*viewportPanel)(nil)
 
 // listPanel wraps a list.Model to implement the Panel interface
 type listPanel struct {
@@ -107,4 +109,38 @@ func (sp *stringPanel) View() string {
 func (sp *stringPanel) SetSize(width, height int) {
 	sp.width = width
 	sp.height = height
+}
+
+// viewportPanel displays content in a scrollable viewport
+type viewportPanel struct {
+	viewport viewport.Model
+	content  string
+}
+
+func newViewportPanel(content string) *viewportPanel {
+	vp := viewport.New(0, 0)
+	vp.SetContent(content)
+	return &viewportPanel{
+		viewport: vp,
+		content:  content,
+	}
+}
+
+func (vp *viewportPanel) Init() tea.Cmd {
+	return nil
+}
+
+func (vp *viewportPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	vp.viewport, cmd = vp.viewport.Update(msg)
+	return vp, cmd
+}
+
+func (vp *viewportPanel) View() string {
+	return vp.viewport.View()
+}
+
+func (vp *viewportPanel) SetSize(width, height int) {
+	vp.viewport.Width = width
+	vp.viewport.Height = height
 }
