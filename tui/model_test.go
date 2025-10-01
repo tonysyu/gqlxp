@@ -45,10 +45,10 @@ func TestNewModel(t *testing.T) {
 	is.True(firstPanel != nil)
 
 	// Test keybindings are properly set
-	is.True(model.keymap.nextPanel.Enabled())
-	is.True(model.keymap.prevPanel.Enabled())
-	is.True(model.keymap.quit.Enabled())
-	is.True(model.keymap.toggleGQLType.Enabled())
+	is.True(model.keymap.NextPanel.Enabled())
+	is.True(model.keymap.PrevPanel.Enabled())
+	is.True(model.keymap.Quit.Enabled())
+	is.True(model.keymap.ToggleGQLType.Enabled())
 }
 
 func TestModelPanelNavigation(t *testing.T) {

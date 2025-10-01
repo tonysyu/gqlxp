@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"reflect"
 	"slices"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -80,20 +81,21 @@ var (
 )
 
 type keymap = struct {
-	nextPanel, prevPanel, quit, toggleGQLType, reverseToggleGQLType, toggleOverlay key.Binding
+	NextPanel, PrevPanel, Quit, ToggleGQLType, ReverseToggleGQLType, ToggleOverlay key.Binding
 }
 
 type mainModel struct {
-	width        int
-	height       int
-	keymap       keymap
-	help         help.Model
-	panels       []Panel
-	focus        int
-	schema       gql.GraphQLSchema
-	fieldType    GQLType
-	showOverlay  bool
-	overlayPanel Panel
+	width            int
+	height           int
+	keymap           keymap
+	globalKeyBinds   []key.Binding
+	help             help.Model
+	panels           []Panel
+	focus            int
+	schema           gql.GraphQLSchema
+	fieldType        GQLType
+	showOverlay      bool
+	overlayPanel     Panel
 }
 
 func NewModel(schema gql.GraphQLSchema) mainModel {
@@ -103,32 +105,40 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 		schema:    schema,
 		fieldType: QueryType,
 		keymap: keymap{
-			nextPanel: key.NewBinding(
+			NextPanel: key.NewBinding(
 				key.WithKeys("tab"),
 				key.WithHelp("tab", "next"),
 			),
-			prevPanel: key.NewBinding(
+			PrevPanel: key.NewBinding(
 				key.WithKeys("shift+tab"),
 				key.WithHelp("shift+tab", "prev"),
 			),
-			quit: key.NewBinding(
+			Quit: key.NewBinding(
 				key.WithKeys("ctrl+c", "ctrl+d"),
 				key.WithHelp("ctrl+c", "quit"),
 			),
-			toggleGQLType: key.NewBinding(
+			ToggleGQLType: key.NewBinding(
 				key.WithKeys("ctrl+t"),
 				key.WithHelp("ctrl+t", "toggle type "),
 			),
-			reverseToggleGQLType: key.NewBinding(
+			ReverseToggleGQLType: key.NewBinding(
 				key.WithKeys("ctrl+r"),
 				key.WithHelp("ctrl+r", "reverse toggle type"),
 			),
-			toggleOverlay: key.NewBinding(
+			ToggleOverlay: key.NewBinding(
 				key.WithKeys(" "),
 				key.WithHelp("space", "overlay"),
 			),
 		},
 	}
+
+	// Build globalKeyBinds from all keymap fields using reflection
+	v := reflect.ValueOf(m.keymap)
+	m.globalKeyBinds = make([]key.Binding, v.NumField())
+	for i := 0; i < v.NumField(); i++ {
+		m.globalKeyBinds[i] = v.Field(i).Interface().(key.Binding)
+	}
+
 	m.resetAndLoadMainPanel()
 	return m
 }
@@ -143,9 +153,9 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.keymap.quit):
+		case key.Matches(msg, m.keymap.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, m.keymap.toggleOverlay):
+		case key.Matches(msg, m.keymap.ToggleOverlay):
 			if m.showOverlay {
 				m.showOverlay = false
 			} else {
@@ -153,25 +163,25 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.overlayPanel = newViewportPanel("This is a placeholder overlay content!\n\nUse arrow keys to scroll.\nPress Enter again to close.")
 				m.overlayPanel.SetSize(m.width-4, m.height-8) // Leave some margin
 			}
-		case key.Matches(msg, m.keymap.nextPanel):
+		case key.Matches(msg, m.keymap.NextPanel):
 			if !m.showOverlay {
 				m.focus++
 				if m.focus > len(m.panels)-1 {
 					m.focus = 0
 				}
 			}
-		case key.Matches(msg, m.keymap.prevPanel):
+		case key.Matches(msg, m.keymap.PrevPanel):
 			if !m.showOverlay {
 				m.focus--
 				if m.focus < 0 {
 					m.focus = len(m.panels) - 1
 				}
 			}
-		case key.Matches(msg, m.keymap.toggleGQLType):
+		case key.Matches(msg, m.keymap.ToggleGQLType):
 			if !m.showOverlay {
 				m.incrementGQLTypeIndex(1)
 			}
-		case key.Matches(msg, m.keymap.reverseToggleGQLType):
+		case key.Matches(msg, m.keymap.ReverseToggleGQLType):
 			if !m.showOverlay {
 				m.incrementGQLTypeIndex(-1)
 			}
@@ -220,12 +230,10 @@ func (m *mainModel) shouldPanelReceiveMessage(panelIndex int, msg tea.Msg) bool 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Global navigation keys handled by main model should not go to panels
-		if key.Matches(msg, m.keymap.nextPanel) ||
-			key.Matches(msg, m.keymap.prevPanel) ||
-			key.Matches(msg, m.keymap.quit) ||
-			key.Matches(msg, m.keymap.toggleOverlay) ||
-			key.Matches(msg, m.keymap.toggleGQLType) {
-			return false
+		for _, binding := range m.globalKeyBinds {
+			if key.Matches(msg, binding) {
+				return false
+			}
 		}
 		// All other key messages should only go to the focused panel
 		return panelIndex == m.focus
@@ -369,11 +377,11 @@ func (m *mainModel) renderGQLTypeNavbar() string {
 
 func (m mainModel) View() string {
 	help := m.help.ShortHelpView([]key.Binding{
-		m.keymap.nextPanel,
-		m.keymap.prevPanel,
-		m.keymap.toggleGQLType,
-		m.keymap.toggleOverlay,
-		m.keymap.quit,
+		m.keymap.NextPanel,
+		m.keymap.PrevPanel,
+		m.keymap.ToggleGQLType,
+		m.keymap.ToggleOverlay,
+		m.keymap.Quit,
 	})
 
 	var views []string
