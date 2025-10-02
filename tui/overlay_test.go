@@ -9,8 +9,7 @@ import (
 
 func showDefaultOverlay() overlayModel {
 	overlay := newOverlayModel()
-	panel := newStringPanel("test content")
-	overlay.Show(panel, 100, 50)
+	overlay.Show("test content", 100, 50)
 	return overlay
 }
 
@@ -20,7 +19,7 @@ func TestInactiveOverlay(t *testing.T) {
 
 	t.Run("NewOverlayModel initializes correctly", func(t *testing.T) {
 		is.Equal(overlay.active, false)
-		is.True(overlay.panel == nil)
+		is.Equal(overlay.content, "")
 		is.True(overlay.keymap.Close.Enabled())
 		is.True(overlay.keymap.Quit.Enabled())
 	})
@@ -38,7 +37,7 @@ func TestInactiveOverlay(t *testing.T) {
 		overlay := showDefaultOverlay()
 
 		is.Equal(overlay.active, true)
-		is.True(overlay.panel != nil)
+		is.Equal(overlay.content, "test content")
 		is.Equal(overlay.IsActive(), true)
 
 		// Test Hide
@@ -82,29 +81,23 @@ func TestInactiveOverlay(t *testing.T) {
 		is.Equal(intercepted, true)
 	})
 
-	t.Run("Panel receives update messages", func(t *testing.T) {
+	t.Run("Viewport receives update messages", func(t *testing.T) {
 		overlay := showDefaultOverlay()
 
-		initialPanel := overlay.panel
-
-		// Send a message to update panel
+		// Send a message to update viewport
 		msg := tea.KeyMsg{Type: tea.KeyDown}
 		updatedOverlay, _, intercepted := overlay.Update(msg)
 
 		is.Equal(intercepted, true)
-		is.True(updatedOverlay.panel != nil)
-		// Panel reference may or may not change depending on implementation
-		_ = initialPanel
+		is.Equal(updatedOverlay.active, true)
 	})
 
-	t.Run("Show sets panel size with margin", func(t *testing.T) {
+	t.Run("Show sets viewport size with margin", func(t *testing.T) {
 		width, height := 200, 100
 		overlay := newOverlayModel()
-		panel := newStringPanel("test content")
-		overlay.Show(panel, width, height)
+		overlay.Show("test content", width, height)
 
-		stringPanel := overlay.panel.(*stringPanel)
-		is.Equal(stringPanel.width, width-overlayPanelMargin)
-		is.Equal(stringPanel.height, height-overlayPanelMargin-helpHeight)
+		is.Equal(overlay.viewport.Width, width-overlayPanelMargin)
+		is.Equal(overlay.viewport.Height, height-overlayPanelMargin-helpHeight)
 	})
 }
