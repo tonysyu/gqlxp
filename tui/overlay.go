@@ -86,8 +86,3 @@ func (o overlayModel) View() string {
 	}
 	return o.panel.View()
 }
-
-// GetCloseBinding returns the key binding for closing the overlay
-func (o overlayModel) GetCloseBinding() key.Binding {
-	return o.keymap.Close
-}
