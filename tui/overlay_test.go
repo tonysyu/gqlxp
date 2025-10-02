@@ -103,9 +103,8 @@ func TestInactiveOverlay(t *testing.T) {
 		panel := newStringPanel("test content")
 		overlay.Show(panel, width, height)
 
-		// Panel should be sized with 8-pixel margin
 		stringPanel := overlay.panel.(*stringPanel)
-		is.Equal(stringPanel.width, width-8)
-		is.Equal(stringPanel.height, height-8)
+		is.Equal(stringPanel.width, width-overlayPanelMargin)
+		is.Equal(stringPanel.height, height-overlayPanelMargin-helpHeight)
 	})
 }

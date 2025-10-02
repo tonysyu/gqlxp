@@ -12,11 +12,13 @@ import (
 )
 
 const (
-	intialPanels = 2
-	maxPanes     = 6
-	minPanes     = 1
-	helpHeight   = 5
-	navbarHeight = 3
+	intialPanels   = 2
+	maxPanes       = 6
+	minPanes       = 1
+	helpHeight     = 5
+	navbarHeight   = 3
+	overlayPadding = 1
+	overlayMargin  = 2
 )
 
 type GQLType string
@@ -76,11 +78,11 @@ var (
 	overlayStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("238")).
-			Padding(1).
-			Margin(2)
+			Padding(overlayPadding).
+			Margin(overlayMargin)
 )
 
-var(
+var (
 	quitKeyBinding = key.NewBinding(
 		key.WithKeys("ctrl+c", "ctrl+d"),
 		key.WithHelp("ctrl+c", "quit"),

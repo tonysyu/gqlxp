@@ -6,6 +6,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// Panel inside the overlay must be inset by padding, margin, and a 1-char border on all sides.
+var overlayPanelMargin = 2 * (overlayMargin + overlayPadding + 1)
+
 // overlayModel manages overlay display and message interception
 type overlayModel struct {
 	active bool
@@ -73,7 +76,10 @@ func (o overlayModel) Update(msg tea.Msg) (overlayModel, tea.Cmd, bool) {
 // Show activates the overlay with the given panel and size
 func (o *overlayModel) Show(panel Panel, width, height int) {
 	o.panel = panel
-	o.panel.SetSize(width-8, height-8) // Leave margin for border/padding
+	o.panel.SetSize(
+		width-overlayPanelMargin,
+		height-overlayPanelMargin-helpHeight,
+	)
 	o.active = true
 }
 
