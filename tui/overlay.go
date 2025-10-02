@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -10,16 +11,23 @@ type overlayModel struct {
 	active bool
 	panel  Panel
 	keymap overlayKeymap
+	help   help.Model
 }
 
 type overlayKeymap struct {
 	Close key.Binding
-	Quit key.Binding
+	Quit  key.Binding
+}
+
+// ShortHelp returns keybindings to be shown in the mini help view.
+func (k overlayKeymap) ShortHelp() []key.Binding {
+	return []key.Binding{k.Close, k.Quit}
 }
 
 func newOverlayModel() overlayModel {
 	return overlayModel{
 		active: false,
+		help:   help.New(),
 		keymap: overlayKeymap{
 			Close: key.NewBinding(
 				key.WithKeys(" "),
@@ -79,10 +87,11 @@ func (o overlayModel) IsActive() bool {
 	return o.active
 }
 
-// View renders the overlay panel content
+// View renders the overlay panel content with help
 func (o overlayModel) View() string {
 	if !o.active || o.panel == nil {
 		return ""
 	}
-	return o.panel.View()
+	helpView := o.help.ShortHelpView(o.keymap.ShortHelp())
+	return o.panel.View() + "\n\n" + helpView
 }

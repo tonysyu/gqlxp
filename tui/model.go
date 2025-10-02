@@ -169,7 +169,15 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, m.keymap.ToggleOverlay):
-			panel := newViewportPanel("This is a placeholder overlay content!\n\nUse arrow keys to scroll.\nPress space to close.")
+			content := "No item selected"
+			if focusedPanel, ok := m.panels[m.focus].(*listPanel); ok {
+				if selectedItem := focusedPanel.Model.SelectedItem(); selectedItem != nil {
+					if listItem, ok := selectedItem.(ListItem); ok {
+						content = listItem.Title() + "\n\n" + listItem.Description()
+					}
+				}
+			}
+			panel := newViewportPanel(content)
 			m.overlay.Show(panel, m.width, m.height)
 		case key.Matches(msg, m.keymap.NextPanel):
 			m.focus++
