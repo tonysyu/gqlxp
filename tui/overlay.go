@@ -41,7 +41,6 @@ func newOverlayModel() overlayModel {
 		glamour.WithAutoStyle(),
 	)
 	// If glamour fails, renderer will be nil and we'll use plain content
-
 	model := overlayModel{
 		active:    false,
 		viewport:  vp,
@@ -102,18 +101,6 @@ func (o *overlayModel) Show(content string, width, height int) {
 
 	// Render markdown content using the shared glamour renderer
 	if o.renderer != nil && viewportWidth > 0 {
-		// Only recreate renderer if width has changed
-		if viewportWidth != o.lastWidth {
-			renderer, err := glamour.NewTermRenderer(
-				glamour.WithAutoStyle(),
-				glamour.WithWordWrap(viewportWidth),
-			)
-			if err == nil {
-				o.renderer = renderer
-				o.lastWidth = viewportWidth
-			}
-		}
-
 		// Render content with current renderer
 		rendered, err := o.renderer.Render(content)
 		if err == nil {
