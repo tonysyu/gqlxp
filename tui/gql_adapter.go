@@ -15,6 +15,9 @@ type ListItem interface {
 
 	// Open Panel to show additional information.
 	Open() (Panel, bool)
+
+	// Details returns markdown-formatted details for the item.
+	Details() string
 }
 
 // Ensure that all item types implements ListItem interface
@@ -128,6 +131,10 @@ func (i fieldItem) Description() string {
 	return gql.GetStringValue(i.gqlField.GetDescription())
 }
 
+func (i fieldItem) Details() string {
+	return "# " + i.Title() + "\n\n" + i.Description()
+}
+
 // Implement ListItem interface
 func (i fieldItem) Open() (Panel, bool) {
 	// Create list items for the detail view
@@ -205,6 +212,10 @@ func (i typeDefItem) Description() string {
 	return ""
 }
 
+func (i typeDefItem) Details() string {
+	return "# " + i.Title() + "\n\n" + i.Description()
+}
+
 // Implement ListItem interface
 func (i typeDefItem) Open() (Panel, bool) {
 	// Create list items for the detail view
@@ -241,6 +252,9 @@ type simpleItem struct {
 func (di simpleItem) Title() string       { return di.title }
 func (di simpleItem) Description() string { return di.description }
 func (di simpleItem) FilterValue() string { return di.title }
+func (di simpleItem) Details() string {
+	return "# " + di.Title() + "\n\n" + di.Description()
+}
 func (di simpleItem) Open() (Panel, bool) { return nil, false }
 
 func newSectionHeader(title string) simpleItem {

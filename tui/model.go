@@ -175,7 +175,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if focusedPanel, ok := m.panels[m.focus].(*listPanel); ok {
 				if selectedItem := focusedPanel.Model.SelectedItem(); selectedItem != nil {
 					if listItem, ok := selectedItem.(ListItem); ok {
-						content = "# " + listItem.Title() + "\n\n" + listItem.Description()
+						content = listItem.Details()
 					}
 				}
 			}
