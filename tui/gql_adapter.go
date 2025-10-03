@@ -1,7 +1,7 @@
 package tui
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/graphql-go/graphql/language/ast"
@@ -132,7 +132,12 @@ func (i fieldItem) Description() string {
 }
 
 func (i fieldItem) Details() string {
-	return "# " + i.Title() + "\n\n" + i.Description()
+	parts := []string {
+		"# " + i.Title(),
+		"```graphqls\n" + gql.GetFieldDefinitionString(i.gqlField) + "\n```",
+		i.Description(),
+	}
+	return strings.Join(parts, "\n\n")
 }
 
 // Implement ListItem interface
@@ -273,10 +278,8 @@ func newTypeItem(t ast.Type) simpleItem {
 
 func newInputValueItem(inputValue *ast.InputValueDefinition) simpleItem {
 	// TODO: Update item to support proper Open and use custom display string
-	fieldName := inputValue.Name.Value
-	fieldType := gql.GetTypeString(inputValue.Type)
 	return simpleItem{
-		title:       fmt.Sprintf("%s: %s", fieldName, fieldType),
+		title:       gql.GetInputValueDefinitionString(inputValue),
 		description: gql.GetStringValue(inputValue.Description),
 	}
 }

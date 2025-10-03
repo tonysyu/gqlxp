@@ -1,9 +1,11 @@
 package gql
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/graphql-go/graphql/language/ast"
 )
@@ -62,6 +64,27 @@ func GetTypeName[T NamedType](node T) string {
 	default:
 		return ""
 	}
+}
+
+func GetInputValueDefinitionString(inputValue *ast.InputValueDefinition) string {
+	fieldName := inputValue.Name.Value
+	fieldType := GetTypeString(inputValue.Type)
+	return fmt.Sprintf("%s: %s", fieldName, fieldType)
+}
+
+// Return string representing the `<field>: <type>` pair or signature of a field.
+func GetFieldDefinitionString(field *ast.FieldDefinition) string {
+	fieldName := field.Name.Value
+	fieldType := GetTypeString(field.Type)
+	if len(field.Arguments) > 0 {
+		var inputArgs []string
+		for _, arg := range field.Arguments {
+			inputArgs = append(inputArgs, GetInputValueDefinitionString(arg))
+		}
+		inputArgString := strings.Join(inputArgs, ", ")
+		return fieldName + "(" + inputArgString + "): " + fieldType
+	}
+	return fieldName + ": " + fieldType
 }
 
 // CollectAndSortMapValues extracts values from a map, sorts them by name, and returns a slice.
