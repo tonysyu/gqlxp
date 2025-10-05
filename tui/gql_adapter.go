@@ -8,6 +8,13 @@ import (
 	"github.com/tonysyu/igq/gql"
 )
 
+type NamedTypeDef interface {
+	ast.TypeDefinition
+	// For some reason graphql-go defines ast.TypeDefinition without GetName but all
+	// implementers should have this method.
+	GetName() *ast.Name
+}
+
 // list item that can be "opened" to provide additional information about the item.
 // The opened data is represented as a Panel instance that can be rendered to users.
 type ListItem interface {
@@ -187,33 +194,17 @@ func adaptInputValueDefinitions(inputValues []*ast.InputValueDefinition) []ListI
 
 // Adapter/delegate for ast.TypeDefinition to support ListItem interface
 type typeDefItem struct {
-	typeDef ast.TypeDefinition
+	typeDef NamedTypeDef
 }
 
-func newTypeDefItem(typeDef ast.TypeDefinition) typeDefItem {
+func newTypeDefItem(typeDef NamedTypeDef) typeDefItem {
 	return typeDefItem{
 		typeDef: typeDef,
 	}
 }
 
 func (i typeDefItem) Title() string {
-	// TODO: Can this reuse gql.GetTypeName? The fact that `i.typeDef` is the interface seems to
-	// cause problems using it directly.
-	switch typeDef := (i.typeDef).(type) {
-	case *ast.ScalarDefinition:
-		return typeDef.Name.Value
-	case *ast.ObjectDefinition:
-		return typeDef.Name.Value
-	case *ast.InterfaceDefinition:
-		return typeDef.Name.Value
-	case *ast.UnionDefinition:
-		return typeDef.Name.Value
-	case *ast.EnumDefinition:
-		return typeDef.Name.Value
-	case *ast.InputObjectDefinition:
-		return typeDef.Name.Value
-	}
-	return "UNKNOWN"
+	return i.typeDef.GetName().Value
 }
 
 func (i typeDefItem) FilterValue() string {
