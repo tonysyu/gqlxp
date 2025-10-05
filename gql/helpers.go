@@ -19,6 +19,16 @@ func GetStringValue(s *ast.StringValue) string {
 	return s.Value
 }
 
+// NamedTypeDef is a custom ast.TypeDef with GetName() method.
+//
+// For some reason graphql-go defines ast.TypeDefinition without GetName() but all
+// implementers should have this method.
+type NamedTypeDef interface {
+	ast.TypeDefinition
+	GetName() *ast.Name
+}
+
+
 // NamedType interface for types that have a Name field
 type NamedType interface {
 	*ast.FieldDefinition | *ast.ObjectDefinition | *ast.InputObjectDefinition |

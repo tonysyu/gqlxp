@@ -8,13 +8,6 @@ import (
 	"github.com/tonysyu/igq/gql"
 )
 
-type NamedTypeDef interface {
-	ast.TypeDefinition
-	// For some reason graphql-go defines ast.TypeDefinition without GetName but all
-	// implementers should have this method.
-	GetName() *ast.Name
-}
-
 // list item that can be "opened" to provide additional information about the item.
 // The opened data is represented as a Panel instance that can be rendered to users.
 type ListItem interface {
@@ -115,7 +108,7 @@ func adaptEnumValueDefinitionsToItems(enumNodes []*ast.EnumValueDefinition) []Li
 	return adaptedItems
 }
 
-func adaptFieldDefinitionsToCodeBlock(fieldNodes []*ast.FieldDefinition) string {
+func formatFieldDefinitionsToCodeBlock(fieldNodes []*ast.FieldDefinition) string {
 	if len(fieldNodes) == 0 {
 		return ""
 	}
@@ -194,10 +187,10 @@ func adaptInputValueDefinitions(inputValues []*ast.InputValueDefinition) []ListI
 
 // Adapter/delegate for ast.TypeDefinition to support ListItem interface
 type typeDefItem struct {
-	typeDef NamedTypeDef
+	typeDef gql.NamedTypeDef
 }
 
-func newTypeDefItem(typeDef NamedTypeDef) typeDefItem {
+func newTypeDefItem(typeDef gql.NamedTypeDef) typeDefItem {
 	return typeDefItem{
 		typeDef: typeDef,
 	}
@@ -236,14 +229,14 @@ func (i typeDefItem) Details() string {
 			}
 			parts = append(parts, "**Implements:** "+strings.Join(interfaceNames, ", "))
 		}
-		codeBlock := adaptFieldDefinitionsToCodeBlock(typeDef.Fields)
+		codeBlock := formatFieldDefinitionsToCodeBlock(typeDef.Fields)
 		if len(codeBlock) > 0 {
 			parts = append(parts, codeBlock)
 		}
 	case *ast.ScalarDefinition:
 		parts = append(parts, "_Scalar type_")
 	case *ast.InterfaceDefinition:
-		codeBlock := adaptFieldDefinitionsToCodeBlock(typeDef.Fields)
+		codeBlock := formatFieldDefinitionsToCodeBlock(typeDef.Fields)
 		if len(codeBlock) > 0 {
 			parts = append(parts, codeBlock)
 		}
