@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"strings"
+
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/tonysyu/igq/gql"
@@ -23,7 +25,7 @@ var _ ListItem = (*fieldItem)(nil)
 var _ ListItem = (*typeDefItem)(nil)
 var _ ListItem = (*simpleItem)(nil)
 
-func adaptFieldDefinitions(queryFields []*ast.FieldDefinition) []ListItem {
+func adaptFieldDefinitionsToItems(queryFields []*ast.FieldDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(queryFields))
 	for _, f := range queryFields {
 		adaptedItems = append(adaptedItems, newFieldDefItem(f))
@@ -31,7 +33,7 @@ func adaptFieldDefinitions(queryFields []*ast.FieldDefinition) []ListItem {
 	return adaptedItems
 }
 
-func adaptObjectDefinitions(objects []*ast.ObjectDefinition) []ListItem {
+func adaptObjectDefinitionsToItems(objects []*ast.ObjectDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(objects))
 	for _, obj := range objects {
 		adaptedItems = append(adaptedItems, newTypeDefItem(obj))
@@ -39,7 +41,7 @@ func adaptObjectDefinitions(objects []*ast.ObjectDefinition) []ListItem {
 	return adaptedItems
 }
 
-func adaptInputDefinitions(inputs []*ast.InputObjectDefinition) []ListItem {
+func adaptInputDefinitionsToItems(inputs []*ast.InputObjectDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(inputs))
 	for _, input := range inputs {
 		adaptedItems = append(adaptedItems, newTypeDefItem(input))
@@ -47,7 +49,7 @@ func adaptInputDefinitions(inputs []*ast.InputObjectDefinition) []ListItem {
 	return adaptedItems
 }
 
-func adaptEnumDefinitions(enums []*ast.EnumDefinition) []ListItem {
+func adaptEnumDefinitionsToItems(enums []*ast.EnumDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(enums))
 	for _, enum := range enums {
 		adaptedItems = append(adaptedItems, newTypeDefItem(enum))
@@ -55,7 +57,7 @@ func adaptEnumDefinitions(enums []*ast.EnumDefinition) []ListItem {
 	return adaptedItems
 }
 
-func adaptScalarDefinitions(scalars []*ast.ScalarDefinition) []ListItem {
+func adaptScalarDefinitionsToItems(scalars []*ast.ScalarDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(scalars))
 	for _, scalar := range scalars {
 		adaptedItems = append(adaptedItems, newTypeDefItem(scalar))
@@ -63,7 +65,7 @@ func adaptScalarDefinitions(scalars []*ast.ScalarDefinition) []ListItem {
 	return adaptedItems
 }
 
-func adaptInterfaceDefinitions(interfaces []*ast.InterfaceDefinition) []ListItem {
+func adaptInterfaceDefinitionsToItems(interfaces []*ast.InterfaceDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(interfaces))
 	for _, iface := range interfaces {
 		adaptedItems = append(adaptedItems, newTypeDefItem(iface))
@@ -71,7 +73,7 @@ func adaptInterfaceDefinitions(interfaces []*ast.InterfaceDefinition) []ListItem
 	return adaptedItems
 }
 
-func adaptUnionDefinitions(unions []*ast.UnionDefinition) []ListItem {
+func adaptUnionDefinitionsToItems(unions []*ast.UnionDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(unions))
 	for _, union := range unions {
 		adaptedItems = append(adaptedItems, newTypeDefItem(union))
@@ -79,7 +81,7 @@ func adaptUnionDefinitions(unions []*ast.UnionDefinition) []ListItem {
 	return adaptedItems
 }
 
-func adaptDirectiveDefinitions(directives []*ast.DirectiveDefinition) []ListItem {
+func adaptDirectiveDefinitionsToItems(directives []*ast.DirectiveDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(directives))
 	for _, directive := range directives {
 		adaptedItems = append(adaptedItems, newDirectiveDefinitionItem(directive))
@@ -95,7 +97,7 @@ func adaptNamedItems(namedNodes []*ast.Named) []ListItem {
 	return adaptedItems
 }
 
-func adaptEnumValueDefinitions(enumNodes []*ast.EnumValueDefinition) []ListItem {
+func adaptEnumValueDefinitionsToItems(enumNodes []*ast.EnumValueDefinition) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(enumNodes))
 	for _, node := range enumNodes {
 		adaptedItems = append(adaptedItems, simpleItem{
@@ -104,6 +106,17 @@ func adaptEnumValueDefinitions(enumNodes []*ast.EnumValueDefinition) []ListItem 
 		})
 	}
 	return adaptedItems
+}
+
+func adaptFieldDefinitionsToCodeBlock(fieldNodes []*ast.FieldDefinition) string {
+	if len(fieldNodes) == 0 {
+		return ""
+	}
+	var fields []string
+	for _, field := range fieldNodes {
+		fields = append(fields, gql.GetFieldDefinitionString(field))
+	}
+	return gqlCode(joinLines(fields...))
 }
 
 // Adapter/delegate for ast.FieldDefinition to support ListItem interface
@@ -215,7 +228,61 @@ func (i typeDefItem) Description() string {
 }
 
 func (i typeDefItem) Details() string {
-	return joinParagraphs(h1(i.Title()), i.Description())
+	parts := []string{h1(i.Title())}
+
+	// Add description if available
+	if desc := i.Description(); desc != "" {
+		parts = append(parts, desc)
+	}
+
+	// Add type-specific details
+	switch typeDef := (i.typeDef).(type) {
+	case *ast.ObjectDefinition:
+		if len(typeDef.Interfaces) > 0 {
+			interfaceNames := make([]string, len(typeDef.Interfaces))
+			for i, iface := range typeDef.Interfaces {
+				interfaceNames[i] = iface.Name.Value
+			}
+			parts = append(parts, "**Implements:** "+strings.Join(interfaceNames, ", "))
+		}
+		codeBlock := adaptFieldDefinitionsToCodeBlock(typeDef.Fields)
+		if len(codeBlock) > 0 {
+			parts = append(parts, codeBlock)
+		}
+	case *ast.ScalarDefinition:
+		parts = append(parts, "_Scalar type_")
+	case *ast.InterfaceDefinition:
+		codeBlock := adaptFieldDefinitionsToCodeBlock(typeDef.Fields)
+		if len(codeBlock) > 0 {
+			parts = append(parts, codeBlock)
+		}
+	case *ast.UnionDefinition:
+		if len(typeDef.Types) > 0 {
+			typeNames := make([]string, len(typeDef.Types))
+			for i, t := range typeDef.Types {
+				typeNames[i] = t.Name.Value
+			}
+			parts = append(parts, "**Union of:** "+strings.Join(typeNames, " | "))
+		}
+	case *ast.EnumDefinition:
+		if len(typeDef.Values) > 0 {
+			var values []string
+			for _, val := range typeDef.Values {
+				values = append(values, val.Name.Value)
+			}
+			parts = append(parts, gqlCode(joinLines(values...)))
+		}
+	case *ast.InputObjectDefinition:
+		if len(typeDef.Fields) > 0 {
+			var fields []string
+			for _, field := range typeDef.Fields {
+				fields = append(fields, gql.GetInputValueDefinitionString(field))
+			}
+			parts = append(parts, gqlCode(joinLines(fields...)))
+		}
+	}
+
+	return joinParagraphs(parts...)
 }
 
 // Implement ListItem interface
@@ -230,15 +297,15 @@ func (i typeDefItem) Open() (Panel, bool) {
 
 	switch typeDef := (i.typeDef).(type) {
 	case *ast.ObjectDefinition:
-		detailItems = append(detailItems, adaptFieldDefinitions(typeDef.Fields)...)
+		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields)...)
 	case *ast.ScalarDefinition:
 		// No details needed
 	case *ast.InterfaceDefinition:
-		detailItems = append(detailItems, adaptFieldDefinitions(typeDef.Fields)...)
+		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields)...)
 	case *ast.UnionDefinition:
 		detailItems = append(detailItems, adaptNamedItems(typeDef.Types)...)
 	case *ast.EnumDefinition:
-		detailItems = append(detailItems, adaptEnumValueDefinitions(typeDef.Values)...)
+		detailItems = append(detailItems, adaptEnumValueDefinitionsToItems(typeDef.Values)...)
 	case *ast.InputObjectDefinition:
 		detailItems = append(detailItems, adaptInputValueDefinitions(typeDef.Fields)...)
 	}
@@ -255,7 +322,10 @@ func (di simpleItem) Title() string       { return di.title }
 func (di simpleItem) Description() string { return di.description }
 func (di simpleItem) FilterValue() string { return di.title }
 func (di simpleItem) Details() string {
-	return joinParagraphs(h1(di.Title()), di.Description())
+	if di.description != "" {
+		return joinParagraphs(h1(di.Title()), di.Description())
+	}
+	return h1(di.Title())
 }
 func (di simpleItem) Open() (Panel, bool) { return nil, false }
 

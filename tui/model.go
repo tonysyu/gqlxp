@@ -141,7 +141,7 @@ func NewModel(schema gql.GraphQLSchema) mainModel {
 	// Build globalKeyBinds from all keymap fields using reflection
 	v := reflect.ValueOf(m.keymap)
 	m.globalKeyBinds = make([]key.Binding, v.NumField())
-	for i := 0; i < v.NumField(); i++ {
+	for i := range v.NumField() {
 		m.globalKeyBinds[i] = v.Field(i).Interface().(key.Binding)
 	}
 
@@ -293,31 +293,31 @@ func (m *mainModel) loadMainPanel() {
 
 	switch m.fieldType {
 	case QueryType:
-		items = adaptFieldDefinitions(gql.CollectAndSortMapValues(m.schema.Query))
+		items = adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Query))
 		title = "Query Fields"
 	case MutationType:
-		items = adaptFieldDefinitions(gql.CollectAndSortMapValues(m.schema.Mutation))
+		items = adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Mutation))
 		title = "Mutation Fields"
 	case ObjectType:
-		items = adaptObjectDefinitions(gql.CollectAndSortMapValues(m.schema.Object))
+		items = adaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Object))
 		title = "Object Types"
 	case InputType:
-		items = adaptInputDefinitions(gql.CollectAndSortMapValues(m.schema.Input))
+		items = adaptInputDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Input))
 		title = "Input Types"
 	case EnumType:
-		items = adaptEnumDefinitions(gql.CollectAndSortMapValues(m.schema.Enum))
+		items = adaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Enum))
 		title = "Enum Types"
 	case ScalarType:
-		items = adaptScalarDefinitions(gql.CollectAndSortMapValues(m.schema.Scalar))
+		items = adaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Scalar))
 		title = "Scalar Types"
 	case InterfaceType:
-		items = adaptInterfaceDefinitions(gql.CollectAndSortMapValues(m.schema.Interface))
+		items = adaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Interface))
 		title = "Interface Types"
 	case UnionType:
-		items = adaptUnionDefinitions(gql.CollectAndSortMapValues(m.schema.Union))
+		items = adaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Union))
 		title = "Union Types"
 	case DirectiveType:
-		items = adaptDirectiveDefinitions(gql.CollectAndSortMapValues(m.schema.Directive))
+		items = adaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Directive))
 		title = "Directive Types"
 	}
 
