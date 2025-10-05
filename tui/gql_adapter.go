@@ -1,8 +1,6 @@
 package tui
 
 import (
-	"strings"
-
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/tonysyu/igq/gql"
@@ -132,12 +130,11 @@ func (i fieldItem) Description() string {
 }
 
 func (i fieldItem) Details() string {
-	parts := []string {
-		"# " + i.Title(),
-		"```graphqls\n" + gql.GetFieldDefinitionString(i.gqlField) + "\n```",
+	return joinParagraphs(
+		h1(i.Title()),
+		gqlCode(gql.GetFieldDefinitionString(i.gqlField)),
 		i.Description(),
-	}
-	return strings.Join(parts, "\n\n")
+	)
 }
 
 // Implement ListItem interface
@@ -218,7 +215,7 @@ func (i typeDefItem) Description() string {
 }
 
 func (i typeDefItem) Details() string {
-	return "# " + i.Title() + "\n\n" + i.Description()
+	return joinParagraphs(h1(i.Title()), i.Description())
 }
 
 // Implement ListItem interface
@@ -258,7 +255,7 @@ func (di simpleItem) Title() string       { return di.title }
 func (di simpleItem) Description() string { return di.description }
 func (di simpleItem) FilterValue() string { return di.title }
 func (di simpleItem) Details() string {
-	return "# " + di.Title() + "\n\n" + di.Description()
+	return joinParagraphs(h1(di.Title()), di.Description())
 }
 func (di simpleItem) Open() (Panel, bool) { return nil, false }
 
