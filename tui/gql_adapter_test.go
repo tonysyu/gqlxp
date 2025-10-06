@@ -56,7 +56,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 
 	t.Run("Query field with no arguments shows description and result type", func(t *testing.T) {
 		field := schema.Query["getAllPosts"]
-		item := newFieldDefItem(field)
+		item := newFieldDefItem(field, &schema)
 		panel, _ := item.Open()
 
 		// Set a reasonable size for testing
@@ -77,7 +77,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 
 	t.Run("Query field with arguments shows all sections", func(t *testing.T) {
 		field := schema.Query["getPostById"]
-		item := newFieldDefItem(field)
+		item := newFieldDefItem(field, &schema)
 		panel, _ := item.Open()
 
 		// Set a reasonable size for testing
@@ -98,7 +98,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 
 	t.Run("Mutation field with multiple arguments shows all sections", func(t *testing.T) {
 		field := schema.Mutation["createPost"]
-		item := newFieldDefItem(field)
+		item := newFieldDefItem(field, &schema)
 		panel, _ := item.Open()
 
 		// Set a reasonable size for testing
@@ -136,7 +136,7 @@ func TestObjectDefinitionItemOpenPanel(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	userObj := schema.Object["User"]
-	item := newTypeDefItem(userObj)
+	item := newTypeDefItem(userObj, &schema)
 	panel, ok := item.Open()
 
 	is.True(ok)
@@ -166,7 +166,7 @@ func TestInputDefinitionItemOpenPanel(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	inputObj := schema.Input["CreateUserInput"]
-	item := newTypeDefItem(inputObj)
+	item := newTypeDefItem(inputObj, &schema)
 	panel, ok := item.Open()
 
 	is.True(ok)
@@ -193,7 +193,7 @@ func TestEnumDefinitionItemOpenPanel(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	enumObj := schema.Enum["Status"]
-	item := newTypeDefItem(enumObj)
+	item := newTypeDefItem(enumObj, &schema)
 	panel, ok := item.Open()
 
 	is.True(ok)
@@ -214,7 +214,7 @@ func TestScalarDefinitionItemOpenPanel(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	scalarObj := schema.Scalar["Date"]
-	item := newTypeDefItem(scalarObj)
+	item := newTypeDefItem(scalarObj, &schema)
 	panel, ok := item.Open()
 
 	is.True(ok)
@@ -238,7 +238,7 @@ func TestInterfaceDefinitionItemOpenPanel(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	interfaceObj := schema.Interface["Node"]
-	item := newTypeDefItem(interfaceObj)
+	item := newTypeDefItem(interfaceObj, &schema)
 	panel, ok := item.Open()
 
 	is.True(ok)
@@ -270,7 +270,7 @@ func TestUnionDefinitionItemOpenPanel(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	unionObj := schema.Union["SearchResult"]
-	item := newTypeDefItem(unionObj)
+	item := newTypeDefItem(unionObj, &schema)
 	panel, ok := item.Open()
 
 	is.True(ok)
@@ -294,7 +294,7 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	field := schema.Query["simpleField"]
-	item := newFieldDefItem(field)
+	item := newFieldDefItem(field, &schema)
 
 	is.Equal(item.Title(), "simpleField")
 	is.Equal(item.Description(), "") // No description
@@ -338,7 +338,7 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	field := schema.Query["complexField"]
-	item := newFieldDefItem(field)
+	item := newFieldDefItem(field, &schema)
 	panel, ok := item.Open()
 
 	is.True(ok)
@@ -399,28 +399,28 @@ func TestAdapterFunctions(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	// Test all adapter functions
-	queryItems := adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(schema.Query))
+	queryItems := adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(schema.Query), &schema)
 	is.Equal(len(queryItems), 1)
 
-	mutationItems := adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(schema.Mutation))
+	mutationItems := adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(schema.Mutation), &schema)
 	is.Equal(len(mutationItems), 1)
 
-	objectItems := adaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(schema.Object))
+	objectItems := adaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(schema.Object), &schema)
 	is.Equal(len(objectItems), 1)
 
-	inputItems := adaptInputDefinitionsToItems(gql.CollectAndSortMapValues(schema.Input))
+	inputItems := adaptInputDefinitionsToItems(gql.CollectAndSortMapValues(schema.Input), &schema)
 	is.Equal(len(inputItems), 1)
 
-	enumItems := adaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(schema.Enum))
+	enumItems := adaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(schema.Enum), &schema)
 	is.Equal(len(enumItems), 1)
 
-	scalarItems := adaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(schema.Scalar))
+	scalarItems := adaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(schema.Scalar), &schema)
 	is.Equal(len(scalarItems), 1)
 
-	interfaceItems := adaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(schema.Interface))
+	interfaceItems := adaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(schema.Interface), &schema)
 	is.Equal(len(interfaceItems), 1)
 
-	unionItems := adaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(schema.Union))
+	unionItems := adaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(schema.Union), &schema)
 	is.Equal(len(unionItems), 1)
 
 	directiveItems := adaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(schema.Directive))
@@ -431,25 +431,25 @@ func TestEmptyAdapterInputs(t *testing.T) {
 	is := is.New(t)
 
 	// Test adapters with empty inputs
-	emptyFieldItems := adaptFieldDefinitionsToItems([]*ast.FieldDefinition{})
+	emptyFieldItems := adaptFieldDefinitionsToItems([]*ast.FieldDefinition{}, nil)
 	is.Equal(len(emptyFieldItems), 0)
 
-	emptyObjectItems := adaptObjectDefinitionsToItems([]*ast.ObjectDefinition{})
+	emptyObjectItems := adaptObjectDefinitionsToItems([]*ast.ObjectDefinition{}, nil)
 	is.Equal(len(emptyObjectItems), 0)
 
-	emptyInputItems := adaptInputDefinitionsToItems([]*ast.InputObjectDefinition{})
+	emptyInputItems := adaptInputDefinitionsToItems([]*ast.InputObjectDefinition{}, nil)
 	is.Equal(len(emptyInputItems), 0)
 
-	emptyEnumItems := adaptEnumDefinitionsToItems([]*ast.EnumDefinition{})
+	emptyEnumItems := adaptEnumDefinitionsToItems([]*ast.EnumDefinition{}, nil)
 	is.Equal(len(emptyEnumItems), 0)
 
-	emptyScalarItems := adaptScalarDefinitionsToItems([]*ast.ScalarDefinition{})
+	emptyScalarItems := adaptScalarDefinitionsToItems([]*ast.ScalarDefinition{}, nil)
 	is.Equal(len(emptyScalarItems), 0)
 
-	emptyInterfaceItems := adaptInterfaceDefinitionsToItems([]*ast.InterfaceDefinition{})
+	emptyInterfaceItems := adaptInterfaceDefinitionsToItems([]*ast.InterfaceDefinition{}, nil)
 	is.Equal(len(emptyInterfaceItems), 0)
 
-	emptyUnionItems := adaptUnionDefinitionsToItems([]*ast.UnionDefinition{})
+	emptyUnionItems := adaptUnionDefinitionsToItems([]*ast.UnionDefinition{}, nil)
 	is.Equal(len(emptyUnionItems), 0)
 
 	emptyDirectiveItems := adaptDirectiveDefinitionsToItems([]*ast.DirectiveDefinition{})

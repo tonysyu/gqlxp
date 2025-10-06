@@ -407,3 +407,163 @@ func TestParseLargeSchema(t *testing.T) {
 	is.Equal(len(schema.Mutation), 50)
 	is.Equal(len(schema.Object), 20)
 }
+
+func TestNamedToTypeDefinition(t *testing.T) {
+	is := is.New(t)
+
+	schemaString := `
+		enum Status {
+		  ACTIVE
+		}
+
+		scalar Date
+
+		input CreateUserInput {
+		  name: String!
+		}
+
+		interface Node {
+		  id: ID!
+		}
+
+		union SearchResult = User | Post
+
+		directive @deprecated(reason: String) on FIELD_DEFINITION
+
+		type User {
+		  id: ID!
+		  name: String!
+		}
+
+		type Post {
+		  id: ID!
+		  title: String!
+		}
+
+		type Query {
+		  getUser: User
+		}
+
+		type Mutation {
+		  createUser: User
+		}
+	`
+
+	schema, _ := ParseSchema([]byte(schemaString))
+
+	successTests := []struct {
+		name           string
+		typeName       string
+		validateResult func(result ast.Node)
+	}{
+		{
+			name:     "resolves Object type correctly",
+			typeName: "User",
+			validateResult: func(result ast.Node) {
+				objectDef, ok := result.(*ast.ObjectDefinition)
+				is.True(ok)
+				is.Equal(objectDef.Name.Value, "User")
+			},
+		},
+		{
+			name:     "resolves Input type correctly",
+			typeName: "CreateUserInput",
+			validateResult: func(result ast.Node) {
+				inputDef, ok := result.(*ast.InputObjectDefinition)
+				is.True(ok)
+				is.Equal(inputDef.Name.Value, "CreateUserInput")
+			},
+		},
+		{
+			name:     "resolves Enum type correctly",
+			typeName: "Status",
+			validateResult: func(result ast.Node) {
+				enumDef, ok := result.(*ast.EnumDefinition)
+				is.True(ok)
+				is.Equal(enumDef.Name.Value, "Status")
+			},
+		},
+		{
+			name:     "resolves Scalar type correctly",
+			typeName: "Date",
+			validateResult: func(result ast.Node) {
+				scalarDef, ok := result.(*ast.ScalarDefinition)
+				is.True(ok)
+				is.Equal(scalarDef.Name.Value, "Date")
+			},
+		},
+		{
+			name:     "resolves Interface type correctly",
+			typeName: "Node",
+			validateResult: func(result ast.Node) {
+				interfaceDef, ok := result.(*ast.InterfaceDefinition)
+				is.True(ok)
+				is.Equal(interfaceDef.Name.Value, "Node")
+			},
+		},
+		{
+			name:     "resolves Union type correctly",
+			typeName: "SearchResult",
+			validateResult: func(result ast.Node) {
+				unionDef, ok := result.(*ast.UnionDefinition)
+				is.True(ok)
+				is.Equal(unionDef.Name.Value, "SearchResult")
+			},
+		},
+	}
+
+	for _, tt := range successTests {
+		t.Run(tt.name, func(t *testing.T) {
+			named := &ast.Named{Name: &ast.Name{Value: tt.typeName}}
+			result, err := schema.NamedToTypeDefinition(named)
+
+			is.NoErr(err)
+			is.True(result != nil)
+			tt.validateResult(result)
+		})
+	}
+
+	errorTests := []struct {
+		name     string
+		typeName *string
+	}{
+		{
+			name:     "returns err for Query type",
+			typeName: stringPtr("Query"),
+		},
+		{
+			name:     "returns err for Mutation type",
+			typeName: stringPtr("Mutation"),
+		},
+		{
+			name:     "returns err for Directive type",
+			typeName: stringPtr("deprecated"),
+		},
+		{
+			name:     "returns err for non-existent type",
+			typeName: stringPtr("NonExistent"),
+		},
+		{
+			name:     "returns err for nil input",
+			typeName: nil,
+		},
+	}
+
+	for _, tt := range errorTests {
+		t.Run(tt.name, func(t *testing.T) {
+			var named *ast.Named
+			if tt.typeName != nil {
+				named = &ast.Named{Name: &ast.Name{Value: *tt.typeName}}
+			}
+
+			result, err := schema.NamedToTypeDefinition(named)
+
+			is.True(err != nil)
+			is.True(result == nil)
+		})
+	}
+}
+
+func stringPtr(s string) *string {
+	return &s
+}

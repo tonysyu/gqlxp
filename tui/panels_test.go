@@ -118,7 +118,7 @@ func TestListPanelSelectionChange(t *testing.T) {
 	`))
 
 	fields := gql.CollectAndSortMapValues(schema.Query)
-	items := adaptFieldDefinitionsToItems(fields)
+	items := adaptFieldDefinitionsToItems(fields, &schema)
 	panel := newListPanel(items, "Test Panel")
 
 	// Simulate key down to change selection
@@ -139,7 +139,7 @@ func TestListPanelAutoOpen(t *testing.T) {
 	`))
 
 	fields := gql.CollectAndSortMapValues(schema.Query)
-	items := adaptFieldDefinitionsToItems(fields)
+	items := adaptFieldDefinitionsToItems(fields, &schema)
 	panel := newListPanel(items, "Test Panel")
 
 	// Ensure we have an item that can be opened

@@ -50,6 +50,20 @@ func GetTypeString(t ast.Type) string {
 	}
 }
 
+// GetTypeString converts ast.Type to string representation
+func GetNamedFromType(t ast.Type) *ast.Named {
+	switch typ := t.(type) {
+	case *ast.Named:
+		return typ
+	case *ast.List:
+		return GetNamedFromType(typ.Type)
+	case *ast.NonNull:
+		return GetNamedFromType(typ.Type)
+	default:
+		return nil
+	}
+}
+
 // GetTypeName extracts the name from various AST node types.
 func GetTypeName[T NamedType](node T) string {
 	// All these GraphQL types have `Name` attributes, but this isn't exposed in any shared

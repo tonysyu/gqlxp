@@ -25,58 +25,58 @@ var _ ListItem = (*fieldItem)(nil)
 var _ ListItem = (*typeDefItem)(nil)
 var _ ListItem = (*simpleItem)(nil)
 
-func adaptFieldDefinitionsToItems(queryFields []*ast.FieldDefinition) []ListItem {
+func adaptFieldDefinitionsToItems(queryFields []*ast.FieldDefinition, schema *gql.GraphQLSchema) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(queryFields))
 	for _, f := range queryFields {
-		adaptedItems = append(adaptedItems, newFieldDefItem(f))
+		adaptedItems = append(adaptedItems, newFieldDefItem(f, schema))
 	}
 	return adaptedItems
 }
 
-func adaptObjectDefinitionsToItems(objects []*ast.ObjectDefinition) []ListItem {
+func adaptObjectDefinitionsToItems(objects []*ast.ObjectDefinition, schema *gql.GraphQLSchema) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(objects))
 	for _, obj := range objects {
-		adaptedItems = append(adaptedItems, newTypeDefItem(obj))
+		adaptedItems = append(adaptedItems, newTypeDefItem(obj, schema))
 	}
 	return adaptedItems
 }
 
-func adaptInputDefinitionsToItems(inputs []*ast.InputObjectDefinition) []ListItem {
+func adaptInputDefinitionsToItems(inputs []*ast.InputObjectDefinition, schema *gql.GraphQLSchema) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(inputs))
 	for _, input := range inputs {
-		adaptedItems = append(adaptedItems, newTypeDefItem(input))
+		adaptedItems = append(adaptedItems, newTypeDefItem(input, schema))
 	}
 	return adaptedItems
 }
 
-func adaptEnumDefinitionsToItems(enums []*ast.EnumDefinition) []ListItem {
+func adaptEnumDefinitionsToItems(enums []*ast.EnumDefinition, schema *gql.GraphQLSchema) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(enums))
 	for _, enum := range enums {
-		adaptedItems = append(adaptedItems, newTypeDefItem(enum))
+		adaptedItems = append(adaptedItems, newTypeDefItem(enum, schema))
 	}
 	return adaptedItems
 }
 
-func adaptScalarDefinitionsToItems(scalars []*ast.ScalarDefinition) []ListItem {
+func adaptScalarDefinitionsToItems(scalars []*ast.ScalarDefinition, schema *gql.GraphQLSchema) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(scalars))
 	for _, scalar := range scalars {
-		adaptedItems = append(adaptedItems, newTypeDefItem(scalar))
+		adaptedItems = append(adaptedItems, newTypeDefItem(scalar, schema))
 	}
 	return adaptedItems
 }
 
-func adaptInterfaceDefinitionsToItems(interfaces []*ast.InterfaceDefinition) []ListItem {
+func adaptInterfaceDefinitionsToItems(interfaces []*ast.InterfaceDefinition, schema *gql.GraphQLSchema) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(interfaces))
 	for _, iface := range interfaces {
-		adaptedItems = append(adaptedItems, newTypeDefItem(iface))
+		adaptedItems = append(adaptedItems, newTypeDefItem(iface, schema))
 	}
 	return adaptedItems
 }
 
-func adaptUnionDefinitionsToItems(unions []*ast.UnionDefinition) []ListItem {
+func adaptUnionDefinitionsToItems(unions []*ast.UnionDefinition, schema *gql.GraphQLSchema) []ListItem {
 	adaptedItems := make([]ListItem, 0, len(unions))
 	for _, union := range unions {
-		adaptedItems = append(adaptedItems, newTypeDefItem(union))
+		adaptedItems = append(adaptedItems, newTypeDefItem(union, schema))
 	}
 	return adaptedItems
 }
@@ -122,11 +122,13 @@ func formatFieldDefinitionsToCodeBlock(fieldNodes []*ast.FieldDefinition) string
 // Adapter/delegate for ast.FieldDefinition to support ListItem interface
 type fieldItem struct {
 	gqlField *ast.FieldDefinition
+	schema   *gql.GraphQLSchema
 }
 
-func newFieldDefItem(gqlField *ast.FieldDefinition) ListItem {
+func newFieldDefItem(gqlField *ast.FieldDefinition, schema *gql.GraphQLSchema) ListItem {
 	return fieldItem{
 		gqlField: gqlField,
+		schema:   schema,
 	}
 }
 
@@ -168,7 +170,15 @@ func (i fieldItem) Open() (Panel, bool) {
 
 	// Add result type section
 	detailItems = append(detailItems, newSectionHeader("Result Type"))
+	// TODO: Use NamedToTypeDefinition and newTypeDefItem
+	// resultType, err := i.schema.NamedToTypeDefinition(gql.GetNamedFromType(i.gqlField.Type))
+	// if err != nil {
+	// 	detailItems = append(detailItems, newTypeItem(i.gqlField.Type))
+	// } else {
+	// 	detailItems = append(detailItems, newTypeDefItem(resultType, i.schema))
+	// }
 	detailItems = append(detailItems, newTypeItem(i.gqlField.Type))
+	// detailItems = append(detailItems, newTypeItem(i.gqlField.Type))
 	return newListPanel(detailItems, i.Title()), true
 }
 
@@ -188,11 +198,13 @@ func adaptInputValueDefinitions(inputValues []*ast.InputValueDefinition) []ListI
 // Adapter/delegate for ast.TypeDefinition to support ListItem interface
 type typeDefItem struct {
 	typeDef gql.NamedTypeDef
+	schema  *gql.GraphQLSchema
 }
 
-func newTypeDefItem(typeDef gql.NamedTypeDef) typeDefItem {
+func newTypeDefItem(typeDef gql.NamedTypeDef, schema *gql.GraphQLSchema) typeDefItem {
 	return typeDefItem{
 		typeDef: typeDef,
+		schema:  schema,
 	}
 }
 
@@ -281,11 +293,11 @@ func (i typeDefItem) Open() (Panel, bool) {
 
 	switch typeDef := (i.typeDef).(type) {
 	case *ast.ObjectDefinition:
-		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields)...)
+		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields, i.schema)...)
 	case *ast.ScalarDefinition:
 		// No details needed
 	case *ast.InterfaceDefinition:
-		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields)...)
+		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields, i.schema)...)
 	case *ast.UnionDefinition:
 		detailItems = append(detailItems, adaptNamedItems(typeDef.Types)...)
 	case *ast.EnumDefinition:

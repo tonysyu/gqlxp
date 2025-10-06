@@ -293,28 +293,28 @@ func (m *mainModel) loadMainPanel() {
 
 	switch m.fieldType {
 	case QueryType:
-		items = adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Query))
+		items = adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Query), &m.schema)
 		title = "Query Fields"
 	case MutationType:
-		items = adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Mutation))
+		items = adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Mutation), &m.schema)
 		title = "Mutation Fields"
 	case ObjectType:
-		items = adaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Object))
+		items = adaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Object), &m.schema)
 		title = "Object Types"
 	case InputType:
-		items = adaptInputDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Input))
+		items = adaptInputDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Input), &m.schema)
 		title = "Input Types"
 	case EnumType:
-		items = adaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Enum))
+		items = adaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Enum), &m.schema)
 		title = "Enum Types"
 	case ScalarType:
-		items = adaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Scalar))
+		items = adaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Scalar), &m.schema)
 		title = "Scalar Types"
 	case InterfaceType:
-		items = adaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Interface))
+		items = adaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Interface), &m.schema)
 		title = "Interface Types"
 	case UnionType:
-		items = adaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Union))
+		items = adaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Union), &m.schema)
 		title = "Union Types"
 	case DirectiveType:
 		items = adaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Directive))
