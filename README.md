@@ -25,3 +25,4 @@ $ just run {{PATH_TO_GRAPHQL_SCHEMA_FILE}}
 - [Documentation Index](docs/index.md)
     - [Development Commands](docs/development.md)
     - [Architecture](docs/architecture.md)
+    - [Coding Best Practices](docs/coding.md)

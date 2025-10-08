@@ -16,7 +16,7 @@ var _ Panel = (*stringPanel)(nil)
 
 // ListPanel wraps a list.Model to implement the Panel interface
 type ListPanel struct {
-	list.Model
+	model             list.Model
 	lastSelectedIndex int // Track the last selected index to detect changes
 }
 
@@ -29,7 +29,7 @@ func NewListPanel[T list.Item](choices []T, title string) *ListPanel {
 	m.DisableQuitKeybindings()
 	m.Title = title
 	return &ListPanel{
-		Model:             m,
+		model:             m,
 		lastSelectedIndex: -1, // Initialize to -1 to trigger opening on first selection
 	}
 }
@@ -42,13 +42,13 @@ func (lp *ListPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	// Update the list model first
-	lp.Model, cmd = lp.Model.Update(msg)
+	lp.model, cmd = lp.model.Update(msg)
 
 	// Check if selection has changed and auto-open detail panel
-	currentIndex := lp.Model.Index()
+	currentIndex := lp.model.Index()
 	if currentIndex != lp.lastSelectedIndex && currentIndex >= 0 {
 		lp.lastSelectedIndex = currentIndex
-		if selectedItem := lp.Model.SelectedItem(); selectedItem != nil {
+		if selectedItem := lp.model.SelectedItem(); selectedItem != nil {
 			if listItem, ok := selectedItem.(ListItem); ok {
 				if newPanel, ok := listItem.Open(); ok {
 					return lp, tea.Batch(cmd, func() tea.Msg {
@@ -63,12 +63,32 @@ func (lp *ListPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (lp *ListPanel) SetSize(width, height int) {
-	lp.Model.SetWidth(width)
-	lp.Model.SetHeight(height)
+	lp.model.SetWidth(width)
+	lp.model.SetHeight(height)
 }
 
 func (lp *ListPanel) SetTitle(title string) {
-	lp.Model.Title = title
+	lp.model.Title = title
+}
+
+// SelectedItem returns the currently selected item in the list
+func (lp *ListPanel) SelectedItem() list.Item {
+	return lp.model.SelectedItem()
+}
+
+// Title returns the title of the list panel
+func (lp *ListPanel) Title() string {
+	return lp.model.Title
+}
+
+// Items returns the items in the list
+func (lp *ListPanel) Items() []list.Item {
+	return lp.model.Items()
+}
+
+// View renders the list panel
+func (lp *ListPanel) View() string {
+	return lp.model.View()
 }
 
 // stringPanel displays a simple string content

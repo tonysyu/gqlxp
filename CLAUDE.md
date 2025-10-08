@@ -10,6 +10,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **CLAUDE.md is exclusively for AI instructions and should NOT contain user/developer documentation.**
 
+**When creating new documentation files:**
+- Add entry to `docs/index.md` under "Available Documentation"
+- Add entry to `README.md` under "Developer Documentation"
+
 ## DOCUMENTATION CONSISTENCY RULE
 
 **When discovering inconsistencies between code and documentation:**
@@ -33,12 +37,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## DOCUMENTATION STYLE RULE
 
-**Keep documentation concise and avoid repetition:**
-- Write clear, focused content that gets to the point quickly
-- Eliminate redundant information between sections and files
-- Maintain readability while prioritizing brevity
-- Use cross-references instead of duplicating content
-- Avoid referencing specific code locations (file:line) in documentation to prevent maintenance overhead
+**Keep documentation concise.** Prioritize brevity over completeness.
+
+- Get to the point in 1-2 sentences when possible
+- Eliminate examples, benefits lists, and redundant explanations
+- Use bullet points, not paragraphs
+- Cross-reference instead of duplicating content
+- Avoid referencing specific code locations (file:line)
 
 ## Project Information
 

@@ -9,6 +9,7 @@ This directory contains technical documentation for the `igq` GraphQL query expl
 - **[Architecture](architecture.md)**: Package structure, interfaces, navigation flow, and feature documentation
   - Query and Mutation type support
   - Interactive field type toggling (Ctrl+T)
+- **[Coding Best Practices](coding.md)**: Code organization, visibility guidelines, and testing practices
 
 ## Additional Resources
 

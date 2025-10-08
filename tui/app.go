@@ -6,6 +6,6 @@ import (
 )
 
 func Start(schema gql.GraphQLSchema) (tea.Model, error) {
-	p := tea.NewProgram(NewModel(schema))
+	p := tea.NewProgram(newModel(schema))
 	return p.Run()
 }

@@ -97,7 +97,7 @@ func TestListPanelBasic(t *testing.T) {
 
 	// Test initial state
 	is.Equal(panel.lastSelectedIndex, -1)
-	is.Equal(panel.Model.Title, "Test Panel")
+	is.Equal(panel.Title(), "Test Panel")
 
 	// Test SetSize
 	panel.SetSize(80, 20)
@@ -170,11 +170,11 @@ func TestListPanelTitleSetting(t *testing.T) {
 	is := is.New(t)
 
 	panel := NewListPanel([]ListItem{}, "Initial Title")
-	is.Equal(panel.Model.Title, "Initial Title")
+	is.Equal(panel.Title(), "Initial Title")
 
 	// Test SetTitle
 	panel.SetTitle("Updated Title")
-	is.Equal(panel.Model.Title, "Updated Title")
+	is.Equal(panel.Title(), "Updated Title")
 }
 
 func TestListPanelWithManyItems(t *testing.T) {
@@ -241,7 +241,7 @@ func TestListPanelFilteringSupport(t *testing.T) {
 	panel.SetSize(80, 20)
 
 	// Test that items have proper FilterValue implementation
-	listItems := panel.Model.Items()
+	listItems := panel.Items()
 	is.Equal(len(listItems), 3)
 
 	for i, item := range listItems {

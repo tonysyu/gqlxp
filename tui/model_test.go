@@ -31,12 +31,12 @@ func TestNewModel(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
-	model := NewModel(schema)
+	model := newModel(schema)
 
 	// Test initial state
 	is.Equal(len(model.panels), intialPanels)
 	is.Equal(model.focus, 0)
-	is.Equal(model.fieldType, QueryType)
+	is.Equal(model.fieldType, queryType)
 	is.Equal(len(model.schema.Query), 2)    // getAllPosts, getPostById
 	is.Equal(len(model.schema.Mutation), 1) // createPost
 
@@ -58,7 +58,7 @@ func TestModelPanelNavigation(t *testing.T) {
 	schema := gql.GraphQLSchema{
 		Query: make(map[string]*ast.FieldDefinition),
 	}
-	model := NewModel(schema)
+	model := newModel(schema)
 
 	// Test initial focus
 	is.Equal(model.focus, 0)
@@ -124,13 +124,13 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
-	model := NewModel(schema)
+	model := newModel(schema)
 
 	// Test initial type
-	is.Equal(model.fieldType, QueryType)
+	is.Equal(model.fieldType, queryType)
 
 	// Test forward cycling through types
-	expectedTypes := []GQLType{MutationType, ObjectType, InputType, EnumType, ScalarType, InterfaceType, UnionType, DirectiveType, QueryType}
+	expectedTypes := []gqlType{mutationType, objectType, inputType, enumType, scalarType, interfaceType, unionType, directiveType, queryType}
 
 	for _, expectedType := range expectedTypes {
 		updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
@@ -142,7 +142,7 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 	// Test reverse cycling
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
 	model = updatedModel.(mainModel)
-	is.Equal(model.fieldType, DirectiveType)
+	is.Equal(model.fieldType, directiveType)
 }
 
 func TestModelWindowResize(t *testing.T) {
@@ -151,7 +151,7 @@ func TestModelWindowResize(t *testing.T) {
 	schema := gql.GraphQLSchema{
 		Query: make(map[string]*ast.FieldDefinition),
 	}
-	model := NewModel(schema)
+	model := newModel(schema)
 
 	// Test window resize
 	newWidth, newHeight := 120, 40
@@ -178,17 +178,17 @@ func TestModelWithEmptySchema(t *testing.T) {
 		Directive: make(map[string]*ast.DirectiveDefinition),
 	}
 
-	model := NewModel(emptySchema)
+	model := newModel(emptySchema)
 
 	// Model should still initialize properly
 	is.Equal(len(model.panels), intialPanels)
 	is.Equal(model.focus, 0)
-	is.Equal(model.fieldType, QueryType)
+	is.Equal(model.fieldType, queryType)
 
 	// Should be able to cycle through types even with empty schema
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
 	model = updatedModel.(mainModel)
-	is.Equal(model.fieldType, MutationType)
+	is.Equal(model.fieldType, mutationType)
 }
 
 func TestModelPanelLimits(t *testing.T) {
@@ -197,7 +197,7 @@ func TestModelPanelLimits(t *testing.T) {
 	schema := gql.GraphQLSchema{
 		Query: make(map[string]*ast.FieldDefinition),
 	}
-	model := NewModel(schema)
+	model := newModel(schema)
 
 	// Test reaching maximum panels
 	for i := len(model.panels); i < maxPanes; i++ {
@@ -216,7 +216,7 @@ func TestModelKeyboardShortcuts(t *testing.T) {
 	schema := gql.GraphQLSchema{
 		Query: make(map[string]*ast.FieldDefinition),
 	}
-	model := NewModel(schema)
+	model := newModel(schema)
 
 	// Test all keyboard shortcuts don't crash
 	shortcuts := []tea.KeyMsg{

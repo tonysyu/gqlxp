@@ -23,22 +23,22 @@ const (
 	overlayMargin  = 2
 )
 
-type GQLType string
+type gqlType string
 
 const (
-	QueryType     GQLType = "Query"
-	MutationType  GQLType = "Mutation"
-	ObjectType    GQLType = "Object"
-	InputType     GQLType = "Input"
-	EnumType      GQLType = "Enum"
-	ScalarType    GQLType = "Scalar"
-	InterfaceType GQLType = "Interface"
-	UnionType     GQLType = "Union"
-	DirectiveType GQLType = "Directive"
+	queryType     gqlType = "Query"
+	mutationType  gqlType = "Mutation"
+	objectType    gqlType = "Object"
+	inputType     gqlType = "Input"
+	enumType      gqlType = "Enum"
+	scalarType    gqlType = "Scalar"
+	interfaceType gqlType = "Interface"
+	unionType     gqlType = "Union"
+	directiveType gqlType = "Directive"
 )
 
 // availableGQLTypes defines the ordered list of GQL types for navigation
-var availableGQLTypes = []GQLType{QueryType, MutationType, ObjectType, InputType, EnumType, ScalarType, InterfaceType, UnionType, DirectiveType}
+var availableGQLTypes = []gqlType{queryType, mutationType, objectType, inputType, enumType, scalarType, interfaceType, unionType, directiveType}
 
 var (
 	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
@@ -104,16 +104,16 @@ type mainModel struct {
 	panels         []components.Panel
 	focus          int
 	schema         gql.GraphQLSchema
-	fieldType      GQLType
+	fieldType      gqlType
 	overlay        overlayModel
 }
 
-func NewModel(schema gql.GraphQLSchema) mainModel {
+func newModel(schema gql.GraphQLSchema) mainModel {
 	m := mainModel{
 		panels:    make([]components.Panel, intialPanels),
 		help:      help.New(),
 		schema:    schema,
-		fieldType: QueryType,
+		fieldType: queryType,
 		overlay:   newOverlayModel(),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
@@ -175,7 +175,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.ToggleOverlay):
 			content := "No item selected"
 			if focusedPanel, ok := m.panels[m.focus].(*components.ListPanel); ok {
-				if selectedItem := focusedPanel.Model.SelectedItem(); selectedItem != nil {
+				if selectedItem := focusedPanel.SelectedItem(); selectedItem != nil {
 					if listItem, ok := selectedItem.(components.ListItem); ok {
 						content = listItem.Details()
 					}
@@ -294,31 +294,31 @@ func (m *mainModel) loadMainPanel() {
 	var title string
 
 	switch m.fieldType {
-	case QueryType:
+	case queryType:
 		items = adapters.AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Query), &m.schema)
 		title = "Query Fields"
-	case MutationType:
+	case mutationType:
 		items = adapters.AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Mutation), &m.schema)
 		title = "Mutation Fields"
-	case ObjectType:
+	case objectType:
 		items = adapters.AdaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Object), &m.schema)
 		title = "Object Types"
-	case InputType:
+	case inputType:
 		items = adapters.AdaptInputDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Input), &m.schema)
 		title = "Input Types"
-	case EnumType:
+	case enumType:
 		items = adapters.AdaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Enum), &m.schema)
 		title = "Enum Types"
-	case ScalarType:
+	case scalarType:
 		items = adapters.AdaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Scalar), &m.schema)
 		title = "Scalar Types"
-	case InterfaceType:
+	case interfaceType:
 		items = adapters.AdaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Interface), &m.schema)
 		title = "Interface Types"
-	case UnionType:
+	case unionType:
 		items = adapters.AdaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Union), &m.schema)
 		title = "Union Types"
-	case DirectiveType:
+	case directiveType:
 		items = adapters.AdaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Directive))
 		title = "Directive Types"
 	}
@@ -340,7 +340,7 @@ func (m *mainModel) loadMainPanel() {
 // incrementGQLTypeIndex cycles through available GQL types with wraparound
 func (m *mainModel) incrementGQLTypeIndex(offset int) {
 	// Find current GQL type index
-	currentIndex := slices.IndexFunc(availableGQLTypes, func(fieldType GQLType) bool {
+	currentIndex := slices.IndexFunc(availableGQLTypes, func(fieldType gqlType) bool {
 		return m.fieldType == fieldType
 	})
 

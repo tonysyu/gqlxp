@@ -17,7 +17,7 @@ func TestShouldPanelReceiveMessage(t *testing.T) {
 	schema := gql.GraphQLSchema{
 		Query: make(map[string]*ast.FieldDefinition),
 	}
-	model := NewModel(schema)
+	model := newModel(schema)
 	model.focus = 1 // Set focus to second panel
 
 	tests := []struct {
@@ -72,7 +72,7 @@ func TestGlobalNavigationKeysNotSentToPanels(t *testing.T) {
 	schema := gql.GraphQLSchema{
 		Query: make(map[string]*ast.FieldDefinition),
 	}
-	model := NewModel(schema)
+	model := newModel(schema)
 	model.focus = 0
 
 	// Test all global navigation keys
