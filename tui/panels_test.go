@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/matryer/is"
 	"github.com/tonysyu/igq/gql"
+	"github.com/tonysyu/igq/tui/components"
 )
 
 func TestStringPanelBasic(t *testing.T) {
@@ -79,7 +80,7 @@ func TestListPanelBasic(t *testing.T) {
 		{title: "Item 3", description: "Description 3"},
 	}
 
-	listItems := make([]ListItem, len(items))
+	listItems := make([]components.ListItem, len(items))
 	for i, item := range items {
 		listItems[i] = item
 	}
@@ -98,7 +99,7 @@ func TestListPanelBasic(t *testing.T) {
 func TestListPanelWithEmptyItems(t *testing.T) {
 	is := is.New(t)
 
-	panel := newListPanel([]ListItem{}, "Empty Panel")
+	panel := newListPanel([]components.ListItem{}, "Empty Panel")
 	panel.SetSize(80, 20)
 
 	// Should handle empty list gracefully
@@ -159,7 +160,7 @@ func TestListPanelAutoOpen(t *testing.T) {
 func TestListPanelTitleSetting(t *testing.T) {
 	is := is.New(t)
 
-	panel := newListPanel([]ListItem{}, "Initial Title")
+	panel := newListPanel([]components.ListItem{}, "Initial Title")
 	is.Equal(panel.Model.Title, "Initial Title")
 
 	// Test SetTitle
@@ -171,7 +172,7 @@ func TestListPanelWithManyItems(t *testing.T) {
 	is := is.New(t)
 
 	// Create many simple items
-	var items []ListItem
+	var items []components.ListItem
 	for i := 0; i < 100; i++ {
 		items = append(items, simpleItem{
 			title:       "Item " + string(rune(i)),
@@ -211,7 +212,7 @@ func TestPanelSizeEdgeCases(t *testing.T) {
 	is.True(len(view) >= 0) // Should not crash
 
 	// Test list panel with small sizes
-	listPanel := newListPanel([]ListItem{simpleItem{title: "test"}}, "test")
+	listPanel := newListPanel([]components.ListItem{simpleItem{title: "test"}}, "test")
 	listPanel.SetSize(1, 1)
 	view = listPanel.View()
 	is.True(len(view) >= 0) // Should not crash
@@ -221,7 +222,7 @@ func TestListPanelFilteringSupport(t *testing.T) {
 	is := is.New(t)
 
 	// Create items with different filter values
-	items := []ListItem{
+	items := []components.ListItem{
 		simpleItem{title: "Apple", description: "A fruit"},
 		simpleItem{title: "Banana", description: "Another fruit"},
 		simpleItem{title: "Carrot", description: "A vegetable"},
@@ -243,9 +244,9 @@ func TestListPanelFilteringSupport(t *testing.T) {
 func TestPanelInterfaceCompliance(t *testing.T) {
 	is := is.New(t)
 
-	// Test that both panel types implement Panel interface
-	var stringPanelInterface Panel = newStringPanel("test")
-	var listPanelInterface Panel = newListPanel([]ListItem{}, "test")
+	// Test that both panel types implement components.Panel interface
+	var stringPanelInterface components.Panel = newStringPanel("test")
+	var listPanelInterface components.Panel = newListPanel([]components.ListItem{}, "test")
 
 	// Test that they can be used as Panels
 	stringPanelInterface.SetSize(80, 20)

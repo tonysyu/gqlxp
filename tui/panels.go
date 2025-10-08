@@ -4,23 +4,18 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tonysyu/igq/tui/components"
 )
 
 // openPanelMsg is sent when an item should be opened
 type openPanelMsg struct {
-	panel Panel
+	panel components.Panel
 }
 
-// Panel represents a generic panel that can be displayed in the TUI
-type Panel interface {
-	tea.Model
-	SetSize(width, height int)
-}
+var _ components.Panel = (*listPanel)(nil)
+var _ components.Panel = (*stringPanel)(nil)
 
-var _ Panel = (*listPanel)(nil)
-var _ Panel = (*stringPanel)(nil)
-
-// listPanel wraps a list.Model to implement the Panel interface
+// listPanel wraps a list.Model to implement the components.Panel interface
 type listPanel struct {
 	list.Model
 	lastSelectedIndex int // Track the last selected index to detect changes
@@ -55,7 +50,7 @@ func (lp *listPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if currentIndex != lp.lastSelectedIndex && currentIndex >= 0 {
 		lp.lastSelectedIndex = currentIndex
 		if selectedItem := lp.Model.SelectedItem(); selectedItem != nil {
-			if listItem, ok := selectedItem.(ListItem); ok {
+			if listItem, ok := selectedItem.(components.ListItem); ok {
 				if newPanel, ok := listItem.Open(); ok {
 					return lp, tea.Batch(cmd, func() tea.Msg {
 						return openPanelMsg{panel: newPanel}

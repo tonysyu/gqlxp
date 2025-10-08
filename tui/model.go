@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/igq/gql"
+	"github.com/tonysyu/igq/tui/components"
 )
 
 const (
@@ -99,7 +100,7 @@ type mainModel struct {
 	keymap         keymap
 	globalKeyBinds []key.Binding
 	help           help.Model
-	panels         []Panel
+	panels         []components.Panel
 	focus          int
 	schema         gql.GraphQLSchema
 	fieldType      GQLType
@@ -108,7 +109,7 @@ type mainModel struct {
 
 func NewModel(schema gql.GraphQLSchema) mainModel {
 	m := mainModel{
-		panels:    make([]Panel, intialPanels),
+		panels:    make([]components.Panel, intialPanels),
 		help:      help.New(),
 		schema:    schema,
 		fieldType: QueryType,
@@ -174,7 +175,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			content := "No item selected"
 			if focusedPanel, ok := m.panels[m.focus].(*listPanel); ok {
 				if selectedItem := focusedPanel.Model.SelectedItem(); selectedItem != nil {
-					if listItem, ok := selectedItem.(ListItem); ok {
+					if listItem, ok := selectedItem.(components.ListItem); ok {
 						content = listItem.Details()
 					}
 				}
@@ -212,7 +213,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		shouldReceiveMsg := m.shouldPanelReceiveMessage(i, msg)
 		if shouldReceiveMsg {
 			newModel, cmd = m.panels[i].Update(msg)
-			if panel, ok := newModel.(Panel); ok {
+			if panel, ok := newModel.(components.Panel); ok {
 				m.panels[i] = panel
 			}
 			cmds = append(cmds, cmd)
@@ -251,7 +252,7 @@ func (m *mainModel) sizePanels() {
 }
 
 // addPanel adds a new panel to the model
-func (m *mainModel) addPanel(panel Panel) {
+func (m *mainModel) addPanel(panel components.Panel) {
 	if len(m.panels) < maxPanes {
 		m.panels = append(m.panels, panel)
 		m.sizePanels()
@@ -259,7 +260,7 @@ func (m *mainModel) addPanel(panel Panel) {
 }
 
 // handleOpenPanel handles when an item is opened
-func (m *mainModel) handleOpenPanel(newPanel Panel) {
+func (m *mainModel) handleOpenPanel(newPanel components.Panel) {
 	nextPanelIndex := m.focus + 1
 
 	// If there's a next panel, replace it
@@ -288,7 +289,7 @@ func (m *mainModel) resetAndLoadMainPanel() {
 
 // loadMainPanel loads the the currently selected GQL type in the main (left-most) panel
 func (m *mainModel) loadMainPanel() {
-	var items []ListItem
+	var items []components.ListItem
 	var title string
 
 	switch m.fieldType {
@@ -327,7 +328,7 @@ func (m *mainModel) loadMainPanel() {
 
 	// Auto-open detail panel for the first item if available
 	if len(items) > 0 {
-		if firstItem, ok := items[0].(ListItem); ok {
+		if firstItem, ok := items[0].(components.ListItem); ok {
 			if newPanel, ok := firstItem.Open(); ok {
 				m.handleOpenPanel(newPanel)
 			}
