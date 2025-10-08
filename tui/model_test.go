@@ -7,6 +7,7 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
 	"github.com/tonysyu/igq/gql"
+	"github.com/tonysyu/igq/tui/components"
 )
 
 func TestNewModel(t *testing.T) {
@@ -200,12 +201,12 @@ func TestModelPanelLimits(t *testing.T) {
 
 	// Test reaching maximum panels
 	for i := len(model.panels); i < maxPanes; i++ {
-		model.addPanel(newStringPanel("test"))
+		model.addPanel(components.NewStringPanel("test"))
 	}
 	is.Equal(len(model.panels), maxPanes)
 
 	// Try to add one more panel - should not exceed max
-	model.addPanel(newStringPanel("overflow"))
+	model.addPanel(components.NewStringPanel("overflow"))
 	is.Equal(len(model.panels), maxPanes)
 }
 

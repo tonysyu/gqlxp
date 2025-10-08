@@ -1,4 +1,4 @@
-package tui
+package components
 
 import (
 	"strings"
@@ -7,15 +7,23 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/matryer/is"
-	"github.com/tonysyu/igq/gql"
-	"github.com/tonysyu/igq/tui/components"
 )
+
+// testOpenableItem is a test helper that implements ListItem with a working Open() method
+type testOpenableItem struct {
+	SimpleItem
+	openPanel Panel
+}
+
+func (i testOpenableItem) Open() (Panel, bool) {
+	return i.openPanel, true
+}
 
 func TestStringPanelBasic(t *testing.T) {
 	is := is.New(t)
 
 	content := "This is test content"
-	panel := newStringPanel(content)
+	panel := NewStringPanel(content)
 
 	// Test basic properties
 	is.Equal(panel.content, content)
@@ -36,7 +44,7 @@ func TestStringPanelBasic(t *testing.T) {
 func TestStringPanelView(t *testing.T) {
 	is := is.New(t)
 
-	panel := newStringPanel("test content")
+	panel := NewStringPanel("test content")
 	panel.SetSize(50, 10)
 
 	view := panel.View()
@@ -46,7 +54,7 @@ func TestStringPanelView(t *testing.T) {
 func TestStringPanelWithEmptyContent(t *testing.T) {
 	is := is.New(t)
 
-	panel := newStringPanel("")
+	panel := NewStringPanel("")
 	panel.SetSize(80, 20)
 
 	view := panel.View()
@@ -62,7 +70,7 @@ func TestStringPanelWithLargeContent(t *testing.T) {
 		longContent += "This is a very long line of content that should be handled properly. "
 	}
 
-	panel := newStringPanel(longContent)
+	panel := NewStringPanel(longContent)
 	panel.SetSize(80, 20)
 
 	// Should not crash with large content
@@ -74,18 +82,18 @@ func TestListPanelBasic(t *testing.T) {
 	is := is.New(t)
 
 	// Create test items
-	items := []simpleItem{
-		{title: "Item 1", description: "Description 1"},
-		{title: "Item 2", description: "Description 2"},
-		{title: "Item 3", description: "Description 3"},
+	items := []SimpleItem{
+		NewSimpleItem("Item 1", "Description 1"),
+		NewSimpleItem("Item 2", "Description 2"),
+		NewSimpleItem("Item 3", "Description 3"),
 	}
 
-	listItems := make([]components.ListItem, len(items))
+	listItems := make([]ListItem, len(items))
 	for i, item := range items {
 		listItems[i] = item
 	}
 
-	panel := newListPanel(listItems, "Test Panel")
+	panel := NewListPanel(listItems, "Test Panel")
 
 	// Test initial state
 	is.Equal(panel.lastSelectedIndex, -1)
@@ -99,7 +107,7 @@ func TestListPanelBasic(t *testing.T) {
 func TestListPanelWithEmptyItems(t *testing.T) {
 	is := is.New(t)
 
-	panel := newListPanel([]components.ListItem{}, "Empty Panel")
+	panel := NewListPanel([]ListItem{}, "Empty Panel")
 	panel.SetSize(80, 20)
 
 	// Should handle empty list gracefully
@@ -111,37 +119,38 @@ func TestListPanelSelectionChange(t *testing.T) {
 	is := is.New(t)
 
 	// Create items with Open capability
-	schema, _ := gql.ParseSchema([]byte(`
-		type Query {
-			field1: String
-			field2: String
-		}
-	`))
-
-	fields := gql.CollectAndSortMapValues(schema.Query)
-	items := adaptFieldDefinitionsToItems(fields, &schema)
-	panel := newListPanel(items, "Test Panel")
+	testPanel := NewStringPanel("opened panel content")
+	items := []ListItem{
+		testOpenableItem{
+			SimpleItem: NewSimpleItem("Item 1", "Description 1"),
+			openPanel:  testPanel,
+		},
+		testOpenableItem{
+			SimpleItem: NewSimpleItem("Item 2", "Description 2"),
+			openPanel:  testPanel,
+		},
+	}
+	panel := NewListPanel(items, "Test Panel")
 
 	// Simulate key down to change selection
 	_, cmd := panel.Update(tea.KeyMsg{Type: tea.KeyDown})
 
-	// Should generate openPanelMsg command when selection changes
+	// Should generate OpenPanelMsg command when selection changes
 	is.True(cmd != nil)
 }
 
 func TestListPanelAutoOpen(t *testing.T) {
 	is := is.New(t)
 
-	// Create schema with field that can be opened
-	schema, _ := gql.ParseSchema([]byte(`
-		type Query {
-			testField(arg: String): String
-		}
-	`))
-
-	fields := gql.CollectAndSortMapValues(schema.Query)
-	items := adaptFieldDefinitionsToItems(fields, &schema)
-	panel := newListPanel(items, "Test Panel")
+	// Create items with Open capability
+	testPanel := NewStringPanel("opened panel content")
+	items := []ListItem{
+		testOpenableItem{
+			SimpleItem: NewSimpleItem("Test Field", "Test Description"),
+			openPanel:  testPanel,
+		},
+	}
+	panel := NewListPanel(items, "Test Panel")
 
 	// Ensure we have an item that can be opened
 	is.True(len(items) > 0)
@@ -160,7 +169,7 @@ func TestListPanelAutoOpen(t *testing.T) {
 func TestListPanelTitleSetting(t *testing.T) {
 	is := is.New(t)
 
-	panel := newListPanel([]components.ListItem{}, "Initial Title")
+	panel := NewListPanel([]ListItem{}, "Initial Title")
 	is.Equal(panel.Model.Title, "Initial Title")
 
 	// Test SetTitle
@@ -172,15 +181,15 @@ func TestListPanelWithManyItems(t *testing.T) {
 	is := is.New(t)
 
 	// Create many simple items
-	var items []components.ListItem
+	var items []ListItem
 	for i := 0; i < 100; i++ {
-		items = append(items, simpleItem{
-			title:       "Item " + string(rune(i)),
-			description: "Description " + string(rune(i)),
-		})
+		items = append(items, NewSimpleItem(
+			"Item "+string(rune(i)),
+			"Description "+string(rune(i)),
+		))
 	}
 
-	panel := newListPanel(items, "Large Panel")
+	panel := NewListPanel(items, "Large Panel")
 	panel.SetSize(80, 20)
 
 	// Should handle large lists without issues
@@ -196,7 +205,7 @@ func TestPanelSizeEdgeCases(t *testing.T) {
 	is := is.New(t)
 
 	// Test with very small sizes
-	stringPanel := newStringPanel("test")
+	stringPanel := NewStringPanel("test")
 	stringPanel.SetSize(1, 1)
 	view := stringPanel.View()
 	is.True(len(view) >= 0) // Should not crash
@@ -212,7 +221,7 @@ func TestPanelSizeEdgeCases(t *testing.T) {
 	is.True(len(view) >= 0) // Should not crash
 
 	// Test list panel with small sizes
-	listPanel := newListPanel([]components.ListItem{simpleItem{title: "test"}}, "test")
+	listPanel := NewListPanel([]ListItem{NewSimpleItem("test", "")}, "test")
 	listPanel.SetSize(1, 1)
 	view = listPanel.View()
 	is.True(len(view) >= 0) // Should not crash
@@ -222,13 +231,13 @@ func TestListPanelFilteringSupport(t *testing.T) {
 	is := is.New(t)
 
 	// Create items with different filter values
-	items := []components.ListItem{
-		simpleItem{title: "Apple", description: "A fruit"},
-		simpleItem{title: "Banana", description: "Another fruit"},
-		simpleItem{title: "Carrot", description: "A vegetable"},
+	items := []ListItem{
+		NewSimpleItem("Apple", "A fruit"),
+		NewSimpleItem("Banana", "Another fruit"),
+		NewSimpleItem("Carrot", "A vegetable"),
 	}
 
-	panel := newListPanel(items, "Filterable Panel")
+	panel := NewListPanel(items, "Filterable Panel")
 	panel.SetSize(80, 20)
 
 	// Test that items have proper FilterValue implementation
@@ -244,9 +253,9 @@ func TestListPanelFilteringSupport(t *testing.T) {
 func TestPanelInterfaceCompliance(t *testing.T) {
 	is := is.New(t)
 
-	// Test that both panel types implement components.Panel interface
-	var stringPanelInterface components.Panel = newStringPanel("test")
-	var listPanelInterface components.Panel = newListPanel([]components.ListItem{}, "test")
+	// Test that both panel types implement Panel interface
+	var stringPanelInterface Panel = NewStringPanel("test")
+	var listPanelInterface Panel = NewListPanel([]ListItem{}, "test")
 
 	// Test that they can be used as Panels
 	stringPanelInterface.SetSize(80, 20)

@@ -1,4 +1,4 @@
-package tui
+package adapters
 
 import (
 	"strings"
@@ -7,6 +7,7 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
 	"github.com/tonysyu/igq/gql"
+	"github.com/tonysyu/igq/tui/components"
 )
 
 // normalizeView strips leading/trailing whitespace and empty lines from multi-line strings
@@ -399,31 +400,31 @@ func TestAdapterFunctions(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	// Test all adapter functions
-	queryItems := adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(schema.Query), &schema)
+	queryItems := AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(schema.Query), &schema)
 	is.Equal(len(queryItems), 1)
 
-	mutationItems := adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(schema.Mutation), &schema)
+	mutationItems := AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(schema.Mutation), &schema)
 	is.Equal(len(mutationItems), 1)
 
-	objectItems := adaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(schema.Object), &schema)
+	objectItems := AdaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(schema.Object), &schema)
 	is.Equal(len(objectItems), 1)
 
-	inputItems := adaptInputDefinitionsToItems(gql.CollectAndSortMapValues(schema.Input), &schema)
+	inputItems := AdaptInputDefinitionsToItems(gql.CollectAndSortMapValues(schema.Input), &schema)
 	is.Equal(len(inputItems), 1)
 
-	enumItems := adaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(schema.Enum), &schema)
+	enumItems := AdaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(schema.Enum), &schema)
 	is.Equal(len(enumItems), 1)
 
-	scalarItems := adaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(schema.Scalar), &schema)
+	scalarItems := AdaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(schema.Scalar), &schema)
 	is.Equal(len(scalarItems), 1)
 
-	interfaceItems := adaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(schema.Interface), &schema)
+	interfaceItems := AdaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(schema.Interface), &schema)
 	is.Equal(len(interfaceItems), 1)
 
-	unionItems := adaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(schema.Union), &schema)
+	unionItems := AdaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(schema.Union), &schema)
 	is.Equal(len(unionItems), 1)
 
-	directiveItems := adaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(schema.Directive))
+	directiveItems := AdaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(schema.Directive))
 	is.Equal(len(directiveItems), 1)
 }
 
@@ -431,38 +432,35 @@ func TestEmptyAdapterInputs(t *testing.T) {
 	is := is.New(t)
 
 	// Test adapters with empty inputs
-	emptyFieldItems := adaptFieldDefinitionsToItems([]*ast.FieldDefinition{}, nil)
+	emptyFieldItems := AdaptFieldDefinitionsToItems([]*ast.FieldDefinition{}, nil)
 	is.Equal(len(emptyFieldItems), 0)
 
-	emptyObjectItems := adaptObjectDefinitionsToItems([]*ast.ObjectDefinition{}, nil)
+	emptyObjectItems := AdaptObjectDefinitionsToItems([]*ast.ObjectDefinition{}, nil)
 	is.Equal(len(emptyObjectItems), 0)
 
-	emptyInputItems := adaptInputDefinitionsToItems([]*ast.InputObjectDefinition{}, nil)
+	emptyInputItems := AdaptInputDefinitionsToItems([]*ast.InputObjectDefinition{}, nil)
 	is.Equal(len(emptyInputItems), 0)
 
-	emptyEnumItems := adaptEnumDefinitionsToItems([]*ast.EnumDefinition{}, nil)
+	emptyEnumItems := AdaptEnumDefinitionsToItems([]*ast.EnumDefinition{}, nil)
 	is.Equal(len(emptyEnumItems), 0)
 
-	emptyScalarItems := adaptScalarDefinitionsToItems([]*ast.ScalarDefinition{}, nil)
+	emptyScalarItems := AdaptScalarDefinitionsToItems([]*ast.ScalarDefinition{}, nil)
 	is.Equal(len(emptyScalarItems), 0)
 
-	emptyInterfaceItems := adaptInterfaceDefinitionsToItems([]*ast.InterfaceDefinition{}, nil)
+	emptyInterfaceItems := AdaptInterfaceDefinitionsToItems([]*ast.InterfaceDefinition{}, nil)
 	is.Equal(len(emptyInterfaceItems), 0)
 
-	emptyUnionItems := adaptUnionDefinitionsToItems([]*ast.UnionDefinition{}, nil)
+	emptyUnionItems := AdaptUnionDefinitionsToItems([]*ast.UnionDefinition{}, nil)
 	is.Equal(len(emptyUnionItems), 0)
 
-	emptyDirectiveItems := adaptDirectiveDefinitionsToItems([]*ast.DirectiveDefinition{})
+	emptyDirectiveItems := AdaptDirectiveDefinitionsToItems([]*ast.DirectiveDefinition{})
 	is.Equal(len(emptyDirectiveItems), 0)
 }
 
 func TestSimpleItemInterface(t *testing.T) {
 	is := is.New(t)
 
-	item := simpleItem{
-		title:       "Test Title",
-		description: "Test Description",
-	}
+	item := components.NewSimpleItem("Test Title", "Test Description")
 
 	is.Equal(item.Title(), "Test Title")
 	is.Equal(item.Description(), "Test Description")
@@ -505,15 +503,15 @@ func TestInputValueItemCreation(t *testing.T) {
 	is.Equal(len(items), 3)
 
 	// Test first argument
-	item1 := items[0].(simpleItem)
+	item1 := items[0].(components.SimpleItem)
 	is.Equal(item1.Title(), "arg1: String!")
 
 	// Test second argument
-	item2 := items[1].(simpleItem)
+	item2 := items[1].(components.SimpleItem)
 	is.Equal(item2.Title(), "arg2: Int")
 
 	// Test third argument
-	item3 := items[2].(simpleItem)
+	item3 := items[2].(components.SimpleItem)
 	is.Equal(item3.Title(), "arg3: [String]")
 }
 

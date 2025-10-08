@@ -1,27 +1,26 @@
-package tui
+package components
 
 import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/tonysyu/igq/tui/components"
 )
 
-// openPanelMsg is sent when an item should be opened
-type openPanelMsg struct {
-	panel components.Panel
+// OpenPanelMsg is sent when an item should be opened
+type OpenPanelMsg struct {
+	Panel Panel
 }
 
-var _ components.Panel = (*listPanel)(nil)
-var _ components.Panel = (*stringPanel)(nil)
+var _ Panel = (*ListPanel)(nil)
+var _ Panel = (*stringPanel)(nil)
 
-// listPanel wraps a list.Model to implement the components.Panel interface
-type listPanel struct {
+// ListPanel wraps a list.Model to implement the Panel interface
+type ListPanel struct {
 	list.Model
 	lastSelectedIndex int // Track the last selected index to detect changes
 }
 
-func newListPanel[T list.Item](choices []T, title string) *listPanel {
+func NewListPanel[T list.Item](choices []T, title string) *ListPanel {
 	items := make([]list.Item, len(choices))
 	for i, choice := range choices {
 		items[i] = choice
@@ -29,17 +28,17 @@ func newListPanel[T list.Item](choices []T, title string) *listPanel {
 	m := list.New(items, list.NewDefaultDelegate(), 0, 0)
 	m.DisableQuitKeybindings()
 	m.Title = title
-	return &listPanel{
+	return &ListPanel{
 		Model:             m,
 		lastSelectedIndex: -1, // Initialize to -1 to trigger opening on first selection
 	}
 }
 
-func (lp *listPanel) Init() tea.Cmd {
+func (lp *ListPanel) Init() tea.Cmd {
 	return nil
 }
 
-func (lp *listPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (lp *ListPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	// Update the list model first
@@ -50,10 +49,10 @@ func (lp *listPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if currentIndex != lp.lastSelectedIndex && currentIndex >= 0 {
 		lp.lastSelectedIndex = currentIndex
 		if selectedItem := lp.Model.SelectedItem(); selectedItem != nil {
-			if listItem, ok := selectedItem.(components.ListItem); ok {
+			if listItem, ok := selectedItem.(ListItem); ok {
 				if newPanel, ok := listItem.Open(); ok {
 					return lp, tea.Batch(cmd, func() tea.Msg {
-						return openPanelMsg{panel: newPanel}
+						return OpenPanelMsg{Panel: newPanel}
 					})
 				}
 			}
@@ -63,12 +62,12 @@ func (lp *listPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return lp, cmd
 }
 
-func (lp *listPanel) SetSize(width, height int) {
+func (lp *ListPanel) SetSize(width, height int) {
 	lp.Model.SetWidth(width)
 	lp.Model.SetHeight(height)
 }
 
-func (lp *listPanel) SetTitle(title string) {
+func (lp *ListPanel) SetTitle(title string) {
 	lp.Model.Title = title
 }
 
@@ -79,7 +78,7 @@ type stringPanel struct {
 	height  int
 }
 
-func newStringPanel(content string) *stringPanel {
+func NewStringPanel(content string) *stringPanel {
 	return &stringPanel{content: content}
 }
 

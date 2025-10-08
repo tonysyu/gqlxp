@@ -7,6 +7,7 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
 	"github.com/tonysyu/igq/gql"
+	"github.com/tonysyu/igq/tui/components"
 )
 
 func TestShouldPanelReceiveMessage(t *testing.T) {
@@ -50,9 +51,9 @@ func TestShouldPanelReceiveMessage(t *testing.T) {
 			shouldReceive: false,
 		},
 		{
-			name:          "openPanelMsg not sent to panels",
+			name:          "OpenPanelMsg not sent to panels",
 			panelIndex:    1,
-			msg:           openPanelMsg{panel: newStringPanel("test")},
+			msg:           components.OpenPanelMsg{Panel: components.NewStringPanel("test")},
 			shouldReceive: false,
 		},
 	}

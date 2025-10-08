@@ -28,7 +28,6 @@ type NamedTypeDef interface {
 	GetName() *ast.Name
 }
 
-
 // NamedType interface for types that have a Name field
 type NamedType interface {
 	*ast.FieldDefinition | *ast.ObjectDefinition | *ast.InputObjectDefinition |

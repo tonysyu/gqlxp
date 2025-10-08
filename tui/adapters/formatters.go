@@ -1,14 +1,14 @@
-package tui
+package adapters
 
 import (
 	"strings"
 )
 
-func joinParagraphs(lines... string) string {
+func joinParagraphs(lines ...string) string {
 	return strings.Join(lines, "\n\n")
 }
 
-func joinLines(lines... string) string {
+func joinLines(lines ...string) string {
 	return strings.Join(lines, "\n")
 }
 

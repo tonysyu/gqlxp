@@ -1,4 +1,4 @@
-package tui
+package adapters
 
 import (
 	"strings"
@@ -11,9 +11,9 @@ import (
 // Ensure that all item types implements components.ListItem interface
 var _ components.ListItem = (*fieldItem)(nil)
 var _ components.ListItem = (*typeDefItem)(nil)
-var _ components.ListItem = (*simpleItem)(nil)
+var _ components.ListItem = (*components.SimpleItem)(nil)
 
-func adaptFieldDefinitionsToItems(queryFields []*ast.FieldDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptFieldDefinitionsToItems(queryFields []*ast.FieldDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(queryFields))
 	for _, f := range queryFields {
 		adaptedItems = append(adaptedItems, newFieldDefItem(f, schema))
@@ -29,31 +29,31 @@ func adaptTypeDefsToItems[T gql.NamedTypeDef](typeDefs []T, schema *gql.GraphQLS
 	return adaptedItems
 }
 
-func adaptObjectDefinitionsToItems(objects []*ast.ObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptObjectDefinitionsToItems(objects []*ast.ObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(objects, schema)
 }
 
-func adaptInputDefinitionsToItems(inputs []*ast.InputObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptInputDefinitionsToItems(inputs []*ast.InputObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(inputs, schema)
 }
 
-func adaptEnumDefinitionsToItems(enums []*ast.EnumDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptEnumDefinitionsToItems(enums []*ast.EnumDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(enums, schema)
 }
 
-func adaptScalarDefinitionsToItems(scalars []*ast.ScalarDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptScalarDefinitionsToItems(scalars []*ast.ScalarDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(scalars, schema)
 }
 
-func adaptInterfaceDefinitionsToItems(interfaces []*ast.InterfaceDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptInterfaceDefinitionsToItems(interfaces []*ast.InterfaceDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(interfaces, schema)
 }
 
-func adaptUnionDefinitionsToItems(unions []*ast.UnionDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptUnionDefinitionsToItems(unions []*ast.UnionDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(unions, schema)
 }
 
-func adaptDirectiveDefinitionsToItems(directives []*ast.DirectiveDefinition) []components.ListItem {
+func AdaptDirectiveDefinitionsToItems(directives []*ast.DirectiveDefinition) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(directives))
 	for _, directive := range directives {
 		adaptedItems = append(adaptedItems, newDirectiveDefinitionItem(directive))
@@ -72,10 +72,10 @@ func adaptNamedToItems(namedNodes []*ast.Named) []components.ListItem {
 func adaptEnumValueDefinitionsToItems(enumNodes []*ast.EnumValueDefinition) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(enumNodes))
 	for _, node := range enumNodes {
-		adaptedItems = append(adaptedItems, simpleItem{
-			title:       node.Name.Value,
-			description: gql.GetStringValue(node.Description),
-		})
+		adaptedItems = append(adaptedItems, components.NewSimpleItem(
+			node.Name.Value,
+			gql.GetStringValue(node.Description),
+		))
 	}
 	return adaptedItems
 }
@@ -131,7 +131,7 @@ func (i fieldItem) Open() (components.Panel, bool) {
 
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
-		detailItems = append(detailItems, simpleItem{title: desc})
+		detailItems = append(detailItems, components.NewSimpleItem(desc, ""))
 	}
 
 	inputValueItems := adaptInputValueDefinitions(i.gqlField.Arguments)
@@ -151,7 +151,7 @@ func (i fieldItem) Open() (components.Panel, bool) {
 	// }
 	detailItems = append(detailItems, newTypeItem(i.gqlField.Type))
 	// detailItems = append(detailItems, newTypeItem(i.gqlField.Type))
-	return newListPanel(detailItems, i.Title()), true
+	return components.NewListPanel(detailItems, i.Title()), true
 }
 
 // Create an array of ListItem instances given InputValueDefinition. This is used for
@@ -260,16 +260,16 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
-		detailItems = append(detailItems, simpleItem{title: desc})
+		detailItems = append(detailItems, components.NewSimpleItem(desc, ""))
 	}
 
 	switch typeDef := (i.typeDef).(type) {
 	case *ast.ObjectDefinition:
-		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields, i.schema)...)
+		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(typeDef.Fields, i.schema)...)
 	case *ast.ScalarDefinition:
 		// No details needed
 	case *ast.InterfaceDefinition:
-		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields, i.schema)...)
+		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(typeDef.Fields, i.schema)...)
 	case *ast.UnionDefinition:
 		detailItems = append(detailItems, adaptNamedToItems(typeDef.Types)...)
 	case *ast.EnumDefinition:
@@ -278,50 +278,34 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 		detailItems = append(detailItems, adaptInputValueDefinitions(typeDef.Fields)...)
 	}
 
-	return newListPanel(detailItems, i.Title()), true
+	return components.NewListPanel(detailItems, i.Title()), true
 }
 
-// ListItem interface with arbitrary title and description and no-op Open() function.
-type simpleItem struct {
-	title, description string
+func newSectionHeader(title string) components.SimpleItem {
+	return components.NewSimpleItem("======== "+title+" ========", "")
 }
 
-func (di simpleItem) Title() string       { return di.title }
-func (di simpleItem) Description() string { return di.description }
-func (di simpleItem) FilterValue() string { return di.title }
-func (di simpleItem) Details() string {
-	if di.description != "" {
-		return joinParagraphs(h1(di.Title()), di.Description())
-	}
-	return h1(di.Title())
-}
-func (di simpleItem) Open() (components.Panel, bool) { return nil, false }
-
-func newSectionHeader(title string) simpleItem {
-	return simpleItem{title: "======== " + title + " ========"}
-}
-
-func newNamedItem(node *ast.Named) simpleItem {
+func newNamedItem(node *ast.Named) components.SimpleItem {
 	// TODO: This probably requires a reference to the schema to return full type when opening
-	return simpleItem{title: node.Name.Value}
+	return components.NewSimpleItem(node.Name.Value, "")
 }
 
-func newTypeItem(t ast.Type) simpleItem {
+func newTypeItem(t ast.Type) components.SimpleItem {
 	// TODO: This probably requires a reference to the schema to return full type when opening
-	return simpleItem{title: gql.GetTypeString(t)}
+	return components.NewSimpleItem(gql.GetTypeString(t), "")
 }
 
-func newInputValueItem(inputValue *ast.InputValueDefinition) simpleItem {
+func newInputValueItem(inputValue *ast.InputValueDefinition) components.SimpleItem {
 	// TODO: Update item to support proper Open and use custom display string
-	return simpleItem{
-		title:       gql.GetInputValueDefinitionString(inputValue),
-		description: gql.GetStringValue(inputValue.Description),
-	}
+	return components.NewSimpleItem(
+		gql.GetInputValueDefinitionString(inputValue),
+		gql.GetStringValue(inputValue.Description),
+	)
 }
 
-func newDirectiveDefinitionItem(directive *ast.DirectiveDefinition) simpleItem {
-	return simpleItem{
-		title:       directive.Name.Value,
-		description: gql.GetStringValue(directive.Description),
-	}
+func newDirectiveDefinitionItem(directive *ast.DirectiveDefinition) components.SimpleItem {
+	return components.NewSimpleItem(
+		directive.Name.Value,
+		gql.GetStringValue(directive.Description),
+	)
 }

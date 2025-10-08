@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/igq/gql"
+	"github.com/tonysyu/igq/tui/adapters"
 	"github.com/tonysyu/igq/tui/components"
 )
 
@@ -173,7 +174,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, m.keymap.ToggleOverlay):
 			content := "No item selected"
-			if focusedPanel, ok := m.panels[m.focus].(*listPanel); ok {
+			if focusedPanel, ok := m.panels[m.focus].(*components.ListPanel); ok {
 				if selectedItem := focusedPanel.Model.SelectedItem(); selectedItem != nil {
 					if listItem, ok := selectedItem.(components.ListItem); ok {
 						content = listItem.Details()
@@ -196,8 +197,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.ReverseToggleGQLType):
 			m.incrementGQLTypeIndex(-1)
 		}
-	case openPanelMsg:
-		m.handleOpenPanel(msg.panel)
+	case components.OpenPanelMsg:
+		m.handleOpenPanel(msg.Panel)
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
 		m.width = msg.Width
@@ -236,8 +237,8 @@ func (m *mainModel) shouldPanelReceiveMessage(panelIndex int, msg tea.Msg) bool 
 		}
 		// All other key messages should only go to the focused panel
 		return panelIndex == m.focus
-	case openPanelMsg:
-		// openPanelMsg is handled by main model, not individual panels
+	case components.OpenPanelMsg:
+		// OpenPanelMsg is handled by main model, not individual panels
 		return false
 	default:
 		// Unknown message types go to all panels (safe default)
@@ -280,7 +281,7 @@ func (m *mainModel) handleOpenPanel(newPanel components.Panel) {
 func (m *mainModel) resetAndLoadMainPanel() {
 	// Initialize panels with empty list models
 	for i := range intialPanels {
-		m.panels[i] = newStringPanel("")
+		m.panels[i] = components.NewStringPanel("")
 	}
 
 	// Load initial fields based on currently selected GQL type
@@ -294,35 +295,35 @@ func (m *mainModel) loadMainPanel() {
 
 	switch m.fieldType {
 	case QueryType:
-		items = adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Query), &m.schema)
+		items = adapters.AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Query), &m.schema)
 		title = "Query Fields"
 	case MutationType:
-		items = adaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Mutation), &m.schema)
+		items = adapters.AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Mutation), &m.schema)
 		title = "Mutation Fields"
 	case ObjectType:
-		items = adaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Object), &m.schema)
+		items = adapters.AdaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Object), &m.schema)
 		title = "Object Types"
 	case InputType:
-		items = adaptInputDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Input), &m.schema)
+		items = adapters.AdaptInputDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Input), &m.schema)
 		title = "Input Types"
 	case EnumType:
-		items = adaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Enum), &m.schema)
+		items = adapters.AdaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Enum), &m.schema)
 		title = "Enum Types"
 	case ScalarType:
-		items = adaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Scalar), &m.schema)
+		items = adapters.AdaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Scalar), &m.schema)
 		title = "Scalar Types"
 	case InterfaceType:
-		items = adaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Interface), &m.schema)
+		items = adapters.AdaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Interface), &m.schema)
 		title = "Interface Types"
 	case UnionType:
-		items = adaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Union), &m.schema)
+		items = adapters.AdaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Union), &m.schema)
 		title = "Union Types"
 	case DirectiveType:
-		items = adaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Directive))
+		items = adapters.AdaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Directive))
 		title = "Directive Types"
 	}
 
-	m.panels[0] = newListPanel(items, title)
+	m.panels[0] = components.NewListPanel(items, title)
 	// Move focus to the main panel when switching fields.
 	m.focus = 0
 
