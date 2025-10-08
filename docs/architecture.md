@@ -3,43 +3,50 @@
 For build and development commands, see [Development Commands](development.md).
 
 ## Package Structure
-- **`cmd/igq`**: Main application entry point that reads schema file and initializes TUI
-  - `main()` - Entry point that reads schema and starts TUI
+- **`cmd/igq`**: Main application entry point
+  - `main()` - Reads schema file and starts TUI
 - **`gql`**: GraphQL schema parsing and type extraction
-  - `ParseSchema()` - Main function to parse GraphQL schema and extract Query and Mutation fields
-  - `GraphQLSchema` struct - Contains Query and Mutation field maps
-  - `GetTypeString()` - Converts AST types to string representation
-- **`tui`**: Terminal user interface components built on Bubble Tea
-  - `mainModel` - Root application model managing panels and navigation
-  - `Panel` interface - Generic panel abstraction for different content types
-  - `ListItem` interface - Interactive list items that can be "opened" to show details
-  - `listPanel` and `stringPanel` - Concrete panel implementations
+  - `ParseSchema()` - Parses GraphQL schema and extracts all type definitions
+  - `GraphQLSchema` struct - Contains maps for Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, and Directive types
+  - `NamedToTypeDefinition()` - Resolves type names to their definitions
+  - Helper functions: `GetTypeString()`, `CollectAndSortMapValues()`, `GetFieldDefinitionString()`, etc.
+- **`tui`**: Terminal user interface built on Bubble Tea
+  - `mainModel` - Root model managing panels, navigation, and GQL type toggling
+  - **`tui/components`**: Reusable UI components
+    - `Panel` interface - Generic panel abstraction
+    - `ListItem` interface - Interactive list items with `Open()` method
+    - `ListPanel` - Panel displaying lists with auto-open behavior
+    - `SimpleItem` - Basic ListItem implementation
+  - **`tui/adapters`**: Converts GraphQL AST types to UI components
+    - `Adapt*ToItems()` functions - Convert schema types to ListItems
+    - `fieldItem`, `typeDefItem` - ListItem adapters for GraphQL types
 
 ## Key Interfaces
 - **`ListItem`**: Extends `list.DefaultItem` with `Open() Panel` method for interactive items
 - **`Panel`**: Implements `tea.Model` with `SetSize(width, height int)` for resizable content
 
 ## Navigation Flow
-1. Application starts by parsing GraphQL schema from `examples/github.graphqls`
-2. Creates list of GraphQL Query and Mutation fields as interactive items
-3. User navigates with tab/shift+tab between panels
-4. Pressing enter on list items opens details in adjacent panels
-5. Supports up to 6 panels horizontally with ctrl+n/ctrl+w for add/remove
-6. **Field Type Toggling**: Use ctrl+t to toggle between Query and Mutation fields (see [Features](#features) section below)
+1. Application parses GraphQL schema from provided file path
+2. Displays Query fields by default in main panel
+3. Selecting items auto-opens details in adjacent panel
+4. Tab/Shift+Tab navigates between panels
+5. Ctrl+T/Ctrl+R cycles through 9 GQL type categories
+6. Space bar opens detail overlay for focused item
+7. Supports up to 6 panels horizontally
 
 ## Features
 
-### Query and Mutation Support
-The application supports exploring both GraphQL Query and Mutation types:
-- **Schema Parsing**: Extracts both Query and Mutation fields from GraphQL schemas
-- **Field Type Enum**: Uses `FieldType` enum to track current view mode
-- **Dynamic Field Loading**: `loadFieldsPanel()` method loads appropriate fields based on current type
+### GraphQL Type Exploration
+Supports exploring all GraphQL schema types:
+- **9 Type Categories**: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive
+- **Type Cycling**: Ctrl+T cycles forward, Ctrl+R cycles backward through types
+- **Auto-Loading**: Panels auto-populate when switching types
 
-### Interactive Field Type Toggling
-Users can switch between viewing Query and Mutation fields:
-- **Keyboard Shortcut**: Ctrl+T toggles between Query and Mutation fields
-- **Toggle Implementation**: `toggleFieldType()` method switches field types and reloads panel
-- **Visual Feedback**: Panel title updates to show current field type
+### Interactive Navigation
+- **Panel Focus**: Tab/Shift+Tab to navigate between panels
+- **Auto-Open**: Selecting items automatically opens details in adjacent panel
+- **Detail Overlay**: Space bar shows full item details in centered overlay
+- **Multi-Panel**: Supports up to 6 panels horizontally
 
 ## Dependencies
 - **Bubble Tea**: TUI framework for terminal applications
