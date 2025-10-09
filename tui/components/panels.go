@@ -6,6 +6,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// Panel represents a generic panel that can be displayed in the TUI
+type Panel interface {
+	tea.Model
+	SetSize(width, height int)
+}
+
 // OpenPanelMsg is sent when an item should be opened
 type OpenPanelMsg struct {
 	Panel Panel

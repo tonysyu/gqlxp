@@ -1,5 +1,21 @@
 package components
 
+import (
+	"github.com/charmbracelet/bubbles/list"
+)
+
+// ListItem is a list item that can be "opened" to provide additional information about the item.
+// The opened data is represented as a Panel instance that can be rendered to users.
+type ListItem interface {
+	list.DefaultItem
+
+	// Open Panel to show additional information.
+	Open() (Panel, bool)
+
+	// Details returns markdown-formatted details for the item.
+	Details() string
+}
+
 // SimpleItem is a ListItem implementation with arbitrary title and description and no-op Open() function.
 type SimpleItem struct {
 	title       string
