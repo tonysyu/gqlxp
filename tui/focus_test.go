@@ -4,20 +4,15 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
-	"github.com/tonysyu/igq/gql"
+	"github.com/tonysyu/igq/tui/adapters"
 	"github.com/tonysyu/igq/tui/components"
 )
 
 func TestShouldPanelReceiveMessage(t *testing.T) {
 	is := is.New(t)
 
-	// Create a test model with multiple panels
-	schema := gql.GraphQLSchema{
-		Query: make(map[string]*ast.FieldDefinition),
-	}
-	model := newModel(schema)
+	model := newModel(adapters.SchemaView{})
 	model.focus = 1 // Set focus to second panel
 
 	tests := []struct {
@@ -69,10 +64,7 @@ func TestShouldPanelReceiveMessage(t *testing.T) {
 func TestGlobalNavigationKeysNotSentToPanels(t *testing.T) {
 	is := is.New(t)
 
-	schema := gql.GraphQLSchema{
-		Query: make(map[string]*ast.FieldDefinition),
-	}
-	model := newModel(schema)
+	model := newModel(adapters.SchemaView{})
 	model.focus = 0
 
 	// Test all global navigation keys

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tonysyu/igq/gql"
+	"github.com/tonysyu/igq/tui/adapters"
 	"github.com/tonysyu/igq/tui"
 )
 
@@ -19,7 +19,7 @@ func main() {
 		abort(fmt.Sprintf("Error reading schema file '%s': %v\n", schemaFile, err))
 	}
 
-	schema, err := gql.ParseSchema(schemaContent)
+	schema, err := adapters.ParseSchema(schemaContent)
 	if err != nil {
 		abort(fmt.Sprintf("Error parsing schema: %v", err))
 	}

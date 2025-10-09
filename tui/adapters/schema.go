@@ -9,6 +9,14 @@ type SchemaView struct {
 	schema gql.GraphQLSchema
 }
 
+func ParseSchema(schemaContent []byte) (SchemaView, error) {
+	schema, err := gql.ParseSchema(schemaContent)
+	if err != nil {
+		return SchemaView{}, err
+	}
+	return NewSchemaView(schema), nil
+}
+
 func NewSchemaView(schema gql.GraphQLSchema) SchemaView {
 	return SchemaView{
 		schema: schema,
@@ -49,9 +57,4 @@ func (p *SchemaView) GetUnionItems() []components.ListItem {
 
 func (p *SchemaView) GetDirectiveItems() []components.ListItem {
 	return AdaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Directive))
-}
-
-// GetSchema returns the underlying GraphQL schema (primarily for testing)
-func (p *SchemaView) GetSchema() *gql.GraphQLSchema {
-	return &p.schema
 }

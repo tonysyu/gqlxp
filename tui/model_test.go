@@ -4,9 +4,8 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
-	"github.com/tonysyu/igq/gql"
+	"github.com/tonysyu/igq/tui/adapters"
 	"github.com/tonysyu/igq/tui/components"
 )
 
@@ -30,15 +29,15 @@ func TestNewModel(t *testing.T) {
 		}
 	`
 
-	schema, _ := gql.ParseSchema([]byte(schemaString))
-	model := newModel(schema)
+	schemaView, _ := adapters.ParseSchema([]byte(schemaString))
+	model := newModel(schemaView)
 
 	// Test initial state
 	is.Equal(len(model.panels), intialPanels)
 	is.Equal(model.focus, 0)
 	is.Equal(model.fieldType, queryType)
-	is.Equal(len(model.schema.GetSchema().Query), 2)    // getAllPosts, getPostById
-	is.Equal(len(model.schema.GetSchema().Mutation), 1) // createPost
+	is.Equal(len(model.schema.GetQueryItems()), 2)    // getAllPosts, getPostById
+	is.Equal(len(model.schema.GetMutationItems()), 1) // createPost
 
 	// Test that first panel is properly initialized with Query fields
 	firstPanel := model.panels[0]
@@ -55,10 +54,7 @@ func TestNewModel(t *testing.T) {
 func TestModelPanelNavigation(t *testing.T) {
 	is := is.New(t)
 
-	schema := gql.GraphQLSchema{
-		Query: make(map[string]*ast.FieldDefinition),
-	}
-	model := newModel(schema)
+	model := newModel(adapters.SchemaView{})
 
 	// Test initial focus
 	is.Equal(model.focus, 0)
@@ -123,8 +119,8 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 		directive @deprecated on FIELD_DEFINITION
 	`
 
-	schema, _ := gql.ParseSchema([]byte(schemaString))
-	model := newModel(schema)
+	schemaView, _ := adapters.ParseSchema([]byte(schemaString))
+	model := newModel(schemaView)
 
 	// Test initial type
 	is.Equal(model.fieldType, queryType)
@@ -148,10 +144,7 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 func TestModelWindowResize(t *testing.T) {
 	is := is.New(t)
 
-	schema := gql.GraphQLSchema{
-		Query: make(map[string]*ast.FieldDefinition),
-	}
-	model := newModel(schema)
+	model := newModel(adapters.SchemaView{})
 
 	// Test window resize
 	newWidth, newHeight := 120, 40
@@ -166,19 +159,7 @@ func TestModelWithEmptySchema(t *testing.T) {
 	is := is.New(t)
 
 	// Test with completely empty schema
-	emptySchema := gql.GraphQLSchema{
-		Query:     make(map[string]*ast.FieldDefinition),
-		Mutation:  make(map[string]*ast.FieldDefinition),
-		Object:    make(map[string]*ast.ObjectDefinition),
-		Input:     make(map[string]*ast.InputObjectDefinition),
-		Enum:      make(map[string]*ast.EnumDefinition),
-		Scalar:    make(map[string]*ast.ScalarDefinition),
-		Interface: make(map[string]*ast.InterfaceDefinition),
-		Union:     make(map[string]*ast.UnionDefinition),
-		Directive: make(map[string]*ast.DirectiveDefinition),
-	}
-
-	model := newModel(emptySchema)
+	model := newModel(adapters.SchemaView{})
 
 	// Model should still initialize properly
 	is.Equal(len(model.panels), intialPanels)
@@ -194,10 +175,7 @@ func TestModelWithEmptySchema(t *testing.T) {
 func TestModelPanelLimits(t *testing.T) {
 	is := is.New(t)
 
-	schema := gql.GraphQLSchema{
-		Query: make(map[string]*ast.FieldDefinition),
-	}
-	model := newModel(schema)
+	model := newModel(adapters.SchemaView{})
 
 	// Test reaching maximum panels
 	for i := len(model.panels); i < maxPanes; i++ {
@@ -213,10 +191,7 @@ func TestModelPanelLimits(t *testing.T) {
 func TestModelKeyboardShortcuts(t *testing.T) {
 	is := is.New(t)
 
-	schema := gql.GraphQLSchema{
-		Query: make(map[string]*ast.FieldDefinition),
-	}
-	model := newModel(schema)
+	model := newModel(adapters.SchemaView{})
 
 	// Test all keyboard shortcuts don't crash
 	shortcuts := []tea.KeyMsg{

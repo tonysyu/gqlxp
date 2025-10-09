@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/tonysyu/igq/gql"
 	"github.com/tonysyu/igq/tui/adapters"
 	"github.com/tonysyu/igq/tui/components"
 )
@@ -108,11 +107,11 @@ type mainModel struct {
 	overlay        overlayModel
 }
 
-func newModel(schema gql.GraphQLSchema) mainModel {
+func newModel(schema adapters.SchemaView) mainModel {
 	m := mainModel{
 		panels:    make([]components.Panel, intialPanels),
 		help:      help.New(),
-		schema:    adapters.NewSchemaView(schema),
+		schema:    schema,
 		fieldType: queryType,
 		overlay:   newOverlayModel(),
 		keymap: keymap{
