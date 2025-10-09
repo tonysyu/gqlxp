@@ -103,7 +103,7 @@ type mainModel struct {
 	help           help.Model
 	panels         []components.Panel
 	focus          int
-	schema         gql.GraphQLSchema
+	schema         adapters.SchemaView
 	fieldType      gqlType
 	overlay        overlayModel
 }
@@ -112,7 +112,7 @@ func newModel(schema gql.GraphQLSchema) mainModel {
 	m := mainModel{
 		panels:    make([]components.Panel, intialPanels),
 		help:      help.New(),
-		schema:    schema,
+		schema:    adapters.NewSchemaView(schema),
 		fieldType: queryType,
 		overlay:   newOverlayModel(),
 		keymap: keymap{
@@ -299,31 +299,31 @@ func (m *mainModel) loadMainPanel() {
 
 	switch m.fieldType {
 	case queryType:
-		items = adapters.AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Query), &m.schema)
+		items = m.schema.GetQueryItems()
 		title = "Query Fields"
 	case mutationType:
-		items = adapters.AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Mutation), &m.schema)
+		items = m.schema.GetMutationItems()
 		title = "Mutation Fields"
 	case objectType:
-		items = adapters.AdaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Object), &m.schema)
+		items = m.schema.GetObjectItems()
 		title = "Object Types"
 	case inputType:
-		items = adapters.AdaptInputDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Input), &m.schema)
+		items = m.schema.GetInputItems()
 		title = "Input Types"
 	case enumType:
-		items = adapters.AdaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Enum), &m.schema)
+		items = m.schema.GetEnumItems()
 		title = "Enum Types"
 	case scalarType:
-		items = adapters.AdaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Scalar), &m.schema)
+		items = m.schema.GetScalarItems()
 		title = "Scalar Types"
 	case interfaceType:
-		items = adapters.AdaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Interface), &m.schema)
+		items = m.schema.GetInterfaceItems()
 		title = "Interface Types"
 	case unionType:
-		items = adapters.AdaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Union), &m.schema)
+		items = m.schema.GetUnionItems()
 		title = "Union Types"
 	case directiveType:
-		items = adapters.AdaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(m.schema.Directive))
+		items = m.schema.GetDirectiveItems()
 		title = "Directive Types"
 	}
 

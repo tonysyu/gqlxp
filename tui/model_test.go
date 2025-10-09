@@ -37,8 +37,8 @@ func TestNewModel(t *testing.T) {
 	is.Equal(len(model.panels), intialPanels)
 	is.Equal(model.focus, 0)
 	is.Equal(model.fieldType, queryType)
-	is.Equal(len(model.schema.Query), 2)    // getAllPosts, getPostById
-	is.Equal(len(model.schema.Mutation), 1) // createPost
+	is.Equal(len(model.schema.GetSchema().Query), 2)    // getAllPosts, getPostById
+	is.Equal(len(model.schema.GetSchema().Mutation), 1) // createPost
 
 	// Test that first panel is properly initialized with Query fields
 	firstPanel := model.panels[0]
