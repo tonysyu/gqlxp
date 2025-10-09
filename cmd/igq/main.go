@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tonysyu/igq/tui/adapters"
 	"github.com/tonysyu/igq/tui"
+	"github.com/tonysyu/igq/tui/adapters"
 )
 
 func main() {

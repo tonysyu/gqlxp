@@ -11,7 +11,6 @@ import (
 // Ensure that all item types implements components.ListItem interface
 var _ components.ListItem = (*fieldItem)(nil)
 var _ components.ListItem = (*typeDefItem)(nil)
-var _ components.ListItem = (*components.SimpleItem)(nil)
 
 func AdaptFieldDefinitionsToItems(queryFields []*ast.FieldDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(queryFields))

@@ -16,6 +16,8 @@ type ListItem interface {
 	Details() string
 }
 
+var _ ListItem = (*SimpleItem)(nil)
+
 // SimpleItem is a ListItem implementation with arbitrary title and description and no-op Open() function.
 type SimpleItem struct {
 	title       string
