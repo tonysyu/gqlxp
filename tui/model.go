@@ -173,15 +173,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, m.keymap.ToggleOverlay):
-			content := "No item selected"
-			if focusedPanel, ok := m.panels[m.focus].(*components.ListPanel); ok {
-				if selectedItem := focusedPanel.SelectedItem(); selectedItem != nil {
-					if listItem, ok := selectedItem.(components.ListItem); ok {
-						content = listItem.Details()
-					}
-				}
-			}
-			m.overlay.Show(content, m.width, m.height)
+			m.openOverlayForSelectedItem()
 		case key.Matches(msg, m.keymap.NextPanel):
 			m.focus++
 			if m.focus > len(m.panels)-1 {
@@ -222,6 +214,18 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m *mainModel) openOverlayForSelectedItem() {
+	content := "No item selected"
+	if focusedPanel, ok := m.panels[m.focus].(*components.ListPanel); ok {
+		if selectedItem := focusedPanel.SelectedItem(); selectedItem != nil {
+			if listItem, ok := selectedItem.(components.ListItem); ok {
+				content = listItem.Details()
+			}
+		}
+	}
+	m.overlay.Show(content, m.width, m.height)
 }
 
 // shouldPanelReceiveMessage determines if a panel should receive a message
