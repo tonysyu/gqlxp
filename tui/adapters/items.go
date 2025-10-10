@@ -141,15 +141,7 @@ func (i fieldItem) Open() (components.Panel, bool) {
 
 	// Add result type section
 	detailItems = append(detailItems, newSectionHeader("Result Type"))
-	// TODO: Use NamedToTypeDefinition and newTypeDefItem
-	// resultType, err := i.schema.NamedToTypeDefinition(gql.GetNamedFromType(i.gqlField.Type))
-	// if err != nil {
-	// 	detailItems = append(detailItems, newTypeItem(i.gqlField.Type))
-	// } else {
-	// 	detailItems = append(detailItems, newTypeDefItem(resultType, i.schema))
-	// }
-	detailItems = append(detailItems, newTypeItem(i.gqlField.Type))
-	// detailItems = append(detailItems, newTypeItem(i.gqlField.Type))
+	detailItems = append(detailItems, newTypeItem(i.gqlField.Type, i.schema))
 	return components.NewListPanel(detailItems, i.Title()), true
 }
 
@@ -168,20 +160,25 @@ func adaptInputValueDefinitions(inputValues []*ast.InputValueDefinition) []compo
 
 // Adapter/delegate for ast.TypeDefinition to support ListItem interface
 type typeDefItem struct {
-	typeDef gql.NamedTypeDef
-	schema  *gql.GraphQLSchema
+	title    string
+	typeName string
+	typeDef  gql.NamedTypeDef
+	schema   *gql.GraphQLSchema
 }
 
 func newTypeDefItem(typeDef gql.NamedTypeDef, schema *gql.GraphQLSchema) typeDefItem {
+	title := typeDef.GetName().Value
 	return typeDefItem{
-		typeDef: typeDef,
-		schema:  schema,
+		title:    title,
+		typeName: title,
+		typeDef:  typeDef,
+		schema:   schema,
 	}
 }
 
-func (i typeDefItem) Title() string       { return i.typeDef.GetName().Value }
+func (i typeDefItem) Title() string       { return i.title }
 func (i typeDefItem) FilterValue() string { return i.Title() }
-func (i typeDefItem) TypeName() string    { return i.Title() }
+func (i typeDefItem) TypeName() string    { return i.typeName }
 
 func (i typeDefItem) Description() string {
 	if desc := (i.typeDef).GetDescription(); desc != nil {
@@ -285,12 +282,22 @@ func newNamedItem(node *ast.Named) components.SimpleItem {
 	return components.NewSimpleItem(node.Name.Value)
 }
 
-func newTypeItem(t ast.Type) components.SimpleItem {
-	// TODO: This probably requires a reference to the schema to return full type when opening
-	return components.NewSimpleItem(
-		gql.GetTypeString(t),
-		components.WithTypeName(gql.GetNamedFromType(t).Name.Value),
-	)
+func newTypeItem(t ast.Type, schema *gql.GraphQLSchema) components.ListItem {
+	resultType, err := schema.NamedToTypeDefinition(gql.GetNamedFromType(t))
+	if err != nil {
+		// FIXME: Currently, this treats any error as a built-in type, but instead we should
+		// check for _known_ built in types and handle errors intelligently.
+		return components.NewSimpleItem(
+			gql.GetTypeString(t),
+			components.WithTypeName(gql.GetNamedFromType(t).Name.Value),
+		)
+	}
+	return typeDefItem{
+		title:    gql.GetTypeString(t),
+		typeName: resultType.GetName().Value,
+		typeDef:  resultType,
+		schema:   schema,
+	}
 }
 
 func newInputValueItem(inputValue *ast.InputValueDefinition) components.SimpleItem {
@@ -302,8 +309,8 @@ func newInputValueItem(inputValue *ast.InputValueDefinition) components.SimpleIt
 }
 
 func newDirectiveDefinitionItem(directive *ast.DirectiveDefinition) components.SimpleItem {
-	if desc := gql.GetStringValue(directive.Description); desc != "" {
-		return components.NewSimpleItem(directive.Name.Value, components.WithDescription(desc))
-	}
-	return components.NewSimpleItem(directive.Name.Value)
+	return components.NewSimpleItem(
+		directive.Name.Value,
+		components.WithDescription(gql.GetStringValue(directive.Description)),
+	)
 }

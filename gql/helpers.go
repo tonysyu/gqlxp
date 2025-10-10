@@ -36,6 +36,7 @@ type NamedType interface {
 }
 
 // GetTypeString converts ast.Type to string representation
+// ast.Types are ast.Named types wrapped in arbitrary numbers of lists and non-nulls.
 func GetTypeString(t ast.Type) string {
 	switch typ := t.(type) {
 	case *ast.Named:
@@ -50,6 +51,7 @@ func GetTypeString(t ast.Type) string {
 }
 
 // GetTypeString converts ast.Type to string representation
+// ast.Types are ast.Named types wrapped in arbitrary numbers of lists and non-nulls.
 func GetNamedFromType(t ast.Type) *ast.Named {
 	switch typ := t.(type) {
 	case *ast.Named:

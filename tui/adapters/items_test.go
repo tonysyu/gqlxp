@@ -534,15 +534,15 @@ func TestTypeItemCreation(t *testing.T) {
 
 	// Test type items for different field types
 	simpleField := schema.Query["simpleField"]
-	typeItem1 := newTypeItem(simpleField.Type)
+	typeItem1 := newTypeItem(simpleField.Type, &schema)
 	is.Equal(typeItem1.Title(), "String")
 
 	listField := schema.Query["listField"]
-	typeItem2 := newTypeItem(listField.Type)
+	typeItem2 := newTypeItem(listField.Type, &schema)
 	is.Equal(typeItem2.Title(), "[String!]!")
 
 	complexField := schema.Query["complexField"]
-	typeItem3 := newTypeItem(complexField.Type)
+	typeItem3 := newTypeItem(complexField.Type, &schema)
 	is.Equal(typeItem3.Title(), "[User]")
 }
 
