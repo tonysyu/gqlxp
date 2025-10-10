@@ -83,9 +83,9 @@ func TestListPanelBasic(t *testing.T) {
 
 	// Create test items
 	items := []SimpleItem{
-		NewSimpleItem("Item 1", "Description 1"),
-		NewSimpleItem("Item 2", "Description 2"),
-		NewSimpleItem("Item 3", "Description 3"),
+		NewSimpleItem("Item 1"),
+		NewSimpleItem("Item 2"),
+		NewSimpleItem("Item 3"),
 	}
 
 	listItems := make([]ListItem, len(items))
@@ -122,11 +122,11 @@ func TestListPanelSelectionChange(t *testing.T) {
 	testPanel := NewStringPanel("opened panel content")
 	items := []ListItem{
 		testOpenableItem{
-			SimpleItem: NewSimpleItem("Item 1", "Description 1"),
+			SimpleItem: NewSimpleItem("Item 1"),
 			openPanel:  testPanel,
 		},
 		testOpenableItem{
-			SimpleItem: NewSimpleItem("Item 2", "Description 2"),
+			SimpleItem: NewSimpleItem("Item 2"),
 			openPanel:  testPanel,
 		},
 	}
@@ -146,7 +146,7 @@ func TestListPanelAutoOpen(t *testing.T) {
 	testPanel := NewStringPanel("opened panel content")
 	items := []ListItem{
 		testOpenableItem{
-			SimpleItem: NewSimpleItem("Test Field", "Test Description"),
+			SimpleItem: NewSimpleItem("Test Field"),
 			openPanel:  testPanel,
 		},
 	}
@@ -185,7 +185,7 @@ func TestListPanelWithManyItems(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		items = append(items, NewSimpleItem(
 			"Item "+string(rune(i)),
-			"Description "+string(rune(i)),
+			WithDescription("Description "+string(rune(i))),
 		))
 	}
 
@@ -221,7 +221,7 @@ func TestPanelSizeEdgeCases(t *testing.T) {
 	is.True(len(view) >= 0) // Should not crash
 
 	// Test list panel with small sizes
-	listPanel := NewListPanel([]ListItem{NewSimpleItem("test", "")}, "test")
+	listPanel := NewListPanel([]ListItem{NewSimpleItem("test")}, "test")
 	listPanel.SetSize(1, 1)
 	view = listPanel.View()
 	is.True(len(view) >= 0) // Should not crash
@@ -232,9 +232,9 @@ func TestListPanelFilteringSupport(t *testing.T) {
 
 	// Create items with different filter values
 	items := []ListItem{
-		NewSimpleItem("Apple", "A fruit"),
-		NewSimpleItem("Banana", "Another fruit"),
-		NewSimpleItem("Carrot", "A vegetable"),
+		NewSimpleItem("Apple"),
+		NewSimpleItem("Banana"),
+		NewSimpleItem("Carrot"),
 	}
 
 	panel := NewListPanel(items, "Filterable Panel")

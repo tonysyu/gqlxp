@@ -460,7 +460,7 @@ func TestEmptyAdapterInputs(t *testing.T) {
 func TestSimpleItemInterface(t *testing.T) {
 	is := is.New(t)
 
-	item := components.NewSimpleItem("Test Title", "Test Description")
+	item := components.NewSimpleItem("Test Title", components.WithDescription("Test Description"))
 
 	is.Equal(item.Title(), "Test Title")
 	is.Equal(item.Description(), "Test Description")

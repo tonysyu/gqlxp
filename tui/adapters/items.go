@@ -71,10 +71,11 @@ func adaptNamedToItems(namedNodes []*ast.Named) []components.ListItem {
 func adaptEnumValueDefinitionsToItems(enumNodes []*ast.EnumValueDefinition) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(enumNodes))
 	for _, node := range enumNodes {
-		adaptedItems = append(adaptedItems, components.NewSimpleItem(
+		item := components.NewSimpleItem(
 			node.Name.Value,
-			gql.GetStringValue(node.Description),
-		))
+			components.WithDescription(gql.GetStringValue(node.Description)),
+		)
+		adaptedItems = append(adaptedItems, item)
 	}
 	return adaptedItems
 }
@@ -103,12 +104,11 @@ func newFieldDefItem(gqlField *ast.FieldDefinition, schema *gql.GraphQLSchema) c
 	}
 }
 
-func (i fieldItem) Title() string {
-	return i.gqlField.Name.Value
-}
-
-func (i fieldItem) FilterValue() string {
-	return i.Title()
+func (i fieldItem) Title() string       { return i.gqlField.Name.Value }
+func (i fieldItem) FilterValue() string { return i.Title() }
+func (i fieldItem) TypeName() string {
+	resultType := gql.GetNamedFromType(i.gqlField.Type)
+	return resultType.Name.Value
 }
 
 func (i fieldItem) Description() string {
@@ -117,7 +117,7 @@ func (i fieldItem) Description() string {
 
 func (i fieldItem) Details() string {
 	return joinParagraphs(
-		h1(i.Title()),
+		h1(i.TypeName()),
 		gqlCode(gql.GetFieldDefinitionString(i.gqlField)),
 		i.Description(),
 	)
@@ -130,7 +130,7 @@ func (i fieldItem) Open() (components.Panel, bool) {
 
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
-		detailItems = append(detailItems, components.NewSimpleItem(desc, ""))
+		detailItems = append(detailItems, components.NewSimpleItem(desc))
 	}
 
 	inputValueItems := adaptInputValueDefinitions(i.gqlField.Arguments)
@@ -179,13 +179,9 @@ func newTypeDefItem(typeDef gql.NamedTypeDef, schema *gql.GraphQLSchema) typeDef
 	}
 }
 
-func (i typeDefItem) Title() string {
-	return i.typeDef.GetName().Value
-}
-
-func (i typeDefItem) FilterValue() string {
-	return i.Title()
-}
+func (i typeDefItem) Title() string       { return i.typeDef.GetName().Value }
+func (i typeDefItem) FilterValue() string { return i.Title() }
+func (i typeDefItem) TypeName() string    { return i.Title() }
 
 func (i typeDefItem) Description() string {
 	if desc := (i.typeDef).GetDescription(); desc != nil {
@@ -195,7 +191,7 @@ func (i typeDefItem) Description() string {
 }
 
 func (i typeDefItem) Details() string {
-	parts := []string{h1(i.Title())}
+	parts := []string{h1(i.TypeName())}
 
 	// Add description if available
 	if desc := i.Description(); desc != "" {
@@ -259,7 +255,7 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
-		detailItems = append(detailItems, components.NewSimpleItem(desc, ""))
+		detailItems = append(detailItems, components.NewSimpleItem(desc))
 	}
 
 	switch typeDef := (i.typeDef).(type) {
@@ -281,30 +277,30 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 }
 
 func newSectionHeader(title string) components.SimpleItem {
-	return components.NewSimpleItem("======== "+title+" ========", "")
+	return components.NewSimpleItem("======== " + title + " ========")
 }
 
 func newNamedItem(node *ast.Named) components.SimpleItem {
 	// TODO: This probably requires a reference to the schema to return full type when opening
-	return components.NewSimpleItem(node.Name.Value, "")
+	return components.NewSimpleItem(node.Name.Value)
 }
 
 func newTypeItem(t ast.Type) components.SimpleItem {
 	// TODO: This probably requires a reference to the schema to return full type when opening
-	return components.NewSimpleItem(gql.GetTypeString(t), "")
+	return components.NewSimpleItem(gql.GetTypeString(t))
 }
 
 func newInputValueItem(inputValue *ast.InputValueDefinition) components.SimpleItem {
 	// TODO: Update item to support proper Open and use custom display string
 	return components.NewSimpleItem(
 		gql.GetInputValueDefinitionString(inputValue),
-		gql.GetStringValue(inputValue.Description),
+		components.WithDescription(gql.GetStringValue(inputValue.Description)),
 	)
 }
 
 func newDirectiveDefinitionItem(directive *ast.DirectiveDefinition) components.SimpleItem {
-	return components.NewSimpleItem(
-		directive.Name.Value,
-		gql.GetStringValue(directive.Description),
-	)
+	if desc := gql.GetStringValue(directive.Description); desc != "" {
+		return components.NewSimpleItem(directive.Name.Value, components.WithDescription(desc))
+	}
+	return components.NewSimpleItem(directive.Name.Value)
 }

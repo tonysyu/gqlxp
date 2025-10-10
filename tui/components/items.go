@@ -14,6 +14,10 @@ type ListItem interface {
 
 	// Details returns markdown-formatted details for the item.
 	Details() string
+
+	// TypeName returns the name of the underlying GraphQL type.
+	// This often matches the Title() but may differ for types wrapped in lists and non-nulls.
+	TypeName() string
 }
 
 var _ ListItem = (*SimpleItem)(nil)
@@ -22,23 +26,46 @@ var _ ListItem = (*SimpleItem)(nil)
 type SimpleItem struct {
 	title       string
 	description string
+	typename    string
 }
 
-// NewSimpleItem creates a new SimpleItem with the given title and description
-func NewSimpleItem(title, description string) SimpleItem {
-	return SimpleItem{
-		title:       title,
-		description: description,
+// SimpleItemOption is a function that configures a SimpleItem.
+type SimpleItemOption func(*SimpleItem)
+
+// WithDescription sets the description for a SimpleItem.
+func WithDescription(desc string) SimpleItemOption {
+	return func(si *SimpleItem) {
+		si.description = desc
 	}
+}
+
+// WithTypeName sets the typename for a SimpleItem.
+func WithTypeName(typename string) SimpleItemOption {
+	return func(si *SimpleItem) {
+		si.typename = typename
+	}
+}
+
+// NewSimpleItem creates a new SimpleItem with the given title and optional configuration.
+func NewSimpleItem(title string, opts ...SimpleItemOption) SimpleItem {
+	si := SimpleItem{
+		title:    title,
+		typename: title,
+	}
+	for _, opt := range opts {
+		opt(&si)
+	}
+	return si
 }
 
 func (si SimpleItem) Title() string       { return si.title }
 func (si SimpleItem) Description() string { return si.description }
-func (si SimpleItem) FilterValue() string { return si.title }
+func (si SimpleItem) FilterValue() string { return si.Title() }
+func (si SimpleItem) TypeName() string    { return si.typename }
 func (si SimpleItem) Details() string {
-	if si.description != "" {
-		return "# " + si.Title() + "\n\n" + si.Description()
+	if si.Description() != "" {
+		return "# " + si.TypeName() + "\n\n" + si.Description()
 	}
-	return "# " + si.Title()
+	return "# " + si.TypeName()
 }
 func (si SimpleItem) Open() (Panel, bool) { return nil, false }
