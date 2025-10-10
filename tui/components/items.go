@@ -13,10 +13,13 @@ type ListItem interface {
 	Open() (Panel, bool)
 
 	// Details returns markdown-formatted details for the item.
+	// The igq TUI renders details in an overlay pane.
 	Details() string
 
 	// TypeName returns the name of the underlying GraphQL type.
 	// This often matches the Title() but may differ for types wrapped in lists and non-nulls.
+	// Title() is used when referencing this item in lists
+	// In contrast, TypeName() is used as the title by Details()
 	TypeName() string
 }
 

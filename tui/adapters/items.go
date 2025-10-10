@@ -287,7 +287,10 @@ func newNamedItem(node *ast.Named) components.SimpleItem {
 
 func newTypeItem(t ast.Type) components.SimpleItem {
 	// TODO: This probably requires a reference to the schema to return full type when opening
-	return components.NewSimpleItem(gql.GetTypeString(t))
+	return components.NewSimpleItem(
+		gql.GetTypeString(t),
+		components.WithTypeName(gql.GetNamedFromType(t).Name.Value),
+	)
 }
 
 func newInputValueItem(inputValue *ast.InputValueDefinition) components.SimpleItem {
