@@ -94,18 +94,18 @@ type keymap = struct {
 
 type mainModel struct {
 	// Parsed GraphQL schema that's displayed in the TUI.
-	schema         adapters.SchemaView
+	schema adapters.SchemaView
 	// Panels displaying list-views of GraphQL types.
 	// A list of top-level types (see availableGQLTypes) is at the bottom of the stack, and children
 	// of those types (e.g. fields, inputs, return types) are displayed in additional panels.
-	panelStack     []components.Panel
+	panelStack []components.Panel
 	// Position of the currently focused panel in the panelStack.
 	// This may not be the top-most item in the stack.
-	stackPosition  int
+	stackPosition int
 	// Currently displayed GraphQL Type (see availableGQLTypes)
-	fieldType      gqlType
-	// Overlay for displaying ListItem.Details() 
-	overlay        overlayModel
+	selectedGQLType gqlType
+	// Overlay for displaying ListItem.Details()
+	overlay overlayModel
 
 	width          int
 	height         int
@@ -116,12 +116,12 @@ type mainModel struct {
 
 func newModel(schema adapters.SchemaView) mainModel {
 	m := mainModel{
-		panelStack:    make([]components.Panel, displayedPanels),
-		stackPosition: 0,
-		help:          help.New(),
-		schema:        schema,
-		fieldType:     queryType,
-		overlay:       newOverlayModel(),
+		panelStack:      make([]components.Panel, displayedPanels),
+		stackPosition:   0,
+		help:            help.New(),
+		schema:          schema,
+		selectedGQLType: queryType,
+		overlay:         newOverlayModel(),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
 				key.WithKeys("tab"),
@@ -297,7 +297,7 @@ func (m *mainModel) loadMainPanel() {
 	var items []components.ListItem
 	var title string
 
-	switch m.fieldType {
+	switch m.selectedGQLType {
 	case queryType:
 		items = m.schema.GetQueryItems()
 		title = "Query Fields"
@@ -345,7 +345,7 @@ func (m *mainModel) loadMainPanel() {
 func (m *mainModel) incrementGQLTypeIndex(offset int) {
 	// Find current GQL type index
 	currentIndex := slices.IndexFunc(availableGQLTypes, func(fieldType gqlType) bool {
-		return m.fieldType == fieldType
+		return m.selectedGQLType == fieldType
 	})
 
 	newIndex := (currentIndex + offset)
@@ -355,7 +355,7 @@ func (m *mainModel) incrementGQLTypeIndex(offset int) {
 	} else if newIndex >= len(availableGQLTypes) {
 		newIndex = 0
 	}
-	m.fieldType = availableGQLTypes[newIndex]
+	m.selectedGQLType = availableGQLTypes[newIndex]
 
 	m.resetAndLoadMainPanel()
 	m.sizePanels()
@@ -367,7 +367,7 @@ func (m *mainModel) renderGQLTypeNavbar() string {
 
 	for _, fieldType := range availableGQLTypes {
 		var style lipgloss.Style
-		if m.fieldType == fieldType {
+		if m.selectedGQLType == fieldType {
 			style = activeTabStyle
 		} else {
 			style = inactiveTabStyle

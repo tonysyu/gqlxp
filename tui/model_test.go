@@ -35,7 +35,7 @@ func TestNewModel(t *testing.T) {
 	// Test initial state
 	is.Equal(len(model.panelStack), displayedPanels)
 	is.Equal(model.stackPosition, 0)
-	is.Equal(model.fieldType, queryType)
+	is.Equal(model.selectedGQLType, queryType)
 	is.Equal(len(model.schema.GetQueryItems()), 2)    // getAllPosts, getPostById
 	is.Equal(len(model.schema.GetMutationItems()), 1) // createPost
 
@@ -147,7 +147,7 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 	model := newModel(schemaView)
 
 	// Test initial type
-	is.Equal(model.fieldType, queryType)
+	is.Equal(model.selectedGQLType, queryType)
 
 	// Test forward cycling through types
 	expectedTypes := []gqlType{mutationType, objectType, inputType, enumType, scalarType, interfaceType, unionType, directiveType, queryType}
@@ -155,14 +155,14 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 	for _, expectedType := range expectedTypes {
 		updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
 		model = updatedModel.(mainModel)
-		is.Equal(model.fieldType, expectedType)
+		is.Equal(model.selectedGQLType, expectedType)
 		is.Equal(model.stackPosition, 0) // Stack position should reset to 0
 	}
 
 	// Test reverse cycling
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
 	model = updatedModel.(mainModel)
-	is.Equal(model.fieldType, directiveType)
+	is.Equal(model.selectedGQLType, directiveType)
 }
 
 func TestModelWindowResize(t *testing.T) {
@@ -188,12 +188,12 @@ func TestModelWithEmptySchema(t *testing.T) {
 	// Model should still initialize properly
 	is.Equal(len(model.panelStack), displayedPanels)
 	is.Equal(model.stackPosition, 0)
-	is.Equal(model.fieldType, queryType)
+	is.Equal(model.selectedGQLType, queryType)
 
 	// Should be able to cycle through types even with empty schema
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
 	model = updatedModel.(mainModel)
-	is.Equal(model.fieldType, mutationType)
+	is.Equal(model.selectedGQLType, mutationType)
 }
 
 func TestModelKeyboardShortcuts(t *testing.T) {
