@@ -93,16 +93,25 @@ type keymap = struct {
 }
 
 type mainModel struct {
-	width         int
-	height        int
-	keymap        keymap
+	// Parsed GraphQL schema that's displayed in the TUI.
+	schema         adapters.SchemaView
+	// Panels displaying list-views of GraphQL types.
+	// A list of top-level types (see availableGQLTypes) is at the bottom of the stack, and children
+	// of those types (e.g. fields, inputs, return types) are displayed in additional panels.
+	panelStack     []components.Panel
+	// Position of the currently focused panel in the panelStack.
+	// This may not be the top-most item in the stack.
+	stackPosition  int
+	// Currently displayed GraphQL Type (see availableGQLTypes)
+	fieldType      gqlType
+	// Overlay for displaying ListItem.Details() 
+	overlay        overlayModel
+
+	width          int
+	height         int
+	keymap         keymap
 	globalKeyBinds []key.Binding
-	help          help.Model
-	panelStack    []components.Panel
-	stackPosition int
-	schema        adapters.SchemaView
-	fieldType     gqlType
-	overlay       overlayModel
+	help           help.Model
 }
 
 func newModel(schema adapters.SchemaView) mainModel {
@@ -197,20 +206,17 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.sizePanels()
 
 	// Update visible panels in the stack
-	// Only the left panel (stackPosition) receives input; right panel is display-only
-	for offset := 0; offset < displayedPanels && m.stackPosition+offset < len(m.panelStack); offset++ {
-		var newModel tea.Model
-		var cmd tea.Cmd
+	var newModel tea.Model
+	var cmd tea.Cmd
 
-		stackIndex := m.stackPosition + offset
-		shouldReceiveMsg := m.shouldPanelReceiveMessage(offset, msg)
-		if shouldReceiveMsg {
-			newModel, cmd = m.panelStack[stackIndex].Update(msg)
-			if panel, ok := newModel.(components.Panel); ok {
-				m.panelStack[stackIndex] = panel
-			}
-			cmds = append(cmds, cmd)
+	// Only the left (focused) panel receives input; right panel is display-only
+	shouldReceiveMsg := m.shouldFocusedPanelReceiveMessage(msg)
+	if shouldReceiveMsg {
+		newModel, cmd = m.panelStack[m.stackPosition].Update(msg)
+		if panel, ok := newModel.(components.Panel); ok {
+			m.panelStack[m.stackPosition] = panel
 		}
+		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
@@ -229,9 +235,8 @@ func (m *mainModel) openOverlayForSelectedItem() {
 	m.overlay.Show(content, m.width, m.height)
 }
 
-// shouldPanelReceiveMessage determines if a panel should receive a message
-// based on the display offset (0=left, 1=right) and message type
-func (m *mainModel) shouldPanelReceiveMessage(displayOffset int, msg tea.Msg) bool {
+// shouldFocusedPanelReceiveMessage determines if the focused panel should receive a message
+func (m *mainModel) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Global navigation keys handled by main model should not go to panels
@@ -240,24 +245,23 @@ func (m *mainModel) shouldPanelReceiveMessage(displayOffset int, msg tea.Msg) bo
 				return false
 			}
 		}
-		// Only the left panel (offset 0) receives key input
-		return displayOffset == 0
+		return true
 	case components.OpenPanelMsg:
 		// OpenPanelMsg is handled by main model, not individual panels
 		return false
 	default:
-		// Unknown message types go to all panels (safe default)
+		// Unknown message types go to focued panel (safe default)
 		return true
 	}
 }
 
 func (m *mainModel) sizePanels() {
 	panelWidth := m.width / displayedPanels
-	panelHeight := m.height-helpHeight-navbarHeight
+	panelHeight := m.height - helpHeight - navbarHeight
 	// Size only the visible panels (displayedPanels = 2)
 	m.panelStack[m.stackPosition].SetSize(panelWidth, panelHeight)
 	// The right panel might not exist, so check before resizing
-	if (len(m.panelStack) > m.stackPosition+1) {
+	if len(m.panelStack) > m.stackPosition+1 {
 		m.panelStack[m.stackPosition+1].SetSize(panelWidth, panelHeight)
 	}
 }

@@ -27,12 +27,6 @@ func TestShouldPanelReceiveMessage(t *testing.T) {
 			shouldReceive: true,
 		},
 		{
-			name:          "right panel (offset 1) does not receive key message",
-			displayOffset: 1,
-			msg:           tea.KeyMsg{Type: tea.KeyEnter},
-			shouldReceive: false,
-		},
-		{
 			name:          "all panels receive window size message",
 			displayOffset: 0,
 			msg:           tea.WindowSizeMsg{Width: 100, Height: 50},
@@ -54,7 +48,7 @@ func TestShouldPanelReceiveMessage(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := model.shouldPanelReceiveMessage(tt.displayOffset, tt.msg)
+			result := model.shouldFocusedPanelReceiveMessage(tt.msg)
 			is.Equal(result, tt.shouldReceive)
 		})
 	}
@@ -76,7 +70,7 @@ func TestGlobalNavigationKeysNotSentToPanels(t *testing.T) {
 
 	for _, keyMsg := range globalKeys {
 		// Even the left panel (offset 0) should not receive global navigation keys
-		shouldReceive := model.shouldPanelReceiveMessage(0, keyMsg)
+		shouldReceive := model.shouldFocusedPanelReceiveMessage(keyMsg)
 		is.True(!shouldReceive)
 	}
 }
