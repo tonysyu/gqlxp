@@ -389,16 +389,11 @@ func (m mainModel) View() string {
 	})
 
 	var views []string
-	// Render only the visible panels from the stack
-	for offset := 0; offset < displayedPanels && m.stackPosition+offset < len(m.panelStack); offset++ {
-		panelView := m.panelStack[m.stackPosition+offset].View()
-		// Only the left panel (offset 0) is focused
-		if offset == 0 && !m.overlay.IsActive() {
-			panelView = focusedBorderStyle.Render(panelView)
-		} else {
-			panelView = blurredBorderStyle.Render(panelView)
+	if !m.overlay.IsActive() {
+		views = append(views, focusedBorderStyle.Render(m.panelStack[m.stackPosition].View()))
+		if len(m.panelStack) > m.stackPosition+1 {
+			views = append(views, blurredBorderStyle.Render(m.panelStack[m.stackPosition+1].View()))
 		}
-		views = append(views, panelView)
 	}
 
 	navbar := m.renderGQLTypeNavbar()
@@ -406,6 +401,7 @@ func (m mainModel) View() string {
 	mainView := navbar + "\n" + panels + "\n\n" + help
 
 	// Show overlay if active
+	// TODO: Move this logic into overlayModel.View() (possibly with overlayStyle passed into model)
 	if m.overlay.IsActive() {
 		overlayContent := m.overlay.View()
 		overlay := overlayStyle.Render(overlayContent)
