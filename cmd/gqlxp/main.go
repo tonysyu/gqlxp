@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tonysyu/igq/tui"
-	"github.com/tonysyu/igq/tui/adapters"
+	"github.com/tonysyu/gqlxp/tui"
+	"github.com/tonysyu/gqlxp/tui/adapters"
 )
 
 func main() {
 	if len(os.Args) < 2 {
-		abort("Usage: igq <schema-file>")
+		abort("Usage: gqlxp <schema-file>")
 	}
 
 	schemaFile := os.Args[1]

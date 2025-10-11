@@ -1,7 +1,7 @@
 # Documentation Index
 
 ## Overview
-This directory contains technical documentation for the `igq` GraphQL query explorer TUI application.
+This directory contains technical documentation for the `gqlxp` GraphQL query explorer TUI application.
 
 ## Available Documentation
 

@@ -1,8 +1,8 @@
 package adapters
 
 import (
-	"github.com/tonysyu/igq/gql"
-	"github.com/tonysyu/igq/tui/components"
+	"github.com/tonysyu/gqlxp/gql"
+	"github.com/tonysyu/gqlxp/tui/components"
 )
 
 type SchemaView struct {

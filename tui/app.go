@@ -2,7 +2,7 @@ package tui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/tonysyu/igq/tui/adapters"
+	"github.com/tonysyu/gqlxp/tui/adapters"
 )
 
 func Start(schema adapters.SchemaView) (tea.Model, error) {

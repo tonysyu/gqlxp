@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/graphql-go/graphql/language/ast"
-	"github.com/tonysyu/igq/gql"
-	"github.com/tonysyu/igq/tui/components"
+	"github.com/tonysyu/gqlxp/gql"
+	"github.com/tonysyu/gqlxp/tui/components"
 )
 
 // Ensure that all item types implements components.ListItem interface

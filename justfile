@@ -3,10 +3,10 @@ default:
     @echo 'Usage: just [OPTIONS] [ARGUMENTS]...'
     @just -l
 
-# Run the igq tui
+# Run the gqlxp tui
 [group('app')]
 run schemaPath:
-    go run ./cmd/igq {{schemaPath}}
+    go run ./cmd/gqlxp {{schemaPath}}
 
 # Run tests (defaults to all tests in projects)
 [group('code')]
@@ -29,4 +29,4 @@ verify: && test lint-fix
 # Build executable
 [group('deploy')]
 build:
-    go build -o dist/igq ./cmd/igq
+    go build -o dist/gqlxp ./cmd/gqlxp

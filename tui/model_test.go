@@ -5,8 +5,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/matryer/is"
-	"github.com/tonysyu/igq/tui/adapters"
-	"github.com/tonysyu/igq/tui/components"
+	"github.com/tonysyu/gqlxp/tui/adapters"
+	"github.com/tonysyu/gqlxp/tui/components"
 )
 
 func TestNewModel(t *testing.T) {

@@ -6,8 +6,8 @@ import (
 
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
-	"github.com/tonysyu/igq/gql"
-	"github.com/tonysyu/igq/tui/components"
+	"github.com/tonysyu/gqlxp/gql"
+	"github.com/tonysyu/gqlxp/tui/components"
 )
 
 // normalizeView strips leading/trailing whitespace and empty lines from multi-line strings
