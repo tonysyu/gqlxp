@@ -33,14 +33,14 @@ func TestNewModel(t *testing.T) {
 	model := newModel(schemaView)
 
 	// Test initial state
-	is.Equal(len(model.panels), intialPanels)
-	is.Equal(model.focus, 0)
+	is.Equal(len(model.panelStack), displayedPanels)
+	is.Equal(model.stackPosition, 0)
 	is.Equal(model.fieldType, queryType)
 	is.Equal(len(model.schema.GetQueryItems()), 2)    // getAllPosts, getPostById
 	is.Equal(len(model.schema.GetMutationItems()), 1) // createPost
 
 	// Test that first panel is properly initialized with Query fields
-	firstPanel := model.panels[0]
+	firstPanel := model.panelStack[0]
 	// The first panel should be a list panel with Query fields
 	is.True(firstPanel != nil)
 
@@ -56,29 +56,53 @@ func TestModelPanelNavigation(t *testing.T) {
 
 	model := newModel(adapters.SchemaView{})
 
-	// Test initial focus
-	is.Equal(model.focus, 0)
+	// Test initial stack position
+	is.Equal(model.stackPosition, 0)
 
-	// Test next panel navigation
+	// Add some panels to the stack to enable navigation
+	model.panelStack = append(model.panelStack, components.NewStringPanel("test3"))
+	model.panelStack = append(model.panelStack, components.NewStringPanel("test4"))
+	// Now we have 4 panels total
+
+	// Test next panel navigation (move forward in stack)
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.focus, 1)
+	is.Equal(model.stackPosition, 1)
 
-	// Test wraparound to beginning
+	// Test another forward navigation
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.focus, 0)
+	is.Equal(model.stackPosition, 2)
 
-	// Test previous panel navigation
+	// Test another forward navigation
+	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	model = updatedModel.(mainModel)
+	is.Equal(model.stackPosition, 3)
+
+	// Test that we can't go beyond the last panel
+	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	model = updatedModel.(mainModel)
+	is.Equal(model.stackPosition, 3) // Should stay at 3
+
+	// Test previous panel navigation (move backward in stack)
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.focus, 1)
+	is.Equal(model.stackPosition, 2)
 
-	// Test wraparound to end
-	model.focus = 0
+	// Test another backward navigation
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.focus, 1)
+	is.Equal(model.stackPosition, 1)
+
+	// Navigate to beginning
+	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
+	model = updatedModel.(mainModel)
+	is.Equal(model.stackPosition, 0)
+
+	// Test that we can't go before the beginning
+	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
+	model = updatedModel.(mainModel)
+	is.Equal(model.stackPosition, 0) // Should stay at 0
 }
 
 func TestModelGQLTypeSwitching(t *testing.T) {
@@ -132,7 +156,7 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 		updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
 		model = updatedModel.(mainModel)
 		is.Equal(model.fieldType, expectedType)
-		is.Equal(model.focus, 0) // Focus should reset to main panel
+		is.Equal(model.stackPosition, 0) // Stack position should reset to 0
 	}
 
 	// Test reverse cycling
@@ -162,30 +186,14 @@ func TestModelWithEmptySchema(t *testing.T) {
 	model := newModel(adapters.SchemaView{})
 
 	// Model should still initialize properly
-	is.Equal(len(model.panels), intialPanels)
-	is.Equal(model.focus, 0)
+	is.Equal(len(model.panelStack), displayedPanels)
+	is.Equal(model.stackPosition, 0)
 	is.Equal(model.fieldType, queryType)
 
 	// Should be able to cycle through types even with empty schema
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
 	model = updatedModel.(mainModel)
 	is.Equal(model.fieldType, mutationType)
-}
-
-func TestModelPanelLimits(t *testing.T) {
-	is := is.New(t)
-
-	model := newModel(adapters.SchemaView{})
-
-	// Test reaching maximum panels
-	for i := len(model.panels); i < maxPanes; i++ {
-		model.addPanel(components.NewStringPanel("test"))
-	}
-	is.Equal(len(model.panels), maxPanes)
-
-	// Try to add one more panel - should not exceed max
-	model.addPanel(components.NewStringPanel("overflow"))
-	is.Equal(len(model.panels), maxPanes)
 }
 
 func TestModelKeyboardShortcuts(t *testing.T) {

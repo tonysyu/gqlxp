@@ -13,13 +13,11 @@ import (
 )
 
 const (
-	intialPanels   = 2
-	maxPanes       = 6
-	minPanes       = 1
-	helpHeight     = 5
-	navbarHeight   = 3
-	overlayPadding = 1
-	overlayMargin  = 2
+	displayedPanels = 2
+	helpHeight      = 5
+	navbarHeight    = 3
+	overlayPadding  = 1
+	overlayMargin   = 2
 )
 
 type gqlType string
@@ -95,25 +93,26 @@ type keymap = struct {
 }
 
 type mainModel struct {
-	width          int
-	height         int
-	keymap         keymap
+	width         int
+	height        int
+	keymap        keymap
 	globalKeyBinds []key.Binding
-	help           help.Model
-	panels         []components.Panel
-	focus          int
-	schema         adapters.SchemaView
-	fieldType      gqlType
-	overlay        overlayModel
+	help          help.Model
+	panelStack    []components.Panel
+	stackPosition int
+	schema        adapters.SchemaView
+	fieldType     gqlType
+	overlay       overlayModel
 }
 
 func newModel(schema adapters.SchemaView) mainModel {
 	m := mainModel{
-		panels:    make([]components.Panel, intialPanels),
-		help:      help.New(),
-		schema:    schema,
-		fieldType: queryType,
-		overlay:   newOverlayModel(),
+		panelStack:    make([]components.Panel, displayedPanels),
+		stackPosition: 0,
+		help:          help.New(),
+		schema:        schema,
+		fieldType:     queryType,
+		overlay:       newOverlayModel(),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
 				key.WithKeys("tab"),
@@ -174,14 +173,14 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.ToggleOverlay):
 			m.openOverlayForSelectedItem()
 		case key.Matches(msg, m.keymap.NextPanel):
-			m.focus++
-			if m.focus > len(m.panels)-1 {
-				m.focus = 0
+			// Move forward in stack if there's at least one more panel ahead
+			if m.stackPosition+1 < len(m.panelStack) {
+				m.stackPosition++
 			}
 		case key.Matches(msg, m.keymap.PrevPanel):
-			m.focus--
-			if m.focus < 0 {
-				m.focus = len(m.panels) - 1
+			// Move backward in stack if not at the beginning
+			if m.stackPosition > 0 {
+				m.stackPosition--
 			}
 		case key.Matches(msg, m.keymap.ToggleGQLType):
 			m.incrementGQLTypeIndex(1)
@@ -197,16 +196,18 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	m.sizePanels()
 
-	// Update panels based on message type and focus
-	for i := range m.panels {
+	// Update visible panels in the stack
+	// Only the left panel (stackPosition) receives input; right panel is display-only
+	for offset := 0; offset < displayedPanels && m.stackPosition+offset < len(m.panelStack); offset++ {
 		var newModel tea.Model
 		var cmd tea.Cmd
 
-		shouldReceiveMsg := m.shouldPanelReceiveMessage(i, msg)
+		stackIndex := m.stackPosition + offset
+		shouldReceiveMsg := m.shouldPanelReceiveMessage(offset, msg)
 		if shouldReceiveMsg {
-			newModel, cmd = m.panels[i].Update(msg)
+			newModel, cmd = m.panelStack[stackIndex].Update(msg)
 			if panel, ok := newModel.(components.Panel); ok {
-				m.panels[i] = panel
+				m.panelStack[stackIndex] = panel
 			}
 			cmds = append(cmds, cmd)
 		}
@@ -217,7 +218,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *mainModel) openOverlayForSelectedItem() {
 	content := "No item selected"
-	if focusedPanel, ok := m.panels[m.focus].(*components.ListPanel); ok {
+	// Always use the left panel (first visible panel in stack)
+	if focusedPanel, ok := m.panelStack[m.stackPosition].(*components.ListPanel); ok {
 		if selectedItem := focusedPanel.SelectedItem(); selectedItem != nil {
 			if listItem, ok := selectedItem.(components.ListItem); ok {
 				content = listItem.Details()
@@ -228,8 +230,8 @@ func (m *mainModel) openOverlayForSelectedItem() {
 }
 
 // shouldPanelReceiveMessage determines if a panel should receive a message
-// based on the panel index, current focus, and message type
-func (m *mainModel) shouldPanelReceiveMessage(panelIndex int, msg tea.Msg) bool {
+// based on the display offset (0=left, 1=right) and message type
+func (m *mainModel) shouldPanelReceiveMessage(displayOffset int, msg tea.Msg) bool {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Global navigation keys handled by main model should not go to panels
@@ -238,8 +240,8 @@ func (m *mainModel) shouldPanelReceiveMessage(panelIndex int, msg tea.Msg) bool 
 				return false
 			}
 		}
-		// All other key messages should only go to the focused panel
-		return panelIndex == m.focus
+		// Only the left panel (offset 0) receives key input
+		return displayOffset == 0
 	case components.OpenPanelMsg:
 		// OpenPanelMsg is handled by main model, not individual panels
 		return false
@@ -250,30 +252,23 @@ func (m *mainModel) shouldPanelReceiveMessage(panelIndex int, msg tea.Msg) bool 
 }
 
 func (m *mainModel) sizePanels() {
-	for i := range m.panels {
-		m.panels[i].SetSize(m.width/len(m.panels), m.height-helpHeight-navbarHeight)
-	}
-}
-
-// addPanel adds a new panel to the model
-func (m *mainModel) addPanel(panel components.Panel) {
-	if len(m.panels) < maxPanes {
-		m.panels = append(m.panels, panel)
-		m.sizePanels()
+	panelWidth := m.width / displayedPanels
+	panelHeight := m.height-helpHeight-navbarHeight
+	// Size only the visible panels (displayedPanels = 2)
+	m.panelStack[m.stackPosition].SetSize(panelWidth, panelHeight)
+	// The right panel might not exist, so check before resizing
+	if (len(m.panelStack) > m.stackPosition+1) {
+		m.panelStack[m.stackPosition+1].SetSize(panelWidth, panelHeight)
 	}
 }
 
 // handleOpenPanel handles when an item is opened
+// The new panel is added to the stack after the currently focused panel
 func (m *mainModel) handleOpenPanel(newPanel components.Panel) {
-	nextPanelIndex := m.focus + 1
-
-	// If there's a next panel, replace it
-	if nextPanelIndex < len(m.panels) {
-		m.panels[nextPanelIndex] = newPanel
-	} else if len(m.panels) < maxPanes {
-		// Add a new panel if we haven't reached the max
-		m.addPanel(newPanel)
-	}
+	// Truncate stack to keep only up to and including the current left panel
+	m.panelStack = m.panelStack[:m.stackPosition+1]
+	// Append the new panel - it will show on the right
+	m.panelStack = append(m.panelStack, newPanel)
 
 	m.sizePanels()
 }
@@ -282,10 +277,12 @@ func (m *mainModel) handleOpenPanel(newPanel components.Panel) {
 // This method is called on initilization and when switching types, so that detail panels get
 // cleared out to avoid inconsistencies across panels.
 func (m *mainModel) resetAndLoadMainPanel() {
-	// Initialize panels with empty list models
-	for i := range intialPanels {
-		m.panels[i] = components.NewStringPanel("")
+	// Reset stack to initial state with empty panels
+	m.panelStack = make([]components.Panel, displayedPanels)
+	for i := range displayedPanels {
+		m.panelStack[i] = components.NewStringPanel("")
 	}
+	m.stackPosition = 0
 
 	// Load initial fields based on currently selected GQL type
 	m.loadMainPanel()
@@ -326,9 +323,9 @@ func (m *mainModel) loadMainPanel() {
 		title = "Directive Types"
 	}
 
-	m.panels[0] = components.NewListPanel(items, title)
-	// Move focus to the main panel when switching fields.
-	m.focus = 0
+	m.panelStack[0] = components.NewListPanel(items, title)
+	// Reset to the beginning of the stack
+	m.stackPosition = 0
 
 	// Auto-open detail panel for the first item if available
 	if len(items) > 0 {
@@ -388,9 +385,11 @@ func (m mainModel) View() string {
 	})
 
 	var views []string
-	for i := range m.panels {
-		panelView := m.panels[i].View()
-		if i == m.focus && !m.overlay.IsActive() {
+	// Render only the visible panels from the stack
+	for offset := 0; offset < displayedPanels && m.stackPosition+offset < len(m.panelStack); offset++ {
+		panelView := m.panelStack[m.stackPosition+offset].View()
+		// Only the left panel (offset 0) is focused
+		if offset == 0 && !m.overlay.IsActive() {
 			panelView = focusedBorderStyle.Render(panelView)
 		} else {
 			panelView = blurredBorderStyle.Render(panelView)
