@@ -13,7 +13,7 @@ type ListItem interface {
 	Open() (Panel, bool)
 
 	// Details returns markdown-formatted details for the item.
-	// The igq TUI renders details in an overlay pane.
+	// The gqlxp TUI renders details in an overlay pane.
 	Details() string
 
 	// TypeName returns the name of the underlying GraphQL type.

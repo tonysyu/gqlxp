@@ -14,6 +14,12 @@ test target=tests:
     go test {{target}}
 tests := "./..."
 
+# Run tests and generate coverage report
+[group('code')]
+test-coverage:
+    go test -coverprofile=./build/coverage.out ./...
+    go tool cover -html=./build/coverage.out
+
 # Run code formatters and linters
 [group('code')]
 lint-fix:
