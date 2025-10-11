@@ -7,10 +7,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tonysyu/gqlxp/tui/config"
 )
 
 // Panel inside the overlay must be inset by padding, margin, and a 1-char border on all sides.
-var overlayPanelMargin = 2 * (overlayMargin + overlayPadding + 1)
+var overlayPanelMargin = 2 * (config.OverlayMargin + config.OverlayPadding + 1)
 
 // overlayModel manages overlay display and message interception
 type overlayModel struct {
@@ -19,6 +20,7 @@ type overlayModel struct {
 	renderer *glamour.TermRenderer
 	content  string // original markdown content
 	rendered string // cache rendered content
+	styles   config.Styles
 
 	width  int
 	height int
@@ -36,7 +38,7 @@ func (k overlayKeymap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Close, k.Quit}
 }
 
-func newOverlayModel() overlayModel {
+func newOverlayModel(style config.Styles) overlayModel {
 	vp := viewport.New(0, 0)
 
 	// Initialize glamour renderer once for the lifetime of the session
@@ -100,7 +102,7 @@ func (o *overlayModel) Show(content string, width, height int) {
 
 	// Set viewport size
 	viewportWidth := width - overlayPanelMargin
-	viewportHeight := height - overlayPanelMargin - helpHeight
+	viewportHeight := height - overlayPanelMargin - config.HelpHeight
 	o.viewport.Width = viewportWidth
 	o.viewport.Height = viewportHeight
 
@@ -137,7 +139,7 @@ func (o overlayModel) View() string {
 	helpView := o.help.ShortHelpView(o.keymap.ShortHelp())
 	content := o.viewport.View() + "\n\n" + helpView
 
-	overlay := overlayStyle.Render(content)
+	overlay := o.styles.Overlay.Render(content)
 
 	// Center the overlay on screen
 	overlayHeight := lipgloss.Height(overlay)

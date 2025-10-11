@@ -7,6 +7,7 @@ import (
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/components"
+	"github.com/tonysyu/gqlxp/tui/config"
 )
 
 func TestNewModel(t *testing.T) {
@@ -33,7 +34,7 @@ func TestNewModel(t *testing.T) {
 	model := newModel(schemaView)
 
 	// Test initial state
-	is.Equal(len(model.panelStack), displayedPanels)
+	is.Equal(len(model.panelStack), config.VisiblePanelCount)
 	is.Equal(model.stackPosition, 0)
 	is.Equal(model.selectedGQLType, queryType)
 	is.Equal(len(model.schema.GetQueryItems()), 2)    // getAllPosts, getPostById
@@ -186,7 +187,7 @@ func TestModelWithEmptySchema(t *testing.T) {
 	model := newModel(adapters.SchemaView{})
 
 	// Model should still initialize properly
-	is.Equal(len(model.panelStack), displayedPanels)
+	is.Equal(len(model.panelStack), config.VisiblePanelCount)
 	is.Equal(model.stackPosition, 0)
 	is.Equal(model.selectedGQLType, queryType)
 

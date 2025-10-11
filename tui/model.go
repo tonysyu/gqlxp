@@ -10,14 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/components"
-)
-
-const (
-	displayedPanels = 2
-	helpHeight      = 5
-	navbarHeight    = 3
-	overlayPadding  = 1
-	overlayMargin   = 2
+	"github.com/tonysyu/gqlxp/tui/config"
 )
 
 type gqlType string
@@ -36,50 +29,6 @@ const (
 
 // availableGQLTypes defines the ordered list of GQL types for navigation
 var availableGQLTypes = []gqlType{queryType, mutationType, objectType, inputType, enumType, scalarType, interfaceType, unionType, directiveType}
-
-var (
-	cursorStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
-
-	cursorLineStyle = lipgloss.NewStyle().
-			Background(lipgloss.Color("57")).
-			Foreground(lipgloss.Color("230"))
-
-	placeholderStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("238"))
-
-	endOfBufferStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("235"))
-
-	focusedPlaceholderStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("99"))
-
-	focusedBorderStyle = lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("238"))
-
-	blurredBorderStyle = lipgloss.NewStyle().
-				Border(lipgloss.HiddenBorder())
-
-	navbarStyle = lipgloss.NewStyle().
-			Padding(0, 1).
-			Margin(0, 0, 1, 0)
-
-	activeTabStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("230")).
-			Background(lipgloss.Color("57")).
-			Padding(0, 2).
-			Bold(true)
-
-	inactiveTabStyle = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("244")).
-				Padding(0, 2)
-
-	overlayStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("238")).
-			Padding(overlayPadding).
-			Margin(overlayMargin)
-)
 
 var (
 	quitKeyBinding = key.NewBinding(
@@ -109,19 +58,22 @@ type mainModel struct {
 
 	width          int
 	height         int
+	styles         config.Styles
 	keymap         keymap
 	globalKeyBinds []key.Binding
 	help           help.Model
 }
 
 func newModel(schema adapters.SchemaView) mainModel {
+	styles := config.DefaultStyles()
 	m := mainModel{
-		panelStack:      make([]components.Panel, displayedPanels),
+		panelStack:      make([]components.Panel, config.VisiblePanelCount),
 		stackPosition:   0,
 		help:            help.New(),
 		schema:          schema,
 		selectedGQLType: queryType,
-		overlay:         newOverlayModel(),
+		styles:          styles,
+		overlay:         newOverlayModel(styles),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
 				key.WithKeys("tab"),
@@ -257,9 +209,9 @@ func (m *mainModel) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
 }
 
 func (m *mainModel) sizePanels() {
-	panelWidth := m.width / displayedPanels
-	panelHeight := m.height - helpHeight - navbarHeight
-	// Size only the visible panels (displayedPanels = 2)
+	panelWidth := m.width / config.VisiblePanelCount
+	panelHeight := m.height - config.HelpHeight - config.NavbarHeight
+	// Size only the visible panels (config.DisplayedPanels = 2)
 	m.panelStack[m.stackPosition].SetSize(panelWidth, panelHeight)
 	// The right panel might not exist, so check before resizing
 	if len(m.panelStack) > m.stackPosition+1 {
@@ -283,8 +235,8 @@ func (m *mainModel) handleOpenPanel(newPanel components.Panel) {
 // cleared out to avoid inconsistencies across panels.
 func (m *mainModel) resetAndLoadMainPanel() {
 	// Reset stack to initial state with empty panels
-	m.panelStack = make([]components.Panel, displayedPanels)
-	for i := range displayedPanels {
+	m.panelStack = make([]components.Panel, config.VisiblePanelCount)
+	for i := range config.VisiblePanelCount {
 		m.panelStack[i] = components.NewStringPanel("")
 	}
 	m.stackPosition = 0
@@ -369,15 +321,15 @@ func (m *mainModel) renderGQLTypeNavbar() string {
 	for _, fieldType := range availableGQLTypes {
 		var style lipgloss.Style
 		if m.selectedGQLType == fieldType {
-			style = activeTabStyle
+			style = m.styles.ActiveTab
 		} else {
-			style = inactiveTabStyle
+			style = m.styles.InactiveTab
 		}
 		tabs = append(tabs, style.Render(string(fieldType)))
 	}
 
 	navbar := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
-	return navbarStyle.Render(navbar)
+	return m.styles.Navbar.Render(navbar)
 }
 
 func (m mainModel) View() string {
@@ -394,9 +346,9 @@ func (m mainModel) View() string {
 		return m.overlay.View()
 	}
 
-	views := []string{focusedBorderStyle.Render(m.panelStack[m.stackPosition].View())}
+	views := []string{m.styles.FocusedBorder.Render(m.panelStack[m.stackPosition].View())}
 	if len(m.panelStack) > m.stackPosition+1 {
-		views = append(views, blurredBorderStyle.Render(m.panelStack[m.stackPosition+1].View()))
+		views = append(views, m.styles.BlurredBorder.Render(m.panelStack[m.stackPosition+1].View()))
 	}
 
 	navbar := m.renderGQLTypeNavbar()

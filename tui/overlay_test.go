@@ -5,17 +5,18 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/matryer/is"
+	"github.com/tonysyu/gqlxp/tui/config"
 )
 
 func showDefaultOverlay() overlayModel {
-	overlay := newOverlayModel()
+	overlay := newOverlayModel(config.DefaultStyles())
 	overlay.Show("test content", 100, 50)
 	return overlay
 }
 
 func TestInactiveOverlay(t *testing.T) {
 	is := is.New(t)
-	overlay := newOverlayModel()
+	overlay := newOverlayModel(config.DefaultStyles())
 
 	t.Run("NewOverlayModel initializes correctly", func(t *testing.T) {
 		is.Equal(overlay.active, false)
@@ -94,10 +95,10 @@ func TestInactiveOverlay(t *testing.T) {
 
 	t.Run("Show sets viewport size with margin", func(t *testing.T) {
 		width, height := 200, 100
-		overlay := newOverlayModel()
+		overlay := newOverlayModel(config.DefaultStyles())
 		overlay.Show("test content", width, height)
 
 		is.Equal(overlay.viewport.Width, width-overlayPanelMargin)
-		is.Equal(overlay.viewport.Height, height-overlayPanelMargin-helpHeight)
+		is.Equal(overlay.viewport.Height, height-overlayPanelMargin-config.HelpHeight)
 	})
 }
