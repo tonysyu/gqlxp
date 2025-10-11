@@ -66,9 +66,9 @@ func (si SimpleItem) Description() string { return si.description }
 func (si SimpleItem) FilterValue() string { return si.Title() }
 func (si SimpleItem) TypeName() string    { return si.typename }
 func (si SimpleItem) Details() string {
-	if si.Description() != "" {
-		return "# " + si.TypeName() + "\n\n" + si.Description()
+	if si.Description() == "" {
+		return ""
 	}
-	return "# " + si.TypeName()
+	return "# " + si.TypeName() + "\n\n" + si.Description()
 }
 func (si SimpleItem) Open() (Panel, bool) { return nil, false }

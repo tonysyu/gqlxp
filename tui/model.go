@@ -223,16 +223,17 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *mainModel) openOverlayForSelectedItem() {
-	content := "No item selected"
 	// Always use the left panel (first visible panel in stack)
 	if focusedPanel, ok := m.panelStack[m.stackPosition].(*components.ListPanel); ok {
 		if selectedItem := focusedPanel.SelectedItem(); selectedItem != nil {
 			if listItem, ok := selectedItem.(components.ListItem); ok {
-				content = listItem.Details()
+				// Some items don't have details, so these should now open the overlay
+				if content := listItem.Details(); content != "" {
+					m.overlay.Show(content, m.width, m.height)
+				}
 			}
 		}
 	}
-	m.overlay.Show(content, m.width, m.height)
 }
 
 // shouldFocusedPanelReceiveMessage determines if the focused panel should receive a message
