@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // Panel inside the overlay must be inset by padding, margin, and a 1-char border on all sides.
@@ -13,14 +14,16 @@ var overlayPanelMargin = 2 * (overlayMargin + overlayPadding + 1)
 
 // overlayModel manages overlay display and message interception
 type overlayModel struct {
-	active    bool
-	viewport  viewport.Model
-	renderer  *glamour.TermRenderer
-	content   string // original markdown content
-	lastWidth int    // track last rendered width to avoid unnecessary re-renders
-	rendered  string // cache rendered content
-	keymap    overlayKeymap
-	help      help.Model
+	active   bool
+	viewport viewport.Model
+	renderer *glamour.TermRenderer
+	content  string // original markdown content
+	rendered string // cache rendered content
+
+	width  int
+	height int
+	keymap overlayKeymap
+	help   help.Model
 }
 
 type overlayKeymap struct {
@@ -42,11 +45,10 @@ func newOverlayModel() overlayModel {
 	)
 	// If glamour fails, renderer will be nil and we'll use plain content
 	model := overlayModel{
-		active:    false,
-		viewport:  vp,
-		renderer:  nil,
-		lastWidth: 0,
-		help:      help.New(),
+		active:   false,
+		viewport: vp,
+		renderer: nil,
+		help:     help.New(),
 		keymap: overlayKeymap{
 			Close: key.NewBinding(
 				key.WithKeys(" "),
@@ -80,6 +82,9 @@ func (o overlayModel) Update(msg tea.Msg) (overlayModel, tea.Cmd, bool) {
 		case key.Matches(msg, o.keymap.Quit):
 			return o, tea.Quit, true // intercepted
 		}
+	case tea.WindowSizeMsg:
+		o.height = msg.Height
+		o.width = msg.Width
 	}
 
 	// Update viewport with the message
@@ -130,5 +135,29 @@ func (o overlayModel) View() string {
 		return ""
 	}
 	helpView := o.help.ShortHelpView(o.keymap.ShortHelp())
-	return o.viewport.View() + "\n\n" + helpView
+	content := o.viewport.View() + "\n\n" + helpView
+
+	overlay := overlayStyle.Render(content)
+
+	// Center the overlay on screen
+	overlayHeight := lipgloss.Height(overlay)
+	overlayWidth := lipgloss.Width(overlay)
+
+	verticalMargin := (o.height - overlayHeight) / 2
+	horizontalMargin := (o.width - overlayWidth) / 2
+
+	if verticalMargin < 0 {
+		verticalMargin = 0
+	}
+	if horizontalMargin < 0 {
+		horizontalMargin = 0
+	}
+
+	// Position the overlay over the main view
+	positionedOverlay := lipgloss.NewStyle().
+		MarginTop(verticalMargin).
+		MarginLeft(horizontalMargin).
+		Render(overlay)
+
+	return lipgloss.Place(o.width, o.height, lipgloss.Center, lipgloss.Center, positionedOverlay)
 }

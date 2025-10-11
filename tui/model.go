@@ -388,46 +388,19 @@ func (m mainModel) View() string {
 		m.keymap.Quit,
 	})
 
-	var views []string
-	if !m.overlay.IsActive() {
-		views = append(views, focusedBorderStyle.Render(m.panelStack[m.stackPosition].View()))
-		if len(m.panelStack) > m.stackPosition+1 {
-			views = append(views, blurredBorderStyle.Render(m.panelStack[m.stackPosition+1].View()))
-		}
+	// Show overlay if active, and return immediately
+	if m.overlay.IsActive() {
+		return m.overlay.View()
+	}
+
+	views := []string{focusedBorderStyle.Render(m.panelStack[m.stackPosition].View())}
+	if len(m.panelStack) > m.stackPosition+1 {
+		views = append(views, blurredBorderStyle.Render(m.panelStack[m.stackPosition+1].View()))
 	}
 
 	navbar := m.renderGQLTypeNavbar()
 	panels := lipgloss.JoinHorizontal(lipgloss.Top, views...)
 	mainView := navbar + "\n" + panels + "\n\n" + help
-
-	// Show overlay if active
-	// TODO: Move this logic into overlayModel.View() (possibly with overlayStyle passed into model)
-	if m.overlay.IsActive() {
-		overlayContent := m.overlay.View()
-		overlay := overlayStyle.Render(overlayContent)
-
-		// Center the overlay on screen
-		overlayHeight := lipgloss.Height(overlay)
-		overlayWidth := lipgloss.Width(overlay)
-
-		verticalMargin := (m.height - overlayHeight) / 2
-		horizontalMargin := (m.width - overlayWidth) / 2
-
-		if verticalMargin < 0 {
-			verticalMargin = 0
-		}
-		if horizontalMargin < 0 {
-			horizontalMargin = 0
-		}
-
-		// Position the overlay over the main view
-		positionedOverlay := lipgloss.NewStyle().
-			MarginTop(verticalMargin).
-			MarginLeft(horizontalMargin).
-			Render(overlay)
-
-		return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, positionedOverlay)
-	}
 
 	return mainView
 }
