@@ -8,6 +8,11 @@ default:
 run schemaPath:
     go run ./cmd/gqlxp {{schemaPath}}
 
+# Run the gqlxp tui with logging to debug.log file
+[group('app')]
+run-with-log schemaPath:
+    GQLXP_LOGFILE=debug.log go run ./cmd/gqlxp {{schemaPath}}
+
 # Run tests (defaults to all tests in projects)
 [group('code')]
 test target=tests:

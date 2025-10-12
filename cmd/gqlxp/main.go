@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tonysyu/gqlxp/tui"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 )
@@ -11,6 +12,14 @@ import (
 func main() {
 	if len(os.Args) < 2 {
 		abort("Usage: gqlxp <schema-file>")
+	}
+
+	if logFile := os.Getenv("GQLXP_LOGFILE"); logFile != "" {
+		f, err := tea.LogToFile(logFile, "debug")
+		if err != nil {
+			abort(fmt.Sprintf("Error opening log file: %v", err))
+		}
+		defer f.Close()
 	}
 
 	schemaFile := os.Args[1]
