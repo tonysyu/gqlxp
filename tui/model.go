@@ -211,11 +211,17 @@ func (m *mainModel) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
 func (m *mainModel) sizePanels() {
 	panelWidth := m.width / config.VisiblePanelCount
 	panelHeight := m.height - config.HelpHeight - config.NavbarHeight
-	// Size only the visible panels (config.DisplayedPanels = 2)
-	m.panelStack[m.stackPosition].SetSize(panelWidth, panelHeight)
+	// Size only the visible panels (config.VisiblePanelCount = 2)
+	m.panelStack[m.stackPosition].SetSize(
+		panelWidth - m.styles.FocusedPanel.GetHorizontalFrameSize(),
+		panelHeight - m.styles.FocusedPanel.GetVerticalFrameSize(),
+	)
 	// The right panel might not exist, so check before resizing
 	if len(m.panelStack) > m.stackPosition+1 {
-		m.panelStack[m.stackPosition+1].SetSize(panelWidth, panelHeight)
+		m.panelStack[m.stackPosition+1].SetSize(
+			panelWidth - m.styles.BlurredPanel.GetHorizontalFrameSize(),
+			panelHeight - m.styles.BlurredPanel.GetHorizontalFrameSize(),
+		)
 	}
 }
 
@@ -346,9 +352,9 @@ func (m mainModel) View() string {
 		return m.overlay.View()
 	}
 
-	views := []string{m.styles.FocusedBorder.Render(m.panelStack[m.stackPosition].View())}
+	views := []string{m.styles.FocusedPanel.Render(m.panelStack[m.stackPosition].View())}
 	if len(m.panelStack) > m.stackPosition+1 {
-		views = append(views, m.styles.BlurredBorder.Render(m.panelStack[m.stackPosition+1].View()))
+		views = append(views, m.styles.BlurredPanel.Render(m.panelStack[m.stackPosition+1].View()))
 	}
 
 	navbar := m.renderGQLTypeNavbar()

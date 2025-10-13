@@ -114,7 +114,7 @@ func (lp *ListPanel) View() string {
 	availableHeight := lp.height
 	parts := []string{}
 
-	title := lp.styles.Title.Render(lp.Title())
+	title := lp.styles.PanelTitle.Render(lp.Title())
 	parts = append(parts, title)
 	availableHeight -= lipgloss.Height(title)
 

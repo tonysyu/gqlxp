@@ -13,86 +13,57 @@ const (
 
 // Styles contains all lipgloss styles used in the TUI
 type Styles struct {
-	// Cursor styles
-	Cursor     lipgloss.Style
-	CursorLine lipgloss.Style
+	// Panel styles for panels displaying lists of types, fields, etc.
+	FocusedPanel lipgloss.Style
+	BlurredPanel lipgloss.Style
+	PanelTitle lipgloss.Style
 
-	// Placeholder styles
-	Placeholder        lipgloss.Style
-	FocusedPlaceholder lipgloss.Style
-	EndOfBuffer        lipgloss.Style
-
-	// Border styles
-	FocusedBorder lipgloss.Style
-	BlurredBorder lipgloss.Style
-
-	// Navigation styles
+	// Navigation styles for navbar dislplaying GQL Type selection
 	Navbar      lipgloss.Style
 	ActiveTab   lipgloss.Style
 	InactiveTab lipgloss.Style
 
-	// Overlay style
+	// Overlay style for view displaying Details of GQL Types
 	Overlay lipgloss.Style
-
-	// Title style
-	Title lipgloss.Style
 }
 
 // DefaultStyles returns the default style configuration
+// See https://hexdocs.pm/color_palette/ansi_color_codes.html for color codes
 func DefaultStyles() Styles {
 	return Styles{
-		// Cursor styles
-		Cursor: lipgloss.NewStyle().Foreground(lipgloss.Color("212")),
-
-		CursorLine: lipgloss.NewStyle().
-			Background(lipgloss.Color("57")).
-			Foreground(lipgloss.Color("230")),
-
-		// Placeholder styles
-		Placeholder: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("238")),
-
-		FocusedPlaceholder: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("99")),
-
-		EndOfBuffer: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("235")),
-
-		// Border styles
-		FocusedBorder: lipgloss.NewStyle().
+		FocusedPanel: lipgloss.NewStyle().
+			Foreground(lipgloss.Color("244")). // 244 = gray
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("238")),
+			BorderForeground(lipgloss.Color("238")), // 238 = outer_space (dark gray)
 
-		BlurredBorder: lipgloss.NewStyle().
+		BlurredPanel: lipgloss.NewStyle().
+			Foreground(lipgloss.Color("244")). // 244 = gray
 			Border(lipgloss.HiddenBorder()),
 
-		// Navigation styles
+		// Panel title styling copied from bubbles/list
+		PanelTitle: lipgloss.NewStyle().
+			Background(lipgloss.Color("62")).  // 62 = indigo, slate_blue
+			Foreground(lipgloss.Color("230")). // 230 = cream, very_pale_yellow
+			Padding(0, 1),
+
 		Navbar: lipgloss.NewStyle().
 			Padding(0, 1).
 			Margin(0, 0, 1, 0),
 
 		ActiveTab: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("230")).
-			Background(lipgloss.Color("57")).
+			Foreground(lipgloss.Color("230")). // 230 = cream, very_pale_yellow
+			Background(lipgloss.Color("57")).  // 57 = electric_indigo
 			Padding(0, 2).
 			Bold(true),
 
 		InactiveTab: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("244")).
+			Foreground(lipgloss.Color("244")). // 244 = gray
 			Padding(0, 2),
 
-		// Overlay style
 		Overlay: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("238")).
+			BorderForeground(lipgloss.Color("238")). // 238 = outer_space (dark gray)
 			Padding(OverlayPadding).
 			Margin(OverlayMargin),
-
-		// Title style
-		// This is copied from bubbles/list
-		Title: lipgloss.NewStyle().
-			Background(lipgloss.Color("62")).
-			Foreground(lipgloss.Color("230")).
-			Padding(0, 1),
 	}
 }
