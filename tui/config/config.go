@@ -33,6 +33,9 @@ type Styles struct {
 
 	// Overlay style
 	Overlay lipgloss.Style
+
+	// Title style
+	Title lipgloss.Style
 }
 
 // DefaultStyles returns the default style configuration
@@ -84,5 +87,12 @@ func DefaultStyles() Styles {
 			BorderForeground(lipgloss.Color("238")).
 			Padding(OverlayPadding).
 			Margin(OverlayMargin),
+
+		// Title style
+		// This is copied from bubbles/list
+		Title: lipgloss.NewStyle().
+			Background(lipgloss.Color("62")).
+			Foreground(lipgloss.Color("230")).
+			Padding(0, 1),
 	}
 }

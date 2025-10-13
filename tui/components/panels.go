@@ -4,6 +4,9 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
+	"github.com/tonysyu/gqlxp/tui/config"
+	"github.com/tonysyu/gqlxp/utils/text"
 )
 
 // Panel represents a generic panel that can be displayed in the TUI
@@ -24,6 +27,11 @@ var _ Panel = (*stringPanel)(nil)
 type ListPanel struct {
 	model             list.Model
 	lastSelectedIndex int // Track the last selected index to detect changes
+	title             string
+	description       string
+	styles            config.Styles
+	width             int
+	height            int
 }
 
 func NewListPanel[T list.Item](choices []T, title string) *ListPanel {
@@ -33,10 +41,12 @@ func NewListPanel[T list.Item](choices []T, title string) *ListPanel {
 	}
 	m := list.New(items, list.NewDefaultDelegate(), 0, 0)
 	m.DisableQuitKeybindings()
-	m.Title = title
+	m.SetShowTitle(false)
 	return &ListPanel{
 		model:             m,
 		lastSelectedIndex: -1, // Initialize to -1 to trigger opening on first selection
+		title:             title,
+		styles:            config.DefaultStyles(),
 	}
 }
 
@@ -69,22 +79,29 @@ func (lp *ListPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (lp *ListPanel) SetSize(width, height int) {
-	lp.model.SetWidth(width)
-	lp.model.SetHeight(height)
+	lp.width = width
+	lp.height = height
 }
 
 func (lp *ListPanel) SetTitle(title string) {
-	lp.model.Title = title
+	lp.title = title
+}
+
+func (lp *ListPanel) Title() string {
+	return lp.title
+}
+
+func (lp *ListPanel) SetDescription(description string) {
+	lp.description = description
+}
+
+func (lp *ListPanel) Description() string {
+	return lp.description
 }
 
 // SelectedItem returns the currently selected item in the list
 func (lp *ListPanel) SelectedItem() list.Item {
 	return lp.model.SelectedItem()
-}
-
-// Title returns the title of the list panel
-func (lp *ListPanel) Title() string {
-	return lp.model.Title
 }
 
 // Items returns the items in the list
@@ -94,7 +111,23 @@ func (lp *ListPanel) Items() []list.Item {
 
 // View renders the list panel
 func (lp *ListPanel) View() string {
-	return lp.model.View()
+	availableHeight := lp.height
+	parts := []string{}
+
+	title := lp.styles.Title.Render(lp.Title())
+	parts = append(parts, title)
+	availableHeight -= lipgloss.Height(title)
+
+	if lp.Description() != "" {
+		desc := wordwrap.String(lp.Description(), lp.width)
+		parts = append(parts, desc)
+		availableHeight -= lipgloss.Height(desc)
+	}
+
+	lp.model.SetWidth(lp.width)
+	lp.model.SetHeight(availableHeight)
+	parts = append(parts, lp.model.View())
+	return text.JoinLines(parts...)
 }
 
 // stringPanel displays a simple string content

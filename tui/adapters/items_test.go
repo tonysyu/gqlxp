@@ -8,6 +8,7 @@ import (
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/tui/components"
+	"github.com/tonysyu/gqlxp/utils/assert"
 )
 
 // normalizeView strips leading/trailing whitespace and empty lines from multi-line strings
@@ -29,6 +30,7 @@ func normalizeView(s string) string {
 
 func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 	is := is.New(t)
+	assert := assert.New(t)
 
 	schemaString := `
 		type Post {
@@ -66,13 +68,15 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		content := normalizeView(panel.View())
 
 		expected := normalizeView(`
-			│ Return all posts
-			│
-			  ======== Result Type ========
+			  getAllPosts
+			  Return all posts
+			  2 items
+			│ ======== Result Type ========
+			│ 
 			  [Post!]!
 		`)
 
-		is.True(strings.Contains(content, expected))
+		assert.StringContains(content, expected)
 		is.True(!strings.Contains(content, "======== Input Arguments ========")) // Should not have arguments section
 	})
 
@@ -94,7 +98,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 			  Post
 		`)
 
-		is.True(strings.Contains(content, expected))
+		assert.StringContains(content, expected)
 	})
 
 	t.Run("Mutation field with multiple arguments shows all sections", func(t *testing.T) {
@@ -108,9 +112,11 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		content := normalizeView(panel.View())
 
 		expected := normalizeView(`
-			│ Create a new post
+			  createPost
+			  Create a new post
+			  6 items
+			│ ======== Input Arguments ========
 			│
-			  ======== Input Arguments ========
 			  title: String!
 			  content: String!
 			  authorId: ID!
@@ -118,12 +124,13 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 			  Post!
 		`)
 
-		is.True(strings.Contains(content, expected))
+		assert.StringContains(content, expected)
 	})
 }
 
 func TestObjectDefinitionItemOpenPanel(t *testing.T) {
 	is := is.New(t)
+	assert := assert.New(t)
 
 	schemaString := `
 		type User {
@@ -146,15 +153,16 @@ func TestObjectDefinitionItemOpenPanel(t *testing.T) {
 	content := normalizeView(panel.View())
 
 	// Object panels show field names, not their types (types are shown when opening individual fields)
-	is.True(strings.Contains(content, "id"))
-	is.True(strings.Contains(content, "name"))
-	is.True(strings.Contains(content, "email"))
-	is.True(strings.Contains(content, "posts"))
-	is.True(strings.Contains(content, "4 items"))
+	assert.StringContains(content, "id")
+	assert.StringContains(content, "name")
+	assert.StringContains(content, "email")
+	assert.StringContains(content, "posts")
+	assert.StringContains(content, "4 items")
 }
 
 func TestInputDefinitionItemOpenPanel(t *testing.T) {
 	is := is.New(t)
+	assert := assert.New(t)
 
 	schemaString := `
 		input CreateUserInput {
@@ -175,13 +183,14 @@ func TestInputDefinitionItemOpenPanel(t *testing.T) {
 
 	content := normalizeView(panel.View())
 
-	is.True(strings.Contains(content, "name: String!"))
-	is.True(strings.Contains(content, "email: String!"))
-	is.True(strings.Contains(content, "age: Int"))
+	assert.StringContains(content, "name: String!")
+	assert.StringContains(content, "email: String!")
+	assert.StringContains(content, "age: Int")
 }
 
 func TestEnumDefinitionItemOpenPanel(t *testing.T) {
 	is := is.New(t)
+	assert := assert.New(t)
 
 	schemaString := `
 		enum Status {
@@ -202,9 +211,9 @@ func TestEnumDefinitionItemOpenPanel(t *testing.T) {
 
 	content := normalizeView(panel.View())
 
-	is.True(strings.Contains(content, "ACTIVE"))
-	is.True(strings.Contains(content, "INACTIVE"))
-	is.True(strings.Contains(content, "PENDING"))
+	assert.StringContains(content, "ACTIVE")
+	assert.StringContains(content, "INACTIVE")
+	assert.StringContains(content, "PENDING")
 }
 
 func TestScalarDefinitionItemOpenPanel(t *testing.T) {
@@ -228,6 +237,7 @@ func TestScalarDefinitionItemOpenPanel(t *testing.T) {
 
 func TestInterfaceDefinitionItemOpenPanel(t *testing.T) {
 	is := is.New(t)
+	assert := assert.New(t)
 
 	schemaString := `
 		interface Node {
@@ -248,13 +258,14 @@ func TestInterfaceDefinitionItemOpenPanel(t *testing.T) {
 	content := normalizeView(panel.View())
 
 	// Interface panels show field names, not their types (types are shown when opening individual fields)
-	is.True(strings.Contains(content, "id"))
-	is.True(strings.Contains(content, "createdAt"))
-	is.True(strings.Contains(content, "2 items"))
+	assert.StringContains(content, "id")
+	assert.StringContains(content, "createdAt")
+	assert.StringContains(content, "2 items")
 }
 
 func TestUnionDefinitionItemOpenPanel(t *testing.T) {
 	is := is.New(t)
+	assert := assert.New(t)
 
 	schemaString := `
 		type User {
@@ -279,12 +290,13 @@ func TestUnionDefinitionItemOpenPanel(t *testing.T) {
 
 	content := normalizeView(panel.View())
 
-	is.True(strings.Contains(content, "User"))
-	is.True(strings.Contains(content, "Post"))
+	assert.StringContains(content, "User")
+	assert.StringContains(content, "Post")
 }
 
 func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	is := is.New(t)
+	assert := assert.New(t)
 
 	schemaString := `
 		type Query {
@@ -313,12 +325,13 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 		  String
 	`)
 
-	is.True(strings.Contains(content, expected))
+	assert.StringContains(content, expected)
 	is.True(!strings.Contains(content, "======== Input Arguments ========"))
 }
 
 func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 	is := is.New(t)
+	assert := assert.New(t)
 
 	schemaString := `
 		input FilterInput {
@@ -358,7 +371,7 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 		  [String!]!
 	`)
 
-	is.True(strings.Contains(content, expected))
+	assert.StringContains(content, expected)
 }
 
 func TestAdapterFunctions(t *testing.T) {

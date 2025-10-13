@@ -139,7 +139,7 @@ func (o overlayModel) View() string {
 	helpView := o.help.ShortHelpView(o.keymap.ShortHelp())
 	content := o.viewport.View() + "\n\n" + helpView
 
-	overlay := o.styles.Overlay.Render(content)
+	overlay := config.DefaultStyles().Overlay.Render(content)
 
 	// Center the overlay on screen
 	overlayHeight := lipgloss.Height(overlay)

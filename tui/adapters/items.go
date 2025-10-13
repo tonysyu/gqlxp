@@ -6,6 +6,7 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/tui/components"
+	"github.com/tonysyu/gqlxp/utils/text"
 )
 
 // Ensure that all item types implements components.ListItem interface
@@ -88,7 +89,7 @@ func formatFieldDefinitionsToCodeBlock(fieldNodes []*ast.FieldDefinition) string
 	for _, field := range fieldNodes {
 		fields = append(fields, gql.GetFieldDefinitionString(field))
 	}
-	return gqlCode(joinLines(fields...))
+	return text.GqlCode(text.JoinLines(fields...))
 }
 
 // Adapter/delegate for ast.FieldDefinition to support ListItem interface
@@ -116,9 +117,9 @@ func (i fieldItem) Description() string {
 }
 
 func (i fieldItem) Details() string {
-	return joinParagraphs(
-		h1(i.TypeName()),
-		gqlCode(gql.GetFieldDefinitionString(i.gqlField)),
+	return text.JoinParagraphs(
+		text.H1(i.TypeName()),
+		text.GqlCode(gql.GetFieldDefinitionString(i.gqlField)),
 		i.Description(),
 	)
 }
@@ -127,11 +128,6 @@ func (i fieldItem) Details() string {
 func (i fieldItem) Open() (components.Panel, bool) {
 	// Create list items for the detail view
 	var detailItems []components.ListItem
-
-	// Add description as a header if available
-	if desc := i.Description(); desc != "" {
-		detailItems = append(detailItems, components.NewSimpleItem(desc))
-	}
 
 	inputValueItems := adaptInputValueDefinitions(i.gqlField.Arguments)
 	if len(inputValueItems) > 0 {
@@ -142,7 +138,13 @@ func (i fieldItem) Open() (components.Panel, bool) {
 	// Add result type section
 	detailItems = append(detailItems, newSectionHeader("Result Type"))
 	detailItems = append(detailItems, newTypeItem(i.gqlField.Type, i.schema))
-	return components.NewListPanel(detailItems, i.Title()), true
+	panel := components.NewListPanel(detailItems, i.Title())
+
+	// Add description as a header if available
+	if desc := i.Description(); desc != "" {
+		panel.SetDescription(desc)
+	}
+	return panel, true
 }
 
 // Create an array of ListItem instances given InputValueDefinition. This is used for
@@ -188,7 +190,7 @@ func (i typeDefItem) Description() string {
 }
 
 func (i typeDefItem) Details() string {
-	parts := []string{h1(i.TypeName())}
+	parts := []string{text.H1(i.TypeName())}
 
 	// Add description if available
 	if desc := i.Description(); desc != "" {
@@ -230,7 +232,7 @@ func (i typeDefItem) Details() string {
 			for _, val := range typeDef.Values {
 				values = append(values, val.Name.Value)
 			}
-			parts = append(parts, gqlCode(joinLines(values...)))
+			parts = append(parts, text.GqlCode(text.JoinLines(values...)))
 		}
 	case *ast.InputObjectDefinition:
 		if len(typeDef.Fields) > 0 {
@@ -238,22 +240,17 @@ func (i typeDefItem) Details() string {
 			for _, field := range typeDef.Fields {
 				fields = append(fields, gql.GetInputValueDefinitionString(field))
 			}
-			parts = append(parts, gqlCode(joinLines(fields...)))
+			parts = append(parts, text.GqlCode(text.JoinLines(fields...)))
 		}
 	}
 
-	return joinParagraphs(parts...)
+	return text.JoinParagraphs(parts...)
 }
 
 // Implement components.ListItem interface
 func (i typeDefItem) Open() (components.Panel, bool) {
 	// Create list items for the detail view
 	var detailItems []components.ListItem
-
-	// Add description as a header if available
-	if desc := i.Description(); desc != "" {
-		detailItems = append(detailItems, components.NewSimpleItem(desc))
-	}
 
 	switch typeDef := (i.typeDef).(type) {
 	case *ast.ObjectDefinition:
@@ -270,7 +267,12 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 		detailItems = append(detailItems, adaptInputValueDefinitions(typeDef.Fields)...)
 	}
 
-	return components.NewListPanel(detailItems, i.Title()), true
+	panel := components.NewListPanel(detailItems, i.Title())
+	// Add description as a header if available
+	if desc := i.Description(); desc != "" {
+		panel.SetDescription(desc)
+	}
+	return panel, true
 }
 
 func newSectionHeader(title string) components.SimpleItem {
