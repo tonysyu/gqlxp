@@ -126,24 +126,19 @@ func (i fieldItem) Details() string {
 
 // Implement components.ListItem interface
 func (i fieldItem) Open() (components.Panel, bool) {
-	// Create list items for the detail view
-	var detailItems []components.ListItem
-
+	// Only add actual argument items to list (no section headers)
 	inputValueItems := adaptInputValueDefinitions(i.gqlField.Arguments)
-	if len(inputValueItems) > 0 {
-		detailItems = append(detailItems, newSectionHeader("Input Arguments"))
-		detailItems = append(detailItems, inputValueItems...)
-	}
 
-	// Add result type section
-	detailItems = append(detailItems, newSectionHeader("Result Type"))
-	detailItems = append(detailItems, newTypeItem(i.gqlField.Type, i.schema))
-	panel := components.NewListPanel(detailItems, i.Title())
+	panel := components.NewListPanel(inputValueItems, i.Title())
 
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
 		panel.SetDescription(desc)
 	}
+
+	// Set result type as virtual item at top
+	panel.SetResultType(newTypeItem(i.gqlField.Type, i.schema))
+
 	return panel, true
 }
 
@@ -273,10 +268,6 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 		panel.SetDescription(desc)
 	}
 	return panel, true
-}
-
-func newSectionHeader(title string) components.SimpleItem {
-	return components.NewSimpleItem("======== " + title + " ========")
 }
 
 func newNamedItem(node *ast.Named) components.SimpleItem {

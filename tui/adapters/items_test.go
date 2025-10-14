@@ -70,14 +70,12 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		expected := normalizeView(`
 			  getAllPosts
 			  Return all posts
-			  2 items
-			│ ======== Result Type ========
-			│ 
-			  [Post!]!
+			  Result Type
+			  │ [Post!]!
 		`)
 
 		assert.StringContains(content, expected)
-		is.True(!strings.Contains(content, "======== Input Arguments ========")) // Should not have arguments section
+		is.True(!strings.Contains(content, "Input Arguments")) // Should not have arguments section
 	})
 
 	t.Run("Query field with arguments shows all sections", func(t *testing.T) {
@@ -91,11 +89,11 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		content := normalizeView(panel.View())
 
 		expected := normalizeView(`
-			│ ======== Input Arguments ========
-			│
-			  id: ID!
-			  ======== Result Type ========
-			  Post
+			  Result Type
+			  │ Post
+			  Input Arguments
+			  1 item
+			│ id: ID!
 		`)
 
 		assert.StringContains(content, expected)
@@ -114,14 +112,14 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		expected := normalizeView(`
 			  createPost
 			  Create a new post
-			  6 items
-			│ ======== Input Arguments ========
+			  Result Type
+			  │ Post!
+			  Input Arguments
+			  3 items
+			│ title: String!
 			│
-			  title: String!
 			  content: String!
 			  authorId: ID!
-			  ======== Result Type ========
-			  Post!
 		`)
 
 		assert.StringContains(content, expected)
@@ -320,13 +318,12 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	content := normalizeView(panel.View())
 
 	expected := normalizeView(`
-		│ ======== Result Type ========
-		│
-		  String
+		  Result Type
+		  │ String
 	`)
 
 	assert.StringContains(content, expected)
-	is.True(!strings.Contains(content, "======== Input Arguments ========"))
+	is.True(!strings.Contains(content, "Input Arguments"))
 }
 
 func TestFieldDefinitionWithComplexArguments(t *testing.T) {
@@ -361,14 +358,15 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 	content := normalizeView(panel.View())
 
 	expected := normalizeView(`
-		│ ======== Input Arguments ========
+		  Result Type
+		  │ [String!]!
+		  Input Arguments
+		  4 items
+		│ id: ID!
 		│
-		  id: ID!
 		  filters: FilterInput
 		  tags: [String!]!
 		  metadata: [String]
-		  ======== Result Type ========
-		  [String!]!
 	`)
 
 	assert.StringContains(content, expected)
@@ -481,20 +479,6 @@ func TestSimpleItemInterface(t *testing.T) {
 
 	// Simple items should not be openable
 	panel, ok := item.Open()
-	is.True(!ok)
-	is.True(panel == nil)
-}
-
-func TestSectionHeaderCreation(t *testing.T) {
-	is := is.New(t)
-
-	header := newSectionHeader("Test Section")
-	is.Equal(header.Title(), "======== Test Section ========")
-	is.Equal(header.Description(), "")
-	is.Equal(header.FilterValue(), "======== Test Section ========")
-
-	// Section headers should not be openable
-	panel, ok := header.Open()
 	is.True(!ok)
 	is.True(panel == nil)
 }

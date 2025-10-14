@@ -1,6 +1,7 @@
 package components
 
 import (
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -29,9 +30,22 @@ type ListPanel struct {
 	lastSelectedIndex int // Track the last selected index to detect changes
 	title             string
 	description       string
+	resultType        ListItem // Virtual item displayed at top
+	focusOnResultType bool     // Track whether focus is on result type or list
 	styles            config.Styles
 	width             int
 	height            int
+}
+
+// OpenPanelFromItem tries to create an OpenPanelMsg tea.Cmd from an item.
+// Return nil if item is not ListItem or Open doesn't return a Panel.
+func OpenPanelFromItem(item list.Item) tea.Cmd {
+	if listItem, ok := item.(ListItem); ok {
+		if newPanel, ok := listItem.Open(); ok {
+			return func() tea.Msg { return OpenPanelMsg{Panel: newPanel} }
+		}
+	}
+	return nil
 }
 
 func NewListPanel[T list.Item](choices []T, title string) *ListPanel {
@@ -55,27 +69,52 @@ func (lp *ListPanel) Init() tea.Cmd {
 }
 
 func (lp *ListPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
-	// Update the list model first
-	lp.model, cmd = lp.model.Update(msg)
-
-	// Check if selection has changed and auto-open detail panel
-	currentIndex := lp.model.Index()
-	if currentIndex != lp.lastSelectedIndex && currentIndex >= 0 {
-		lp.lastSelectedIndex = currentIndex
-		if selectedItem := lp.model.SelectedItem(); selectedItem != nil {
-			if listItem, ok := selectedItem.(ListItem); ok {
-				if newPanel, ok := listItem.Open(); ok {
-					return lp, tea.Batch(cmd, func() tea.Msg {
-						return OpenPanelMsg{Panel: newPanel}
-					})
+	// Handle navigation when result type is present
+	if lp.resultType != nil {
+		if keyMsg, ok := msg.(tea.KeyMsg); ok {
+			switch {
+			case key.Matches(keyMsg, lp.model.KeyMap.CursorDown):
+				if lp.focusOnResultType {
+					// Move from result type to first list item
+					lp.focusOnResultType = false
+					if len(lp.model.Items()) > 0 {
+						lp.model.Select(0)
+						lp.lastSelectedIndex = 0
+						return lp, lp.OpenSelectedItem()
+					}
+					return lp, nil
 				}
+				// Otherwise, let list handle it below
+
+			case key.Matches(keyMsg, lp.model.KeyMap.CursorUp):
+				if !lp.focusOnResultType && lp.model.Index() == 0 {
+					// Move from first list item back to result type
+					lp.model.Select(-1)
+					lp.lastSelectedIndex = -1
+					lp.focusOnResultType = true
+					return lp, lp.OpenSelectedItem()
+				}
+				// Otherwise, let list handle it below
 			}
 		}
 	}
 
-	return lp, cmd
+	// Only update list if focus is on list (or no result type)
+	if !lp.focusOnResultType {
+		var cmd tea.Cmd
+		lp.model, cmd = lp.model.Update(msg)
+		// Check if selection has changed and auto-open detail panel
+		currentIndex := lp.model.Index()
+		if currentIndex != lp.lastSelectedIndex && currentIndex >= 0 {
+			lp.lastSelectedIndex = currentIndex
+			if openCmd := lp.OpenSelectedItem(); openCmd != nil {
+				return lp, tea.Batch(cmd, openCmd)
+			}
+		}
+		return lp, cmd
+	}
+
+	return lp, nil
 }
 
 func (lp *ListPanel) SetSize(width, height int) {
@@ -99,9 +138,21 @@ func (lp *ListPanel) Description() string {
 	return lp.description
 }
 
+func (lp *ListPanel) SetResultType(item ListItem) {
+	lp.resultType = item
+	lp.focusOnResultType = true // Start with focus on result type
+}
+
 // SelectedItem returns the currently selected item in the list
 func (lp *ListPanel) SelectedItem() list.Item {
+	if lp.focusOnResultType {
+		return lp.resultType
+	}
 	return lp.model.SelectedItem()
+}
+
+func (lp *ListPanel) OpenSelectedItem() tea.Cmd {
+	return OpenPanelFromItem(lp.SelectedItem())
 }
 
 // Items returns the items in the list
@@ -124,9 +175,33 @@ func (lp *ListPanel) View() string {
 		availableHeight -= lipgloss.Height(desc)
 	}
 
-	lp.model.SetWidth(lp.width)
-	lp.model.SetHeight(availableHeight)
-	parts = append(parts, lp.model.View())
+	// Render result type section if present
+	if lp.resultType != nil {
+		sectionLabel := lp.styles.SectionLabel.Render("Result Type")
+		parts = append(parts, "", sectionLabel, "") // Appending empty string adds new lines
+		availableHeight -= lipgloss.Height(sectionLabel)
+
+		// Render result type with focus indicator
+		resultTypeText := lp.resultType.Title()
+		if lp.focusOnResultType {
+			resultTypeText = lp.styles.FocusedItem.Render(resultTypeText)
+		} else {
+			resultTypeText = lp.styles.UnfocusedItem.Render(" " + resultTypeText)
+		}
+		parts = append(parts, resultTypeText)
+		availableHeight -= lipgloss.Height(resultTypeText)
+	}
+
+	// Input Arguments section label if list has items
+	if len(lp.model.Items()) > 0 {
+		sectionLabel := lp.styles.SectionLabel.Render("Input Arguments")
+		parts = append(parts, "", sectionLabel) // Appending empty string adds new lines
+		availableHeight -= lipgloss.Height(sectionLabel)
+		lp.model.SetWidth(lp.width)
+		lp.model.SetHeight(availableHeight)
+		parts = append(parts, lp.model.View())
+	}
+
 	return text.JoinLines(parts...)
 }
 

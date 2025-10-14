@@ -115,8 +115,6 @@ func (m mainModel) Init() tea.Cmd {
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
-
 	// Try overlay first - it intercepts messages when active
 	var overlayCmd tea.Cmd
 	var intercepted bool
@@ -124,6 +122,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if intercepted {
 		return m, overlayCmd
 	}
+
+	var cmds []tea.Cmd
 
 	// Handle global messages
 	switch msg := msg.(type) {
@@ -137,6 +137,13 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Move forward in stack if there's at least one more panel ahead
 			if m.stackPosition+1 < len(m.panelStack) {
 				m.stackPosition++
+				// Open up child panel for ResultType if it exists
+				focusedPanel := m.panelStack[m.stackPosition]
+				if listPanel, ok := focusedPanel.(*components.ListPanel); ok {
+					if openCmd := listPanel.OpenSelectedItem(); openCmd != nil {
+						cmds = append(cmds, openCmd)
+					}
+				}
 			}
 		case key.Matches(msg, m.keymap.PrevPanel):
 			// Move backward in stack if not at the beginning
@@ -213,14 +220,14 @@ func (m *mainModel) sizePanels() {
 	panelHeight := m.height - config.HelpHeight - config.NavbarHeight
 	// Size only the visible panels (config.VisiblePanelCount = 2)
 	m.panelStack[m.stackPosition].SetSize(
-		panelWidth - m.styles.FocusedPanel.GetHorizontalFrameSize(),
-		panelHeight - m.styles.FocusedPanel.GetVerticalFrameSize(),
+		panelWidth-m.styles.FocusedPanel.GetHorizontalFrameSize(),
+		panelHeight-m.styles.FocusedPanel.GetVerticalFrameSize(),
 	)
 	// The right panel might not exist, so check before resizing
 	if len(m.panelStack) > m.stackPosition+1 {
 		m.panelStack[m.stackPosition+1].SetSize(
-			panelWidth - m.styles.BlurredPanel.GetHorizontalFrameSize(),
-			panelHeight - m.styles.BlurredPanel.GetHorizontalFrameSize(),
+			panelWidth-m.styles.BlurredPanel.GetHorizontalFrameSize(),
+			panelHeight-m.styles.BlurredPanel.GetHorizontalFrameSize(),
 		)
 	}
 }

@@ -16,7 +16,7 @@ type Styles struct {
 	// Panel styles for panels displaying lists of types, fields, etc.
 	FocusedPanel lipgloss.Style
 	BlurredPanel lipgloss.Style
-	PanelTitle lipgloss.Style
+	PanelTitle   lipgloss.Style
 
 	// Navigation styles for navbar dislplaying GQL Type selection
 	Navbar      lipgloss.Style
@@ -25,6 +25,12 @@ type Styles struct {
 
 	// Overlay style for view displaying Details of GQL Types
 	Overlay lipgloss.Style
+
+	// Section and item styles for virtual navigation items
+	SectionLabel  lipgloss.Style
+	FocusedItem   lipgloss.Style
+	UnfocusedItem lipgloss.Style
+	Divider       lipgloss.Style
 }
 
 // DefaultStyles returns the default style configuration
@@ -65,5 +71,25 @@ func DefaultStyles() Styles {
 			BorderForeground(lipgloss.Color("238")). // 238 = outer_space (dark gray)
 			Padding(OverlayPadding).
 			Margin(OverlayMargin),
+
+		SectionLabel: lipgloss.NewStyle().
+			Foreground(lipgloss.Color("240")). // 240 = dim gray
+			Bold(true).
+			Padding(0, 1),
+
+		FocusedItem: lipgloss.NewStyle().
+			// Use left-border to indicated selected/focused item.
+			// (Adapted from bubbles/list/defaultitem)
+			Border(lipgloss.NormalBorder(), false, false, false, true).
+			BorderForeground(lipgloss.Color("170")). // 170 = orchid (pink/purple)
+			Foreground(lipgloss.Color("170")).       // 170 = orchid (pink/purple)
+			Padding(0, 0, 0, 1),
+
+		UnfocusedItem: lipgloss.NewStyle().
+			Foreground(lipgloss.Color("244")). // 244 = gray
+			Padding(0, 1),
+
+		Divider: lipgloss.NewStyle().
+			Foreground(lipgloss.Color("238")), // 238 = outer_space (dark gray)
 	}
 }
