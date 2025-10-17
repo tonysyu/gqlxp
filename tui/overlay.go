@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/tui/config"
+	"github.com/tonysyu/gqlxp/utils/text"
 )
 
 // Panel inside the overlay must be inset by padding, margin, and a 1-char border on all sides.
@@ -137,7 +138,7 @@ func (o overlayModel) View() string {
 		return ""
 	}
 	helpView := o.help.ShortHelpView(o.keymap.ShortHelp())
-	content := o.viewport.View() + "\n\n" + helpView
+	content := text.JoinParagraphs(o.viewport.View(), helpView)
 
 	overlay := config.DefaultStyles().Overlay.Render(content)
 

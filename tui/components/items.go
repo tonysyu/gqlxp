@@ -2,6 +2,7 @@ package components
 
 import (
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/tonysyu/gqlxp/utils/text"
 )
 
 // ListItem is a list item that can be "opened" to provide additional information about the item.
@@ -69,6 +70,9 @@ func (si SimpleItem) Details() string {
 	if si.Description() == "" {
 		return ""
 	}
-	return "# " + si.TypeName() + "\n\n" + si.Description()
+	return text.JoinParagraphs(
+		text.H1(si.TypeName()),
+		si.Description(),
+	)
 }
 func (si SimpleItem) Open() (Panel, bool) { return nil, false }
