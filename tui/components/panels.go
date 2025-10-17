@@ -186,7 +186,7 @@ func (lp *ListPanel) View() string {
 		if lp.focusOnResultType {
 			resultTypeText = lp.styles.FocusedItem.Render(resultTypeText)
 		} else {
-			resultTypeText = lp.styles.UnfocusedItem.Render(" " + resultTypeText)
+			resultTypeText = lp.styles.UnfocusedItem.Render(resultTypeText)
 		}
 		parts = append(parts, resultTypeText)
 		availableHeight -= lipgloss.Height(resultTypeText)

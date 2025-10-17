@@ -86,8 +86,9 @@ func DefaultStyles() Styles {
 			Padding(0, 0, 0, 1),
 
 		UnfocusedItem: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("244")). // 244 = gray
-			Padding(0, 1),
+			Foreground(lipgloss.Color("253")). // 253 = alto (off-white)
+			Padding(0, 0, 0, 2),               // Use left-padding 2 instead of 1 (see FocusedItem)
+		                                       // because UnfocusedItem has no left-border
 
 		Divider: lipgloss.NewStyle().
 			Foreground(lipgloss.Color("238")), // 238 = outer_space (dark gray)

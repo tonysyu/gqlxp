@@ -359,6 +359,7 @@ func (m mainModel) View() string {
 		return m.overlay.View()
 	}
 
+	// TODO: Make panels responsible for owning rendering using configured style
 	views := []string{m.styles.FocusedPanel.Render(m.panelStack[m.stackPosition].View())}
 	if len(m.panelStack) > m.stackPosition+1 {
 		views = append(views, m.styles.BlurredPanel.Render(m.panelStack[m.stackPosition+1].View()))
