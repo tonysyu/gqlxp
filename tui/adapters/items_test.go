@@ -8,25 +8,9 @@ import (
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/tui/components"
-	"github.com/tonysyu/gqlxp/utils/assert"
+	"github.com/tonysyu/gqlxp/utils/testx"
+	"github.com/tonysyu/gqlxp/utils/testx/assert"
 )
-
-// normalizeView strips leading/trailing whitespace and empty lines from multi-line strings
-// This is useful for testing bubble-tea views which may have empty-lines for spacing.
-func normalizeView(s string) string {
-	lines := strings.Split(s, "\n")
-	var result []string
-
-	// Trim whitespace from each line and skip empty lines
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if trimmed != "" {
-			result = append(result, trimmed)
-		}
-	}
-
-	return strings.Join(result, "\n")
-}
 
 func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 	is := is.New(t)
@@ -65,9 +49,9 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		// Set a reasonable size for testing
 		panel.SetSize(80, 40)
 
-		content := normalizeView(panel.View())
+		content := testx.NormalizeView(panel.View())
 
-		expected := normalizeView(`
+		expected := testx.NormalizeView(`
 			  getAllPosts
 			  Return all posts
 			  Result Type
@@ -86,17 +70,14 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		// Set a reasonable size for testing
 		panel.SetSize(80, 40)
 
-		content := normalizeView(panel.View())
+		content := testx.RenderMinimalPanel(panel)
+		assert.StringContains(content, testx.NormalizeView(`
+			Result Type
+		  │ Post
 
-		expected := normalizeView(`
-			  Result Type
-			  │ Post
-			  Input Arguments
-			  1 item
-			│ id: ID!
-		`)
-
-		assert.StringContains(content, expected)
+			Input Arguments
+			id: ID!
+		`))
 	})
 
 	t.Run("Mutation field with multiple arguments shows all sections", func(t *testing.T) {
@@ -107,22 +88,20 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		// Set a reasonable size for testing
 		panel.SetSize(80, 40)
 
-		content := normalizeView(panel.View())
+		content := testx.RenderMinimalPanel(panel)
+		assert.StringContains(content, testx.NormalizeView(`
+			createPost
+			Create a new post
 
-		expected := normalizeView(`
-			  createPost
-			  Create a new post
-			  Result Type
-			  │ Post!
-			  Input Arguments
-			  3 items
-			│ title: String!
-			│
-			  content: String!
-			  authorId: ID!
-		`)
+			Result Type
+		  │ Post!
 
-		assert.StringContains(content, expected)
+			Input Arguments
+			title: String!
+			content: String!
+			authorId: ID!
+		`))
+
 	})
 }
 
@@ -148,14 +127,17 @@ func TestObjectDefinitionItemOpenPanel(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := normalizeView(panel.View())
+	content := testx.RenderMinimalPanel(panel)
 
-	// Object panels show field names, not their types (types are shown when opening individual fields)
-	assert.StringContains(content, "id")
-	assert.StringContains(content, "name")
-	assert.StringContains(content, "email")
-	assert.StringContains(content, "posts")
-	assert.StringContains(content, "4 items")
+	// FIXME: Render types for each field
+	assert.StringContains(content, testx.NormalizeView(`
+		User
+
+		id
+		name
+		email
+		posts
+	`))
 }
 
 func TestInputDefinitionItemOpenPanel(t *testing.T) {
@@ -179,11 +161,16 @@ func TestInputDefinitionItemOpenPanel(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := normalizeView(panel.View())
+	content := testx.RenderMinimalPanel(panel)
 
-	assert.StringContains(content, "name: String!")
-	assert.StringContains(content, "email: String!")
-	assert.StringContains(content, "age: Int")
+	// FIXME: Render Default value for age
+	assert.StringContains(content, testx.NormalizeView(`
+		CreateUserInput
+
+		name: String!
+		email: String!
+		age: Int
+	`))
 }
 
 func TestEnumDefinitionItemOpenPanel(t *testing.T) {
@@ -207,11 +194,12 @@ func TestEnumDefinitionItemOpenPanel(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := normalizeView(panel.View())
-
-	assert.StringContains(content, "ACTIVE")
-	assert.StringContains(content, "INACTIVE")
-	assert.StringContains(content, "PENDING")
+	content := testx.RenderMinimalPanel(panel)
+	assert.StringContains(content, testx.NormalizeView(`
+		ACTIVE
+		INACTIVE
+		PENDING
+	`))
 }
 
 func TestScalarDefinitionItemOpenPanel(t *testing.T) {
@@ -253,12 +241,14 @@ func TestInterfaceDefinitionItemOpenPanel(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := normalizeView(panel.View())
+	content := testx.RenderMinimalPanel(panel)
 
-	// Interface panels show field names, not their types (types are shown when opening individual fields)
-	assert.StringContains(content, "id")
-	assert.StringContains(content, "createdAt")
-	assert.StringContains(content, "2 items")
+	// FIXME: Render types for each field
+	assert.StringContains(content, testx.NormalizeView(`
+		Node
+		id
+		createdAt
+	`))
 }
 
 func TestUnionDefinitionItemOpenPanel(t *testing.T) {
@@ -286,10 +276,13 @@ func TestUnionDefinitionItemOpenPanel(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := normalizeView(panel.View())
+	content := testx.RenderMinimalPanel(panel)
 
-	assert.StringContains(content, "User")
-	assert.StringContains(content, "Post")
+	assert.StringContains(content, testx.NormalizeView(`
+		SearchResult
+		User
+		Post
+	`))
 }
 
 func TestFieldDefinitionWithoutDescription(t *testing.T) {
@@ -315,9 +308,9 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := normalizeView(panel.View())
+	content := testx.NormalizeView(panel.View())
 
-	expected := normalizeView(`
+	expected := testx.NormalizeView(`
 		  Result Type
 		  │ String
 	`)
@@ -355,21 +348,18 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
-	content := normalizeView(panel.View())
+	content := testx.RenderMinimalPanel(panel)
 
-	expected := normalizeView(`
-		  Result Type
-		  │ [String!]!
-		  Input Arguments
-		  4 items
-		│ id: ID!
-		│
-		  filters: FilterInput
-		  tags: [String!]!
-		  metadata: [String]
-	`)
+	assert.StringContains(content, testx.NormalizeView(`
+		Result Type
+	  │ [String!]!
 
-	assert.StringContains(content, expected)
+		Input Arguments
+		id: ID!
+		filters: FilterInput
+		tags: [String!]!
+		metadata: [String]
+	`))
 }
 
 func TestAdapterFunctions(t *testing.T) {
