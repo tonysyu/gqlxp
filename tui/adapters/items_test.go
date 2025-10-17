@@ -129,14 +129,13 @@ func TestObjectDefinitionItemOpenPanel(t *testing.T) {
 
 	content := testx.RenderMinimalPanel(panel)
 
-	// FIXME: Render types for each field
 	assert.StringContains(content, testx.NormalizeView(`
 		User
 
-		id
-		name
-		email
-		posts
+		id: ID!
+		name: String!
+		email: String
+		posts: [Post!]!
 	`))
 }
 
@@ -243,11 +242,10 @@ func TestInterfaceDefinitionItemOpenPanel(t *testing.T) {
 
 	content := testx.RenderMinimalPanel(panel)
 
-	// FIXME: Render types for each field
 	assert.StringContains(content, testx.NormalizeView(`
 		Node
-		id
-		createdAt
+		id: ID!
+		createdAt: String
 	`))
 }
 
@@ -300,7 +298,7 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	field := schema.Query["simpleField"]
 	item := newFieldDefItem(field, &schema)
 
-	is.Equal(item.Title(), "simpleField")
+	is.Equal(item.Title(), "simpleField: String")
 	is.Equal(item.Description(), "") // No description
 	is.Equal(item.FilterValue(), "simpleField")
 

@@ -94,19 +94,21 @@ func formatFieldDefinitionsToCodeBlock(fieldNodes []*ast.FieldDefinition) string
 
 // Adapter/delegate for ast.FieldDefinition to support ListItem interface
 type fieldItem struct {
-	gqlField *ast.FieldDefinition
-	schema   *gql.GraphQLSchema
+	gqlField  *ast.FieldDefinition
+	schema    *gql.GraphQLSchema
+	fieldName string
 }
 
 func newFieldDefItem(gqlField *ast.FieldDefinition, schema *gql.GraphQLSchema) components.ListItem {
 	return fieldItem{
-		gqlField: gqlField,
-		schema:   schema,
+		gqlField:  gqlField,
+		schema:    schema,
+		fieldName: gqlField.Name.Value,
 	}
 }
 
-func (i fieldItem) Title() string       { return i.gqlField.Name.Value }
-func (i fieldItem) FilterValue() string { return i.Title() }
+func (i fieldItem) Title() string       { return gql.GetFieldDefinitionString(i.gqlField) }
+func (i fieldItem) FilterValue() string { return i.fieldName }
 func (i fieldItem) TypeName() string {
 	resultType := gql.GetNamedFromType(i.gqlField.Type)
 	return resultType.Name.Value
@@ -129,7 +131,7 @@ func (i fieldItem) Open() (components.Panel, bool) {
 	// Only add actual argument items to list (no section headers)
 	inputValueItems := adaptInputValueDefinitions(i.gqlField.Arguments)
 
-	panel := components.NewListPanel(inputValueItems, i.Title())
+	panel := components.NewListPanel(inputValueItems, i.fieldName)
 
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
