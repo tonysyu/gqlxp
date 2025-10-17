@@ -202,7 +202,11 @@ func (lp *ListPanel) View() string {
 		parts = append(parts, lp.model.View())
 	}
 
-	return text.JoinLines(parts...)
+	content := text.JoinLines(parts...)
+
+	// Apply fixed width style to ensure panel respects its allocated width
+	style := lipgloss.NewStyle().Width(lp.width)
+	return style.Render(content)
 }
 
 // stringPanel displays a simple string content
