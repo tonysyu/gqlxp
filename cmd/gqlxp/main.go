@@ -22,6 +22,7 @@ func main() {
 		defer f.Close()
 	}
 
+	// TODO: Store cache of paths and add UI for choosing path if not defined.
 	schemaFile := os.Args[1]
 	schemaContent, err := os.ReadFile(schemaFile)
 	if err != nil {

@@ -40,6 +40,7 @@ type ListPanel struct {
 // OpenPanelFromItem tries to create an OpenPanelMsg tea.Cmd from an item.
 // Return nil if item is not ListItem or Open doesn't return a Panel.
 func OpenPanelFromItem(item list.Item) tea.Cmd {
+	// FIXME: This should also clear old panels if current item can't be opened
 	if listItem, ok := item.(ListItem); ok {
 		if newPanel, ok := listItem.Open(); ok {
 			return func() tea.Msg { return OpenPanelMsg{Panel: newPanel} }

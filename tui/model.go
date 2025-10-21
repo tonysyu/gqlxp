@@ -235,6 +235,8 @@ func (m *mainModel) sizePanels() {
 // handleOpenPanel handles when an item is opened
 // The new panel is added to the stack after the currently focused panel
 func (m *mainModel) handleOpenPanel(newPanel components.Panel) {
+	// FIXME: New Panel should not show help, but switching panels also needs to activate it.
+
 	// Truncate stack to keep only up to and including the current left panel
 	m.panelStack = m.panelStack[:m.stackPosition+1]
 	// Append the new panel - it will show on the right
