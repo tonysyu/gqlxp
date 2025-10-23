@@ -3,7 +3,6 @@ package gql_test
 import (
 	"testing"
 
-	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
 	. "github.com/tonysyu/gqlxp/gql"
 )
@@ -49,7 +48,7 @@ func TestGetTypeString(t *testing.T) {
 		t.Run(tc.fieldName, func(t *testing.T) {
 			field, ok := schema.Query[tc.fieldName]
 			is.True(ok)
-			is.Equal(GetTypeString(field.Type), tc.expectedType)
+			is.Equal(field.TypeString(), tc.expectedType)
 		})
 	}
 }
@@ -58,7 +57,7 @@ func TestGetTypeString(t *testing.T) {
 func TestCollectAndSortMapValuesEmpty(t *testing.T) {
 	is := is.New(t)
 
-	emptyMap := make(map[string]*ast.FieldDefinition)
+	emptyMap := make(map[string]*FieldDefinition)
 	result := CollectAndSortMapValues(emptyMap)
 	is.Equal(len(result), 0)
 }
@@ -80,10 +79,10 @@ func TestCollectAndSortMapValuesSorting(t *testing.T) {
 	sortedFields := CollectAndSortMapValues(schema.Query)
 
 	is.Equal(len(sortedFields), 4)
-	is.Equal(sortedFields[0].Name.Value, "alpha")
-	is.Equal(sortedFields[1].Name.Value, "beta")
-	is.Equal(sortedFields[2].Name.Value, "gamma")
-	is.Equal(sortedFields[3].Name.Value, "zebra")
+	is.Equal(sortedFields[0].Name(), "alpha")
+	is.Equal(sortedFields[1].Name(), "beta")
+	is.Equal(sortedFields[2].Name(), "gamma")
+	is.Equal(sortedFields[3].Name(), "zebra")
 }
 
 func TestGetTypeNameAllTypes(t *testing.T) {

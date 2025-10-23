@@ -10,29 +10,29 @@ import (
 
 // GraphQLSchema represents the GraphQL schema with Query and Mutation field definitions
 type GraphQLSchema struct {
-	Query      map[string]*ast.FieldDefinition
-	Mutation   map[string]*ast.FieldDefinition
-	Object     map[string]*ast.ObjectDefinition
-	Input      map[string]*ast.InputObjectDefinition
-	Enum       map[string]*ast.EnumDefinition
-	Scalar     map[string]*ast.ScalarDefinition
-	Interface  map[string]*ast.InterfaceDefinition
-	Union      map[string]*ast.UnionDefinition
-	Directive  map[string]*ast.DirectiveDefinition
+	Query      map[string]*FieldDefinition
+	Mutation   map[string]*FieldDefinition
+	Object     map[string]*ObjectDefinition
+	Input      map[string]*InputObjectDefinition
+	Enum       map[string]*EnumDefinition
+	Scalar     map[string]*ScalarDefinition
+	Interface  map[string]*InterfaceDefinition
+	Union      map[string]*UnionDefinition
+	Directive  map[string]*DirectiveDefinition
 	nameToType map[string]string
 }
 
 func buildGraphQLTypes(doc *ast.Document) GraphQLSchema {
 	gqlSchema := GraphQLSchema{
-		Query:      make(map[string]*ast.FieldDefinition),
-		Mutation:   make(map[string]*ast.FieldDefinition),
-		Object:     make(map[string]*ast.ObjectDefinition),
-		Input:      make(map[string]*ast.InputObjectDefinition),
-		Enum:       make(map[string]*ast.EnumDefinition),
-		Scalar:     make(map[string]*ast.ScalarDefinition),
-		Interface:  make(map[string]*ast.InterfaceDefinition),
-		Union:      make(map[string]*ast.UnionDefinition),
-		Directive:  make(map[string]*ast.DirectiveDefinition),
+		Query:      make(map[string]*FieldDefinition),
+		Mutation:   make(map[string]*FieldDefinition),
+		Object:     make(map[string]*ObjectDefinition),
+		Input:      make(map[string]*InputObjectDefinition),
+		Enum:       make(map[string]*EnumDefinition),
+		Scalar:     make(map[string]*ScalarDefinition),
+		Interface:  make(map[string]*InterfaceDefinition),
+		Union:      make(map[string]*UnionDefinition),
+		Directive:  make(map[string]*DirectiveDefinition),
 		nameToType: make(map[string]string),
 	}
 
@@ -41,35 +41,35 @@ func buildGraphQLTypes(doc *ast.Document) GraphQLSchema {
 		case *ast.ObjectDefinition:
 			if typeDef.Name.Value == "Query" {
 				for _, field := range typeDef.Fields {
-					gqlSchema.Query[field.Name.Value] = field
+					gqlSchema.Query[field.Name.Value] = NewFieldDefinition(field)
 				}
 				gqlSchema.nameToType["Query"] = "Query"
 			} else if typeDef.Name.Value == "Mutation" {
 				for _, field := range typeDef.Fields {
-					gqlSchema.Mutation[field.Name.Value] = field
+					gqlSchema.Mutation[field.Name.Value] = NewFieldDefinition(field)
 				}
 				gqlSchema.nameToType["Mutation"] = "Mutation"
 			} else {
-				gqlSchema.Object[typeDef.Name.Value] = typeDef
+				gqlSchema.Object[typeDef.Name.Value] = NewObjectDefinition(typeDef)
 				gqlSchema.nameToType[typeDef.Name.Value] = "Object"
 			}
 		case *ast.InputObjectDefinition:
-			gqlSchema.Input[typeDef.Name.Value] = typeDef
+			gqlSchema.Input[typeDef.Name.Value] = NewInputObjectDefinition(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Input"
 		case *ast.EnumDefinition:
-			gqlSchema.Enum[typeDef.Name.Value] = typeDef
+			gqlSchema.Enum[typeDef.Name.Value] = NewEnumDefinition(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Enum"
 		case *ast.ScalarDefinition:
-			gqlSchema.Scalar[typeDef.Name.Value] = typeDef
+			gqlSchema.Scalar[typeDef.Name.Value] = NewScalarDefinition(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Scalar"
 		case *ast.InterfaceDefinition:
-			gqlSchema.Interface[typeDef.Name.Value] = typeDef
+			gqlSchema.Interface[typeDef.Name.Value] = NewInterfaceDefinition(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Interface"
 		case *ast.UnionDefinition:
-			gqlSchema.Union[typeDef.Name.Value] = typeDef
+			gqlSchema.Union[typeDef.Name.Value] = NewUnionDefinition(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Union"
 		case *ast.DirectiveDefinition:
-			gqlSchema.Directive[typeDef.Name.Value] = typeDef
+			gqlSchema.Directive[typeDef.Name.Value] = NewDirectiveDefinition(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Directive"
 		case *ast.InputValueDefinition:
 		// Ignore: Not sure what to do w/ input values right now
@@ -100,22 +100,12 @@ func ParseSchema(schemaContent []byte) (GraphQLSchema, error) {
 
 // GetSortedQueryFields returns all query fields as wrapped FieldDefinitions, sorted by name.
 func (s *GraphQLSchema) GetSortedQueryFields() []*FieldDefinition {
-	astFields := CollectAndSortMapValues(s.Query)
-	fields := make([]*FieldDefinition, 0, len(astFields))
-	for _, field := range astFields {
-		fields = append(fields, NewFieldDefinition(field))
-	}
-	return fields
+	return CollectAndSortMapValues(s.Query)
 }
 
 // GetSortedMutationFields returns all mutation fields as wrapped FieldDefinitions, sorted by name.
 func (s *GraphQLSchema) GetSortedMutationFields() []*FieldDefinition {
-	astFields := CollectAndSortMapValues(s.Mutation)
-	fields := make([]*FieldDefinition, 0, len(astFields))
-	for _, field := range astFields {
-		fields = append(fields, NewFieldDefinition(field))
-	}
-	return fields
+	return CollectAndSortMapValues(s.Mutation)
 }
 
 // NamedToTypeDefinition resolves a Named type to its actual type definition.

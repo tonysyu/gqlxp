@@ -137,10 +137,10 @@ func TestParseSchemaWithVeryDeepNesting(t *testing.T) {
 
 	schema, _ := ParseSchema([]byte(deepNesting))
 
-	// If parsing succeeds, test that GetTypeString can handle it
+	// If parsing succeeds, test that TypeString can handle it
 	if len(schema.Query) > 0 {
 		for _, field := range schema.Query {
-			typeStr := GetTypeString(field.Type)
+			typeStr := field.TypeString()
 			is.True(len(typeStr) > 0)
 		}
 	}
@@ -186,15 +186,15 @@ func TestSchemaWithCircularReferences(t *testing.T) {
 	// Test that we can access all the types without issues
 	user := schema.Object["User"]
 	is.True(user != nil)
-	is.Equal(user.Name.Value, "User")
+	is.Equal(user.Name(), "User")
 
 	post := schema.Object["Post"]
 	is.True(post != nil)
-	is.Equal(post.Name.Value, "Post")
+	is.Equal(post.Name(), "Post")
 
 	comment := schema.Object["Comment"]
 	is.True(comment != nil)
-	is.Equal(comment.Name.Value, "Comment")
+	is.Equal(comment.Name(), "Comment")
 }
 
 func TestEmptyFileHandling(t *testing.T) {

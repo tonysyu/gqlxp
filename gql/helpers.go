@@ -28,11 +28,14 @@ type NamedTypeDef interface {
 	GetName() *ast.Name
 }
 
-// NamedType interface for types that have a Name field
+// NamedType interface for types that have a Name field (both ast and wrapped types)
 type NamedType interface {
 	*ast.FieldDefinition | *ast.ObjectDefinition | *ast.InputObjectDefinition |
 		*ast.EnumDefinition | *ast.ScalarDefinition | *ast.InterfaceDefinition |
-		*ast.UnionDefinition | *ast.DirectiveDefinition
+		*ast.UnionDefinition | *ast.DirectiveDefinition |
+		*FieldDefinition | *ObjectDefinition | *InputObjectDefinition |
+		*EnumDefinition | *ScalarDefinition | *InterfaceDefinition |
+		*UnionDefinition | *DirectiveDefinition
 }
 
 // GetTypeString converts ast.Type to string representation
@@ -65,7 +68,7 @@ func GetNamedFromType(t ast.Type) *ast.Named {
 	}
 }
 
-// GetTypeName extracts the name from various AST node types.
+// GetTypeName extracts the name from various AST node types and wrapped types.
 func GetTypeName[T NamedType](node T) string {
 	// All these GraphQL types have `Name` attributes, but this isn't exposed in any shared
 	// interface, so we make due with this silly switch statement.
@@ -86,6 +89,23 @@ func GetTypeName[T NamedType](node T) string {
 		return n.Name.Value
 	case *ast.DirectiveDefinition:
 		return n.Name.Value
+	// Wrapped types all have Name() method
+	case *FieldDefinition:
+		return n.Name()
+	case *ObjectDefinition:
+		return n.Name()
+	case *InputObjectDefinition:
+		return n.Name()
+	case *EnumDefinition:
+		return n.Name()
+	case *ScalarDefinition:
+		return n.Name()
+	case *InterfaceDefinition:
+		return n.Name()
+	case *UnionDefinition:
+		return n.Name()
+	case *DirectiveDefinition:
+		return n.Name()
 	default:
 		return ""
 	}
