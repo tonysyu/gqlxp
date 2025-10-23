@@ -43,7 +43,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 
 	t.Run("Query field with no arguments shows description and result type", func(t *testing.T) {
 		field := schema.Query["getAllPosts"]
-		item := newFieldDefItem(field, &schema)
+		item := newFieldDefItem(gql.NewFieldDefinition(field), &schema)
 		panel, _ := item.Open()
 
 		// Set a reasonable size for testing
@@ -64,7 +64,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 
 	t.Run("Query field with arguments shows all sections", func(t *testing.T) {
 		field := schema.Query["getPostById"]
-		item := newFieldDefItem(field, &schema)
+		item := newFieldDefItem(gql.NewFieldDefinition(field), &schema)
 		panel, _ := item.Open()
 
 		// Set a reasonable size for testing
@@ -82,7 +82,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 
 	t.Run("Mutation field with multiple arguments shows all sections", func(t *testing.T) {
 		field := schema.Mutation["createPost"]
-		item := newFieldDefItem(field, &schema)
+		item := newFieldDefItem(gql.NewFieldDefinition(field), &schema)
 		panel, _ := item.Open()
 
 		// Set a reasonable size for testing
@@ -296,7 +296,7 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	field := schema.Query["simpleField"]
-	item := newFieldDefItem(field, &schema)
+	item := newFieldDefItem(gql.NewFieldDefinition(field), &schema)
 
 	is.Equal(item.Title(), "simpleField: String")
 	is.Equal(item.Description(), "") // No description
@@ -340,7 +340,7 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	field := schema.Query["complexField"]
-	item := newFieldDefItem(field, &schema)
+	item := newFieldDefItem(gql.NewFieldDefinition(field), &schema)
 	panel, ok := item.Open()
 
 	is.True(ok)
@@ -399,10 +399,10 @@ func TestAdapterFunctions(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	// Test all adapter functions
-	queryItems := AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(schema.Query), &schema)
+	queryItems := AdaptFieldDefinitionsToItems(schema.GetSortedQueryFields(), &schema)
 	is.Equal(len(queryItems), 1)
 
-	mutationItems := AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(schema.Mutation), &schema)
+	mutationItems := AdaptFieldDefinitionsToItems(schema.GetSortedMutationFields(), &schema)
 	is.Equal(len(mutationItems), 1)
 
 	objectItems := AdaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(schema.Object), &schema)
@@ -431,7 +431,7 @@ func TestEmptyAdapterInputs(t *testing.T) {
 	is := is.New(t)
 
 	// Test adapters with empty inputs
-	emptyFieldItems := AdaptFieldDefinitionsToItems([]*ast.FieldDefinition{}, nil)
+	emptyFieldItems := AdaptFieldDefinitionsToItems([]*gql.FieldDefinition{}, nil)
 	is.Equal(len(emptyFieldItems), 0)
 
 	emptyObjectItems := AdaptObjectDefinitionsToItems([]*ast.ObjectDefinition{}, nil)
@@ -484,7 +484,7 @@ func TestInputValueItemCreation(t *testing.T) {
 	field := schema.Query["testField"]
 
 	// Test input value items creation
-	items := adaptInputValueDefinitions(field.Arguments)
+	items := adaptInputValueDefinitions(gql.WrapInputValueDefinitions(field.Arguments))
 	is.Equal(len(items), 3)
 
 	// Test first argument
@@ -555,6 +555,6 @@ func TestInputValueDefinitionsEmpty(t *testing.T) {
 	is := is.New(t)
 
 	// Test with empty input value definitions
-	items := adaptInputValueDefinitions([]*ast.InputValueDefinition{})
+	items := adaptInputValueDefinitions([]*gql.InputValueDefinition{})
 	is.Equal(len(items), 0)
 }

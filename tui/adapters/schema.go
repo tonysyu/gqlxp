@@ -24,11 +24,11 @@ func NewSchemaView(schema gql.GraphQLSchema) SchemaView {
 }
 
 func (p *SchemaView) GetQueryItems() []components.ListItem {
-	return AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Query), &p.schema)
+	return AdaptFieldDefinitionsToItems(p.schema.GetSortedQueryFields(), &p.schema)
 }
 
 func (p *SchemaView) GetMutationItems() []components.ListItem {
-	return AdaptFieldDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Mutation), &p.schema)
+	return AdaptFieldDefinitionsToItems(p.schema.GetSortedMutationFields(), &p.schema)
 }
 
 func (p *SchemaView) GetObjectItems() []components.ListItem {

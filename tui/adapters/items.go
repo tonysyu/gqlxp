@@ -13,7 +13,7 @@ import (
 var _ components.ListItem = (*fieldItem)(nil)
 var _ components.ListItem = (*typeDefItem)(nil)
 
-func AdaptFieldDefinitionsToItems(queryFields []*ast.FieldDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptFieldDefinitionsToItems(queryFields []*gql.FieldDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(queryFields))
 	for _, f := range queryFields {
 		adaptedItems = append(adaptedItems, newFieldDefItem(f, schema))
@@ -81,47 +81,44 @@ func adaptEnumValueDefinitionsToItems(enumNodes []*ast.EnumValueDefinition) []co
 	return adaptedItems
 }
 
-func formatFieldDefinitionsToCodeBlock(fieldNodes []*ast.FieldDefinition) string {
+func formatFieldDefinitionsToCodeBlock(fieldNodes []*gql.FieldDefinition) string {
 	if len(fieldNodes) == 0 {
 		return ""
 	}
 	var fields []string
 	for _, field := range fieldNodes {
-		fields = append(fields, gql.GetFieldDefinitionString(field))
+		fields = append(fields, field.Signature())
 	}
 	return text.GqlCode(text.JoinLines(fields...))
 }
 
-// Adapter/delegate for ast.FieldDefinition to support ListItem interface
+// Adapter/delegate for gql.FieldDefinition to support ListItem interface
 type fieldItem struct {
-	gqlField  *ast.FieldDefinition
+	gqlField  *gql.FieldDefinition
 	schema    *gql.GraphQLSchema
 	fieldName string
 }
 
-func newFieldDefItem(gqlField *ast.FieldDefinition, schema *gql.GraphQLSchema) components.ListItem {
+func newFieldDefItem(gqlField *gql.FieldDefinition, schema *gql.GraphQLSchema) components.ListItem {
 	return fieldItem{
 		gqlField:  gqlField,
 		schema:    schema,
-		fieldName: gqlField.Name.Value,
+		fieldName: gqlField.Name(),
 	}
 }
 
-func (i fieldItem) Title() string       { return gql.GetFieldDefinitionString(i.gqlField) }
+func (i fieldItem) Title() string       { return i.gqlField.Signature() }
 func (i fieldItem) FilterValue() string { return i.fieldName }
-func (i fieldItem) TypeName() string {
-	resultType := gql.GetNamedFromType(i.gqlField.Type)
-	return resultType.Name.Value
-}
+func (i fieldItem) TypeName() string    { return i.gqlField.TypeName() }
 
 func (i fieldItem) Description() string {
-	return gql.GetStringValue(i.gqlField.GetDescription())
+	return i.gqlField.Description()
 }
 
 func (i fieldItem) Details() string {
 	return text.JoinParagraphs(
 		text.H1(i.TypeName()),
-		text.GqlCode(gql.GetFieldDefinitionString(i.gqlField)),
+		text.GqlCode(i.gqlField.Signature()),
 		i.Description(),
 	)
 }
@@ -129,7 +126,7 @@ func (i fieldItem) Details() string {
 // Implement components.ListItem interface
 func (i fieldItem) Open() (components.Panel, bool) {
 	// Only add actual argument items to list (no section headers)
-	inputValueItems := adaptInputValueDefinitions(i.gqlField.Arguments)
+	inputValueItems := adaptInputValueDefinitions(i.gqlField.Arguments())
 
 	panel := components.NewListPanel(inputValueItems, i.fieldName)
 
@@ -139,14 +136,14 @@ func (i fieldItem) Open() (components.Panel, bool) {
 	}
 
 	// Set result type as virtual item at top
-	panel.SetResultType(newTypeItem(i.gqlField.Type, i.schema))
+	panel.SetResultType(newFieldTypeItem(i.gqlField, i.schema))
 
 	return panel, true
 }
 
 // Create an array of ListItem instances given InputValueDefinition. This is used for
-// `ast.FieldDefinition.Arguments` and `ast.InputObjectDefinition.Fields`
-func adaptInputValueDefinitions(inputValues []*ast.InputValueDefinition) []components.ListItem {
+// field arguments and input object fields.
+func adaptInputValueDefinitions(inputValues []*gql.InputValueDefinition) []components.ListItem {
 	var items []components.ListItem
 	if len(inputValues) > 0 {
 		for _, arg := range inputValues {
@@ -204,14 +201,14 @@ func (i typeDefItem) Details() string {
 			}
 			parts = append(parts, "**Implements:** "+strings.Join(interfaceNames, ", "))
 		}
-		codeBlock := formatFieldDefinitionsToCodeBlock(typeDef.Fields)
+		codeBlock := formatFieldDefinitionsToCodeBlock(gql.WrapFieldDefinitions(typeDef.Fields))
 		if len(codeBlock) > 0 {
 			parts = append(parts, codeBlock)
 		}
 	case *ast.ScalarDefinition:
 		parts = append(parts, "_Scalar type_")
 	case *ast.InterfaceDefinition:
-		codeBlock := formatFieldDefinitionsToCodeBlock(typeDef.Fields)
+		codeBlock := formatFieldDefinitionsToCodeBlock(gql.WrapFieldDefinitions(typeDef.Fields))
 		if len(codeBlock) > 0 {
 			parts = append(parts, codeBlock)
 		}
@@ -251,17 +248,17 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 
 	switch typeDef := (i.typeDef).(type) {
 	case *ast.ObjectDefinition:
-		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(typeDef.Fields, i.schema)...)
+		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(gql.WrapFieldDefinitions(typeDef.Fields), i.schema)...)
 	case *ast.ScalarDefinition:
 		// No details needed
 	case *ast.InterfaceDefinition:
-		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(typeDef.Fields, i.schema)...)
+		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(gql.WrapFieldDefinitions(typeDef.Fields), i.schema)...)
 	case *ast.UnionDefinition:
 		detailItems = append(detailItems, adaptNamedToItems(typeDef.Types)...)
 	case *ast.EnumDefinition:
 		detailItems = append(detailItems, adaptEnumValueDefinitionsToItems(typeDef.Values)...)
 	case *ast.InputObjectDefinition:
-		detailItems = append(detailItems, adaptInputValueDefinitions(typeDef.Fields)...)
+		detailItems = append(detailItems, adaptInputValueDefinitions(gql.WrapInputValueDefinitions(typeDef.Fields))...)
 	}
 
 	panel := components.NewListPanel(detailItems, i.Title())
@@ -295,11 +292,30 @@ func newTypeItem(t ast.Type, schema *gql.GraphQLSchema) components.ListItem {
 	}
 }
 
-func newInputValueItem(inputValue *ast.InputValueDefinition) components.SimpleItem {
+// newFieldTypeItem creates a list item for a field's result type
+func newFieldTypeItem(field *gql.FieldDefinition, schema *gql.GraphQLSchema) components.ListItem {
+	resultType, err := field.ResolveResultType(schema)
+	if err != nil {
+		// FIXME: Currently, this treats any error as a built-in type, but instead we should
+		// check for _known_ built in types and handle errors intelligently.
+		return components.NewSimpleItem(
+			field.TypeString(),
+			components.WithTypeName(field.TypeName()),
+		)
+	}
+	return typeDefItem{
+		title:    field.TypeString(),
+		typeName: resultType.GetName().Value,
+		typeDef:  resultType,
+		schema:   schema,
+	}
+}
+
+func newInputValueItem(inputValue *gql.InputValueDefinition) components.SimpleItem {
 	// TODO: Update item to support proper Open and use custom display string
 	return components.NewSimpleItem(
-		gql.GetInputValueDefinitionString(inputValue),
-		components.WithDescription(gql.GetStringValue(inputValue.Description)),
+		inputValue.Signature(),
+		components.WithDescription(inputValue.Description()),
 	)
 }
 

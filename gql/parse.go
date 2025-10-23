@@ -98,6 +98,26 @@ func ParseSchema(schemaContent []byte) (GraphQLSchema, error) {
 	return gqlSchema, nil
 }
 
+// GetSortedQueryFields returns all query fields as wrapped FieldDefinitions, sorted by name.
+func (s *GraphQLSchema) GetSortedQueryFields() []*FieldDefinition {
+	astFields := CollectAndSortMapValues(s.Query)
+	fields := make([]*FieldDefinition, 0, len(astFields))
+	for _, field := range astFields {
+		fields = append(fields, NewFieldDefinition(field))
+	}
+	return fields
+}
+
+// GetSortedMutationFields returns all mutation fields as wrapped FieldDefinitions, sorted by name.
+func (s *GraphQLSchema) GetSortedMutationFields() []*FieldDefinition {
+	astFields := CollectAndSortMapValues(s.Mutation)
+	fields := make([]*FieldDefinition, 0, len(astFields))
+	for _, field := range astFields {
+		fields = append(fields, NewFieldDefinition(field))
+	}
+	return fields
+}
+
 // NamedToTypeDefinition resolves a Named type to its actual type definition.
 // Returns (nil, nil) for nil input or special types (Query, Mutation, Directive) that don't have type definitions.
 // Returns (nil, error) when the type name is not found in the schema.
