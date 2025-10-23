@@ -56,16 +56,6 @@ func (f *FieldDefinition) Signature() string {
 	return GetFieldDefinitionString(f.astField)
 }
 
-// HasArguments returns true if the field has arguments
-func (f *FieldDefinition) HasArguments() bool {
-	return len(f.arguments) > 0
-}
-
-// ArgumentCount returns the number of arguments
-func (f *FieldDefinition) ArgumentCount() int {
-	return len(f.arguments)
-}
-
 // Arguments returns the field's arguments as wrapped InputValueDefinition types
 func (f *FieldDefinition) Arguments() []*InputValueDefinition {
 	return WrapInputValueDefinitions(f.arguments)
@@ -77,10 +67,6 @@ func (f *FieldDefinition) ResolveResultType(schema *GraphQLSchema) (NamedTypeDef
 	named := GetNamedFromType(f.fieldType)
 	return schema.NamedToTypeDefinition(named)
 }
-
-// QueryDefinition is an alias for FieldDefinition to make the intent clearer when working with Query fields.
-// Use schema.GetQueryField() or schema.GetQueryFields() to obtain QueryDefinition instances.
-type QueryDefinition = FieldDefinition
 
 // WrapFieldDefinitions converts a slice of ast.FieldDefinition to wrapped FieldDefinition types.
 // This is useful for converting fields from ObjectDefinition, InterfaceDefinition, etc.
