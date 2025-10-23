@@ -3,7 +3,6 @@ package adapters
 import (
 	"strings"
 
-	"github.com/graphql-go/graphql/language/ast"
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/tui/components"
 	"github.com/tonysyu/gqlxp/utils/text"
@@ -29,31 +28,31 @@ func adaptTypeDefsToItems[T gql.NamedTypeDef](typeDefs []T, schema *gql.GraphQLS
 	return adaptedItems
 }
 
-func AdaptObjectDefinitionsToItems(objects []*ast.ObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptObjectDefinitionsToItems(objects []*gql.ObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(objects, schema)
 }
 
-func AdaptInputDefinitionsToItems(inputs []*ast.InputObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptInputDefinitionsToItems(inputs []*gql.InputObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(inputs, schema)
 }
 
-func AdaptEnumDefinitionsToItems(enums []*ast.EnumDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptEnumDefinitionsToItems(enums []*gql.EnumDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(enums, schema)
 }
 
-func AdaptScalarDefinitionsToItems(scalars []*ast.ScalarDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptScalarDefinitionsToItems(scalars []*gql.ScalarDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(scalars, schema)
 }
 
-func AdaptInterfaceDefinitionsToItems(interfaces []*ast.InterfaceDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptInterfaceDefinitionsToItems(interfaces []*gql.InterfaceDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(interfaces, schema)
 }
 
-func AdaptUnionDefinitionsToItems(unions []*ast.UnionDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func AdaptUnionDefinitionsToItems(unions []*gql.UnionDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(unions, schema)
 }
 
-func AdaptDirectiveDefinitionsToItems(directives []*ast.DirectiveDefinition) []components.ListItem {
+func AdaptDirectiveDefinitionsToItems(directives []*gql.DirectiveDefinition) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(directives))
 	for _, directive := range directives {
 		adaptedItems = append(adaptedItems, newDirectiveDefinitionItem(directive))
@@ -61,7 +60,7 @@ func AdaptDirectiveDefinitionsToItems(directives []*ast.DirectiveDefinition) []c
 	return adaptedItems
 }
 
-func adaptNamedToItems(namedNodes []*ast.Named) []components.ListItem {
+func adaptNamedToItems(namedNodes []*gql.Named) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(namedNodes))
 	for _, node := range namedNodes {
 		adaptedItems = append(adaptedItems, newNamedItem(node))
@@ -69,12 +68,12 @@ func adaptNamedToItems(namedNodes []*ast.Named) []components.ListItem {
 	return adaptedItems
 }
 
-func adaptEnumValueDefinitionsToItems(enumNodes []*ast.EnumValueDefinition) []components.ListItem {
+func adaptEnumValueDefinitionsToItems(enumNodes []*gql.EnumValueDefinition) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(enumNodes))
 	for _, node := range enumNodes {
 		item := components.NewSimpleItem(
-			node.Name.Value,
-			components.WithDescription(gql.GetStringValue(node.Description)),
+			node.Name(),
+			components.WithDescription(node.Description()),
 		)
 		adaptedItems = append(adaptedItems, item)
 	}
@@ -154,7 +153,7 @@ func adaptInputValueDefinitions(inputValues []*gql.InputValueDefinition) []compo
 
 }
 
-// Adapter/delegate for ast.TypeDefinition to support ListItem interface
+// Adapter/delegate for gql.NamedTypeDef to support ListItem interface
 type typeDefItem struct {
 	title    string
 	typeName string
@@ -193,46 +192,46 @@ func (i typeDefItem) Details() string {
 
 	// Add type-specific details
 	switch typeDef := (i.typeDef).(type) {
-	case *ast.ObjectDefinition:
-		if len(typeDef.Interfaces) > 0 {
-			interfaceNames := make([]string, len(typeDef.Interfaces))
-			for i, iface := range typeDef.Interfaces {
-				interfaceNames[i] = iface.Name.Value
+	case *gql.ObjectDefinition:
+		if len(typeDef.Interfaces()) > 0 {
+			interfaceNames := make([]string, len(typeDef.Interfaces()))
+			for i, iface := range typeDef.Interfaces() {
+				interfaceNames[i] = iface.Name()
 			}
 			parts = append(parts, "**Implements:** "+strings.Join(interfaceNames, ", "))
 		}
-		codeBlock := formatFieldDefinitionsToCodeBlock(gql.WrapFieldDefinitions(typeDef.Fields))
+		codeBlock := formatFieldDefinitionsToCodeBlock(typeDef.Fields())
 		if len(codeBlock) > 0 {
 			parts = append(parts, codeBlock)
 		}
-	case *ast.ScalarDefinition:
+	case *gql.ScalarDefinition:
 		parts = append(parts, "_Scalar type_")
-	case *ast.InterfaceDefinition:
-		codeBlock := formatFieldDefinitionsToCodeBlock(gql.WrapFieldDefinitions(typeDef.Fields))
+	case *gql.InterfaceDefinition:
+		codeBlock := formatFieldDefinitionsToCodeBlock(typeDef.Fields())
 		if len(codeBlock) > 0 {
 			parts = append(parts, codeBlock)
 		}
-	case *ast.UnionDefinition:
-		if len(typeDef.Types) > 0 {
-			typeNames := make([]string, len(typeDef.Types))
-			for i, t := range typeDef.Types {
-				typeNames[i] = t.Name.Value
+	case *gql.UnionDefinition:
+		if len(typeDef.Types()) > 0 {
+			typeNames := make([]string, len(typeDef.Types()))
+			for i, t := range typeDef.Types() {
+				typeNames[i] = t.Name()
 			}
 			parts = append(parts, "**Union of:** "+strings.Join(typeNames, " | "))
 		}
-	case *ast.EnumDefinition:
-		if len(typeDef.Values) > 0 {
+	case *gql.EnumDefinition:
+		if len(typeDef.Values()) > 0 {
 			var values []string
-			for _, val := range typeDef.Values {
-				values = append(values, val.Name.Value)
+			for _, val := range typeDef.Values() {
+				values = append(values, val.Name())
 			}
 			parts = append(parts, text.GqlCode(text.JoinLines(values...)))
 		}
-	case *ast.InputObjectDefinition:
-		if len(typeDef.Fields) > 0 {
+	case *gql.InputObjectDefinition:
+		if len(typeDef.Fields()) > 0 {
 			var fields []string
-			for _, field := range typeDef.Fields {
-				fields = append(fields, gql.GetInputValueDefinitionString(field))
+			for _, field := range typeDef.Fields() {
+				fields = append(fields, field.Signature())
 			}
 			parts = append(parts, text.GqlCode(text.JoinLines(fields...)))
 		}
@@ -247,18 +246,18 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 	var detailItems []components.ListItem
 
 	switch typeDef := (i.typeDef).(type) {
-	case *ast.ObjectDefinition:
-		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(gql.WrapFieldDefinitions(typeDef.Fields), i.schema)...)
-	case *ast.ScalarDefinition:
+	case *gql.ObjectDefinition:
+		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(typeDef.Fields(), i.schema)...)
+	case *gql.ScalarDefinition:
 		// No details needed
-	case *ast.InterfaceDefinition:
-		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(gql.WrapFieldDefinitions(typeDef.Fields), i.schema)...)
-	case *ast.UnionDefinition:
-		detailItems = append(detailItems, adaptNamedToItems(typeDef.Types)...)
-	case *ast.EnumDefinition:
-		detailItems = append(detailItems, adaptEnumValueDefinitionsToItems(typeDef.Values)...)
-	case *ast.InputObjectDefinition:
-		detailItems = append(detailItems, adaptInputValueDefinitions(gql.WrapInputValueDefinitions(typeDef.Fields))...)
+	case *gql.InterfaceDefinition:
+		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(typeDef.Fields(), i.schema)...)
+	case *gql.UnionDefinition:
+		detailItems = append(detailItems, adaptNamedToItems(typeDef.Types())...)
+	case *gql.EnumDefinition:
+		detailItems = append(detailItems, adaptEnumValueDefinitionsToItems(typeDef.Values())...)
+	case *gql.InputObjectDefinition:
+		detailItems = append(detailItems, adaptInputValueDefinitions(typeDef.Fields())...)
 	}
 
 	panel := components.NewListPanel(detailItems, i.Title())
@@ -269,27 +268,9 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 	return panel, true
 }
 
-func newNamedItem(node *ast.Named) components.SimpleItem {
+func newNamedItem(node *gql.Named) components.SimpleItem {
 	// TODO: This probably requires a reference to the schema to return full type when opening
-	return components.NewSimpleItem(node.Name.Value)
-}
-
-func newTypeItem(t ast.Type, schema *gql.GraphQLSchema) components.ListItem {
-	resultType, err := schema.NamedToTypeDefinition(gql.GetNamedFromType(t))
-	if err != nil {
-		// FIXME: Currently, this treats any error as a built-in type, but instead we should
-		// check for _known_ built in types and handle errors intelligently.
-		return components.NewSimpleItem(
-			gql.GetTypeString(t),
-			components.WithTypeName(gql.GetNamedFromType(t).Name.Value),
-		)
-	}
-	return typeDefItem{
-		title:    gql.GetTypeString(t),
-		typeName: resultType.GetName().Value,
-		typeDef:  resultType,
-		schema:   schema,
-	}
+	return components.NewSimpleItem(node.Name())
 }
 
 // newFieldTypeItem creates a list item for a field's result type
@@ -319,9 +300,9 @@ func newInputValueItem(inputValue *gql.InputValueDefinition) components.SimpleIt
 	)
 }
 
-func newDirectiveDefinitionItem(directive *ast.DirectiveDefinition) components.SimpleItem {
+func newDirectiveDefinitionItem(directive *gql.DirectiveDefinition) components.SimpleItem {
 	return components.NewSimpleItem(
-		directive.Name.Value,
-		components.WithDescription(gql.GetStringValue(directive.Description)),
+		directive.Name(),
+		components.WithDescription(directive.Description()),
 	)
 }
