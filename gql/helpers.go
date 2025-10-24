@@ -19,14 +19,19 @@ func getStringValue(s *ast.StringValue) string {
 	return s.Value
 }
 
-// NamedTypeDef is a custom ast.TypeDef with GetName() method.
-//
-// For some reason graphql-go defines ast.TypeDefinition without GetName() but all
-// implementers should have this method.
 type NamedTypeDef interface {
-	ast.TypeDefinition
-	GetName() *ast.Name
+	Name() string
+	Description() string
 }
+
+var _ NamedTypeDef = (*FieldDefinition)(nil)
+var _ NamedTypeDef = (*ObjectDefinition)(nil)
+var _ NamedTypeDef = (*InputObjectDefinition)(nil)
+var _ NamedTypeDef = (*EnumDefinition)(nil)
+var _ NamedTypeDef = (*ScalarDefinition)(nil)
+var _ NamedTypeDef = (*InterfaceDefinition)(nil)
+var _ NamedTypeDef = (*UnionDefinition)(nil)
+var _ NamedTypeDef = (*DirectiveDefinition)(nil)
 
 // namedType interface for types that have a Name field (both ast and wrapped types)
 type namedType interface {
@@ -70,23 +75,6 @@ func getTypeName[T namedType](node T) string {
 	// All these GraphQL types have `Name` attributes, but this isn't exposed in any shared
 	// interface, so we make due with this silly switch statement.
 	switch n := any(node).(type) {
-	case *ast.FieldDefinition:
-		return n.Name.Value
-	case *ast.ObjectDefinition:
-		return n.Name.Value
-	case *ast.InputObjectDefinition:
-		return n.Name.Value
-	case *ast.EnumDefinition:
-		return n.Name.Value
-	case *ast.ScalarDefinition:
-		return n.Name.Value
-	case *ast.InterfaceDefinition:
-		return n.Name.Value
-	case *ast.UnionDefinition:
-		return n.Name.Value
-	case *ast.DirectiveDefinition:
-		return n.Name.Value
-	// Wrapped types all have Name() method
 	case *FieldDefinition:
 		return n.Name()
 	case *ObjectDefinition:

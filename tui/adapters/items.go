@@ -12,7 +12,7 @@ import (
 var _ components.ListItem = (*fieldItem)(nil)
 var _ components.ListItem = (*typeDefItem)(nil)
 
-func AdaptFieldDefinitionsToItems(queryFields []*gql.FieldDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptFieldDefinitionsToItems(queryFields []*gql.FieldDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(queryFields))
 	for _, f := range queryFields {
 		adaptedItems = append(adaptedItems, newFieldDefItem(f, schema))
@@ -28,31 +28,31 @@ func adaptTypeDefsToItems[T gql.NamedTypeDef](typeDefs []T, schema *gql.GraphQLS
 	return adaptedItems
 }
 
-func AdaptObjectDefinitionsToItems(objects []*gql.ObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptObjectDefinitionsToItems(objects []*gql.ObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(objects, schema)
 }
 
-func AdaptInputDefinitionsToItems(inputs []*gql.InputObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptInputDefinitionsToItems(inputs []*gql.InputObjectDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(inputs, schema)
 }
 
-func AdaptEnumDefinitionsToItems(enums []*gql.EnumDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptEnumDefinitionsToItems(enums []*gql.EnumDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(enums, schema)
 }
 
-func AdaptScalarDefinitionsToItems(scalars []*gql.ScalarDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptScalarDefinitionsToItems(scalars []*gql.ScalarDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(scalars, schema)
 }
 
-func AdaptInterfaceDefinitionsToItems(interfaces []*gql.InterfaceDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptInterfaceDefinitionsToItems(interfaces []*gql.InterfaceDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(interfaces, schema)
 }
 
-func AdaptUnionDefinitionsToItems(unions []*gql.UnionDefinition, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptUnionDefinitionsToItems(unions []*gql.UnionDefinition, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(unions, schema)
 }
 
-func AdaptDirectiveDefinitionsToItems(directives []*gql.DirectiveDefinition) []components.ListItem {
+func adaptDirectiveDefinitionsToItems(directives []*gql.DirectiveDefinition) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(directives))
 	for _, directive := range directives {
 		adaptedItems = append(adaptedItems, newDirectiveDefinitionItem(directive))
@@ -162,7 +162,7 @@ type typeDefItem struct {
 }
 
 func newTypeDefItem(typeDef gql.NamedTypeDef, schema *gql.GraphQLSchema) typeDefItem {
-	title := typeDef.GetName().Value
+	title := typeDef.Name()
 	return typeDefItem{
 		title:    title,
 		typeName: title,
@@ -174,13 +174,7 @@ func newTypeDefItem(typeDef gql.NamedTypeDef, schema *gql.GraphQLSchema) typeDef
 func (i typeDefItem) Title() string       { return i.title }
 func (i typeDefItem) FilterValue() string { return i.Title() }
 func (i typeDefItem) TypeName() string    { return i.typeName }
-
-func (i typeDefItem) Description() string {
-	if desc := (i.typeDef).GetDescription(); desc != nil {
-		return desc.Value
-	}
-	return ""
-}
+func (i typeDefItem) Description() string { return i.typeDef.Description() }
 
 func (i typeDefItem) Details() string {
 	parts := []string{text.H1(i.TypeName())}
@@ -247,11 +241,11 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 
 	switch typeDef := (i.typeDef).(type) {
 	case *gql.ObjectDefinition:
-		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(typeDef.Fields(), i.schema)...)
+		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields(), i.schema)...)
 	case *gql.ScalarDefinition:
 		// No details needed
 	case *gql.InterfaceDefinition:
-		detailItems = append(detailItems, AdaptFieldDefinitionsToItems(typeDef.Fields(), i.schema)...)
+		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields(), i.schema)...)
 	case *gql.UnionDefinition:
 		detailItems = append(detailItems, adaptNamedToItems(typeDef.Types())...)
 	case *gql.EnumDefinition:
@@ -286,7 +280,7 @@ func newFieldTypeItem(field *gql.FieldDefinition, schema *gql.GraphQLSchema) com
 	}
 	return typeDefItem{
 		title:    field.TypeString(),
-		typeName: resultType.GetName().Value,
+		typeName: resultType.Name(),
 		typeDef:  resultType,
 		schema:   schema,
 	}

@@ -24,37 +24,37 @@ func NewSchemaView(schema gql.GraphQLSchema) SchemaView {
 }
 
 func (p *SchemaView) GetQueryItems() []components.ListItem {
-	return AdaptFieldDefinitionsToItems(p.schema.GetSortedQueryFields(), &p.schema)
+	return adaptFieldDefinitionsToItems(p.schema.GetSortedQueryFields(), &p.schema)
 }
 
 func (p *SchemaView) GetMutationItems() []components.ListItem {
-	return AdaptFieldDefinitionsToItems(p.schema.GetSortedMutationFields(), &p.schema)
+	return adaptFieldDefinitionsToItems(p.schema.GetSortedMutationFields(), &p.schema)
 }
 
 func (p *SchemaView) GetObjectItems() []components.ListItem {
-	return AdaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Object), &p.schema)
+	return adaptObjectDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Object), &p.schema)
 }
 
 func (p *SchemaView) GetInputItems() []components.ListItem {
-	return AdaptInputDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Input), &p.schema)
+	return adaptInputDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Input), &p.schema)
 }
 
 func (p *SchemaView) GetEnumItems() []components.ListItem {
-	return AdaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Enum), &p.schema)
+	return adaptEnumDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Enum), &p.schema)
 }
 
 func (p *SchemaView) GetScalarItems() []components.ListItem {
-	return AdaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Scalar), &p.schema)
+	return adaptScalarDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Scalar), &p.schema)
 }
 
 func (p *SchemaView) GetInterfaceItems() []components.ListItem {
-	return AdaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Interface), &p.schema)
+	return adaptInterfaceDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Interface), &p.schema)
 }
 
 func (p *SchemaView) GetUnionItems() []components.ListItem {
-	return AdaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Union), &p.schema)
+	return adaptUnionDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Union), &p.schema)
 }
 
 func (p *SchemaView) GetDirectiveItems() []components.ListItem {
-	return AdaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Directive))
+	return adaptDirectiveDefinitionsToItems(gql.CollectAndSortMapValues(p.schema.Directive))
 }
