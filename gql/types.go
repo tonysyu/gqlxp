@@ -2,6 +2,28 @@ package gql
 
 import "github.com/graphql-go/graphql/language/ast"
 
+// Interface for GQL Type Definitions
+type TypeDef interface {
+	Name() string
+	Description() string
+}
+
+var _ TypeDef = (*Field)(nil)
+var _ TypeDef = (*Object)(nil)
+var _ TypeDef = (*InputObject)(nil)
+var _ TypeDef = (*Enum)(nil)
+var _ TypeDef = (*Scalar)(nil)
+var _ TypeDef = (*Interface)(nil)
+var _ TypeDef = (*Union)(nil)
+var _ TypeDef = (*Directive)(nil)
+
+// gqlType interface for types that have a Name field (both ast and wrapped types)
+type gqlType interface {
+	*Field | *Object | *InputObject |
+		*Enum | *Scalar | *Interface |
+		*Union | *Directive
+}
+
 // Field wraps ast.Field to avoid exposing graphql-go types outside gql package.
 // This can represent query fields, mutation fields, or object fields.
 type Field struct {
@@ -63,7 +85,7 @@ func (f *Field) Arguments() []*InputValue {
 
 // ResolveResultType returns the NamedTypeDef for this field's return type.
 // Returns an error if the type is a built-in scalar (String, Int, Boolean, etc.)
-func (f *Field) ResolveResultType(schema *GraphQLSchema) (NamedTypeDef, error) {
+func (f *Field) ResolveResultType(schema *GraphQLSchema) (TypeDef, error) {
 	named := getNamedFromType(f.fieldType)
 	return schema.NamedToTypeDef(named)
 }

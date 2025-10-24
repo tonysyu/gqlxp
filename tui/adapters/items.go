@@ -20,7 +20,7 @@ func adaptFieldDefinitionsToItems(queryFields []*gql.Field, schema *gql.GraphQLS
 	return adaptedItems
 }
 
-func adaptTypeDefsToItems[T gql.NamedTypeDef](typeDefs []T, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptTypeDefsToItems[T gql.TypeDef](typeDefs []T, schema *gql.GraphQLSchema) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(typeDefs))
 	for _, td := range typeDefs {
 		adaptedItems = append(adaptedItems, newTypeDefItem(td, schema))
@@ -157,11 +157,11 @@ func adaptInputValueDefinitions(inputValues []*gql.InputValue) []components.List
 type typeDefItem struct {
 	title    string
 	typeName string
-	typeDef  gql.NamedTypeDef
+	typeDef  gql.TypeDef
 	schema   *gql.GraphQLSchema
 }
 
-func newTypeDefItem(typeDef gql.NamedTypeDef, schema *gql.GraphQLSchema) typeDefItem {
+func newTypeDefItem(typeDef gql.TypeDef, schema *gql.GraphQLSchema) typeDefItem {
 	title := typeDef.Name()
 	return typeDefItem{
 		title:    title,

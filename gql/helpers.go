@@ -19,27 +19,6 @@ func getStringValue(s *ast.StringValue) string {
 	return s.Value
 }
 
-type NamedTypeDef interface {
-	Name() string
-	Description() string
-}
-
-var _ NamedTypeDef = (*Field)(nil)
-var _ NamedTypeDef = (*Object)(nil)
-var _ NamedTypeDef = (*InputObject)(nil)
-var _ NamedTypeDef = (*Enum)(nil)
-var _ NamedTypeDef = (*Scalar)(nil)
-var _ NamedTypeDef = (*Interface)(nil)
-var _ NamedTypeDef = (*Union)(nil)
-var _ NamedTypeDef = (*Directive)(nil)
-
-// namedType interface for types that have a Name field (both ast and wrapped types)
-type namedType interface {
-		*Field | *Object | *InputObject |
-		*Enum | *Scalar | *Interface |
-		*Union | *Directive
-}
-
 // getTypeString converts ast.Type to string representation
 // ast.Types are ast.Named types wrapped in arbitrary numbers of lists and non-nulls.
 func getTypeString(t ast.Type) string {
@@ -71,7 +50,7 @@ func getNamedFromType(t ast.Type) *ast.Named {
 }
 
 // getTypeName extracts the name from various AST node types and wrapped types.
-func getTypeName[T namedType](node T) string {
+func getTypeName[T gqlType](node T) string {
 	// All these GraphQL types have `Name` attributes, but this isn't exposed in any shared
 	// interface, so we make due with this silly switch statement.
 	switch n := any(node).(type) {
@@ -120,7 +99,7 @@ func getFieldString(field *ast.FieldDefinition) string {
 // CollectAndSortMapValues extracts values from a map, sorts them by name, and returns a slice.
 // GraphQL types in GraphQLSchema are stored as `name` -> `ast.TypeDefinition`/`ast.FieldDefinition`
 // maps. This helper extracts and sorts the values by name.
-func CollectAndSortMapValues[T namedType](m map[string]T) []T {
+func CollectAndSortMapValues[T gqlType](m map[string]T) []T {
 	values := slices.Collect(maps.Values(m))
 	sort.Slice(values, func(i, j int) bool {
 		return getTypeName(values[i]) < getTypeName(values[j])

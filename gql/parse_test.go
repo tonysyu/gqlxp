@@ -444,12 +444,12 @@ func TestNamedToTypeDefinition(t *testing.T) {
 	successTests := []struct {
 		name           string
 		typeName       string
-		validateResult func(result NamedTypeDef)
+		validateResult func(result TypeDef)
 	}{
 		{
 			name:     "resolves Object type correctly",
 			typeName: "User",
-			validateResult: func(result NamedTypeDef) {
+			validateResult: func(result TypeDef) {
 				objectDef, ok := result.(*Object)
 				is.True(ok)
 				is.Equal(objectDef.Name(), "User")
@@ -458,7 +458,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 		{
 			name:     "resolves Input type correctly",
 			typeName: "CreateUserInput",
-			validateResult: func(result NamedTypeDef) {
+			validateResult: func(result TypeDef) {
 				inputDef, ok := result.(*InputObject)
 				is.True(ok)
 				is.Equal(inputDef.Name(), "CreateUserInput")
@@ -467,7 +467,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 		{
 			name:     "resolves Enum type correctly",
 			typeName: "Status",
-			validateResult: func(result NamedTypeDef) {
+			validateResult: func(result TypeDef) {
 				enumDef, ok := result.(*Enum)
 				is.True(ok)
 				is.Equal(enumDef.Name(), "Status")
@@ -476,7 +476,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 		{
 			name:     "resolves Scalar type correctly",
 			typeName: "Date",
-			validateResult: func(result NamedTypeDef) {
+			validateResult: func(result TypeDef) {
 				scalarDef, ok := result.(*Scalar)
 				is.True(ok)
 				is.Equal(scalarDef.Name(), "Date")
@@ -485,7 +485,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 		{
 			name:     "resolves Interface type correctly",
 			typeName: "Node",
-			validateResult: func(result NamedTypeDef) {
+			validateResult: func(result TypeDef) {
 				interfaceDef, ok := result.(*Interface)
 				is.True(ok)
 				is.Equal(interfaceDef.Name(), "Node")
@@ -494,7 +494,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 		{
 			name:     "resolves Union type correctly",
 			typeName: "SearchResult",
-			validateResult: func(result NamedTypeDef) {
+			validateResult: func(result TypeDef) {
 				unionDef, ok := result.(*Union)
 				is.True(ok)
 				is.Equal(unionDef.Name(), "SearchResult")
