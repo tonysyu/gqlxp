@@ -427,6 +427,6 @@ func TestInputValueDefinitionsEmpty(t *testing.T) {
 	is := is.New(t)
 
 	// Test with empty input value definitions
-	items := adaptInputValueDefinitions([]*gql.InputValueDefinition{})
+	items := adaptInputValueDefinitions([]*gql.InputValue{})
 	is.Equal(len(items), 0)
 }

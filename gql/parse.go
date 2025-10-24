@@ -10,29 +10,29 @@ import (
 
 // GraphQLSchema represents the GraphQL schema with Query and Mutation field definitions
 type GraphQLSchema struct {
-	Query      map[string]*FieldDefinition
-	Mutation   map[string]*FieldDefinition
-	Object     map[string]*ObjectDefinition
-	Input      map[string]*InputObjectDefinition
-	Enum       map[string]*EnumDefinition
-	Scalar     map[string]*ScalarDefinition
-	Interface  map[string]*InterfaceDefinition
-	Union      map[string]*UnionDefinition
-	Directive  map[string]*DirectiveDefinition
+	Query      map[string]*Field
+	Mutation   map[string]*Field
+	Object     map[string]*Object
+	Input      map[string]*InputObject
+	Enum       map[string]*Enum
+	Scalar     map[string]*Scalar
+	Interface  map[string]*Interface
+	Union      map[string]*Union
+	Directive  map[string]*Directive
 	nameToType map[string]string
 }
 
 func buildGraphQLTypes(doc *ast.Document) GraphQLSchema {
 	gqlSchema := GraphQLSchema{
-		Query:      make(map[string]*FieldDefinition),
-		Mutation:   make(map[string]*FieldDefinition),
-		Object:     make(map[string]*ObjectDefinition),
-		Input:      make(map[string]*InputObjectDefinition),
-		Enum:       make(map[string]*EnumDefinition),
-		Scalar:     make(map[string]*ScalarDefinition),
-		Interface:  make(map[string]*InterfaceDefinition),
-		Union:      make(map[string]*UnionDefinition),
-		Directive:  make(map[string]*DirectiveDefinition),
+		Query:      make(map[string]*Field),
+		Mutation:   make(map[string]*Field),
+		Object:     make(map[string]*Object),
+		Input:      make(map[string]*InputObject),
+		Enum:       make(map[string]*Enum),
+		Scalar:     make(map[string]*Scalar),
+		Interface:  make(map[string]*Interface),
+		Union:      make(map[string]*Union),
+		Directive:  make(map[string]*Directive),
 		nameToType: make(map[string]string),
 	}
 
@@ -41,35 +41,35 @@ func buildGraphQLTypes(doc *ast.Document) GraphQLSchema {
 		case *ast.ObjectDefinition:
 			if typeDef.Name.Value == "Query" {
 				for _, field := range typeDef.Fields {
-					gqlSchema.Query[field.Name.Value] = NewFieldDefinition(field)
+					gqlSchema.Query[field.Name.Value] = NewField(field)
 				}
 				gqlSchema.nameToType["Query"] = "Query"
 			} else if typeDef.Name.Value == "Mutation" {
 				for _, field := range typeDef.Fields {
-					gqlSchema.Mutation[field.Name.Value] = NewFieldDefinition(field)
+					gqlSchema.Mutation[field.Name.Value] = NewField(field)
 				}
 				gqlSchema.nameToType["Mutation"] = "Mutation"
 			} else {
-				gqlSchema.Object[typeDef.Name.Value] = NewObjectDefinition(typeDef)
+				gqlSchema.Object[typeDef.Name.Value] = NewObject(typeDef)
 				gqlSchema.nameToType[typeDef.Name.Value] = "Object"
 			}
 		case *ast.InputObjectDefinition:
-			gqlSchema.Input[typeDef.Name.Value] = NewInputObjectDefinition(typeDef)
+			gqlSchema.Input[typeDef.Name.Value] = NewInputObject(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Input"
 		case *ast.EnumDefinition:
-			gqlSchema.Enum[typeDef.Name.Value] = NewEnumDefinition(typeDef)
+			gqlSchema.Enum[typeDef.Name.Value] = NewEnum(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Enum"
 		case *ast.ScalarDefinition:
-			gqlSchema.Scalar[typeDef.Name.Value] = NewScalarDefinition(typeDef)
+			gqlSchema.Scalar[typeDef.Name.Value] = NewScalar(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Scalar"
 		case *ast.InterfaceDefinition:
-			gqlSchema.Interface[typeDef.Name.Value] = NewInterfaceDefinition(typeDef)
+			gqlSchema.Interface[typeDef.Name.Value] = NewInterface(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Interface"
 		case *ast.UnionDefinition:
-			gqlSchema.Union[typeDef.Name.Value] = NewUnionDefinition(typeDef)
+			gqlSchema.Union[typeDef.Name.Value] = NewUnion(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Union"
 		case *ast.DirectiveDefinition:
-			gqlSchema.Directive[typeDef.Name.Value] = NewDirectiveDefinition(typeDef)
+			gqlSchema.Directive[typeDef.Name.Value] = NewDirective(typeDef)
 			gqlSchema.nameToType[typeDef.Name.Value] = "Directive"
 		case *ast.InputValueDefinition:
 		// Ignore: Not sure what to do w/ input values right now
@@ -98,20 +98,20 @@ func ParseSchema(schemaContent []byte) (GraphQLSchema, error) {
 	return gqlSchema, nil
 }
 
-// GetSortedQueryFields returns all query fields as wrapped FieldDefinitions, sorted by name.
-func (s *GraphQLSchema) GetSortedQueryFields() []*FieldDefinition {
+// GetSortedQueryFields returns all query fields as wrapped Fields, sorted by name.
+func (s *GraphQLSchema) GetSortedQueryFields() []*Field {
 	return CollectAndSortMapValues(s.Query)
 }
 
-// GetSortedMutationFields returns all mutation fields as wrapped FieldDefinitions, sorted by name.
-func (s *GraphQLSchema) GetSortedMutationFields() []*FieldDefinition {
+// GetSortedMutationFields returns all mutation fields as wrapped Fields, sorted by name.
+func (s *GraphQLSchema) GetSortedMutationFields() []*Field {
 	return CollectAndSortMapValues(s.Mutation)
 }
 
-// NamedToTypeDefinition resolves a Named type to its actual type definition.
+// NamedToTypeDef resolves a Named type to its actual type definition.
 // Returns (nil, nil) for nil input or special types (Query, Mutation, Directive) that don't have type definitions.
 // Returns (nil, error) when the type name is not found in the schema.
-func (s *GraphQLSchema) NamedToTypeDefinition(named *ast.Named) (NamedTypeDef, error) {
+func (s *GraphQLSchema) NamedToTypeDef(named *ast.Named) (NamedTypeDef, error) {
 	if named == nil {
 		return nil, fmt.Errorf("nil not supported for NamedToTypeDefinition")
 	}

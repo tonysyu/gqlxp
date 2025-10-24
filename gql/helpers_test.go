@@ -57,7 +57,7 @@ func TestGetTypeString(t *testing.T) {
 func TestCollectAndSortMapValuesEmpty(t *testing.T) {
 	is := is.New(t)
 
-	emptyMap := make(map[string]*FieldDefinition)
+	emptyMap := make(map[string]*Field)
 	result := CollectAndSortMapValues(emptyMap)
 	is.Equal(len(result), 0)
 }

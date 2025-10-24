@@ -2,9 +2,9 @@ package gql
 
 import "github.com/graphql-go/graphql/language/ast"
 
-// FieldDefinition wraps ast.FieldDefinition to avoid exposing graphql-go types outside gql package.
+// Field wraps ast.Field to avoid exposing graphql-go types outside gql package.
 // This can represent query fields, mutation fields, or object fields.
-type FieldDefinition struct {
+type Field struct {
 	name        string
 	description string
 	fieldType   ast.Type
@@ -13,12 +13,12 @@ type FieldDefinition struct {
 	astField *ast.FieldDefinition
 }
 
-// NewFieldDefinition creates a wrapper for ast.FieldDefinition
-func NewFieldDefinition(field *ast.FieldDefinition) *FieldDefinition {
+// NewField creates a wrapper for ast.FieldDefinition
+func NewField(field *ast.FieldDefinition) *Field {
 	if field == nil {
 		return nil
 	}
-	return &FieldDefinition{
+	return &Field{
 		name:        field.Name.Value,
 		description: getStringValue(field.GetDescription()),
 		fieldType:   field.Type,
@@ -28,22 +28,22 @@ func NewFieldDefinition(field *ast.FieldDefinition) *FieldDefinition {
 }
 
 // Name returns the field name
-func (f *FieldDefinition) Name() string {
+func (f *Field) Name() string {
 	return f.name
 }
 
 // Description returns the field description
-func (f *FieldDefinition) Description() string {
+func (f *Field) Description() string {
 	return f.description
 }
 
 // TypeString returns the string representation of the field's type
-func (f *FieldDefinition) TypeString() string {
+func (f *Field) TypeString() string {
 	return getTypeString(f.fieldType)
 }
 
 // TypeName returns the named type (unwrapping List and NonNull)
-func (f *FieldDefinition) TypeName() string {
+func (f *Field) TypeName() string {
 	named := getNamedFromType(f.fieldType)
 	if named == nil {
 		return ""
@@ -52,35 +52,35 @@ func (f *FieldDefinition) TypeName() string {
 }
 
 // Signature returns the full field signature including arguments
-func (f *FieldDefinition) Signature() string {
-	return getFieldDefinitionString(f.astField)
+func (f *Field) Signature() string {
+	return getFieldString(f.astField)
 }
 
-// Arguments returns the field's arguments as wrapped InputValueDefinition types
-func (f *FieldDefinition) Arguments() []*InputValueDefinition {
-	return wrapInputValueDefinitions(f.arguments)
+// Arguments returns the field's arguments as wrapped InputValues
+func (f *Field) Arguments() []*InputValue {
+	return wrapInputValues(f.arguments)
 }
 
 // ResolveResultType returns the NamedTypeDef for this field's return type.
 // Returns an error if the type is a built-in scalar (String, Int, Boolean, etc.)
-func (f *FieldDefinition) ResolveResultType(schema *GraphQLSchema) (NamedTypeDef, error) {
+func (f *Field) ResolveResultType(schema *GraphQLSchema) (NamedTypeDef, error) {
 	named := getNamedFromType(f.fieldType)
-	return schema.NamedToTypeDefinition(named)
+	return schema.NamedToTypeDef(named)
 }
 
-// wrapFieldDefinitions converts a slice of ast.FieldDefinition to wrapped FieldDefinition types.
-// This is useful for converting fields from ObjectDefinition, InterfaceDefinition, etc.
-func wrapFieldDefinitions(astFields []*ast.FieldDefinition) []*FieldDefinition {
-	fields := make([]*FieldDefinition, 0, len(astFields))
+// wrapFields converts a slice of ast.FieldDefinition to wrapped Field types.
+// This is useful for converting fields from Object, Interface, etc.
+func wrapFields(astFields []*ast.FieldDefinition) []*Field {
+	fields := make([]*Field, 0, len(astFields))
 	for _, field := range astFields {
-		fields = append(fields, NewFieldDefinition(field))
+		fields = append(fields, NewField(field))
 	}
 	return fields
 }
 
-// InputValueDefinition wraps ast.InputValueDefinition to avoid exposing graphql-go types outside gql package.
+// InputValue wraps ast.InputValue to avoid exposing graphql-go types outside gql package.
 // This represents input arguments or input object fields.
-type InputValueDefinition struct {
+type InputValue struct {
 	name        string
 	description string
 	inputType   ast.Type
@@ -88,12 +88,12 @@ type InputValueDefinition struct {
 	astInputValue *ast.InputValueDefinition
 }
 
-// NewInputValueDefinition creates a wrapper for ast.InputValueDefinition
-func NewInputValueDefinition(inputValue *ast.InputValueDefinition) *InputValueDefinition {
+// NewInputValue creates a wrapper for ast.InputValueDefinition
+func NewInputValue(inputValue *ast.InputValueDefinition) *InputValue {
 	if inputValue == nil {
 		return nil
 	}
-	return &InputValueDefinition{
+	return &InputValue{
 		name:          inputValue.Name.Value,
 		description:   getStringValue(inputValue.Description),
 		inputType:     inputValue.Type,
@@ -102,196 +102,196 @@ func NewInputValueDefinition(inputValue *ast.InputValueDefinition) *InputValueDe
 }
 
 // Name returns the input value name
-func (i *InputValueDefinition) Name() string {
+func (i *InputValue) Name() string {
 	return i.name
 }
 
 // Description returns the input value description
-func (i *InputValueDefinition) Description() string {
+func (i *InputValue) Description() string {
 	return i.description
 }
 
 // TypeString returns the string representation of the input value's type
-func (i *InputValueDefinition) TypeString() string {
+func (i *InputValue) TypeString() string {
 	return getTypeString(i.inputType)
 }
 
 // Signature returns the full input value signature (name: Type = defaultValue)
-func (i *InputValueDefinition) Signature() string {
-	return getInputValueDefinitionString(i.astInputValue)
+func (i *InputValue) Signature() string {
+	return getInputValueString(i.astInputValue)
 }
 
-// wrapInputValueDefinitions converts a slice of ast.InputValueDefinition to wrapped types
-func wrapInputValueDefinitions(astInputValues []*ast.InputValueDefinition) []*InputValueDefinition {
-	inputValues := make([]*InputValueDefinition, 0, len(astInputValues))
+// wrapInputValues converts a slice of ast.InputValueDefinition to wrapped types
+func wrapInputValues(astInputValues []*ast.InputValueDefinition) []*InputValue {
+	inputValues := make([]*InputValue, 0, len(astInputValues))
 	for _, iv := range astInputValues {
-		inputValues = append(inputValues, NewInputValueDefinition(iv))
+		inputValues = append(inputValues, NewInputValue(iv))
 	}
 	return inputValues
 }
 
-// ObjectDefinition wraps ast.ObjectDefinition to avoid exposing graphql-go types outside gql package.
-type ObjectDefinition struct {
+// Object wraps ast.Object to avoid exposing graphql-go types outside gql package.
+type Object struct {
 	name        string
 	description string
 	interfaces  []*Named
-	fields      []*FieldDefinition
+	fields      []*Field
 	// Keep reference to underlying ast for operations within gql package
 	astObject *ast.ObjectDefinition
 }
 
-// NewObjectDefinition creates a wrapper for ast.ObjectDefinition
-func NewObjectDefinition(obj *ast.ObjectDefinition) *ObjectDefinition {
+// NewObject creates a wrapper for ast.ObjectDefinition
+func NewObject(obj *ast.ObjectDefinition) *Object {
 	if obj == nil {
 		return nil
 	}
-	return &ObjectDefinition{
+	return &Object{
 		name:        obj.Name.Value,
 		description: getStringValue(obj.GetDescription()),
 		interfaces:  wrapNamed(obj.Interfaces),
-		fields:      wrapFieldDefinitions(obj.Fields),
+		fields:      wrapFields(obj.Fields),
 		astObject:   obj,
 	}
 }
 
 // Name returns the object name
-func (o *ObjectDefinition) Name() string {
+func (o *Object) Name() string {
 	return o.name
 }
 
 // Description returns the object description
-func (o *ObjectDefinition) Description() string {
+func (o *Object) Description() string {
 	return o.description
 }
 
 // Interfaces returns the interfaces this object implements
-func (o *ObjectDefinition) Interfaces() []*Named {
+func (o *Object) Interfaces() []*Named {
 	return o.interfaces
 }
 
 // Fields returns the object's fields
-func (o *ObjectDefinition) Fields() []*FieldDefinition {
+func (o *Object) Fields() []*Field {
 	return o.fields
 }
 
 // GetName returns the underlying AST name (for NamedTypeDef interface)
-func (o *ObjectDefinition) GetName() *ast.Name {
+func (o *Object) GetName() *ast.Name {
 	return o.astObject.GetName()
 }
 
 // GetDescription returns the underlying AST description (for NamedTypeDef interface)
-func (o *ObjectDefinition) GetDescription() *ast.StringValue {
+func (o *Object) GetDescription() *ast.StringValue {
 	return o.astObject.GetDescription()
 }
 
-// InputObjectDefinition wraps ast.InputObjectDefinition to avoid exposing graphql-go types outside gql package.
-type InputObjectDefinition struct {
+// InputObject wraps ast.InputObject to avoid exposing graphql-go types outside gql package.
+type InputObject struct {
 	name        string
 	description string
-	fields      []*InputValueDefinition
+	fields      []*InputValue
 	// Keep reference to underlying ast for operations within gql package
 	astInputObject *ast.InputObjectDefinition
 }
 
-// NewInputObjectDefinition creates a wrapper for ast.InputObjectDefinition
-func NewInputObjectDefinition(input *ast.InputObjectDefinition) *InputObjectDefinition {
+// NewInputObject creates a wrapper for ast.InputObjectDefinition
+func NewInputObject(input *ast.InputObjectDefinition) *InputObject {
 	if input == nil {
 		return nil
 	}
-	return &InputObjectDefinition{
+	return &InputObject{
 		name:           input.Name.Value,
 		description:    getStringValue(input.GetDescription()),
-		fields:         wrapInputValueDefinitions(input.Fields),
+		fields:         wrapInputValues(input.Fields),
 		astInputObject: input,
 	}
 }
 
 // Name returns the input object name
-func (i *InputObjectDefinition) Name() string {
+func (i *InputObject) Name() string {
 	return i.name
 }
 
 // Description returns the input object description
-func (i *InputObjectDefinition) Description() string {
+func (i *InputObject) Description() string {
 	return i.description
 }
 
 // Fields returns the input object's fields
-func (i *InputObjectDefinition) Fields() []*InputValueDefinition {
+func (i *InputObject) Fields() []*InputValue {
 	return i.fields
 }
 
 // GetName returns the underlying AST name (for NamedTypeDef interface)
-func (i *InputObjectDefinition) GetName() *ast.Name {
+func (i *InputObject) GetName() *ast.Name {
 	return i.astInputObject.GetName()
 }
 
 // GetDescription returns the underlying AST description (for NamedTypeDef interface)
-func (i *InputObjectDefinition) GetDescription() *ast.StringValue {
+func (i *InputObject) GetDescription() *ast.StringValue {
 	return i.astInputObject.GetDescription()
 }
 
-// EnumDefinition wraps ast.EnumDefinition to avoid exposing graphql-go types outside gql package.
-type EnumDefinition struct {
+// Enum wraps ast.Enum to avoid exposing graphql-go types outside gql package.
+type Enum struct {
 	name        string
 	description string
-	values      []*EnumValueDefinition
+	values      []*EnumValue
 	// Keep reference to underlying ast for operations within gql package
 	astEnum *ast.EnumDefinition
 }
 
-// NewEnumDefinition creates a wrapper for ast.EnumDefinition
-func NewEnumDefinition(enum *ast.EnumDefinition) *EnumDefinition {
+// NewEnum creates a wrapper for ast.EnumDefinition
+func NewEnum(enum *ast.EnumDefinition) *Enum {
 	if enum == nil {
 		return nil
 	}
-	return &EnumDefinition{
+	return &Enum{
 		name:        enum.Name.Value,
 		description: getStringValue(enum.GetDescription()),
-		values:      wrapEnumValueDefinitions(enum.Values),
+		values:      wrapEnumValues(enum.Values),
 		astEnum:     enum,
 	}
 }
 
 // Name returns the enum name
-func (e *EnumDefinition) Name() string {
+func (e *Enum) Name() string {
 	return e.name
 }
 
 // Description returns the enum description
-func (e *EnumDefinition) Description() string {
+func (e *Enum) Description() string {
 	return e.description
 }
 
 // Values returns the enum values
-func (e *EnumDefinition) Values() []*EnumValueDefinition {
+func (e *Enum) Values() []*EnumValue {
 	return e.values
 }
 
 // GetName returns the underlying AST name (for NamedTypeDef interface)
-func (e *EnumDefinition) GetName() *ast.Name {
+func (e *Enum) GetName() *ast.Name {
 	return e.astEnum.GetName()
 }
 
 // GetDescription returns the underlying AST description (for NamedTypeDef interface)
-func (e *EnumDefinition) GetDescription() *ast.StringValue {
+func (e *Enum) GetDescription() *ast.StringValue {
 	return e.astEnum.GetDescription()
 }
 
-// ScalarDefinition wraps ast.ScalarDefinition to avoid exposing graphql-go types outside gql package.
-type ScalarDefinition struct {
+// Scalar wraps ast.Scalar to avoid exposing graphql-go types outside gql package.
+type Scalar struct {
 	name        string
 	description string
 	// Keep reference to underlying ast for operations within gql package
 	astScalar *ast.ScalarDefinition
 }
 
-// NewScalarDefinition creates a wrapper for ast.ScalarDefinition
-func NewScalarDefinition(scalar *ast.ScalarDefinition) *ScalarDefinition {
+// NewScalar creates a wrapper for ast.ScalarDefinition
+func NewScalar(scalar *ast.ScalarDefinition) *Scalar {
 	if scalar == nil {
 		return nil
 	}
-	return &ScalarDefinition{
+	return &Scalar{
 		name:        scalar.Name.Value,
 		description: getStringValue(scalar.GetDescription()),
 		astScalar:   scalar,
@@ -299,74 +299,74 @@ func NewScalarDefinition(scalar *ast.ScalarDefinition) *ScalarDefinition {
 }
 
 // Name returns the scalar name
-func (s *ScalarDefinition) Name() string {
+func (s *Scalar) Name() string {
 	return s.name
 }
 
 // Description returns the scalar description
-func (s *ScalarDefinition) Description() string {
+func (s *Scalar) Description() string {
 	return s.description
 }
 
 // GetName returns the underlying AST name (for NamedTypeDef interface)
-func (s *ScalarDefinition) GetName() *ast.Name {
+func (s *Scalar) GetName() *ast.Name {
 	return s.astScalar.GetName()
 }
 
 // GetDescription returns the underlying AST description (for NamedTypeDef interface)
-func (s *ScalarDefinition) GetDescription() *ast.StringValue {
+func (s *Scalar) GetDescription() *ast.StringValue {
 	return s.astScalar.GetDescription()
 }
 
-// InterfaceDefinition wraps ast.InterfaceDefinition to avoid exposing graphql-go types outside gql package.
-type InterfaceDefinition struct {
+// Interface wraps ast.Interface to avoid exposing graphql-go types outside gql package.
+type Interface struct {
 	name        string
 	description string
-	fields      []*FieldDefinition
+	fields      []*Field
 	// Keep reference to underlying ast for operations within gql package
 	astInterface *ast.InterfaceDefinition
 }
 
-// NewInterfaceDefinition creates a wrapper for ast.InterfaceDefinition
-func NewInterfaceDefinition(iface *ast.InterfaceDefinition) *InterfaceDefinition {
+// NewInterface creates a wrapper for ast.InterfaceDefinition
+func NewInterface(iface *ast.InterfaceDefinition) *Interface {
 	if iface == nil {
 		return nil
 	}
-	return &InterfaceDefinition{
+	return &Interface{
 		name:         iface.Name.Value,
 		description:  getStringValue(iface.GetDescription()),
-		fields:       wrapFieldDefinitions(iface.Fields),
+		fields:       wrapFields(iface.Fields),
 		astInterface: iface,
 	}
 }
 
 // Name returns the interface name
-func (i *InterfaceDefinition) Name() string {
+func (i *Interface) Name() string {
 	return i.name
 }
 
 // Description returns the interface description
-func (i *InterfaceDefinition) Description() string {
+func (i *Interface) Description() string {
 	return i.description
 }
 
 // Fields returns the interface's fields
-func (i *InterfaceDefinition) Fields() []*FieldDefinition {
+func (i *Interface) Fields() []*Field {
 	return i.fields
 }
 
 // GetName returns the underlying AST name (for NamedTypeDef interface)
-func (i *InterfaceDefinition) GetName() *ast.Name {
+func (i *Interface) GetName() *ast.Name {
 	return i.astInterface.GetName()
 }
 
 // GetDescription returns the underlying AST description (for NamedTypeDef interface)
-func (i *InterfaceDefinition) GetDescription() *ast.StringValue {
+func (i *Interface) GetDescription() *ast.StringValue {
 	return i.astInterface.GetDescription()
 }
 
-// UnionDefinition wraps ast.UnionDefinition to avoid exposing graphql-go types outside gql package.
-type UnionDefinition struct {
+// Union wraps ast.Union to avoid exposing graphql-go types outside gql package.
+type Union struct {
 	name        string
 	description string
 	types       []*Named
@@ -374,12 +374,12 @@ type UnionDefinition struct {
 	astUnion *ast.UnionDefinition
 }
 
-// NewUnionDefinition creates a wrapper for ast.UnionDefinition
-func NewUnionDefinition(union *ast.UnionDefinition) *UnionDefinition {
+// NewUnion creates a wrapper for ast.UnionDefinition
+func NewUnion(union *ast.UnionDefinition) *Union {
 	if union == nil {
 		return nil
 	}
-	return &UnionDefinition{
+	return &Union{
 		name:        union.Name.Value,
 		description: getStringValue(union.GetDescription()),
 		types:       wrapNamed(union.Types),
@@ -388,44 +388,44 @@ func NewUnionDefinition(union *ast.UnionDefinition) *UnionDefinition {
 }
 
 // Name returns the union name
-func (u *UnionDefinition) Name() string {
+func (u *Union) Name() string {
 	return u.name
 }
 
 // Description returns the union description
-func (u *UnionDefinition) Description() string {
+func (u *Union) Description() string {
 	return u.description
 }
 
 // Types returns the union's member types
-func (u *UnionDefinition) Types() []*Named {
+func (u *Union) Types() []*Named {
 	return u.types
 }
 
 // GetName returns the underlying AST name (for NamedTypeDef interface)
-func (u *UnionDefinition) GetName() *ast.Name {
+func (u *Union) GetName() *ast.Name {
 	return u.astUnion.GetName()
 }
 
 // GetDescription returns the underlying AST description (for NamedTypeDef interface)
-func (u *UnionDefinition) GetDescription() *ast.StringValue {
+func (u *Union) GetDescription() *ast.StringValue {
 	return u.astUnion.GetDescription()
 }
 
-// DirectiveDefinition wraps ast.DirectiveDefinition to avoid exposing graphql-go types outside gql package.
-type DirectiveDefinition struct {
+// Directive wraps ast.Directive to avoid exposing graphql-go types outside gql package.
+type Directive struct {
 	name        string
 	description string
 	// Keep reference to underlying ast for operations within gql package
 	astDirective *ast.DirectiveDefinition
 }
 
-// NewDirectiveDefinition creates a wrapper for ast.DirectiveDefinition
-func NewDirectiveDefinition(directive *ast.DirectiveDefinition) *DirectiveDefinition {
+// NewDirective creates a wrapper for ast.DirectiveDefinition
+func NewDirective(directive *ast.DirectiveDefinition) *Directive {
 	if directive == nil {
 		return nil
 	}
-	return &DirectiveDefinition{
+	return &Directive{
 		name:         directive.Name.Value,
 		description:  getStringValue(directive.Description),
 		astDirective: directive,
@@ -433,12 +433,12 @@ func NewDirectiveDefinition(directive *ast.DirectiveDefinition) *DirectiveDefini
 }
 
 // Name returns the directive name
-func (d *DirectiveDefinition) Name() string {
+func (d *Directive) Name() string {
 	return d.name
 }
 
 // Description returns the directive description
-func (d *DirectiveDefinition) Description() string {
+func (d *Directive) Description() string {
 	return d.description
 }
 
@@ -474,20 +474,20 @@ func wrapNamed(astNamed []*ast.Named) []*Named {
 	return named
 }
 
-// EnumValueDefinition wraps ast.EnumValueDefinition to avoid exposing graphql-go types outside gql package.
-type EnumValueDefinition struct {
+// EnumValue wraps ast.EnumValue to avoid exposing graphql-go types outside gql package.
+type EnumValue struct {
 	name        string
 	description string
 	// Keep reference to underlying ast for operations within gql package
 	astEnumValue *ast.EnumValueDefinition
 }
 
-// NewEnumValueDefinition creates a wrapper for ast.EnumValueDefinition
-func NewEnumValueDefinition(enumValue *ast.EnumValueDefinition) *EnumValueDefinition {
+// NewEnumValue creates a wrapper for ast.EnumValueDefinition
+func NewEnumValue(enumValue *ast.EnumValueDefinition) *EnumValue {
 	if enumValue == nil {
 		return nil
 	}
-	return &EnumValueDefinition{
+	return &EnumValue{
 		name:         enumValue.Name.Value,
 		description:  getStringValue(enumValue.Description),
 		astEnumValue: enumValue,
@@ -495,20 +495,20 @@ func NewEnumValueDefinition(enumValue *ast.EnumValueDefinition) *EnumValueDefini
 }
 
 // Name returns the enum value name
-func (e *EnumValueDefinition) Name() string {
+func (e *EnumValue) Name() string {
 	return e.name
 }
 
 // Description returns the enum value description
-func (e *EnumValueDefinition) Description() string {
+func (e *EnumValue) Description() string {
 	return e.description
 }
 
-// wrapEnumValueDefinitions converts a slice of ast.EnumValueDefinition to wrapped types
-func wrapEnumValueDefinitions(astEnumValues []*ast.EnumValueDefinition) []*EnumValueDefinition {
-	enumValues := make([]*EnumValueDefinition, 0, len(astEnumValues))
+// wrapEnumValues converts a slice of ast.EnumValueDefinition to wrapped types
+func wrapEnumValues(astEnumValues []*ast.EnumValueDefinition) []*EnumValue {
+	enumValues := make([]*EnumValue, 0, len(astEnumValues))
 	for _, ev := range astEnumValues {
-		enumValues = append(enumValues, NewEnumValueDefinition(ev))
+		enumValues = append(enumValues, NewEnumValue(ev))
 	}
 	return enumValues
 }

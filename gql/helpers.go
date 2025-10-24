@@ -24,20 +24,20 @@ type NamedTypeDef interface {
 	Description() string
 }
 
-var _ NamedTypeDef = (*FieldDefinition)(nil)
-var _ NamedTypeDef = (*ObjectDefinition)(nil)
-var _ NamedTypeDef = (*InputObjectDefinition)(nil)
-var _ NamedTypeDef = (*EnumDefinition)(nil)
-var _ NamedTypeDef = (*ScalarDefinition)(nil)
-var _ NamedTypeDef = (*InterfaceDefinition)(nil)
-var _ NamedTypeDef = (*UnionDefinition)(nil)
-var _ NamedTypeDef = (*DirectiveDefinition)(nil)
+var _ NamedTypeDef = (*Field)(nil)
+var _ NamedTypeDef = (*Object)(nil)
+var _ NamedTypeDef = (*InputObject)(nil)
+var _ NamedTypeDef = (*Enum)(nil)
+var _ NamedTypeDef = (*Scalar)(nil)
+var _ NamedTypeDef = (*Interface)(nil)
+var _ NamedTypeDef = (*Union)(nil)
+var _ NamedTypeDef = (*Directive)(nil)
 
 // namedType interface for types that have a Name field (both ast and wrapped types)
 type namedType interface {
-		*FieldDefinition | *ObjectDefinition | *InputObjectDefinition |
-		*EnumDefinition | *ScalarDefinition | *InterfaceDefinition |
-		*UnionDefinition | *DirectiveDefinition
+		*Field | *Object | *InputObject |
+		*Enum | *Scalar | *Interface |
+		*Union | *Directive
 }
 
 // getTypeString converts ast.Type to string representation
@@ -75,41 +75,41 @@ func getTypeName[T namedType](node T) string {
 	// All these GraphQL types have `Name` attributes, but this isn't exposed in any shared
 	// interface, so we make due with this silly switch statement.
 	switch n := any(node).(type) {
-	case *FieldDefinition:
+	case *Field:
 		return n.Name()
-	case *ObjectDefinition:
+	case *Object:
 		return n.Name()
-	case *InputObjectDefinition:
+	case *InputObject:
 		return n.Name()
-	case *EnumDefinition:
+	case *Enum:
 		return n.Name()
-	case *ScalarDefinition:
+	case *Scalar:
 		return n.Name()
-	case *InterfaceDefinition:
+	case *Interface:
 		return n.Name()
-	case *UnionDefinition:
+	case *Union:
 		return n.Name()
-	case *DirectiveDefinition:
+	case *Directive:
 		return n.Name()
 	default:
 		return ""
 	}
 }
 
-func getInputValueDefinitionString(inputValue *ast.InputValueDefinition) string {
+func getInputValueString(inputValue *ast.InputValueDefinition) string {
 	fieldName := inputValue.Name.Value
 	fieldType := getTypeString(inputValue.Type)
 	return fmt.Sprintf("%s: %s", fieldName, fieldType)
 }
 
 // Return string representing the `<field>: <type>` pair or signature of a field.
-func getFieldDefinitionString(field *ast.FieldDefinition) string {
+func getFieldString(field *ast.FieldDefinition) string {
 	fieldName := field.Name.Value
 	fieldType := getTypeString(field.Type)
 	if len(field.Arguments) > 0 {
 		var inputArgs []string
 		for _, arg := range field.Arguments {
-			inputArgs = append(inputArgs, getInputValueDefinitionString(arg))
+			inputArgs = append(inputArgs, getInputValueString(arg))
 		}
 		inputArgString := strings.Join(inputArgs, ", ")
 		return fieldName + "(" + inputArgString + "): " + fieldType

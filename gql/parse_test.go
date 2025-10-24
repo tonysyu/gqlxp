@@ -13,7 +13,7 @@ import (
 func TestMain(t *testing.T) {
 	is := is.New(t)
 
-	assertArgumentNameAndType := func(arg *InputValueDefinition, expectedName, expectedType string) {
+	assertArgumentNameAndType := func(arg *InputValue, expectedName, expectedType string) {
 		is.Equal(arg.Name(), expectedName)
 		is.Equal(arg.TypeString(), expectedType)
 	}
@@ -450,7 +450,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 			name:     "resolves Object type correctly",
 			typeName: "User",
 			validateResult: func(result NamedTypeDef) {
-				objectDef, ok := result.(*ObjectDefinition)
+				objectDef, ok := result.(*Object)
 				is.True(ok)
 				is.Equal(objectDef.Name(), "User")
 			},
@@ -459,7 +459,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 			name:     "resolves Input type correctly",
 			typeName: "CreateUserInput",
 			validateResult: func(result NamedTypeDef) {
-				inputDef, ok := result.(*InputObjectDefinition)
+				inputDef, ok := result.(*InputObject)
 				is.True(ok)
 				is.Equal(inputDef.Name(), "CreateUserInput")
 			},
@@ -468,7 +468,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 			name:     "resolves Enum type correctly",
 			typeName: "Status",
 			validateResult: func(result NamedTypeDef) {
-				enumDef, ok := result.(*EnumDefinition)
+				enumDef, ok := result.(*Enum)
 				is.True(ok)
 				is.Equal(enumDef.Name(), "Status")
 			},
@@ -477,7 +477,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 			name:     "resolves Scalar type correctly",
 			typeName: "Date",
 			validateResult: func(result NamedTypeDef) {
-				scalarDef, ok := result.(*ScalarDefinition)
+				scalarDef, ok := result.(*Scalar)
 				is.True(ok)
 				is.Equal(scalarDef.Name(), "Date")
 			},
@@ -486,7 +486,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 			name:     "resolves Interface type correctly",
 			typeName: "Node",
 			validateResult: func(result NamedTypeDef) {
-				interfaceDef, ok := result.(*InterfaceDefinition)
+				interfaceDef, ok := result.(*Interface)
 				is.True(ok)
 				is.Equal(interfaceDef.Name(), "Node")
 			},
@@ -495,7 +495,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 			name:     "resolves Union type correctly",
 			typeName: "SearchResult",
 			validateResult: func(result NamedTypeDef) {
-				unionDef, ok := result.(*UnionDefinition)
+				unionDef, ok := result.(*Union)
 				is.True(ok)
 				is.Equal(unionDef.Name(), "SearchResult")
 			},
@@ -505,7 +505,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 	for _, tt := range successTests {
 		t.Run(tt.name, func(t *testing.T) {
 			named := &ast.Named{Name: &ast.Name{Value: tt.typeName}}
-			result, err := schema.NamedToTypeDefinition(named)
+			result, err := schema.NamedToTypeDef(named)
 
 			is.NoErr(err)
 			is.True(result != nil)
@@ -546,7 +546,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 				named = &ast.Named{Name: &ast.Name{Value: *tt.typeName}}
 			}
 
-			result, err := schema.NamedToTypeDefinition(named)
+			result, err := schema.NamedToTypeDef(named)
 
 			is.True(err != nil)
 			is.True(result == nil)
