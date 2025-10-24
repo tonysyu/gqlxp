@@ -10,9 +10,9 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 )
 
-// GetStringValue converts ast.StringValue to string representation
+// getStringValue converts ast.StringValue to string representation
 // Note that StringValue pointers are nullable, so this avoids
-func GetStringValue(s *ast.StringValue) string {
+func getStringValue(s *ast.StringValue) string {
 	if s == nil {
 		return ""
 	}
@@ -28,48 +28,45 @@ type NamedTypeDef interface {
 	GetName() *ast.Name
 }
 
-// NamedType interface for types that have a Name field (both ast and wrapped types)
-type NamedType interface {
-	*ast.FieldDefinition | *ast.ObjectDefinition | *ast.InputObjectDefinition |
-		*ast.EnumDefinition | *ast.ScalarDefinition | *ast.InterfaceDefinition |
-		*ast.UnionDefinition | *ast.DirectiveDefinition |
+// namedType interface for types that have a Name field (both ast and wrapped types)
+type namedType interface {
 		*FieldDefinition | *ObjectDefinition | *InputObjectDefinition |
 		*EnumDefinition | *ScalarDefinition | *InterfaceDefinition |
 		*UnionDefinition | *DirectiveDefinition
 }
 
-// GetTypeString converts ast.Type to string representation
+// getTypeString converts ast.Type to string representation
 // ast.Types are ast.Named types wrapped in arbitrary numbers of lists and non-nulls.
-func GetTypeString(t ast.Type) string {
+func getTypeString(t ast.Type) string {
 	switch typ := t.(type) {
 	case *ast.Named:
 		return typ.Name.Value
 	case *ast.List:
-		return "[" + GetTypeString(typ.Type) + "]"
+		return "[" + getTypeString(typ.Type) + "]"
 	case *ast.NonNull:
-		return GetTypeString(typ.Type) + "!"
+		return getTypeString(typ.Type) + "!"
 	default:
 		return "Unknown"
 	}
 }
 
-// GetTypeString converts ast.Type to string representation
+// getNamedFromType converts ast.Type to string representation
 // ast.Types are ast.Named types wrapped in arbitrary numbers of lists and non-nulls.
-func GetNamedFromType(t ast.Type) *ast.Named {
+func getNamedFromType(t ast.Type) *ast.Named {
 	switch typ := t.(type) {
 	case *ast.Named:
 		return typ
 	case *ast.List:
-		return GetNamedFromType(typ.Type)
+		return getNamedFromType(typ.Type)
 	case *ast.NonNull:
-		return GetNamedFromType(typ.Type)
+		return getNamedFromType(typ.Type)
 	default:
 		return nil
 	}
 }
 
-// GetTypeName extracts the name from various AST node types and wrapped types.
-func GetTypeName[T NamedType](node T) string {
+// getTypeName extracts the name from various AST node types and wrapped types.
+func getTypeName[T namedType](node T) string {
 	// All these GraphQL types have `Name` attributes, but this isn't exposed in any shared
 	// interface, so we make due with this silly switch statement.
 	switch n := any(node).(type) {
@@ -111,20 +108,20 @@ func GetTypeName[T NamedType](node T) string {
 	}
 }
 
-func GetInputValueDefinitionString(inputValue *ast.InputValueDefinition) string {
+func getInputValueDefinitionString(inputValue *ast.InputValueDefinition) string {
 	fieldName := inputValue.Name.Value
-	fieldType := GetTypeString(inputValue.Type)
+	fieldType := getTypeString(inputValue.Type)
 	return fmt.Sprintf("%s: %s", fieldName, fieldType)
 }
 
 // Return string representing the `<field>: <type>` pair or signature of a field.
-func GetFieldDefinitionString(field *ast.FieldDefinition) string {
+func getFieldDefinitionString(field *ast.FieldDefinition) string {
 	fieldName := field.Name.Value
-	fieldType := GetTypeString(field.Type)
+	fieldType := getTypeString(field.Type)
 	if len(field.Arguments) > 0 {
 		var inputArgs []string
 		for _, arg := range field.Arguments {
-			inputArgs = append(inputArgs, GetInputValueDefinitionString(arg))
+			inputArgs = append(inputArgs, getInputValueDefinitionString(arg))
 		}
 		inputArgString := strings.Join(inputArgs, ", ")
 		return fieldName + "(" + inputArgString + "): " + fieldType
@@ -135,10 +132,10 @@ func GetFieldDefinitionString(field *ast.FieldDefinition) string {
 // CollectAndSortMapValues extracts values from a map, sorts them by name, and returns a slice.
 // GraphQL types in GraphQLSchema are stored as `name` -> `ast.TypeDefinition`/`ast.FieldDefinition`
 // maps. This helper extracts and sorts the values by name.
-func CollectAndSortMapValues[T NamedType](m map[string]T) []T {
+func CollectAndSortMapValues[T namedType](m map[string]T) []T {
 	values := slices.Collect(maps.Values(m))
 	sort.Slice(values, func(i, j int) bool {
-		return GetTypeName(values[i]) < GetTypeName(values[j])
+		return getTypeName(values[i]) < getTypeName(values[j])
 	})
 	return values
 }

@@ -97,24 +97,6 @@ func TestParseSchemaWithExtremelyLargeContent(t *testing.T) {
 	is.True(len(schema.Query) <= 10000) // Should have parsed some or all fields
 }
 
-func TestGetTypeStringWithNilInput(t *testing.T) {
-	is := is.New(t)
-
-	// Test GetTypeString with potential nil inputs
-	// This tests the robustness of the type string function
-	defer func() {
-		if r := recover(); r != nil {
-			t.Logf("GetTypeString panicked with nil input: %v", r)
-		}
-	}()
-
-	// This might panic depending on the implementation
-	result := GetTypeString(nil)
-
-	// If it doesn't panic, it should return a sensible default
-	is.True(result == "Unknown" || result == "" || len(result) > 0)
-}
-
 func TestParseSchemaWithVeryDeepNesting(t *testing.T) {
 	is := is.New(t)
 

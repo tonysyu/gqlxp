@@ -20,7 +20,7 @@ func NewFieldDefinition(field *ast.FieldDefinition) *FieldDefinition {
 	}
 	return &FieldDefinition{
 		name:        field.Name.Value,
-		description: GetStringValue(field.GetDescription()),
+		description: getStringValue(field.GetDescription()),
 		fieldType:   field.Type,
 		arguments:   field.Arguments,
 		astField:    field,
@@ -39,12 +39,12 @@ func (f *FieldDefinition) Description() string {
 
 // TypeString returns the string representation of the field's type
 func (f *FieldDefinition) TypeString() string {
-	return GetTypeString(f.fieldType)
+	return getTypeString(f.fieldType)
 }
 
 // TypeName returns the named type (unwrapping List and NonNull)
 func (f *FieldDefinition) TypeName() string {
-	named := GetNamedFromType(f.fieldType)
+	named := getNamedFromType(f.fieldType)
 	if named == nil {
 		return ""
 	}
@@ -53,7 +53,7 @@ func (f *FieldDefinition) TypeName() string {
 
 // Signature returns the full field signature including arguments
 func (f *FieldDefinition) Signature() string {
-	return GetFieldDefinitionString(f.astField)
+	return getFieldDefinitionString(f.astField)
 }
 
 // Arguments returns the field's arguments as wrapped InputValueDefinition types
@@ -64,7 +64,7 @@ func (f *FieldDefinition) Arguments() []*InputValueDefinition {
 // ResolveResultType returns the NamedTypeDef for this field's return type.
 // Returns an error if the type is a built-in scalar (String, Int, Boolean, etc.)
 func (f *FieldDefinition) ResolveResultType(schema *GraphQLSchema) (NamedTypeDef, error) {
-	named := GetNamedFromType(f.fieldType)
+	named := getNamedFromType(f.fieldType)
 	return schema.NamedToTypeDefinition(named)
 }
 
@@ -95,7 +95,7 @@ func NewInputValueDefinition(inputValue *ast.InputValueDefinition) *InputValueDe
 	}
 	return &InputValueDefinition{
 		name:          inputValue.Name.Value,
-		description:   GetStringValue(inputValue.Description),
+		description:   getStringValue(inputValue.Description),
 		inputType:     inputValue.Type,
 		astInputValue: inputValue,
 	}
@@ -113,12 +113,12 @@ func (i *InputValueDefinition) Description() string {
 
 // TypeString returns the string representation of the input value's type
 func (i *InputValueDefinition) TypeString() string {
-	return GetTypeString(i.inputType)
+	return getTypeString(i.inputType)
 }
 
 // Signature returns the full input value signature (name: Type = defaultValue)
 func (i *InputValueDefinition) Signature() string {
-	return GetInputValueDefinitionString(i.astInputValue)
+	return getInputValueDefinitionString(i.astInputValue)
 }
 
 // WrapInputValueDefinitions converts a slice of ast.InputValueDefinition to wrapped types
@@ -147,7 +147,7 @@ func NewObjectDefinition(obj *ast.ObjectDefinition) *ObjectDefinition {
 	}
 	return &ObjectDefinition{
 		name:        obj.Name.Value,
-		description: GetStringValue(obj.GetDescription()),
+		description: getStringValue(obj.GetDescription()),
 		interfaces:  WrapNamed(obj.Interfaces),
 		fields:      WrapFieldDefinitions(obj.Fields),
 		astObject:   obj,
@@ -234,7 +234,7 @@ func NewInputObjectDefinition(input *ast.InputObjectDefinition) *InputObjectDefi
 	}
 	return &InputObjectDefinition{
 		name:           input.Name.Value,
-		description:    GetStringValue(input.GetDescription()),
+		description:    getStringValue(input.GetDescription()),
 		fields:         WrapInputValueDefinitions(input.Fields),
 		astInputObject: input,
 	}
@@ -315,7 +315,7 @@ func NewEnumDefinition(enum *ast.EnumDefinition) *EnumDefinition {
 	}
 	return &EnumDefinition{
 		name:        enum.Name.Value,
-		description: GetStringValue(enum.GetDescription()),
+		description: getStringValue(enum.GetDescription()),
 		values:      WrapEnumValueDefinitions(enum.Values),
 		astEnum:     enum,
 	}
@@ -395,7 +395,7 @@ func NewScalarDefinition(scalar *ast.ScalarDefinition) *ScalarDefinition {
 	}
 	return &ScalarDefinition{
 		name:        scalar.Name.Value,
-		description: GetStringValue(scalar.GetDescription()),
+		description: getStringValue(scalar.GetDescription()),
 		astScalar:   scalar,
 	}
 }
@@ -470,7 +470,7 @@ func NewInterfaceDefinition(iface *ast.InterfaceDefinition) *InterfaceDefinition
 	}
 	return &InterfaceDefinition{
 		name:         iface.Name.Value,
-		description:  GetStringValue(iface.GetDescription()),
+		description:  getStringValue(iface.GetDescription()),
 		fields:       WrapFieldDefinitions(iface.Fields),
 		astInterface: iface,
 	}
@@ -551,7 +551,7 @@ func NewUnionDefinition(union *ast.UnionDefinition) *UnionDefinition {
 	}
 	return &UnionDefinition{
 		name:        union.Name.Value,
-		description: GetStringValue(union.GetDescription()),
+		description: getStringValue(union.GetDescription()),
 		types:       WrapNamed(union.Types),
 		astUnion:    union,
 	}
@@ -631,7 +631,7 @@ func NewDirectiveDefinition(directive *ast.DirectiveDefinition) *DirectiveDefini
 	}
 	return &DirectiveDefinition{
 		name:         directive.Name.Value,
-		description:  GetStringValue(directive.Description),
+		description:  getStringValue(directive.Description),
 		astDirective: directive,
 	}
 }
@@ -702,7 +702,7 @@ func NewEnumValueDefinition(enumValue *ast.EnumValueDefinition) *EnumValueDefini
 	}
 	return &EnumValueDefinition{
 		name:         enumValue.Name.Value,
-		description:  GetStringValue(enumValue.Description),
+		description:  getStringValue(enumValue.Description),
 		astEnumValue: enumValue,
 	}
 }
