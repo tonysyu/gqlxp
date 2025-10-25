@@ -8,8 +8,7 @@ For build and development commands, see [Development Commands](development.md).
 - **`gql`**: GraphQL schema parsing and type extraction
   - `ParseSchema()` - Parses GraphQL schema and extracts all type definitions
   - `GraphQLSchema` struct - Contains maps for Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, and Directive types
-  - `NamedToTypeDefinition()` - Resolves type names to their definitions
-  - Helper functions: `GetTypeString()`, `CollectAndSortMapValues()`, `GetFieldDefinitionString()`, etc.
+  - `NamedToTypeDef()` - Resolves type names to their definitions
 - **`tui`**: Terminal user interface built on Bubble Tea
   - `mainModel` - Root model managing panels, navigation, and GQL type toggling
   - **`tui/components`**: Reusable UI components
@@ -18,8 +17,6 @@ For build and development commands, see [Development Commands](development.md).
     - `ListPanel` - Panel displaying lists with auto-open behavior
     - `SimpleItem` - Basic ListItem implementation
   - **`tui/adapters`**: Converts GraphQL AST types to UI components
-    - `Adapt*ToItems()` functions - Convert schema types to ListItems
-    - `fieldItem`, `typeDefItem` - ListItem adapters for GraphQL types
 
 ## Key Interfaces
 - **`ListItem`**: Extends `list.DefaultItem` with `Open() Panel` method for interactive items
