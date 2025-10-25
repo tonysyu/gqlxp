@@ -430,3 +430,28 @@ func TestInputValueDefinitionsEmpty(t *testing.T) {
 	items := adaptInputValueDefinitions([]*gql.InputValue{})
 	is.Equal(len(items), 0)
 }
+
+func TestFieldWithArgumentsSignature(t *testing.T) {
+	is := is.New(t)
+	schemaString := `
+		type Post {
+		  id: ID!
+		  title: String!
+		}
+
+		type Mutation {
+		  """
+		  Create a new post
+		  """
+		  createPost(title: String!, content: String!, authorId: ID!): Post!
+		}
+	`
+
+	schema, _ := gql.ParseSchema([]byte(schemaString))
+	field := schema.Mutation["createPost"]
+
+	is.Equal(
+		field.Signature(),
+		"createPost(title: String!, content: String!, authorId: ID!): Post!",
+	)
+}

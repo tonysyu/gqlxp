@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -94,13 +95,7 @@ func getFieldString(field *ast.FieldDefinition) string {
 		for _, arg := range field.Arguments {
 			inputArgs = append(inputArgs, getArgumentString(arg))
 		}
-		inputArgString := ""
-		for i, arg := range inputArgs {
-			if i > 0 {
-				inputArgString += ", "
-			}
-			inputArgString += arg
-		}
+		inputArgString := strings.Join(inputArgs, ", ")
 		return fmt.Sprintf("%s(%s): %s", field.Name, inputArgString, getTypeString(field.Type))
 	}
 	return fmt.Sprintf("%s: %s", field.Name, getTypeString(field.Type))
