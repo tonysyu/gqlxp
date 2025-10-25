@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/graphql-go/graphql/language/ast"
 	"github.com/matryer/is"
 	. "github.com/tonysyu/gqlxp/gql"
 )
@@ -161,12 +160,12 @@ func TestMain(t *testing.T) {
 		userObj, ok := schema.Object["User"]
 		is.True(ok)
 		is.Equal(len(userObj.Interfaces()), 1)
-		is.Equal(userObj.Interfaces()[0].Name(), "Node")
+		is.Equal(userObj.Interfaces()[0], "Node")
 
 		postObj, ok := schema.Object["Post"]
 		is.True(ok)
 		is.Equal(len(postObj.Interfaces()), 1)
-		is.Equal(postObj.Interfaces()[0].Name(), "Node")
+		is.Equal(postObj.Interfaces()[0], "Node")
 	})
 
 	t.Run("Enum definitions", func(t *testing.T) {
@@ -226,8 +225,8 @@ func TestMain(t *testing.T) {
 		types := searchResultUnion.Types()
 		is.Equal(len(types), 2) // User and Post
 
-		is.Equal(types[0].Name(), "User")
-		is.Equal(types[1].Name(), "Post")
+		is.Equal(types[0], "User")
+		is.Equal(types[1], "Post")
 	})
 
 	t.Run("Directive definitions", func(t *testing.T) {
@@ -297,6 +296,31 @@ func TestParseSchemaWithOnlyQuery(t *testing.T) {
 	hello, ok := schema.Query["hello"]
 	is.True(ok)
 	is.Equal(hello.Name(), "hello")
+}
+
+func TestParseSchemaWithInterfaceImplementingInterface(t *testing.T) {
+	is := is.New(t)
+
+	// Example schema for interface implementing interface. Copied from:
+	// https://spec.graphql.org/October2021/#sec-Interfaces.Interfaces-Implementing-Interfaces
+	schemaString := `
+		interface Node {
+		  id: ID!
+		}
+
+		interface Resource implements Node {
+		  id: ID!
+		  url: String
+		}
+	`
+	schema, err := ParseSchema([]byte(schemaString))
+	is.NoErr(err)
+	is.Equal(len(schema.Interface), 2)
+
+	_, ok := schema.Interface["Resource"]
+	is.True(ok)
+	_, ok = schema.Interface["Node"]
+	is.True(ok)
 }
 
 func TestParseSchemaWithOnlyMutation(t *testing.T) {
@@ -504,8 +528,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 
 	for _, tt := range successTests {
 		t.Run(tt.name, func(t *testing.T) {
-			named := &ast.Named{Name: &ast.Name{Value: tt.typeName}}
-			result, err := schema.NamedToTypeDef(named)
+			result, err := schema.NamedToTypeDef(tt.typeName)
 
 			is.NoErr(err)
 			is.True(result != nil)
@@ -515,45 +538,36 @@ func TestNamedToTypeDefinition(t *testing.T) {
 
 	errorTests := []struct {
 		name     string
-		typeName *string
+		typeName string
 	}{
 		{
 			name:     "returns err for Query type",
-			typeName: stringPtr("Query"),
+			typeName: "Query",
 		},
 		{
 			name:     "returns err for Mutation type",
-			typeName: stringPtr("Mutation"),
+			typeName: "Mutation",
 		},
 		{
 			name:     "returns err for Directive type",
-			typeName: stringPtr("deprecated"),
+			typeName: "deprecated",
 		},
 		{
 			name:     "returns err for non-existent type",
-			typeName: stringPtr("NonExistent"),
+			typeName: "NonExistent",
 		},
 		{
-			name:     "returns err for nil input",
-			typeName: nil,
+			name:     "returns err for empty string",
+			typeName: "",
 		},
 	}
 
 	for _, tt := range errorTests {
 		t.Run(tt.name, func(t *testing.T) {
-			var named *ast.Named
-			if tt.typeName != nil {
-				named = &ast.Named{Name: &ast.Name{Value: *tt.typeName}}
-			}
-
-			result, err := schema.NamedToTypeDef(named)
+			result, err := schema.NamedToTypeDef(tt.typeName)
 
 			is.True(err != nil)
 			is.True(result == nil)
 		})
 	}
-}
-
-func stringPtr(s string) *string {
-	return &s
 }

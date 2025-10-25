@@ -2,10 +2,10 @@ package gql
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/graphql-go/graphql/language/ast"
-	"github.com/graphql-go/graphql/language/parser"
+	"github.com/vektah/gqlparser/v2"
+	"github.com/vektah/gqlparser/v2/ast"
+	"github.com/vektah/gqlparser/v2/parser"
 )
 
 // GraphQLSchema represents the GraphQL schema with Query and Mutation field definitions
@@ -22,7 +22,7 @@ type GraphQLSchema struct {
 	nameToType map[string]string
 }
 
-func buildGraphQLTypes(doc *ast.Document) GraphQLSchema {
+func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 	gqlSchema := GraphQLSchema{
 		Query:      make(map[string]*Field),
 		Mutation:   make(map[string]*Field),
@@ -36,77 +36,143 @@ func buildGraphQLTypes(doc *ast.Document) GraphQLSchema {
 		nameToType: make(map[string]string),
 	}
 
-	for _, def := range doc.Definitions {
-		switch typeDef := def.(type) {
-		case *ast.ObjectDefinition:
-			if typeDef.Name.Value == "Query" {
-				for _, field := range typeDef.Fields {
-					gqlSchema.Query[field.Name.Value] = NewField(field)
-				}
-				gqlSchema.nameToType["Query"] = "Query"
-			} else if typeDef.Name.Value == "Mutation" {
-				for _, field := range typeDef.Fields {
-					gqlSchema.Mutation[field.Name.Value] = NewField(field)
-				}
-				gqlSchema.nameToType["Mutation"] = "Mutation"
-			} else {
-				gqlSchema.Object[typeDef.Name.Value] = NewObject(typeDef)
-				gqlSchema.nameToType[typeDef.Name.Value] = "Object"
+	// Process Query type
+	if schema.Query != nil {
+		for _, field := range schema.Query.Fields {
+			// Skip introspection fields (start with __)
+			if len(field.Name) >= 2 && field.Name[0] == '_' && field.Name[1] == '_' {
+				continue
 			}
-		case *ast.InputObjectDefinition:
-			gqlSchema.Input[typeDef.Name.Value] = NewInputObject(typeDef)
-			gqlSchema.nameToType[typeDef.Name.Value] = "Input"
-		case *ast.EnumDefinition:
-			gqlSchema.Enum[typeDef.Name.Value] = NewEnum(typeDef)
-			gqlSchema.nameToType[typeDef.Name.Value] = "Enum"
-		case *ast.ScalarDefinition:
-			gqlSchema.Scalar[typeDef.Name.Value] = NewScalar(typeDef)
-			gqlSchema.nameToType[typeDef.Name.Value] = "Scalar"
-		case *ast.InterfaceDefinition:
-			gqlSchema.Interface[typeDef.Name.Value] = NewInterface(typeDef)
-			gqlSchema.nameToType[typeDef.Name.Value] = "Interface"
-		case *ast.UnionDefinition:
-			gqlSchema.Union[typeDef.Name.Value] = NewUnion(typeDef)
-			gqlSchema.nameToType[typeDef.Name.Value] = "Union"
-		case *ast.DirectiveDefinition:
-			gqlSchema.Directive[typeDef.Name.Value] = NewDirective(typeDef)
-			gqlSchema.nameToType[typeDef.Name.Value] = "Directive"
-		case *ast.InputValueDefinition:
-		// Ignore: Not sure what to do w/ input values right now
-		default:
-			fmt.Printf("Unknown type: %#v\n", typeDef)
+			gqlSchema.Query[field.Name] = NewField(field)
 		}
+		gqlSchema.nameToType["Query"] = "Query"
+	}
+
+	// Process Mutation type
+	if schema.Mutation != nil {
+		for _, field := range schema.Mutation.Fields {
+			// Skip introspection fields (start with __)
+			if len(field.Name) >= 2 && field.Name[0] == '_' && field.Name[1] == '_' {
+				continue
+			}
+			gqlSchema.Mutation[field.Name] = NewField(field)
+		}
+		gqlSchema.nameToType["Mutation"] = "Mutation"
+	}
+
+	// Process all other types
+	// Built-in scalar types that should be skipped
+	builtInScalars := map[string]bool{
+		"Int":     true,
+		"Float":   true,
+		"String":  true,
+		"Boolean": true,
+		"ID":      true,
+	}
+
+	for name, typeDef := range schema.Types {
+		// Skip built-in types to match graphql-go behavior
+		if typeDef.BuiltIn || builtInScalars[name] {
+			continue
+		}
+
+		switch typeDef.Kind {
+		case ast.Object:
+			// Skip Query and Mutation as they're handled above
+			if name != "Query" && name != "Mutation" {
+				gqlSchema.Object[name] = NewObject(typeDef)
+				gqlSchema.nameToType[name] = "Object"
+			}
+		case ast.InputObject:
+			gqlSchema.Input[name] = NewInputObject(typeDef)
+			gqlSchema.nameToType[name] = "Input"
+		case ast.Enum:
+			gqlSchema.Enum[name] = NewEnum(typeDef)
+			gqlSchema.nameToType[name] = "Enum"
+		case ast.Scalar:
+			gqlSchema.Scalar[name] = NewScalar(typeDef)
+			gqlSchema.nameToType[name] = "Scalar"
+		case ast.Interface:
+			gqlSchema.Interface[name] = NewInterface(typeDef)
+			gqlSchema.nameToType[name] = "Interface"
+		case ast.Union:
+			gqlSchema.Union[name] = NewUnion(typeDef)
+			gqlSchema.nameToType[name] = "Union"
+		default:
+			fmt.Printf("Unknown type kind: %s for type %s\n", typeDef.Kind, name)
+		}
+	}
+
+	// Process directives
+	for name, directive := range schema.Directives {
+		// Skip built-in directives (they have nil Position in gqlparser)
+		// User-defined directives will have a Position set
+		if directive.Position == nil {
+			continue
+		}
+		gqlSchema.Directive[name] = NewDirective(directive)
+		gqlSchema.nameToType[name] = "Directive"
 	}
 
 	return gqlSchema
 }
 
 func ParseSchema(schemaContent []byte) (GraphQLSchema, error) {
-	// Clean up the schema content to remove problematic syntax
-	// Nullable values are null by default, and explicit defaults results in parsing error
-	cleanedSchema := strings.ReplaceAll(string(schemaContent), " = null", "")
-
-	// Parse the schema
-	doc, err := parser.Parse(parser.ParseParams{
-		Source: cleanedSchema,
-	})
-	if err != nil {
-		return GraphQLSchema{}, err
+	// Parse the schema document using gqlparser's lower-level parser
+	source := &ast.Source{
+		Name:  "schema.graphql",
+		Input: string(schemaContent),
 	}
 
-	gqlSchema := buildGraphQLTypes(doc)
+	schemaDoc, gqlErr := parser.ParseSchema(source)
+	if gqlErr != nil {
+		return GraphQLSchema{}, gqlErr
+	}
+
+	// Try to load the full schema with validation
+	schema, err := gqlparser.LoadSchema(source)
+	if err != nil {
+		// If validation fails but we have a parsed document, continue anyway
+		// This maintains compatibility with test cases that have incomplete schemas
+		schema = buildSchemaFromDocument(schemaDoc)
+	}
+
+	gqlSchema := buildGraphQLTypes(schema)
 	return gqlSchema, nil
 }
 
-// NamedToTypeDef resolves a Named type to its actual type definition.
-// Returns (nil, nil) for nil input or special types (Query, Mutation, Directive) that don't have type definitions.
-// Returns (nil, error) when the type name is not found in the schema.
-func (s *GraphQLSchema) NamedToTypeDef(named *ast.Named) (TypeDef, error) {
-	if named == nil {
-		return nil, fmt.Errorf("nil not supported for NamedToTypeDefinition")
+// buildSchemaFromDocument builds a minimal schema from a parsed document
+// without full validation, used for incomplete schemas in tests
+func buildSchemaFromDocument(doc *ast.SchemaDocument) *ast.Schema {
+	schema := &ast.Schema{
+		Types:      make(map[string]*ast.Definition),
+		Directives: make(map[string]*ast.DirectiveDefinition),
 	}
 
-	typeName := named.Name.Value
+	for _, def := range doc.Definitions {
+		if def.Name == "Query" {
+			schema.Query = def
+		} else if def.Name == "Mutation" {
+			schema.Mutation = def
+		}
+		schema.Types[def.Name] = def
+	}
+
+	for _, dir := range doc.Directives {
+		schema.Directives[dir.Name] = dir
+	}
+
+	return schema
+}
+
+// NamedToTypeDef resolves a type name to its actual type definition.
+// Returns (nil, error) for special types (Query, Mutation, Directive) that don't have type definitions,
+// or when the type name is not found in the schema.
+func (s *GraphQLSchema) NamedToTypeDef(typeName string) (TypeDef, error) {
+	if typeName == "" {
+		return nil, fmt.Errorf("empty type name not supported")
+	}
+
 	typeCategory, ok := s.nameToType[typeName]
 	if !ok {
 		return nil, fmt.Errorf("type %q not found in schema", typeName)

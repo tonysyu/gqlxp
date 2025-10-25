@@ -60,10 +60,10 @@ func adaptDirectiveDefinitionsToItems(directives []*gql.Directive) []components.
 	return adaptedItems
 }
 
-func adaptNamedToItems(namedNodes []*gql.Named) []components.ListItem {
-	adaptedItems := make([]components.ListItem, 0, len(namedNodes))
-	for _, node := range namedNodes {
-		adaptedItems = append(adaptedItems, newNamedItem(node))
+func adaptNamedToItems(typeNames []string) []components.ListItem {
+	adaptedItems := make([]components.ListItem, 0, len(typeNames))
+	for _, typeName := range typeNames {
+		adaptedItems = append(adaptedItems, newNamedItem(typeName))
 	}
 	return adaptedItems
 }
@@ -188,11 +188,7 @@ func (i typeDefItem) Details() string {
 	switch typeDef := (i.typeDef).(type) {
 	case *gql.Object:
 		if len(typeDef.Interfaces()) > 0 {
-			interfaceNames := make([]string, len(typeDef.Interfaces()))
-			for i, iface := range typeDef.Interfaces() {
-				interfaceNames[i] = iface.Name()
-			}
-			parts = append(parts, "**Implements:** "+strings.Join(interfaceNames, ", "))
+			parts = append(parts, "**Implements:** "+strings.Join(typeDef.Interfaces(), ", "))
 		}
 		codeBlock := formatFieldDefinitionsToCodeBlock(typeDef.Fields())
 		if len(codeBlock) > 0 {
@@ -207,11 +203,7 @@ func (i typeDefItem) Details() string {
 		}
 	case *gql.Union:
 		if len(typeDef.Types()) > 0 {
-			typeNames := make([]string, len(typeDef.Types()))
-			for i, t := range typeDef.Types() {
-				typeNames[i] = t.Name()
-			}
-			parts = append(parts, "**Union of:** "+strings.Join(typeNames, " | "))
+			parts = append(parts, "**Union of:** "+strings.Join(typeDef.Types(), " | "))
 		}
 	case *gql.Enum:
 		if len(typeDef.Values()) > 0 {
@@ -262,9 +254,9 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 	return panel, true
 }
 
-func newNamedItem(node *gql.Named) components.SimpleItem {
+func newNamedItem(typeName string) components.SimpleItem {
 	// TODO: This probably requires a reference to the schema to return full type when opening
-	return components.NewSimpleItem(node.Name())
+	return components.NewSimpleItem(typeName)
 }
 
 // newFieldTypeItem creates a list item for a field's result type
