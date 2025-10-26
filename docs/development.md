@@ -17,3 +17,14 @@ Use `just` to see all available commands defined in the justfile.
 
 ## Code Quality
 - `just lint-fix` - Format code, tidy modules, and run static analysis
+
+## Documentation
+Use the `go doc` command to get documentation for this module. You can pipe output to
+[bat](https://github.com/sharkdp/bat) for a syntax-highlighted version:
+```
+go doc gql | bat -l go
+go doc tui | bat -l go
+go doc tui/adapters | bat -l go
+go doc tui/components | bat -l go
+go doc tui/config | bat -l go
+```
