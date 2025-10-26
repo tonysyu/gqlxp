@@ -7,147 +7,72 @@ import (
 	. "github.com/tonysyu/gqlxp/gql"
 )
 
-// testSchema is a comprehensive schema used across multiple tests
-const testSchema = `
-	"""
-	Represents a user status
-	"""
-	enum Status {
-		"""Active user"""
-		ACTIVE
-		"""Inactive user"""
-		INACTIVE
-		PENDING
-	}
-
-	"""
-	Custom date scalar
-	"""
-	scalar Date
-
-	"""
-	Input for creating a user
-	"""
-	input CreateUserInput {
-		"""User's name"""
-		name: String!
-		email: String!
-		status: Status = ACTIVE
-	}
-
-	"""
-	Node interface for entities with IDs
-	"""
-	interface Node {
-		"""Unique identifier"""
-		id: ID!
-	}
-
-	"""
-	Search result union
-	"""
-	union SearchResult = User | Post
-
-	"""
-	Marks field as deprecated
-	"""
-	directive @deprecated(reason: String = "No longer supported") on FIELD_DEFINITION | ENUM_VALUE
-
-	"""
-	User type
-	"""
-	type User implements Node {
-		id: ID!
-		name: String!
-		email: String!
-		status: Status!
-		posts: [Post!]!
-	}
-
-	"""
-	Post type
-	"""
-	type Post implements Node {
-		id: ID!
-		title: String!
-		content: String
-		author: User!
-	}
-
-	type Query {
-		"""Get a user by ID"""
-		getUser(id: ID!): User
-		"""Search all content"""
-		search(query: String!, limit: Int = 10): [SearchResult!]!
-	}
-
-	type Mutation {
-		"""Create a new user"""
-		createUser(input: CreateUserInput!): User!
-	}
-`
-
 func TestField_Methods(t *testing.T) {
 	is := is.New(t)
-	schema, _ := ParseSchema([]byte(testSchema))
+	schema, _ := ParseSchema([]byte(`
+		type User {
+			id: ID!
+			name: String!
+		}
+
+		type Post {
+			title: String!
+		}
+
+		union SearchResult = User | Post
+
+		type Query {
+			"""Get a user by ID"""
+			getUser(id: ID!): User
+			search(query: String!, limit: Int = 10): [SearchResult!]!
+		}
+	`))
+
+	getUser := schema.Query["getUser"]
+	search := schema.Query["search"]
 
 	t.Run("Name returns field name", func(t *testing.T) {
-		field := schema.Query["getUser"]
-		is.Equal(field.Name(), "getUser")
+		is.Equal(getUser.Name(), "getUser")
+		is.Equal(search.Name(), "search")
 	})
 
 	t.Run("Description returns field description", func(t *testing.T) {
-		field := schema.Query["getUser"]
-		is.Equal(field.Description(), "Get a user by ID")
+		is.Equal(getUser.Description(), "Get a user by ID")
+		is.Equal(search.Description(), "")
 	})
 
 	t.Run("TypeString returns correct type representation", func(t *testing.T) {
-		testCases := []struct {
-			fieldName    string
-			expectedType string
-		}{
-			{"getUser", "User"},
-			{"search", "[SearchResult!]!"},
-		}
-
-		for _, tc := range testCases {
-			field := schema.Query[tc.fieldName]
-			is.Equal(field.TypeString(), tc.expectedType)
-		}
+		is.Equal(getUser.TypeString(), "User")
+		is.Equal(search.TypeString(), "[SearchResult!]!")
 	})
 
 	t.Run("TypeName returns unwrapped type name", func(t *testing.T) {
-		field := schema.Query["search"]
-		is.Equal(field.TypeName(), "SearchResult")
+		is.Equal(getUser.TypeName(), "User")
+		is.Equal(search.TypeName(), "SearchResult")
+	})
+
+	t.Run("Signature returns full call signature", func(t *testing.T) {
+		is.Equal(getUser.Signature(), "getUser(id: ID!): User")
+		// FIXME: The Signature() method currently doesn't render defaults (`limit: Int = 10`)
+		is.Equal(search.Signature(), "search(query: String!, limit: Int): [SearchResult!]!")
 	})
 
 	t.Run("Arguments returns field arguments", func(t *testing.T) {
-		field := schema.Query["getUser"]
-		args := field.Arguments()
+		args := getUser.Arguments()
 		is.Equal(len(args), 1)
 		is.Equal(args[0].Name(), "id")
 		is.Equal(args[0].TypeString(), "ID!")
 	})
 
 	t.Run("Arguments with defaults", func(t *testing.T) {
-		field := schema.Query["search"]
-		args := field.Arguments()
+		args := search.Arguments()
 		is.Equal(len(args), 2)
 		is.Equal(args[0].Name(), "query")
 		is.Equal(args[1].Name(), "limit")
 	})
 
-	t.Run("Signature includes arguments", func(t *testing.T) {
-		field := schema.Query["getUser"]
-		sig := field.Signature()
-		is.True(sig != "")
-		// Signature should contain the field name
-		is.True(len(sig) > len("getUser"))
-	})
-
 	t.Run("ResolveResultType returns correct TypeDef for Object", func(t *testing.T) {
-		field := schema.Query["getUser"]
-		typeDef, err := field.ResolveResultType(&schema)
+		typeDef, err := getUser.ResolveResultType(&schema)
 		is.NoErr(err)
 
 		userObj, ok := typeDef.(*Object)
@@ -156,8 +81,7 @@ func TestField_Methods(t *testing.T) {
 	})
 
 	t.Run("ResolveResultType returns correct TypeDef for Union", func(t *testing.T) {
-		field := schema.Query["search"]
-		typeDef, err := field.ResolveResultType(&schema)
+		typeDef, err := search.ResolveResultType(&schema)
 		is.NoErr(err)
 
 		union, ok := typeDef.(*Union)
@@ -175,43 +99,59 @@ func TestField_NewField(t *testing.T) {
 	})
 }
 
-func TestInputValue_Methods(t *testing.T) {
+func TestArguments_Methods(t *testing.T) {
 	is := is.New(t)
-	schema, _ := ParseSchema([]byte(testSchema))
+	schema, _ := ParseSchema([]byte(`
+		type User {
+			id: ID!
+		}
+
+		type Query {
+			getUser(id: ID!): User
+		}
+	`))
+
+	userQuery := schema.Query["getUser"]
 
 	t.Run("Name returns input value name", func(t *testing.T) {
-		field := schema.Query["getUser"]
-		args := field.Arguments()
+		args := userQuery.Arguments()
 		is.Equal(args[0].Name(), "id")
 	})
 
-	t.Run("Description returns input value description", func(t *testing.T) {
-		input := schema.Input["CreateUserInput"]
-		fields := input.Fields()
-		is.Equal(fields[0].Description(), "User's name")
-	})
-
 	t.Run("TypeString returns correct type", func(t *testing.T) {
-		field := schema.Query["getUser"]
-		args := field.Arguments()
+		args := userQuery.Arguments()
 		is.Equal(args[0].TypeString(), "ID!")
 	})
 
 	t.Run("Signature for argument includes type", func(t *testing.T) {
-		field := schema.Query["getUser"]
-		args := field.Arguments()
-		sig := args[0].Signature()
-		is.True(sig != "")
-		// Should contain both name and type
-		is.True(len(sig) > len("id"))
+		args := userQuery.Arguments()
+		is.Equal(args[0].Signature(), "id: ID!")
+	})
+}
+
+func TestInputFields_Methods(t *testing.T) {
+	is := is.New(t)
+	schema, _ := ParseSchema([]byte(`
+		input CreateUserInput {
+			"""User's name"""
+			name: String!
+		}
+	`))
+	input := schema.Input["CreateUserInput"]
+	fields := input.Fields()
+
+	nameField := fields[0]
+
+	t.Run("Description returns input value description", func(t *testing.T) {
+		is.Equal(nameField.Name(), "name")
+	})
+
+	t.Run("Description returns input value description", func(t *testing.T) {
+		is.Equal(nameField.Description(), "User's name")
 	})
 
 	t.Run("Signature for input field includes type", func(t *testing.T) {
-		input := schema.Input["CreateUserInput"]
-		fields := input.Fields()
-		sig := fields[0].Signature()
-		is.True(sig != "")
-		is.True(len(sig) > len("name"))
+		is.Equal(nameField.Signature(), "name: String!")
 	})
 }
 
@@ -231,29 +171,35 @@ func TestInputValue_Constructors(t *testing.T) {
 
 func TestObject_Methods(t *testing.T) {
 	is := is.New(t)
-	schema, _ := ParseSchema([]byte(testSchema))
+	schema, _ := ParseSchema([]byte(`
+		"""
+		User type
+		"""
+		type User implements Node {
+			id: ID!
+			name: String!
+			email: String!
+		}
+	`))
+	user := schema.Object["User"]
 
 	t.Run("Name returns object name", func(t *testing.T) {
-		user := schema.Object["User"]
 		is.Equal(user.Name(), "User")
 	})
 
 	t.Run("Description returns object description", func(t *testing.T) {
-		user := schema.Object["User"]
 		is.Equal(user.Description(), "User type")
 	})
 
 	t.Run("Interfaces returns implemented interfaces", func(t *testing.T) {
-		user := schema.Object["User"]
 		interfaces := user.Interfaces()
 		is.Equal(len(interfaces), 1)
 		is.Equal(interfaces[0], "Node")
 	})
 
 	t.Run("Fields returns object fields", func(t *testing.T) {
-		user := schema.Object["User"]
 		fields := user.Fields()
-		is.Equal(len(fields), 5) // id, name, email, status, posts
+		is.Equal(len(fields), 3) // id, name, email
 
 		// Check first field
 		is.Equal(fields[0].Name(), "id")
@@ -286,20 +232,34 @@ func TestObject_NewObject(t *testing.T) {
 
 func TestInputObject_Methods(t *testing.T) {
 	is := is.New(t)
-	schema, _ := ParseSchema([]byte(testSchema))
+	schema, _ := ParseSchema([]byte(`
+		enum Status {
+			ACTIVE
+			INACTIVE
+			PENDING
+		}
+
+		"""
+		Input for creating a user
+		"""
+		input CreateUserInput {
+			"""User's name"""
+			name: String!
+			email: String!
+			status: Status = ACTIVE
+		}
+	`))
+	input := schema.Input["CreateUserInput"]
 
 	t.Run("Name returns input object name", func(t *testing.T) {
-		input := schema.Input["CreateUserInput"]
 		is.Equal(input.Name(), "CreateUserInput")
 	})
 
 	t.Run("Description returns input object description", func(t *testing.T) {
-		input := schema.Input["CreateUserInput"]
 		is.Equal(input.Description(), "Input for creating a user")
 	})
 
 	t.Run("Fields returns input object fields", func(t *testing.T) {
-		input := schema.Input["CreateUserInput"]
 		fields := input.Fields()
 		is.Equal(len(fields), 3) // name, email, status
 
@@ -321,26 +281,45 @@ func TestInputObject_NewInputObject(t *testing.T) {
 
 func TestEnum_Methods(t *testing.T) {
 	is := is.New(t)
-	schema, _ := ParseSchema([]byte(testSchema))
+	schema, _ := ParseSchema([]byte(`
+		"""
+		Represents a user status
+		"""
+		enum Status {
+			"""Active user"""
+			ACTIVE
+			"""Inactive user"""
+			INACTIVE
+			PENDING
+		}
+	`))
+	status := schema.Enum["Status"]
 
 	t.Run("Name returns enum name", func(t *testing.T) {
-		status := schema.Enum["Status"]
 		is.Equal(status.Name(), "Status")
 	})
 
 	t.Run("Description returns enum description", func(t *testing.T) {
-		status := schema.Enum["Status"]
 		is.Equal(status.Description(), "Represents a user status")
 	})
 
 	t.Run("Values returns enum values", func(t *testing.T) {
-		status := schema.Enum["Status"]
 		values := status.Values()
 		is.Equal(len(values), 3)
 
-		is.Equal(values[0].Name(), "ACTIVE")
-		is.Equal(values[1].Name(), "INACTIVE")
-		is.Equal(values[2].Name(), "PENDING")
+		testCases := []struct {
+            name    string
+            description string
+        }{
+            {"ACTIVE", "Active user"},
+            {"INACTIVE", "Inactive user"},
+            {"PENDING", ""},
+        }
+
+        for i, tc := range testCases {
+			is.Equal(values[i].Name(), tc.name)
+			is.Equal(values[i].Description(), tc.description)
+        }
 	})
 }
 
@@ -355,23 +334,32 @@ func TestEnum_NewEnum(t *testing.T) {
 
 func TestEnumValue_Methods(t *testing.T) {
 	is := is.New(t)
-	schema, _ := ParseSchema([]byte(testSchema))
+	schema, _ := ParseSchema([]byte(`
+		"""
+		Represents a user status
+		"""
+		enum Status {
+			"""Active user"""
+			ACTIVE
+			"""Inactive user"""
+			INACTIVE
+			PENDING
+		}
+	`))
+	status := schema.Enum["Status"]
 
 	t.Run("Name returns enum value name", func(t *testing.T) {
-		status := schema.Enum["Status"]
 		values := status.Values()
 		is.Equal(values[0].Name(), "ACTIVE")
 	})
 
 	t.Run("Description returns enum value description", func(t *testing.T) {
-		status := schema.Enum["Status"]
 		values := status.Values()
 		is.Equal(values[0].Description(), "Active user")
 		is.Equal(values[1].Description(), "Inactive user")
 	})
 
 	t.Run("EnumValue without description", func(t *testing.T) {
-		status := schema.Enum["Status"]
 		values := status.Values()
 		is.Equal(values[2].Description(), "")
 	})
@@ -388,15 +376,19 @@ func TestEnumValue_NewEnumValue(t *testing.T) {
 
 func TestScalar_Methods(t *testing.T) {
 	is := is.New(t)
-	schema, _ := ParseSchema([]byte(testSchema))
+	schema, _ := ParseSchema([]byte(`
+		"""
+		Custom date scalar
+		"""
+		scalar Date
+	`))
+	date := schema.Scalar["Date"]
 
 	t.Run("Name returns scalar name", func(t *testing.T) {
-		date := schema.Scalar["Date"]
 		is.Equal(date.Name(), "Date")
 	})
 
 	t.Run("Description returns scalar description", func(t *testing.T) {
-		date := schema.Scalar["Date"]
 		is.Equal(date.Description(), "Custom date scalar")
 	})
 
@@ -424,20 +416,26 @@ func TestScalar_NewScalar(t *testing.T) {
 
 func TestInterface_Methods(t *testing.T) {
 	is := is.New(t)
-	schema, _ := ParseSchema([]byte(testSchema))
+	schema, _ := ParseSchema([]byte(`
+		"""
+		Node interface for entities with IDs
+		"""
+		interface Node {
+			"""Unique identifier"""
+			id: ID!
+		}
+	`))
+	node := schema.Interface["Node"]
 
 	t.Run("Name returns interface name", func(t *testing.T) {
-		node := schema.Interface["Node"]
 		is.Equal(node.Name(), "Node")
 	})
 
 	t.Run("Description returns interface description", func(t *testing.T) {
-		node := schema.Interface["Node"]
 		is.Equal(node.Description(), "Node interface for entities with IDs")
 	})
 
 	t.Run("Fields returns interface fields", func(t *testing.T) {
-		node := schema.Interface["Node"]
 		fields := node.Fields()
 		is.Equal(len(fields), 1)
 
@@ -475,20 +473,26 @@ func TestInterface_NewInterface(t *testing.T) {
 
 func TestUnion_Methods(t *testing.T) {
 	is := is.New(t)
-	schema, _ := ParseSchema([]byte(testSchema))
+	schema, _ := ParseSchema([]byte(`
+		type User { id: ID! }
+		type Post { id: ID! }
+
+		"""
+		Search result union
+		"""
+		union SearchResult = User | Post
+	`))
+	searchResult := schema.Union["SearchResult"]
 
 	t.Run("Name returns union name", func(t *testing.T) {
-		searchResult := schema.Union["SearchResult"]
 		is.Equal(searchResult.Name(), "SearchResult")
 	})
 
 	t.Run("Description returns union description", func(t *testing.T) {
-		searchResult := schema.Union["SearchResult"]
 		is.Equal(searchResult.Description(), "Search result union")
 	})
 
 	t.Run("Types returns union member types", func(t *testing.T) {
-		searchResult := schema.Union["SearchResult"]
 		types := searchResult.Types()
 		is.Equal(len(types), 2)
 		is.Equal(types[0], "User")
@@ -526,15 +530,19 @@ func TestUnion_NewUnion(t *testing.T) {
 
 func TestDirective_Methods(t *testing.T) {
 	is := is.New(t)
-	schema, _ := ParseSchema([]byte(testSchema))
+	schema, _ := ParseSchema([]byte(`
+		"""
+		Marks field as deprecated
+		"""
+		directive @deprecated(reason: String = "No longer supported") on FIELD_DEFINITION | ENUM_VALUE
+	`))
+	deprecated := schema.Directive["deprecated"]
 
 	t.Run("Name returns directive name", func(t *testing.T) {
-		deprecated := schema.Directive["deprecated"]
 		is.Equal(deprecated.Name(), "deprecated")
 	})
 
 	t.Run("Description returns directive description", func(t *testing.T) {
-		deprecated := schema.Directive["deprecated"]
 		is.Equal(deprecated.Description(), "Marks field as deprecated")
 	})
 
