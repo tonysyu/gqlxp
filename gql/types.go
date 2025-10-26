@@ -35,8 +35,8 @@ type Field struct {
 	astField *ast.FieldDefinition
 }
 
-// NewField creates a wrapper for ast.FieldDefinition
-func NewField(field *ast.FieldDefinition) *Field {
+// newField creates a wrapper for ast.FieldDefinition
+func newField(field *ast.FieldDefinition) *Field {
 	if field == nil {
 		return nil
 	}
@@ -91,7 +91,7 @@ func (f *Field) ResolveResultType(schema *GraphQLSchema) (TypeDef, error) {
 func wrapFields(astFields ast.FieldList) []*Field {
 	fields := make([]*Field, 0, len(astFields))
 	for _, field := range astFields {
-		fields = append(fields, NewField(field))
+		fields = append(fields, newField(field))
 	}
 	return fields
 }
@@ -107,8 +107,8 @@ type InputValue struct {
 	astField *ast.FieldDefinition // For input object fields
 }
 
-// NewInputValue creates a wrapper for ast.ArgumentDefinition
-func NewInputValue(arg *ast.ArgumentDefinition) *InputValue {
+// newInputValue creates a wrapper for ast.ArgumentDefinition
+func newInputValue(arg *ast.ArgumentDefinition) *InputValue {
 	if arg == nil {
 		return nil
 	}
@@ -120,8 +120,8 @@ func NewInputValue(arg *ast.ArgumentDefinition) *InputValue {
 	}
 }
 
-// NewInputValueFromField creates a wrapper for input object field (ast.FieldDefinition)
-func NewInputValueFromField(field *ast.FieldDefinition) *InputValue {
+// newInputValueFromField creates a wrapper for input object field (ast.FieldDefinition)
+func newInputValueFromField(field *ast.FieldDefinition) *InputValue {
 	if field == nil {
 		return nil
 	}
@@ -163,7 +163,7 @@ func (i *InputValue) Signature() string {
 func wrapArguments(args ast.ArgumentDefinitionList) []*InputValue {
 	inputValues := make([]*InputValue, 0, len(args))
 	for _, arg := range args {
-		inputValues = append(inputValues, NewInputValue(arg))
+		inputValues = append(inputValues, newInputValue(arg))
 	}
 	return inputValues
 }
@@ -172,7 +172,7 @@ func wrapArguments(args ast.ArgumentDefinitionList) []*InputValue {
 func wrapInputFields(fields ast.FieldList) []*InputValue {
 	inputValues := make([]*InputValue, 0, len(fields))
 	for _, field := range fields {
-		inputValues = append(inputValues, NewInputValueFromField(field))
+		inputValues = append(inputValues, newInputValueFromField(field))
 	}
 	return inputValues
 }
@@ -187,8 +187,8 @@ type Object struct {
 	astDef *ast.Definition
 }
 
-// NewObject creates a wrapper for ast.Definition (Object type)
-func NewObject(def *ast.Definition) *Object {
+// newObject creates a wrapper for ast.Definition (Object type)
+func newObject(def *ast.Definition) *Object {
 	if def == nil {
 		return nil
 	}
@@ -230,8 +230,8 @@ type InputObject struct {
 	astDef *ast.Definition
 }
 
-// NewInputObject creates a wrapper for ast.Definition (InputObject type)
-func NewInputObject(def *ast.Definition) *InputObject {
+// newInputObject creates a wrapper for ast.Definition (InputObject type)
+func newInputObject(def *ast.Definition) *InputObject {
 	if def == nil {
 		return nil
 	}
@@ -267,8 +267,8 @@ type Enum struct {
 	astDef *ast.Definition
 }
 
-// NewEnum creates a wrapper for ast.Definition (Enum type)
-func NewEnum(def *ast.Definition) *Enum {
+// newEnum creates a wrapper for ast.Definition (Enum type)
+func newEnum(def *ast.Definition) *Enum {
 	if def == nil {
 		return nil
 	}
@@ -303,8 +303,8 @@ type Scalar struct {
 	astDef *ast.Definition
 }
 
-// NewScalar creates a wrapper for ast.Definition (Scalar type)
-func NewScalar(def *ast.Definition) *Scalar {
+// newScalar creates a wrapper for ast.Definition (Scalar type)
+func newScalar(def *ast.Definition) *Scalar {
 	if def == nil {
 		return nil
 	}
@@ -334,8 +334,8 @@ type Interface struct {
 	astDef *ast.Definition
 }
 
-// NewInterface creates a wrapper for ast.Definition (Interface type)
-func NewInterface(def *ast.Definition) *Interface {
+// newInterface creates a wrapper for ast.Definition (Interface type)
+func newInterface(def *ast.Definition) *Interface {
 	if def == nil {
 		return nil
 	}
@@ -371,8 +371,8 @@ type Union struct {
 	astDef *ast.Definition
 }
 
-// NewUnion creates a wrapper for ast.Definition (Union type)
-func NewUnion(def *ast.Definition) *Union {
+// newUnion creates a wrapper for ast.Definition (Union type)
+func newUnion(def *ast.Definition) *Union {
 	if def == nil {
 		return nil
 	}
@@ -407,8 +407,8 @@ type Directive struct {
 	astDirective *ast.DirectiveDefinition
 }
 
-// NewDirective creates a wrapper for ast.DirectiveDefinition
-func NewDirective(directive *ast.DirectiveDefinition) *Directive {
+// newDirective creates a wrapper for ast.DirectiveDefinition
+func newDirective(directive *ast.DirectiveDefinition) *Directive {
 	if directive == nil {
 		return nil
 	}
@@ -437,8 +437,8 @@ type EnumValue struct {
 	astEnumValue *ast.EnumValueDefinition
 }
 
-// NewEnumValue creates a wrapper for ast.EnumValueDefinition
-func NewEnumValue(enumValue *ast.EnumValueDefinition) *EnumValue {
+// newEnumValue creates a wrapper for ast.EnumValueDefinition
+func newEnumValue(enumValue *ast.EnumValueDefinition) *EnumValue {
 	if enumValue == nil {
 		return nil
 	}
@@ -463,7 +463,7 @@ func (e *EnumValue) Description() string {
 func wrapEnumValues(astEnumValues ast.EnumValueList) []*EnumValue {
 	enumValues := make([]*EnumValue, 0, len(astEnumValues))
 	for _, ev := range astEnumValues {
-		enumValues = append(enumValues, NewEnumValue(ev))
+		enumValues = append(enumValues, newEnumValue(ev))
 	}
 	return enumValues
 }

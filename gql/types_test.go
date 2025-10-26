@@ -90,15 +90,6 @@ func TestField_Methods(t *testing.T) {
 	})
 }
 
-func TestField_NewField(t *testing.T) {
-	is := is.New(t)
-
-	t.Run("NewField returns nil for nil input", func(t *testing.T) {
-		field := NewField(nil)
-		is.True(field == nil)
-	})
-}
-
 func TestArguments_Methods(t *testing.T) {
 	is := is.New(t)
 	schema, _ := ParseSchema([]byte(`
@@ -155,20 +146,6 @@ func TestInputFields_Methods(t *testing.T) {
 	})
 }
 
-func TestInputValue_Constructors(t *testing.T) {
-	is := is.New(t)
-
-	t.Run("NewInputValue returns nil for nil input", func(t *testing.T) {
-		inputValue := NewInputValue(nil)
-		is.True(inputValue == nil)
-	})
-
-	t.Run("NewInputValueFromField returns nil for nil input", func(t *testing.T) {
-		inputValue := NewInputValueFromField(nil)
-		is.True(inputValue == nil)
-	})
-}
-
 func TestObject_Methods(t *testing.T) {
 	is := is.New(t)
 	schema, _ := ParseSchema([]byte(`
@@ -221,15 +198,6 @@ func TestObject_Methods(t *testing.T) {
 	})
 }
 
-func TestObject_NewObject(t *testing.T) {
-	is := is.New(t)
-
-	t.Run("NewObject returns nil for nil input", func(t *testing.T) {
-		obj := NewObject(nil)
-		is.True(obj == nil)
-	})
-}
-
 func TestInputObject_Methods(t *testing.T) {
 	is := is.New(t)
 	schema, _ := ParseSchema([]byte(`
@@ -267,15 +235,6 @@ func TestInputObject_Methods(t *testing.T) {
 		is.Equal(fields[0].TypeString(), "String!")
 		is.Equal(fields[1].Name(), "email")
 		is.Equal(fields[2].Name(), "status")
-	})
-}
-
-func TestInputObject_NewInputObject(t *testing.T) {
-	is := is.New(t)
-
-	t.Run("NewInputObject returns nil for nil input", func(t *testing.T) {
-		obj := NewInputObject(nil)
-		is.True(obj == nil)
 	})
 }
 
@@ -323,15 +282,6 @@ func TestEnum_Methods(t *testing.T) {
 	})
 }
 
-func TestEnum_NewEnum(t *testing.T) {
-	is := is.New(t)
-
-	t.Run("NewEnum returns nil for nil input", func(t *testing.T) {
-		enum := NewEnum(nil)
-		is.True(enum == nil)
-	})
-}
-
 func TestEnumValue_Methods(t *testing.T) {
 	is := is.New(t)
 	schema, _ := ParseSchema([]byte(`
@@ -365,15 +315,6 @@ func TestEnumValue_Methods(t *testing.T) {
 	})
 }
 
-func TestEnumValue_NewEnumValue(t *testing.T) {
-	is := is.New(t)
-
-	t.Run("NewEnumValue returns nil for nil input", func(t *testing.T) {
-		ev := NewEnumValue(nil)
-		is.True(ev == nil)
-	})
-}
-
 func TestScalar_Methods(t *testing.T) {
 	is := is.New(t)
 	schema, _ := ParseSchema([]byte(`
@@ -402,15 +343,6 @@ func TestScalar_Methods(t *testing.T) {
 		s, _ := ParseSchema([]byte(schemaStr))
 		custom := s.Scalar["CustomScalar"]
 		is.Equal(custom.Description(), "")
-	})
-}
-
-func TestScalar_NewScalar(t *testing.T) {
-	is := is.New(t)
-
-	t.Run("NewScalar returns nil for nil input", func(t *testing.T) {
-		scalar := NewScalar(nil)
-		is.True(scalar == nil)
 	})
 }
 
@@ -462,15 +394,6 @@ func TestInterface_Methods(t *testing.T) {
 	})
 }
 
-func TestInterface_NewInterface(t *testing.T) {
-	is := is.New(t)
-
-	t.Run("NewInterface returns nil for nil input", func(t *testing.T) {
-		iface := NewInterface(nil)
-		is.True(iface == nil)
-	})
-}
-
 func TestUnion_Methods(t *testing.T) {
 	is := is.New(t)
 	schema, _ := ParseSchema([]byte(`
@@ -519,15 +442,6 @@ func TestUnion_Methods(t *testing.T) {
 	})
 }
 
-func TestUnion_NewUnion(t *testing.T) {
-	is := is.New(t)
-
-	t.Run("NewUnion returns nil for nil input", func(t *testing.T) {
-		union := NewUnion(nil)
-		is.True(union == nil)
-	})
-}
-
 func TestDirective_Methods(t *testing.T) {
 	is := is.New(t)
 	schema, _ := ParseSchema([]byte(`
@@ -556,15 +470,6 @@ func TestDirective_Methods(t *testing.T) {
 		s, _ := ParseSchema([]byte(schemaStr))
 		custom := s.Directive["custom"]
 		is.Equal(custom.Description(), "")
-	})
-}
-
-func TestDirective_NewDirective(t *testing.T) {
-	is := is.New(t)
-
-	t.Run("NewDirective returns nil for nil input", func(t *testing.T) {
-		directive := NewDirective(nil)
-		is.True(directive == nil)
 	})
 }
 

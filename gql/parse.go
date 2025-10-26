@@ -43,7 +43,7 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 			if len(field.Name) >= 2 && field.Name[0] == '_' && field.Name[1] == '_' {
 				continue
 			}
-			gqlSchema.Query[field.Name] = NewField(field)
+			gqlSchema.Query[field.Name] = newField(field)
 		}
 		gqlSchema.nameToType["Query"] = "Query"
 	}
@@ -55,7 +55,7 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 			if len(field.Name) >= 2 && field.Name[0] == '_' && field.Name[1] == '_' {
 				continue
 			}
-			gqlSchema.Mutation[field.Name] = NewField(field)
+			gqlSchema.Mutation[field.Name] = newField(field)
 		}
 		gqlSchema.nameToType["Mutation"] = "Mutation"
 	}
@@ -80,23 +80,23 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 		case ast.Object:
 			// Skip Query and Mutation as they're handled above
 			if name != "Query" && name != "Mutation" {
-				gqlSchema.Object[name] = NewObject(typeDef)
+				gqlSchema.Object[name] = newObject(typeDef)
 				gqlSchema.nameToType[name] = "Object"
 			}
 		case ast.InputObject:
-			gqlSchema.Input[name] = NewInputObject(typeDef)
+			gqlSchema.Input[name] = newInputObject(typeDef)
 			gqlSchema.nameToType[name] = "Input"
 		case ast.Enum:
-			gqlSchema.Enum[name] = NewEnum(typeDef)
+			gqlSchema.Enum[name] = newEnum(typeDef)
 			gqlSchema.nameToType[name] = "Enum"
 		case ast.Scalar:
-			gqlSchema.Scalar[name] = NewScalar(typeDef)
+			gqlSchema.Scalar[name] = newScalar(typeDef)
 			gqlSchema.nameToType[name] = "Scalar"
 		case ast.Interface:
-			gqlSchema.Interface[name] = NewInterface(typeDef)
+			gqlSchema.Interface[name] = newInterface(typeDef)
 			gqlSchema.nameToType[name] = "Interface"
 		case ast.Union:
-			gqlSchema.Union[name] = NewUnion(typeDef)
+			gqlSchema.Union[name] = newUnion(typeDef)
 			gqlSchema.nameToType[name] = "Union"
 		default:
 			fmt.Printf("Unknown type kind: %s for type %s\n", typeDef.Kind, name)
@@ -110,7 +110,7 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 		if directive.Position == nil {
 			continue
 		}
-		gqlSchema.Directive[name] = NewDirective(directive)
+		gqlSchema.Directive[name] = newDirective(directive)
 		gqlSchema.nameToType[name] = "Directive"
 	}
 
