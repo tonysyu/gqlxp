@@ -7,46 +7,49 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/graphql-go/graphql/language/ast"
+	"github.com/vektah/gqlparser/v2/ast"
 )
 
-// getStringValue converts ast.StringValue to string representation
-// Note that StringValue pointers are nullable, so this avoids
-func getStringValue(s *ast.StringValue) string {
-	if s == nil {
-		return ""
-	}
-	return s.Value
-}
-
 // getTypeString converts ast.Type to string representation
-// ast.Types are ast.Named types wrapped in arbitrary numbers of lists and non-nulls.
-func getTypeString(t ast.Type) string {
-	switch typ := t.(type) {
-	case *ast.Named:
-		return typ.Name.Value
-	case *ast.List:
-		return "[" + getTypeString(typ.Type) + "]"
-	case *ast.NonNull:
-		return getTypeString(typ.Type) + "!"
-	default:
+// In gqlparser, Type is a struct with NamedType, Elem (for lists), and NonNull fields.
+func getTypeString(t *ast.Type) string {
+	if t == nil {
 		return "Unknown"
 	}
+
+	// Build the type string recursively
+	var result string
+	if t.NamedType != "" {
+		result = t.NamedType
+	} else if t.Elem != nil {
+		result = "[" + getTypeString(t.Elem) + "]"
+	} else {
+		return "Unknown"
+	}
+
+	if t.NonNull {
+		result += "!"
+	}
+
+	return result
 }
 
-// getNamedFromType converts ast.Type to string representation
-// ast.Types are ast.Named types wrapped in arbitrary numbers of lists and non-nulls.
-func getNamedFromType(t ast.Type) *ast.Named {
-	switch typ := t.(type) {
-	case *ast.Named:
-		return typ
-	case *ast.List:
-		return getNamedFromType(typ.Type)
-	case *ast.NonNull:
-		return getNamedFromType(typ.Type)
-	default:
-		return nil
+// getNamedTypeName extracts the base named type from an ast.Type
+// unwrapping any List or NonNull wrappers.
+func getNamedTypeName(t *ast.Type) string {
+	if t == nil {
+		return ""
 	}
+
+	if t.NamedType != "" {
+		return t.NamedType
+	}
+
+	if t.Elem != nil {
+		return getNamedTypeName(t.Elem)
+	}
+
+	return ""
 }
 
 // getTypeName extracts the name from various AST node types and wrapped types.
@@ -75,25 +78,27 @@ func getTypeName[T gqlType](node T) string {
 	}
 }
 
-func getInputValueString(inputValue *ast.InputValueDefinition) string {
-	fieldName := inputValue.Name.Value
-	fieldType := getTypeString(inputValue.Type)
-	return fmt.Sprintf("%s: %s", fieldName, fieldType)
+// getArgumentString returns a string representation of an argument definition
+func getArgumentString(arg *ast.ArgumentDefinition) string {
+	return fmt.Sprintf("%s: %s", arg.Name, getTypeString(arg.Type))
 }
 
-// Return string representing the `<field>: <type>` pair or signature of a field.
+// getInputFieldString returns a string representation of an input field
+func getInputFieldString(field *ast.FieldDefinition) string {
+	return fmt.Sprintf("%s: %s", field.Name, getTypeString(field.Type))
+}
+
+// getFieldString returns the signature of a field including arguments
 func getFieldString(field *ast.FieldDefinition) string {
-	fieldName := field.Name.Value
-	fieldType := getTypeString(field.Type)
 	if len(field.Arguments) > 0 {
 		var inputArgs []string
 		for _, arg := range field.Arguments {
-			inputArgs = append(inputArgs, getInputValueString(arg))
+			inputArgs = append(inputArgs, getArgumentString(arg))
 		}
 		inputArgString := strings.Join(inputArgs, ", ")
-		return fieldName + "(" + inputArgString + "): " + fieldType
+		return fmt.Sprintf("%s(%s): %s", field.Name, inputArgString, getTypeString(field.Type))
 	}
-	return fieldName + ": " + fieldType
+	return fmt.Sprintf("%s: %s", field.Name, getTypeString(field.Type))
 }
 
 // CollectAndSortMapValues extracts values from a map, sorts them by name, and returns a slice.

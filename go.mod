@@ -7,12 +7,13 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.9
 	github.com/charmbracelet/glamour v0.10.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
-	github.com/graphql-go/graphql v0.8.1
 	github.com/matryer/is v1.4.1
 	github.com/muesli/reflow v0.3.0
+	github.com/vektah/gqlparser/v2 v2.5.30
 )
 
 require (
+	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
