@@ -125,9 +125,9 @@ func (i fieldItem) Details() string {
 // Implement components.ListItem interface
 func (i fieldItem) Open() (components.Panel, bool) {
 	// Only add actual argument items to list (no section headers)
-	inputValueItems := adaptInputValueDefinitions(i.gqlField.Arguments())
+	argumentItems := adaptArguments(i.gqlField.Arguments())
 
-	panel := components.NewListPanel(inputValueItems, i.fieldName)
+	panel := components.NewListPanel(argumentItems, i.fieldName)
 
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
@@ -140,17 +140,26 @@ func (i fieldItem) Open() (components.Panel, bool) {
 	return panel, true
 }
 
-// Create an array of ListItem instances given InputValueDefinition. This is used for
-// field arguments and input object fields.
-func adaptInputValueDefinitions(inputValues []*gql.InputValue) []components.ListItem {
+// Create an array of ListItem instances for field arguments
+func adaptArguments(arguments []*gql.Argument) []components.ListItem {
 	var items []components.ListItem
-	if len(inputValues) > 0 {
-		for _, arg := range inputValues {
-			items = append(items, newInputValueItem(arg))
+	if len(arguments) > 0 {
+		for _, arg := range arguments {
+			items = append(items, newArgumentItem(arg))
 		}
 	}
 	return items
+}
 
+// Create an array of ListItem instances for input object fields
+func adaptInputFields(fields []*gql.InputField) []components.ListItem {
+	var items []components.ListItem
+	if len(fields) > 0 {
+		for _, field := range fields {
+			items = append(items, newInputFieldItem(field))
+		}
+	}
+	return items
 }
 
 // Adapter/delegate for gql.NamedTypeDef to support ListItem interface
@@ -243,7 +252,7 @@ func (i typeDefItem) Open() (components.Panel, bool) {
 	case *gql.Enum:
 		detailItems = append(detailItems, adaptEnumValueDefinitionsToItems(typeDef.Values())...)
 	case *gql.InputObject:
-		detailItems = append(detailItems, adaptInputValueDefinitions(typeDef.Fields())...)
+		detailItems = append(detailItems, adaptInputFields(typeDef.Fields())...)
 	}
 
 	panel := components.NewListPanel(detailItems, i.Title())
@@ -278,11 +287,19 @@ func newFieldTypeItem(field *gql.Field, schema *gql.GraphQLSchema) components.Li
 	}
 }
 
-func newInputValueItem(inputValue *gql.InputValue) components.SimpleItem {
+func newArgumentItem(argument *gql.Argument) components.SimpleItem {
 	// TODO: Update item to support proper Open and use custom display string
 	return components.NewSimpleItem(
-		inputValue.Signature(),
-		components.WithDescription(inputValue.Description()),
+		argument.Signature(),
+		components.WithDescription(argument.Description()),
+	)
+}
+
+func newInputFieldItem(field *gql.InputField) components.SimpleItem {
+	// TODO: Update item to support proper Open and use custom display string
+	return components.NewSimpleItem(
+		field.Signature(),
+		components.WithDescription(field.Description()),
 	)
 }
 

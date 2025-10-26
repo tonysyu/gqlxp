@@ -267,18 +267,18 @@ func TestEnum_Methods(t *testing.T) {
 		is.Equal(len(values), 3)
 
 		testCases := []struct {
-            name    string
-            description string
-        }{
-            {"ACTIVE", "Active user"},
-            {"INACTIVE", "Inactive user"},
-            {"PENDING", ""},
-        }
+			name        string
+			description string
+		}{
+			{"ACTIVE", "Active user"},
+			{"INACTIVE", "Inactive user"},
+			{"PENDING", ""},
+		}
 
-        for i, tc := range testCases {
+		for i, tc := range testCases {
 			is.Equal(values[i].Name(), tc.name)
 			is.Equal(values[i].Description(), tc.description)
-        }
+		}
 	})
 }
 

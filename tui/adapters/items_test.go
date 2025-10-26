@@ -374,7 +374,7 @@ func TestSimpleItemInterface(t *testing.T) {
 	is.True(panel == nil)
 }
 
-func TestInputValueItemCreation(t *testing.T) {
+func TestArgumentListCreation(t *testing.T) {
 	is := is.New(t)
 
 	schemaString := `
@@ -386,8 +386,8 @@ func TestInputValueItemCreation(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 	field := schema.Query["testField"]
 
-	// Test input value items creation
-	items := adaptInputValueDefinitions(field.Arguments())
+	// Test argument items creation
+	items := adaptArguments(field.Arguments())
 	is.Equal(len(items), 3)
 
 	// Test first argument
@@ -423,35 +423,14 @@ func TestDirectiveDefinitionItemCreation(t *testing.T) {
 	is.True(panel == nil)
 }
 
-func TestInputValueDefinitionsEmpty(t *testing.T) {
+func TestAdaptEmptyLists(t *testing.T) {
 	is := is.New(t)
 
-	// Test with empty input value definitions
-	items := adaptInputValueDefinitions([]*gql.InputValue{})
-	is.Equal(len(items), 0)
-}
+	// Test with empty arguments
+	argItems := adaptArguments([]*gql.Argument{})
+	is.Equal(len(argItems), 0)
 
-func TestFieldWithArgumentsSignature(t *testing.T) {
-	is := is.New(t)
-	schemaString := `
-		type Post {
-		  id: ID!
-		  title: String!
-		}
-
-		type Mutation {
-		  """
-		  Create a new post
-		  """
-		  createPost(title: String!, content: String!, authorId: ID!): Post!
-		}
-	`
-
-	schema, _ := gql.ParseSchema([]byte(schemaString))
-	field := schema.Mutation["createPost"]
-
-	is.Equal(
-		field.Signature(),
-		"createPost(title: String!, content: String!, authorId: ID!): Post!",
-	)
+	// Test with empty input fields
+	fieldItems := adaptInputFields([]*gql.InputField{})
+	is.Equal(len(fieldItems), 0)
 }

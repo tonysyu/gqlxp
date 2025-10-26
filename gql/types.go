@@ -74,8 +74,8 @@ func (f *Field) Signature() string {
 	return getFieldString(f.astField)
 }
 
-// Arguments returns the field's arguments as wrapped InputValues
-func (f *Field) Arguments() []*InputValue {
+// Arguments returns the field's arguments as wrapped Arguments
+func (f *Field) Arguments() []*Argument {
 	return wrapArguments(f.arguments)
 }
 
@@ -96,23 +96,22 @@ func wrapFields(astFields ast.FieldList) []*Field {
 	return fields
 }
 
-// InputValue wraps ast.ArgumentDefinition to avoid exposing gqlparser types outside gql package.
-// This represents input arguments or input object fields.
-type InputValue struct {
+// Argument wraps ast.ArgumentDefinition to avoid exposing gqlparser types outside gql package.
+// This represents field arguments.
+type Argument struct {
 	name        string
 	description string
 	inputType   *ast.Type
 	// Keep reference to underlying ast for operations within gql package
-	astArg   *ast.ArgumentDefinition
-	astField *ast.FieldDefinition // For input object fields
+	astArg *ast.ArgumentDefinition
 }
 
-// newInputValue creates a wrapper for ast.ArgumentDefinition
-func newInputValue(arg *ast.ArgumentDefinition) *InputValue {
+// newArgument creates a wrapper for ast.ArgumentDefinition
+func newArgument(arg *ast.ArgumentDefinition) *Argument {
 	if arg == nil {
 		return nil
 	}
-	return &InputValue{
+	return &Argument{
 		name:        arg.Name,
 		description: arg.Description,
 		inputType:   arg.Type,
@@ -120,12 +119,51 @@ func newInputValue(arg *ast.ArgumentDefinition) *InputValue {
 	}
 }
 
-// newInputValueFromField creates a wrapper for input object field (ast.FieldDefinition)
-func newInputValueFromField(field *ast.FieldDefinition) *InputValue {
+// Name returns the argument name
+func (a *Argument) Name() string {
+	return a.name
+}
+
+// Description returns the argument description
+func (a *Argument) Description() string {
+	return a.description
+}
+
+// TypeString returns the string representation of the argument's type
+func (a *Argument) TypeString() string {
+	return getTypeString(a.inputType)
+}
+
+// Signature returns the full argument signature (name: Type = defaultValue)
+func (a *Argument) Signature() string {
+	return getArgumentString(a.astArg)
+}
+
+// wrapArguments converts a slice of ast.ArgumentDefinition to wrapped Argument types
+func wrapArguments(args ast.ArgumentDefinitionList) []*Argument {
+	arguments := make([]*Argument, 0, len(args))
+	for _, arg := range args {
+		arguments = append(arguments, newArgument(arg))
+	}
+	return arguments
+}
+
+// InputField wraps ast.FieldDefinition (for input object fields) to avoid exposing gqlparser types outside gql package.
+// This represents input object fields.
+type InputField struct {
+	name        string
+	description string
+	inputType   *ast.Type
+	// Keep reference to underlying ast for operations within gql package
+	astField *ast.FieldDefinition
+}
+
+// newInputField creates a wrapper for input object field (ast.FieldDefinition)
+func newInputField(field *ast.FieldDefinition) *InputField {
 	if field == nil {
 		return nil
 	}
-	return &InputValue{
+	return &InputField{
 		name:        field.Name,
 		description: field.Description,
 		inputType:   field.Type,
@@ -133,48 +171,33 @@ func newInputValueFromField(field *ast.FieldDefinition) *InputValue {
 	}
 }
 
-// Name returns the input value name
-func (i *InputValue) Name() string {
-	return i.name
+// Name returns the input field name
+func (f *InputField) Name() string {
+	return f.name
 }
 
-// Description returns the input value description
-func (i *InputValue) Description() string {
-	return i.description
+// Description returns the input field description
+func (f *InputField) Description() string {
+	return f.description
 }
 
-// TypeString returns the string representation of the input value's type
-func (i *InputValue) TypeString() string {
-	return getTypeString(i.inputType)
+// TypeString returns the string representation of the input field's type
+func (f *InputField) TypeString() string {
+	return getTypeString(f.inputType)
 }
 
-// Signature returns the full input value signature (name: Type = defaultValue)
-func (i *InputValue) Signature() string {
-	if i.astArg != nil {
-		return getArgumentString(i.astArg)
-	}
-	if i.astField != nil {
-		return getInputFieldString(i.astField)
-	}
-	return i.name + ": " + getTypeString(i.inputType)
+// Signature returns the full input field signature (name: Type = defaultValue)
+func (f *InputField) Signature() string {
+	return getInputFieldString(f.astField)
 }
 
-// wrapArguments converts a slice of ast.ArgumentDefinition to wrapped InputValue types
-func wrapArguments(args ast.ArgumentDefinitionList) []*InputValue {
-	inputValues := make([]*InputValue, 0, len(args))
-	for _, arg := range args {
-		inputValues = append(inputValues, newInputValue(arg))
-	}
-	return inputValues
-}
-
-// wrapInputFields converts a slice of ast.FieldDefinition (for input objects) to wrapped InputValue types
-func wrapInputFields(fields ast.FieldList) []*InputValue {
-	inputValues := make([]*InputValue, 0, len(fields))
+// wrapInputFields converts a slice of ast.FieldDefinition (for input objects) to wrapped InputField types
+func wrapInputFields(fields ast.FieldList) []*InputField {
+	inputFields := make([]*InputField, 0, len(fields))
 	for _, field := range fields {
-		inputValues = append(inputValues, newInputValueFromField(field))
+		inputFields = append(inputFields, newInputField(field))
 	}
-	return inputValues
+	return inputFields
 }
 
 // Object wraps ast.Definition (for Object types) to avoid exposing gqlparser types outside gql package.
@@ -225,7 +248,7 @@ func (o *Object) Fields() []*Field {
 type InputObject struct {
 	name        string
 	description string
-	fields      []*InputValue
+	fields      []*InputField
 	// Keep reference to underlying ast for operations within gql package
 	astDef *ast.Definition
 }
@@ -254,7 +277,7 @@ func (i *InputObject) Description() string {
 }
 
 // Fields returns the input object's fields
-func (i *InputObject) Fields() []*InputValue {
+func (i *InputObject) Fields() []*InputField {
 	return i.fields
 }
 

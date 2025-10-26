@@ -12,7 +12,7 @@ import (
 func TestMain(t *testing.T) {
 	is := is.New(t)
 
-	assertArgumentNameAndType := func(arg *InputValue, expectedName, expectedType string) {
+	assertArgumentNameAndType := func(arg *Argument, expectedName, expectedType string) {
 		is.Equal(arg.Name(), expectedName)
 		is.Equal(arg.TypeString(), expectedType)
 	}
