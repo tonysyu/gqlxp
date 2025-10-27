@@ -53,8 +53,7 @@ func TestField_Methods(t *testing.T) {
 
 	t.Run("Signature returns full call signature", func(t *testing.T) {
 		is.Equal(getUser.Signature(), "getUser(id: ID!): User")
-		// FIXME: The Signature() method currently doesn't render defaults (`limit: Int = 10`)
-		is.Equal(search.Signature(), "search(query: String!, limit: Int): [SearchResult!]!")
+		is.Equal(search.Signature(), "search(query: String!, limit: Int = 10): [SearchResult!]!")
 	})
 
 	t.Run("Arguments returns field arguments", func(t *testing.T) {

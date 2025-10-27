@@ -161,13 +161,12 @@ func TestInputDefinitionItemOpenPanel(t *testing.T) {
 
 	content := testx.RenderMinimalPanel(panel)
 
-	// FIXME: Render Default value for age
 	assert.StringContains(content, testx.NormalizeView(`
 		CreateUserInput
 
 		name: String!
 		email: String!
-		age: Int
+		age: Int = 18
 	`))
 }
 

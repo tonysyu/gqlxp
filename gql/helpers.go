@@ -78,14 +78,58 @@ func getTypeName[T gqlType](node T) string {
 	}
 }
 
+// formatValue converts an AST value to its string representation
+func formatValue(value *ast.Value) string {
+	if value == nil {
+		return "null"
+	}
+
+	switch value.Kind {
+	case ast.IntValue, ast.FloatValue, ast.BooleanValue, ast.EnumValue:
+		return value.Raw
+	case ast.StringValue:
+		return fmt.Sprintf(`"%s"`, value.Raw)
+	case ast.NullValue:
+		return "null"
+	case ast.ListValue:
+		if len(value.Children) == 0 {
+			return "[]"
+		}
+		var values []string
+		for _, child := range value.Children {
+			values = append(values, formatValue(child.Value))
+		}
+		return "[" + strings.Join(values, ", ") + "]"
+	case ast.ObjectValue:
+		if len(value.Children) == 0 {
+			return "{}"
+		}
+		var pairs []string
+		for _, child := range value.Children {
+			pairs = append(pairs, fmt.Sprintf("%s: %s", child.Name, formatValue(child.Value)))
+		}
+		return "{" + strings.Join(pairs, ", ") + "}"
+	default:
+		return value.Raw
+	}
+}
+
 // getArgumentString returns a string representation of an argument definition
 func getArgumentString(arg *ast.ArgumentDefinition) string {
-	return fmt.Sprintf("%s: %s", arg.Name, getTypeString(arg.Type))
+	result := fmt.Sprintf("%s: %s", arg.Name, getTypeString(arg.Type))
+	if arg.DefaultValue != nil {
+		result += fmt.Sprintf(" = %s", formatValue(arg.DefaultValue))
+	}
+	return result
 }
 
 // getInputFieldString returns a string representation of an input field
 func getInputFieldString(field *ast.FieldDefinition) string {
-	return fmt.Sprintf("%s: %s", field.Name, getTypeString(field.Type))
+	result := fmt.Sprintf("%s: %s", field.Name, getTypeString(field.Type))
+	if field.DefaultValue != nil {
+		result += fmt.Sprintf(" = %s", formatValue(field.DefaultValue))
+	}
+	return result
 }
 
 // getFieldString returns the signature of a field including arguments
