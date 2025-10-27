@@ -24,8 +24,8 @@ type gqlType interface {
 		*Union | *Directive
 }
 
-// Field wraps ast.Field to avoid exposing gqlparser types outside gql package.
-// This can represent query fields, mutation fields, or object fields.
+// Field represents GraphQL query fields, mutation fields, or object fields.
+// See https://spec.graphql.org/October2021/#sec-Objects
 type Field struct {
 	name        string
 	description string
@@ -49,15 +49,8 @@ func newField(field *ast.FieldDefinition) *Field {
 	}
 }
 
-// Name returns the field name
-func (f *Field) Name() string {
-	return f.name
-}
-
-// Description returns the field description
-func (f *Field) Description() string {
-	return f.description
-}
+func (f *Field) Name() string        { return f.name }
+func (f *Field) Description() string { return f.description }
 
 // TypeString returns the string representation of the field's type
 func (f *Field) TypeString() string {
@@ -96,8 +89,8 @@ func wrapFields(astFields ast.FieldList) []*Field {
 	return fields
 }
 
-// Argument wraps ast.ArgumentDefinition to avoid exposing gqlparser types outside gql package.
-// This represents field arguments.
+// Argument represents arguments to a GraphQL Object field.
+// See https://spec.graphql.org/October2021/#sec-Field-Arguments
 type Argument struct {
 	name        string
 	description string
@@ -119,15 +112,8 @@ func newArgument(arg *ast.ArgumentDefinition) *Argument {
 	}
 }
 
-// Name returns the argument name
-func (a *Argument) Name() string {
-	return a.name
-}
-
-// Description returns the argument description
-func (a *Argument) Description() string {
-	return a.description
-}
+func (a *Argument) Name() string        { return a.name }
+func (a *Argument) Description() string { return a.description }
 
 // TypeString returns the string representation of the argument's type
 func (a *Argument) TypeString() string {
@@ -148,8 +134,8 @@ func wrapArguments(args ast.ArgumentDefinitionList) []*Argument {
 	return arguments
 }
 
-// InputField wraps ast.FieldDefinition (for input object fields) to avoid exposing gqlparser types outside gql package.
-// This represents input object fields.
+// InputField represents fields on InputObjects
+// TODO: Evaluate whether InputField can be removed in favor of Field
 type InputField struct {
 	name        string
 	description string
@@ -171,15 +157,8 @@ func newInputField(field *ast.FieldDefinition) *InputField {
 	}
 }
 
-// Name returns the input field name
-func (f *InputField) Name() string {
-	return f.name
-}
-
-// Description returns the input field description
-func (f *InputField) Description() string {
-	return f.description
-}
+func (f *InputField) Name() string        { return f.name }
+func (f *InputField) Description() string { return f.description }
 
 // TypeString returns the string representation of the input field's type
 func (f *InputField) TypeString() string {
@@ -200,7 +179,8 @@ func wrapInputFields(fields ast.FieldList) []*InputField {
 	return inputFields
 }
 
-// Object wraps ast.Definition (for Object types) to avoid exposing gqlparser types outside gql package.
+// Object represents GraphQL objects.
+// See https://spec.graphql.org/October2021/#sec-Objects
 type Object struct {
 	name        string
 	description string
@@ -224,15 +204,8 @@ func newObject(def *ast.Definition) *Object {
 	}
 }
 
-// Name returns the object name
-func (o *Object) Name() string {
-	return o.name
-}
-
-// Description returns the object description
-func (o *Object) Description() string {
-	return o.description
-}
+func (o *Object) Name() string        { return o.name }
+func (o *Object) Description() string { return o.description }
 
 // Interfaces returns the interfaces this object implements
 func (o *Object) Interfaces() []string {
@@ -244,7 +217,8 @@ func (o *Object) Fields() []*Field {
 	return o.fields
 }
 
-// InputObject wraps ast.Definition (for InputObject types) to avoid exposing gqlparser types outside gql package.
+// InputObject represents GraphQL input objects.
+// See https://spec.graphql.org/October2021/#sec-Input-Objects
 type InputObject struct {
 	name        string
 	description string
@@ -266,22 +240,16 @@ func newInputObject(def *ast.Definition) *InputObject {
 	}
 }
 
-// Name returns the input object name
-func (i *InputObject) Name() string {
-	return i.name
-}
-
-// Description returns the input object description
-func (i *InputObject) Description() string {
-	return i.description
-}
+func (i *InputObject) Name() string        { return i.name }
+func (i *InputObject) Description() string { return i.description }
 
 // Fields returns the input object's fields
 func (i *InputObject) Fields() []*InputField {
 	return i.fields
 }
 
-// Enum wraps ast.Definition (for Enum types) to avoid exposing gqlparser types outside gql package.
+// Enum represents GraphQL enums.
+// See https://spec.graphql.org/October2021/#sec-Enums
 type Enum struct {
 	name        string
 	description string
@@ -303,22 +271,16 @@ func newEnum(def *ast.Definition) *Enum {
 	}
 }
 
-// Name returns the enum name
-func (e *Enum) Name() string {
-	return e.name
-}
-
-// Description returns the enum description
-func (e *Enum) Description() string {
-	return e.description
-}
+func (e *Enum) Name() string        { return e.name }
+func (e *Enum) Description() string { return e.description }
 
 // Values returns the enum values
 func (e *Enum) Values() []*EnumValue {
 	return e.values
 }
 
-// Scalar wraps ast.Definition (for Scalar types) to avoid exposing gqlparser types outside gql package.
+// Scalar represents GraphQL scalar types.
+// See https://spec.graphql.org/October2021/#sec-Scalars
 type Scalar struct {
 	name        string
 	description string
@@ -338,17 +300,11 @@ func newScalar(def *ast.Definition) *Scalar {
 	}
 }
 
-// Name returns the scalar name
-func (s *Scalar) Name() string {
-	return s.name
-}
+func (s *Scalar) Name() string        { return s.name }
+func (s *Scalar) Description() string { return s.description }
 
-// Description returns the scalar description
-func (s *Scalar) Description() string {
-	return s.description
-}
-
-// Interface wraps ast.Definition (for Interface types) to avoid exposing gqlparser types outside gql package.
+// Interface represents GraphQL interface types.
+// See https://spec.graphql.org/October2021/#sec-Interfaces
 type Interface struct {
 	name        string
 	description string
@@ -370,22 +326,16 @@ func newInterface(def *ast.Definition) *Interface {
 	}
 }
 
-// Name returns the interface name
-func (i *Interface) Name() string {
-	return i.name
-}
-
-// Description returns the interface description
-func (i *Interface) Description() string {
-	return i.description
-}
+func (i *Interface) Name() string        { return i.name }
+func (i *Interface) Description() string { return i.description }
 
 // Fields returns the interface's fields
 func (i *Interface) Fields() []*Field {
 	return i.fields
 }
 
-// Union wraps ast.Definition (for Union types) to avoid exposing gqlparser types outside gql package.
+// Union represents GraphQL union types.
+// See https://spec.graphql.org/October2021/#sec-Unions
 type Union struct {
 	name        string
 	description string
@@ -407,22 +357,16 @@ func newUnion(def *ast.Definition) *Union {
 	}
 }
 
-// Name returns the union name
-func (u *Union) Name() string {
-	return u.name
-}
-
-// Description returns the union description
-func (u *Union) Description() string {
-	return u.description
-}
+func (u *Union) Name() string        { return u.name }
+func (u *Union) Description() string { return u.description }
 
 // Types returns the union's member types as type names
 func (u *Union) Types() []string {
 	return u.types
 }
 
-// Directive wraps ast.DirectiveDefinition to avoid exposing gqlparser types outside gql package.
+// Directive represents GraphQL directive types.
+// See https://spec.graphql.org/October2021/#sec-Type-System.Directives
 type Directive struct {
 	name        string
 	description string
@@ -442,17 +386,11 @@ func newDirective(directive *ast.DirectiveDefinition) *Directive {
 	}
 }
 
-// Name returns the directive name
-func (d *Directive) Name() string {
-	return d.name
-}
+func (d *Directive) Name() string        { return d.name }
+func (d *Directive) Description() string { return d.description }
 
-// Description returns the directive description
-func (d *Directive) Description() string {
-	return d.description
-}
-
-// EnumValue wraps ast.EnumValueDefinition to avoid exposing gqlparser types outside gql package.
+// EnumValue represents values on GraphQL enum types.
+// See https://spec.graphql.org/October2021/#sec-Enums
 type EnumValue struct {
 	name        string
 	description string
@@ -472,15 +410,8 @@ func newEnumValue(enumValue *ast.EnumValueDefinition) *EnumValue {
 	}
 }
 
-// Name returns the enum value name
-func (e *EnumValue) Name() string {
-	return e.name
-}
-
-// Description returns the enum value description
-func (e *EnumValue) Description() string {
-	return e.description
-}
+func (e *EnumValue) Name() string        { return e.name }
+func (e *EnumValue) Description() string { return e.description }
 
 // wrapEnumValues converts a slice of ast.EnumValueDefinition to wrapped types
 func wrapEnumValues(astEnumValues ast.EnumValueList) []*EnumValue {
