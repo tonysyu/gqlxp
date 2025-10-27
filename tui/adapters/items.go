@@ -108,7 +108,7 @@ func newFieldDefItem(gqlField *gql.Field, schema *gql.GraphQLSchema) components.
 
 func (i fieldItem) Title() string       { return i.gqlField.Signature() }
 func (i fieldItem) FilterValue() string { return i.fieldName }
-func (i fieldItem) TypeName() string    { return i.gqlField.TypeName() }
+func (i fieldItem) TypeName() string    { return i.gqlField.ObjectTypeName() }
 
 func (i fieldItem) Description() string {
 	return i.gqlField.Description()
@@ -270,13 +270,13 @@ func newNamedItem(typeName string) components.SimpleItem {
 
 // newFieldTypeItem creates a list item for a field's result type
 func newFieldTypeItem(field *gql.Field, schema *gql.GraphQLSchema) components.ListItem {
-	resultType, err := field.ResolveResultType(schema)
+	resultType, err := field.ResolveObjectTypeDef(schema)
 	if err != nil {
 		// FIXME: Currently, this treats any error as a built-in type, but instead we should
 		// check for _known_ built in types and handle errors intelligently.
 		return components.NewSimpleItem(
 			field.TypeString(),
-			components.WithTypeName(field.TypeName()),
+			components.WithTypeName(field.ObjectTypeName()),
 		)
 	}
 	return typeDefItem{

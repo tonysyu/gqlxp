@@ -47,8 +47,8 @@ func TestField_Methods(t *testing.T) {
 	})
 
 	t.Run("TypeName returns unwrapped type name", func(t *testing.T) {
-		is.Equal(getUser.TypeName(), "User")
-		is.Equal(search.TypeName(), "SearchResult")
+		is.Equal(getUser.ObjectTypeName(), "User")
+		is.Equal(search.ObjectTypeName(), "SearchResult")
 	})
 
 	t.Run("Signature returns full call signature", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestField_Methods(t *testing.T) {
 	})
 
 	t.Run("ResolveResultType returns correct TypeDef for Object", func(t *testing.T) {
-		typeDef, err := getUser.ResolveResultType(&schema)
+		typeDef, err := getUser.ResolveObjectTypeDef(&schema)
 		is.NoErr(err)
 
 		userObj, ok := typeDef.(*Object)
@@ -80,7 +80,7 @@ func TestField_Methods(t *testing.T) {
 	})
 
 	t.Run("ResolveResultType returns correct TypeDef for Union", func(t *testing.T) {
-		typeDef, err := search.ResolveResultType(&schema)
+		typeDef, err := search.ResolveObjectTypeDef(&schema)
 		is.NoErr(err)
 
 		union, ok := typeDef.(*Union)

@@ -57,12 +57,20 @@ func (f *Field) TypeString() string {
 	return getTypeString(f.fieldType)
 }
 
-// TypeName returns the named type (unwrapping List and NonNull)
-func (f *Field) TypeName() string {
+// ObjectTypeName returns the object type name (unwrapping List and NonNull)
+// While TypeString would return [MyObject!]!, this just returns MyObject.
+func (f *Field) ObjectTypeName() string {
 	return getNamedTypeName(f.fieldType)
 }
 
-// Signature returns the full field signature including arguments
+// Signature returns the full field signature including arguments.
+// This can be as simple as:
+//
+//	"name: Type"
+//
+// Or can be as complex as:
+//
+//	"childConnection(first: Int = 10, after: ID!): ChildConnection!"
 func (f *Field) Signature() string {
 	return getFieldString(f.astField)
 }
@@ -72,9 +80,9 @@ func (f *Field) Arguments() []*Argument {
 	return wrapArguments(f.arguments)
 }
 
-// ResolveResultType returns the TypeDef for this field's return type.
+// ResolveObjectTypeDef returns the TypeDef for this field's type.
 // Returns an error if the type is a built-in scalar (String, Int, Boolean, etc.)
-func (f *Field) ResolveResultType(schema *GraphQLSchema) (TypeDef, error) {
+func (f *Field) ResolveObjectTypeDef(schema *GraphQLSchema) (TypeDef, error) {
 	typeName := getNamedTypeName(f.fieldType)
 	return schema.NamedToTypeDef(typeName)
 }
