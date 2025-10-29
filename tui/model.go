@@ -302,7 +302,7 @@ func (m *mainModel) loadMainPanel() {
 	// Auto-open detail panel for the first item if available
 	if len(items) > 0 {
 		if firstItem, ok := items[0].(components.ListItem); ok {
-			if newPanel, ok := firstItem.Open(); ok {
+			if newPanel, ok := firstItem.OpenPanel(); ok {
 				m.handleOpenPanel(newPanel)
 			}
 		}

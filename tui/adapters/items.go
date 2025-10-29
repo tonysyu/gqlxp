@@ -122,20 +122,14 @@ func (i fieldItem) Details() string {
 	)
 }
 
-// Implement components.ListItem interface
-func (i fieldItem) Open() (components.Panel, bool) {
-	// Only add actual argument items to list (no section headers)
+// OpenPanel displays arguments of field (if any) and the field's ObjectType
+func (i fieldItem) OpenPanel() (components.Panel, bool) {
 	argumentItems := adaptArguments(i.gqlField.Arguments())
 
 	panel := components.NewListPanel(argumentItems, i.fieldName)
-
-	// Add description as a header if available
-	if desc := i.Description(); desc != "" {
-		panel.SetDescription(desc)
-	}
-
+	panel.SetDescription(i.Description())
 	// Set result type as virtual item at top
-	panel.SetResultType(newFieldTypeItem(i.gqlField, i.schema))
+	panel.SetObjectType(newFieldTypeItem(i.gqlField, i.schema))
 
 	return panel, true
 }
@@ -236,7 +230,7 @@ func (i typeDefItem) Details() string {
 }
 
 // Implement components.ListItem interface
-func (i typeDefItem) Open() (components.Panel, bool) {
+func (i typeDefItem) OpenPanel() (components.Panel, bool) {
 	// Create list items for the detail view
 	var detailItems []components.ListItem
 

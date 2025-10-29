@@ -15,7 +15,7 @@ type testOpenableItem struct {
 	openPanel Panel
 }
 
-func (i testOpenableItem) Open() (Panel, bool) {
+func (i testOpenableItem) OpenPanel() (Panel, bool) {
 	return i.openPanel, true
 }
 

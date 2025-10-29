@@ -42,7 +42,7 @@ type ListPanel struct {
 func OpenPanelFromItem(item list.Item) tea.Cmd {
 	// FIXME: This should also clear old panels if current item can't be opened
 	if listItem, ok := item.(ListItem); ok {
-		if newPanel, ok := listItem.Open(); ok {
+		if newPanel, ok := listItem.OpenPanel(); ok {
 			return func() tea.Msg { return OpenPanelMsg{Panel: newPanel} }
 		}
 	}
@@ -139,7 +139,7 @@ func (lp *ListPanel) Description() string {
 	return lp.description
 }
 
-func (lp *ListPanel) SetResultType(item ListItem) {
+func (lp *ListPanel) SetObjectType(item ListItem) {
 	lp.resultType = item
 	lp.focusOnResultType = true // Start with focus on result type
 }

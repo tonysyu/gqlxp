@@ -43,7 +43,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 	t.Run("Query field with no arguments shows description and result type", func(t *testing.T) {
 		field := schema.Query["getAllPosts"]
 		item := newFieldDefItem(field, &schema)
-		panel, _ := item.Open()
+		panel, _ := item.OpenPanel()
 
 		// Set a reasonable size for testing
 		panel.SetSize(80, 40)
@@ -64,7 +64,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 	t.Run("Query field with arguments shows all sections", func(t *testing.T) {
 		field := schema.Query["getPostById"]
 		item := newFieldDefItem(field, &schema)
-		panel, _ := item.Open()
+		panel, _ := item.OpenPanel()
 
 		// Set a reasonable size for testing
 		panel.SetSize(80, 40)
@@ -82,7 +82,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 	t.Run("Mutation field with multiple arguments shows all sections", func(t *testing.T) {
 		field := schema.Mutation["createPost"]
 		item := newFieldDefItem(field, &schema)
-		panel, _ := item.Open()
+		panel, _ := item.OpenPanel()
 
 		// Set a reasonable size for testing
 		panel.SetSize(80, 40)
@@ -121,7 +121,7 @@ func TestObjectDefinitionItemOpenPanel(t *testing.T) {
 
 	userObj := schema.Object["User"]
 	item := newTypeDefItem(userObj, &schema)
-	panel, ok := item.Open()
+	panel, ok := item.OpenPanel()
 
 	is.True(ok)
 	panel.SetSize(80, 40)
@@ -154,7 +154,7 @@ func TestInputDefinitionItemOpenPanel(t *testing.T) {
 
 	inputObj := schema.Input["CreateUserInput"]
 	item := newTypeDefItem(inputObj, &schema)
-	panel, ok := item.Open()
+	panel, ok := item.OpenPanel()
 
 	is.True(ok)
 	panel.SetSize(80, 40)
@@ -186,7 +186,7 @@ func TestEnumDefinitionItemOpenPanel(t *testing.T) {
 
 	enumObj := schema.Enum["Status"]
 	item := newTypeDefItem(enumObj, &schema)
-	panel, ok := item.Open()
+	panel, ok := item.OpenPanel()
 
 	is.True(ok)
 	panel.SetSize(80, 40)
@@ -208,7 +208,7 @@ func TestScalarDefinitionItemOpenPanel(t *testing.T) {
 
 	scalarObj := schema.Scalar["Date"]
 	item := newTypeDefItem(scalarObj, &schema)
-	panel, ok := item.Open()
+	panel, ok := item.OpenPanel()
 
 	is.True(ok)
 	panel.SetSize(80, 40)
@@ -233,7 +233,7 @@ func TestInterfaceDefinitionItemOpenPanel(t *testing.T) {
 
 	interfaceObj := schema.Interface["Node"]
 	item := newTypeDefItem(interfaceObj, &schema)
-	panel, ok := item.Open()
+	panel, ok := item.OpenPanel()
 
 	is.True(ok)
 	panel.SetSize(80, 40)
@@ -267,7 +267,7 @@ func TestUnionDefinitionItemOpenPanel(t *testing.T) {
 
 	unionObj := schema.Union["SearchResult"]
 	item := newTypeDefItem(unionObj, &schema)
-	panel, ok := item.Open()
+	panel, ok := item.OpenPanel()
 
 	is.True(ok)
 	panel.SetSize(80, 40)
@@ -300,7 +300,7 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	is.Equal(item.Description(), "") // No description
 	is.Equal(item.FilterValue(), "simpleField")
 
-	panel, ok := item.Open()
+	panel, ok := item.OpenPanel()
 	is.True(ok)
 	panel.SetSize(80, 40)
 
@@ -339,7 +339,7 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 
 	field := schema.Query["complexField"]
 	item := newFieldDefItem(field, &schema)
-	panel, ok := item.Open()
+	panel, ok := item.OpenPanel()
 
 	is.True(ok)
 	panel.SetSize(80, 40)
@@ -368,7 +368,7 @@ func TestSimpleItemInterface(t *testing.T) {
 	is.Equal(item.FilterValue(), "Test Title")
 
 	// Simple items should not be openable
-	panel, ok := item.Open()
+	panel, ok := item.OpenPanel()
 	is.True(!ok)
 	is.True(panel == nil)
 }
@@ -417,7 +417,7 @@ func TestDirectiveDefinitionItemCreation(t *testing.T) {
 	is.Equal(item.Description(), "")
 
 	// Directive items should not be openable (they're simple items)
-	panel, ok := item.Open()
+	panel, ok := item.OpenPanel()
 	is.True(!ok)
 	is.True(panel == nil)
 }

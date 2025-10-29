@@ -10,8 +10,8 @@ import (
 type ListItem interface {
 	list.DefaultItem
 
-	// Open Panel to show additional information.
-	Open() (Panel, bool)
+	// OpenPanel Panel to show additional information.
+	OpenPanel() (Panel, bool)
 
 	// Details returns markdown-formatted details for the item.
 	// The gqlxp TUI renders details in an overlay pane.
@@ -75,4 +75,4 @@ func (si SimpleItem) Details() string {
 		si.Description(),
 	)
 }
-func (si SimpleItem) Open() (Panel, bool) { return nil, false }
+func (si SimpleItem) OpenPanel() (Panel, bool) { return nil, false }
