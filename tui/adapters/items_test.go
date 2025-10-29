@@ -42,7 +42,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 
 	t.Run("Query field with no arguments shows description and result type", func(t *testing.T) {
 		field := schema.Query["getAllPosts"]
-		item := newFieldDefItem(field, &schema)
+		item := newFieldItem(field, &schema)
 		panel, _ := item.OpenPanel()
 
 		// Set a reasonable size for testing
@@ -63,7 +63,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 
 	t.Run("Query field with arguments shows all sections", func(t *testing.T) {
 		field := schema.Query["getPostById"]
-		item := newFieldDefItem(field, &schema)
+		item := newFieldItem(field, &schema)
 		panel, _ := item.OpenPanel()
 
 		// Set a reasonable size for testing
@@ -81,7 +81,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 
 	t.Run("Mutation field with multiple arguments shows all sections", func(t *testing.T) {
 		field := schema.Mutation["createPost"]
-		item := newFieldDefItem(field, &schema)
+		item := newFieldItem(field, &schema)
 		panel, _ := item.OpenPanel()
 
 		// Set a reasonable size for testing
@@ -294,7 +294,7 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	field := schema.Query["simpleField"]
-	item := newFieldDefItem(field, &schema)
+	item := newFieldItem(field, &schema)
 
 	is.Equal(item.Title(), "simpleField: String")
 	is.Equal(item.Description(), "") // No description
@@ -338,7 +338,7 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 
 	field := schema.Query["complexField"]
-	item := newFieldDefItem(field, &schema)
+	item := newFieldItem(field, &schema)
 	panel, ok := item.OpenPanel()
 
 	is.True(ok)
@@ -386,7 +386,7 @@ func TestArgumentListCreation(t *testing.T) {
 	field := schema.Query["testField"]
 
 	// Test argument items creation
-	items := adaptArguments(field.Arguments())
+	items := adaptArgumentsToItems(field.Arguments())
 	is.Equal(len(items), 3)
 
 	// Test first argument

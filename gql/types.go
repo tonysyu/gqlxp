@@ -99,7 +99,11 @@ func wrapFields(astFields ast.FieldList) []*Field {
 }
 
 // Argument represents arguments to a GraphQL Object field.
+//
 // See https://spec.graphql.org/October2021/#sec-Field-Arguments
+//
+// Argument is similar to Field, with the exception that it doesn't have an Arguments() method,
+// since an Argument can't have sub-arguments.
 type Argument struct {
 	name        string
 	description string
@@ -129,9 +133,22 @@ func (a *Argument) TypeString() string {
 	return getTypeString(a.inputType)
 }
 
+// ObjectTypeName returns the input type name (unwrapping List and NonNull)
+// While TypeString would return [MyInput!]!, this just returns MyInput.
+func (a *Argument) ObjectTypeName() string {
+	return getNamedTypeName(a.inputType)
+}
+
 // Signature returns the full argument signature (name: Type = defaultValue)
 func (a *Argument) Signature() string {
 	return getArgumentString(a.astArg)
+}
+
+// ResolveObjectTypeDef returns the TypeDef for this argument's input type.
+// Returns an error if the type is a built-in scalar (String, Int, Boolean, etc.)
+func (a *Argument) ResolveObjectTypeDef(schema *GraphQLSchema) (TypeDef, error) {
+	typeName := getNamedTypeName(a.inputType)
+	return schema.NamedToTypeDef(typeName)
 }
 
 // wrapArguments converts a slice of ast.ArgumentDefinition to wrapped Argument types

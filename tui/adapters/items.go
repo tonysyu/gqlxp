@@ -12,12 +12,22 @@ import (
 var _ components.ListItem = (*fieldItem)(nil)
 var _ components.ListItem = (*typeDefItem)(nil)
 
-func adaptFieldDefinitionsToItems(queryFields []*gql.Field, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptFieldsToItems(queryFields []*gql.Field, schema *gql.GraphQLSchema) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(queryFields))
 	for _, f := range queryFields {
-		adaptedItems = append(adaptedItems, newFieldDefItem(f, schema))
+		adaptedItems = append(adaptedItems, newFieldItem(f, schema))
 	}
 	return adaptedItems
+}
+
+func adaptArgumentsToItems(arguments []*gql.Argument) []components.ListItem {
+	var items []components.ListItem
+	if len(arguments) > 0 {
+		for _, arg := range arguments {
+			items = append(items, newArgumentItem(arg))
+		}
+	}
+	return items
 }
 
 func adaptTypeDefsToItems[T gql.TypeDef](typeDefs []T, schema *gql.GraphQLSchema) []components.ListItem {
@@ -28,31 +38,31 @@ func adaptTypeDefsToItems[T gql.TypeDef](typeDefs []T, schema *gql.GraphQLSchema
 	return adaptedItems
 }
 
-func adaptObjectDefinitionsToItems(objects []*gql.Object, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptObjectsToItems(objects []*gql.Object, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(objects, schema)
 }
 
-func adaptInputDefinitionsToItems(inputs []*gql.InputObject, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptInputObjectsToItems(inputs []*gql.InputObject, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(inputs, schema)
 }
 
-func adaptEnumDefinitionsToItems(enums []*gql.Enum, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptEnumsToItems(enums []*gql.Enum, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(enums, schema)
 }
 
-func adaptScalarDefinitionsToItems(scalars []*gql.Scalar, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptScalarsToItems(scalars []*gql.Scalar, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(scalars, schema)
 }
 
-func adaptInterfaceDefinitionsToItems(interfaces []*gql.Interface, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptInterfacesToItems(interfaces []*gql.Interface, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(interfaces, schema)
 }
 
-func adaptUnionDefinitionsToItems(unions []*gql.Union, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptUnionsToItems(unions []*gql.Union, schema *gql.GraphQLSchema) []components.ListItem {
 	return adaptTypeDefsToItems(unions, schema)
 }
 
-func adaptDirectiveDefinitionsToItems(directives []*gql.Directive) []components.ListItem {
+func adaptDirectivesToItems(directives []*gql.Directive) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(directives))
 	for _, directive := range directives {
 		adaptedItems = append(adaptedItems, newDirectiveDefinitionItem(directive))
@@ -98,7 +108,7 @@ type fieldItem struct {
 	fieldName string
 }
 
-func newFieldDefItem(gqlField *gql.Field, schema *gql.GraphQLSchema) components.ListItem {
+func newFieldItem(gqlField *gql.Field, schema *gql.GraphQLSchema) components.ListItem {
 	return fieldItem{
 		gqlField:  gqlField,
 		schema:    schema,
@@ -124,7 +134,7 @@ func (i fieldItem) Details() string {
 
 // OpenPanel displays arguments of field (if any) and the field's ObjectType
 func (i fieldItem) OpenPanel() (components.Panel, bool) {
-	argumentItems := adaptArguments(i.gqlField.Arguments())
+	argumentItems := adaptArgumentsToItems(i.gqlField.Arguments())
 
 	panel := components.NewListPanel(argumentItems, i.fieldName)
 	panel.SetDescription(i.Description())
@@ -132,17 +142,6 @@ func (i fieldItem) OpenPanel() (components.Panel, bool) {
 	panel.SetObjectType(newFieldTypeItem(i.gqlField, i.schema))
 
 	return panel, true
-}
-
-// Create an array of ListItem instances for field arguments
-func adaptArguments(arguments []*gql.Argument) []components.ListItem {
-	var items []components.ListItem
-	if len(arguments) > 0 {
-		for _, arg := range arguments {
-			items = append(items, newArgumentItem(arg))
-		}
-	}
-	return items
 }
 
 // Adapter/delegate for gql.NamedTypeDef to support ListItem interface
@@ -218,24 +217,24 @@ func (i typeDefItem) Details() string {
 	return text.JoinParagraphs(parts...)
 }
 
-// Implement components.ListItem interface
+// OpenPanel displays list of fields on type (if any)
 func (i typeDefItem) OpenPanel() (components.Panel, bool) {
 	// Create list items for the detail view
 	var detailItems []components.ListItem
 
 	switch typeDef := (i.typeDef).(type) {
 	case *gql.Object:
-		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields(), i.schema)...)
+		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.schema)...)
 	case *gql.Scalar:
 		// No details needed
 	case *gql.Interface:
-		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields(), i.schema)...)
+		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.schema)...)
 	case *gql.Union:
 		detailItems = append(detailItems, adaptNamedToItems(typeDef.Types())...)
 	case *gql.Enum:
 		detailItems = append(detailItems, adaptEnumValueDefinitionsToItems(typeDef.Values())...)
 	case *gql.InputObject:
-		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields(), i.schema)...)
+		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.schema)...)
 	}
 
 	panel := components.NewListPanel(detailItems, i.Title())
