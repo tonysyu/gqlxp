@@ -421,15 +421,3 @@ func TestDirectiveDefinitionItemCreation(t *testing.T) {
 	is.True(!ok)
 	is.True(panel == nil)
 }
-
-func TestAdaptEmptyLists(t *testing.T) {
-	is := is.New(t)
-
-	// Test with empty arguments
-	argItems := adaptArguments([]*gql.Argument{})
-	is.Equal(len(argItems), 0)
-
-	// Test with empty input fields
-	fieldItems := adaptInputFields([]*gql.Field{})
-	is.Equal(len(fieldItems), 0)
-}

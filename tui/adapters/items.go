@@ -145,17 +145,6 @@ func adaptArguments(arguments []*gql.Argument) []components.ListItem {
 	return items
 }
 
-// Create an array of ListItem instances for input object fields
-func adaptInputFields(fields []*gql.Field) []components.ListItem {
-	var items []components.ListItem
-	if len(fields) > 0 {
-		for _, field := range fields {
-			items = append(items, newInputFieldItem(field))
-		}
-	}
-	return items
-}
-
 // Adapter/delegate for gql.NamedTypeDef to support ListItem interface
 type typeDefItem struct {
 	title    string
@@ -246,7 +235,7 @@ func (i typeDefItem) OpenPanel() (components.Panel, bool) {
 	case *gql.Enum:
 		detailItems = append(detailItems, adaptEnumValueDefinitionsToItems(typeDef.Values())...)
 	case *gql.InputObject:
-		detailItems = append(detailItems, adaptInputFields(typeDef.Fields())...)
+		detailItems = append(detailItems, adaptFieldDefinitionsToItems(typeDef.Fields(), i.schema)...)
 	}
 
 	panel := components.NewListPanel(detailItems, i.Title())
@@ -286,14 +275,6 @@ func newArgumentItem(argument *gql.Argument) components.SimpleItem {
 	return components.NewSimpleItem(
 		argument.Signature(),
 		components.WithDescription(argument.Description()),
-	)
-}
-
-func newInputFieldItem(field *gql.Field) components.SimpleItem {
-	// TODO: Update item to support proper Open and use custom display string
-	return components.NewSimpleItem(
-		field.Signature(),
-		components.WithDescription(field.Description()),
 	)
 }
 

@@ -8,14 +8,15 @@ type TypeDef interface {
 	Description() string
 }
 
-var _ TypeDef = (*Field)(nil)
-var _ TypeDef = (*Object)(nil)
-var _ TypeDef = (*InputObject)(nil)
-var _ TypeDef = (*Enum)(nil)
-var _ TypeDef = (*Scalar)(nil)
-var _ TypeDef = (*Interface)(nil)
-var _ TypeDef = (*Union)(nil)
+var _ TypeDef = (*Argument)(nil)
 var _ TypeDef = (*Directive)(nil)
+var _ TypeDef = (*Enum)(nil)
+var _ TypeDef = (*Field)(nil)
+var _ TypeDef = (*InputObject)(nil)
+var _ TypeDef = (*Interface)(nil)
+var _ TypeDef = (*Object)(nil)
+var _ TypeDef = (*Scalar)(nil)
+var _ TypeDef = (*Union)(nil)
 
 // gqlType interface for types that have a Name field (both ast and wrapped types)
 type gqlType interface {
