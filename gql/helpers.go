@@ -123,26 +123,29 @@ func getArgumentString(arg *ast.ArgumentDefinition) string {
 	return result
 }
 
-// getInputFieldString returns a string representation of an input field
-func getInputFieldString(field *ast.FieldDefinition) string {
-	result := fmt.Sprintf("%s: %s", field.Name, getTypeString(field.Type))
-	if field.DefaultValue != nil {
-		result += fmt.Sprintf(" = %s", formatValue(field.DefaultValue))
-	}
-	return result
-}
-
-// getFieldString returns the signature of a field including arguments
+// getFieldString returns the signature of a field including arguments and default values
+// Handles both output fields (with arguments) and input fields (with default values)
 func getFieldString(field *ast.FieldDefinition) string {
+	var result string
+
+	// Format with arguments if present
 	if len(field.Arguments) > 0 {
 		var inputArgs []string
 		for _, arg := range field.Arguments {
 			inputArgs = append(inputArgs, getArgumentString(arg))
 		}
 		inputArgString := strings.Join(inputArgs, ", ")
-		return fmt.Sprintf("%s(%s): %s", field.Name, inputArgString, getTypeString(field.Type))
+		result = fmt.Sprintf("%s(%s): %s", field.Name, inputArgString, getTypeString(field.Type))
+	} else {
+		result = fmt.Sprintf("%s: %s", field.Name, getTypeString(field.Type))
 	}
-	return fmt.Sprintf("%s: %s", field.Name, getTypeString(field.Type))
+
+	// Add default value if present (for input fields on InputObjects)
+	if field.DefaultValue != nil {
+		result += fmt.Sprintf(" = %s", formatValue(field.DefaultValue))
+	}
+
+	return result
 }
 
 // CollectAndSortMapValues extracts values from a map, sorts them by name, and returns a slice.

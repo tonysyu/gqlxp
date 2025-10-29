@@ -430,6 +430,6 @@ func TestAdaptEmptyLists(t *testing.T) {
 	is.Equal(len(argItems), 0)
 
 	// Test with empty input fields
-	fieldItems := adaptInputFields([]*gql.InputField{})
+	fieldItems := adaptInputFields([]*gql.Field{})
 	is.Equal(len(fieldItems), 0)
 }

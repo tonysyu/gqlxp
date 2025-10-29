@@ -142,51 +142,6 @@ func wrapArguments(args ast.ArgumentDefinitionList) []*Argument {
 	return arguments
 }
 
-// InputField represents fields on InputObjects
-// TODO: Evaluate whether InputField can be removed in favor of Field
-type InputField struct {
-	name        string
-	description string
-	inputType   *ast.Type
-	// Keep reference to underlying ast for operations within gql package
-	astField *ast.FieldDefinition
-}
-
-// newInputField creates a wrapper for input object field (ast.FieldDefinition)
-func newInputField(field *ast.FieldDefinition) *InputField {
-	if field == nil {
-		return nil
-	}
-	return &InputField{
-		name:        field.Name,
-		description: field.Description,
-		inputType:   field.Type,
-		astField:    field,
-	}
-}
-
-func (f *InputField) Name() string        { return f.name }
-func (f *InputField) Description() string { return f.description }
-
-// TypeString returns the string representation of the input field's type
-func (f *InputField) TypeString() string {
-	return getTypeString(f.inputType)
-}
-
-// Signature returns the full input field signature (name: Type = defaultValue)
-func (f *InputField) Signature() string {
-	return getInputFieldString(f.astField)
-}
-
-// wrapInputFields converts a slice of ast.FieldDefinition (for input objects) to wrapped InputField types
-func wrapInputFields(fields ast.FieldList) []*InputField {
-	inputFields := make([]*InputField, 0, len(fields))
-	for _, field := range fields {
-		inputFields = append(inputFields, newInputField(field))
-	}
-	return inputFields
-}
-
 // Object represents GraphQL objects.
 // See https://spec.graphql.org/October2021/#sec-Objects
 type Object struct {
@@ -230,7 +185,7 @@ func (o *Object) Fields() []*Field {
 type InputObject struct {
 	name        string
 	description string
-	fields      []*InputField
+	fields      []*Field
 	// Keep reference to underlying ast for operations within gql package
 	astDef *ast.Definition
 }
@@ -243,7 +198,7 @@ func newInputObject(def *ast.Definition) *InputObject {
 	return &InputObject{
 		name:        def.Name,
 		description: def.Description,
-		fields:      wrapInputFields(def.Fields),
+		fields:      wrapFields(def.Fields),
 		astDef:      def,
 	}
 }
@@ -252,7 +207,7 @@ func (i *InputObject) Name() string        { return i.name }
 func (i *InputObject) Description() string { return i.description }
 
 // Fields returns the input object's fields
-func (i *InputObject) Fields() []*InputField {
+func (i *InputObject) Fields() []*Field {
 	return i.fields
 }
 

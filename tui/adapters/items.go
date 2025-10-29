@@ -146,7 +146,7 @@ func adaptArguments(arguments []*gql.Argument) []components.ListItem {
 }
 
 // Create an array of ListItem instances for input object fields
-func adaptInputFields(fields []*gql.InputField) []components.ListItem {
+func adaptInputFields(fields []*gql.Field) []components.ListItem {
 	var items []components.ListItem
 	if len(fields) > 0 {
 		for _, field := range fields {
@@ -289,7 +289,7 @@ func newArgumentItem(argument *gql.Argument) components.SimpleItem {
 	)
 }
 
-func newInputFieldItem(field *gql.InputField) components.SimpleItem {
+func newInputFieldItem(field *gql.Field) components.SimpleItem {
 	// TODO: Update item to support proper Open and use custom display string
 	return components.NewSimpleItem(
 		field.Signature(),
