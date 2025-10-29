@@ -386,19 +386,19 @@ func TestArgumentListCreation(t *testing.T) {
 	field := schema.Query["testField"]
 
 	// Test argument items creation
-	items := adaptArgumentsToItems(field.Arguments())
+	items := adaptArgumentsToItems(field.Arguments(), &schema)
 	is.Equal(len(items), 3)
 
 	// Test first argument
-	item1 := items[0].(components.SimpleItem)
+	item1 := items[0]
 	is.Equal(item1.Title(), "arg1: String!")
 
 	// Test second argument
-	item2 := items[1].(components.SimpleItem)
+	item2 := items[1]
 	is.Equal(item2.Title(), "arg2: Int")
 
 	// Test third argument
-	item3 := items[2].(components.SimpleItem)
+	item3 := items[2]
 	is.Equal(item3.Title(), "arg3: [String]")
 }
 

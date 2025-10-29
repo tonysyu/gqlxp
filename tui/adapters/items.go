@@ -10,6 +10,7 @@ import (
 
 // Ensure that all item types implements components.ListItem interface
 var _ components.ListItem = (*fieldItem)(nil)
+var _ components.ListItem = (*argumentItem)(nil)
 var _ components.ListItem = (*typeDefItem)(nil)
 
 func adaptFieldsToItems(queryFields []*gql.Field, schema *gql.GraphQLSchema) []components.ListItem {
@@ -20,11 +21,11 @@ func adaptFieldsToItems(queryFields []*gql.Field, schema *gql.GraphQLSchema) []c
 	return adaptedItems
 }
 
-func adaptArgumentsToItems(arguments []*gql.Argument) []components.ListItem {
+func adaptArgumentsToItems(arguments []*gql.Argument, schema *gql.GraphQLSchema) []components.ListItem {
 	var items []components.ListItem
 	if len(arguments) > 0 {
 		for _, arg := range arguments {
-			items = append(items, newArgumentItem(arg))
+			items = append(items, newArgumentItem(arg, schema))
 		}
 	}
 	return items
@@ -134,12 +135,55 @@ func (i fieldItem) Details() string {
 
 // OpenPanel displays arguments of field (if any) and the field's ObjectType
 func (i fieldItem) OpenPanel() (components.Panel, bool) {
-	argumentItems := adaptArgumentsToItems(i.gqlField.Arguments())
+	argumentItems := adaptArgumentsToItems(i.gqlField.Arguments(), i.schema)
 
 	panel := components.NewListPanel(argumentItems, i.fieldName)
 	panel.SetDescription(i.Description())
 	// Set result type as virtual item at top
-	panel.SetObjectType(newFieldTypeItem(i.gqlField, i.schema))
+	panel.SetObjectType(newTypeDefItemFromField(i.gqlField, i.schema))
+
+	return panel, true
+}
+
+// Adapter/delegate for gql.Argument to support ListItem interface
+type argumentItem struct {
+	gqlArgument *gql.Argument
+	schema      *gql.GraphQLSchema
+	argName     string
+}
+
+func newArgumentItem(gqlArgument *gql.Argument, schema *gql.GraphQLSchema) components.ListItem {
+	return argumentItem{
+		gqlArgument: gqlArgument,
+		schema:      schema,
+		argName:     gqlArgument.Name(),
+	}
+}
+
+func (i argumentItem) Title() string       { return i.gqlArgument.Signature() }
+func (i argumentItem) FilterValue() string { return i.argName }
+func (i argumentItem) TypeName() string    { return i.gqlArgument.ObjectTypeName() }
+
+func (i argumentItem) Description() string {
+	return i.gqlArgument.Description()
+}
+
+func (i argumentItem) Details() string {
+	return text.JoinParagraphs(
+		text.H1(i.argName),
+		text.GqlCode(i.gqlArgument.Signature()),
+		i.Description(),
+	)
+}
+
+// OpenPanel displays the argument's type definition
+func (i argumentItem) OpenPanel() (components.Panel, bool) {
+	// Create an empty panel for the argument (similar to how fieldItem creates a panel for arguments)
+	panel := components.NewListPanel([]components.ListItem{}, i.argName)
+	panel.SetDescription(i.Description())
+
+	// Set the argument's type as the object type at the top
+	panel.SetObjectType(newTypeDefItemFromArgument(i.gqlArgument, i.schema))
 
 	return panel, true
 }
@@ -250,11 +294,11 @@ func newNamedItem(typeName string) components.SimpleItem {
 	return components.NewSimpleItem(typeName)
 }
 
-// newFieldTypeItem creates a list item for a field's result type
-func newFieldTypeItem(field *gql.Field, schema *gql.GraphQLSchema) components.ListItem {
+// newTypeDefItemFromField creates a list item for a field's result type
+func newTypeDefItemFromField(field *gql.Field, schema *gql.GraphQLSchema) components.ListItem {
 	resultType, err := field.ResolveObjectTypeDef(schema)
 	if err != nil {
-		// FIXME: Currently, this treats any error as a built-in type, but instead we should
+		// TODO: Currently, this treats any error as a built-in type, but instead we should
 		// check for _known_ built in types and handle errors intelligently.
 		return components.NewSimpleItem(
 			field.TypeString(),
@@ -269,12 +313,23 @@ func newFieldTypeItem(field *gql.Field, schema *gql.GraphQLSchema) components.Li
 	}
 }
 
-func newArgumentItem(argument *gql.Argument) components.SimpleItem {
-	// TODO: Update item to support proper Open and use custom display string
-	return components.NewSimpleItem(
-		argument.Signature(),
-		components.WithDescription(argument.Description()),
-	)
+// newTypeDefItemFromArgument creates a list item for an argument's type
+func newTypeDefItemFromArgument(argument *gql.Argument, schema *gql.GraphQLSchema) components.ListItem {
+	resultType, err := argument.ResolveObjectTypeDef(schema)
+	if err != nil {
+		// TODO: Currently, this treats any error as a built-in type, but instead we should
+		// check for _known_ built in types and handle errors intelligently.
+		return components.NewSimpleItem(
+			argument.TypeString(),
+			components.WithTypeName(argument.ObjectTypeName()),
+		)
+	}
+	return typeDefItem{
+		title:    argument.TypeString(),
+		typeName: resultType.Name(),
+		typeDef:  resultType,
+		schema:   schema,
+	}
 }
 
 func newDirectiveDefinitionItem(directive *gql.Directive) components.SimpleItem {
