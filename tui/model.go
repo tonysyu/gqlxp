@@ -76,20 +76,20 @@ func newModel(schema adapters.SchemaView) mainModel {
 		overlay:         newOverlayModel(styles),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
-				key.WithKeys("tab"),
+				key.WithKeys("tab", "]"),
 				key.WithHelp("tab", "next"),
 			),
 			PrevPanel: key.NewBinding(
-				key.WithKeys("shift+tab"),
+				key.WithKeys("shift+tab", "["),
 				key.WithHelp("shift+tab", "prev"),
 			),
 			Quit: quitKeyBinding,
 			ToggleGQLType: key.NewBinding(
-				key.WithKeys("ctrl+t"),
-				key.WithHelp("ctrl+t", "toggle type "),
+				key.WithKeys("ctrl+t", "}"),
+				key.WithHelp("ctrl+t", "toggle type"),
 			),
 			ReverseToggleGQLType: key.NewBinding(
-				key.WithKeys("ctrl+r"),
+				key.WithKeys("ctrl+r", "{"),
 				key.WithHelp("ctrl+r", "reverse toggle type"),
 			),
 			ToggleOverlay: key.NewBinding(

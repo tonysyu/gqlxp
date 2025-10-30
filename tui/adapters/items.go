@@ -79,7 +79,7 @@ func adaptNamedToItems(typeNames []string) []components.ListItem {
 	return adaptedItems
 }
 
-func adaptEnumValueDefinitionsToItems(enumNodes []*gql.EnumValue) []components.ListItem {
+func adaptEnumValuesToItems(enumNodes []*gql.EnumValue) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(enumNodes))
 	for _, node := range enumNodes {
 		item := components.NewSimpleItem(
@@ -276,7 +276,7 @@ func (i typeDefItem) OpenPanel() (components.Panel, bool) {
 	case *gql.Union:
 		detailItems = append(detailItems, adaptNamedToItems(typeDef.Types())...)
 	case *gql.Enum:
-		detailItems = append(detailItems, adaptEnumValueDefinitionsToItems(typeDef.Values())...)
+		detailItems = append(detailItems, adaptEnumValuesToItems(typeDef.Values())...)
 	case *gql.InputObject:
 		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.schema)...)
 	}
