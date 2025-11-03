@@ -141,7 +141,8 @@ func (lp *ListPanel) Description() string {
 
 func (lp *ListPanel) SetObjectType(item ListItem) {
 	lp.resultType = item
-	lp.focusOnResultType = true // Start with focus on result type
+	// If there are no items in the list, focus on result type; otherwise focus on first list item
+	lp.focusOnResultType = len(lp.ListModel.Items()) == 0
 }
 
 // SelectedItem returns the currently selected item in the list

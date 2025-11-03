@@ -72,7 +72,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		content := testx.RenderMinimalPanel(panel)
 		assert.StringContains(content, testx.NormalizeView(`
 			Result Type
-		  │ Post
+			Post
 
 			Input Arguments
 			id: ID!
@@ -93,7 +93,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 			Create a new post
 
 			Result Type
-		  │ Post!
+			Post!
 
 			Input Arguments
 			title: String!
@@ -308,7 +308,7 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 
 	expected := testx.NormalizeView(`
 		  Result Type
-		  │ String
+		│ String
 	`)
 
 	assert.StringContains(content, expected)
@@ -348,7 +348,7 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 
 	assert.StringContains(content, testx.NormalizeView(`
 		Result Type
-	  │ [String!]!
+		[String!]!
 
 		Input Arguments
 		id: ID!
