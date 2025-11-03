@@ -71,10 +71,10 @@ func adaptDirectivesToItems(directives []*gql.Directive) []components.ListItem {
 	return adaptedItems
 }
 
-func adaptNamedToItems(typeNames []string) []components.ListItem {
+func adaptUnionTypesToItems(typeNames []string, schema *gql.GraphQLSchema) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(typeNames))
 	for _, typeName := range typeNames {
-		adaptedItems = append(adaptedItems, newNamedItem(typeName))
+		adaptedItems = append(adaptedItems, newNamedItem(typeName, schema))
 	}
 	return adaptedItems
 }
@@ -274,7 +274,7 @@ func (i typeDefItem) OpenPanel() (components.Panel, bool) {
 	case *gql.Interface:
 		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.schema)...)
 	case *gql.Union:
-		detailItems = append(detailItems, adaptNamedToItems(typeDef.Types())...)
+		detailItems = append(detailItems, adaptUnionTypesToItems(typeDef.Types(), i.schema)...)
 	case *gql.Enum:
 		detailItems = append(detailItems, adaptEnumValuesToItems(typeDef.Values())...)
 	case *gql.InputObject:
@@ -289,9 +289,15 @@ func (i typeDefItem) OpenPanel() (components.Panel, bool) {
 	return panel, true
 }
 
-func newNamedItem(typeName string) components.SimpleItem {
-	// TODO: This probably requires a reference to the schema to return full type when opening
-	return components.NewSimpleItem(typeName)
+func newNamedItem(typeName string, schema *gql.GraphQLSchema) components.ListItem {
+	// Try to resolve the type name to a full TypeDef
+	typeDef, err := schema.NamedToTypeDef(typeName)
+	if err != nil {
+		// Type not found or is a primitive - fallback to simple item
+		return components.NewSimpleItem(typeName)
+	}
+	// Create a typeDefItem for resolvable types
+	return newTypeDefItem(typeDef, schema)
 }
 
 // newTypeDefItemFromField creates a list item for a field's result type
