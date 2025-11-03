@@ -126,6 +126,13 @@ func getArgumentString(arg *ast.ArgumentDefinition) string {
 // getFieldString returns the signature of a field including arguments and default values
 // Handles both output fields (with arguments) and input fields (with default values)
 func getFieldString(field *ast.FieldDefinition) string {
+	return formatFieldStringWithWidth(field, 0)
+}
+
+// formatFieldStringWithWidth returns the field signature with optional multiline formatting
+// If maxWidth <= 0, always uses inline format
+// If maxWidth > 0 and inline signature exceeds maxWidth, formats arguments on separate lines
+func formatFieldStringWithWidth(field *ast.FieldDefinition, maxWidth int) string {
 	var result string
 
 	// Format with arguments if present
@@ -134,8 +141,19 @@ func getFieldString(field *ast.FieldDefinition) string {
 		for _, arg := range field.Arguments {
 			inputArgs = append(inputArgs, getArgumentString(arg))
 		}
+
+		// Try inline format first
 		inputArgString := strings.Join(inputArgs, ", ")
-		result = fmt.Sprintf("%s(%s): %s", field.Name, inputArgString, getTypeString(field.Type))
+		inlineResult := fmt.Sprintf("%s(%s): %s", field.Name, inputArgString, getTypeString(field.Type))
+
+		// Check if we should use multiline format
+		if maxWidth > 0 && len(inlineResult) > maxWidth {
+			// Format with each argument on a new line, indented
+			multilineArgs := strings.Join(inputArgs, ",\n  ")
+			result = fmt.Sprintf("%s(\n  %s\n): %s", field.Name, multilineArgs, getTypeString(field.Type))
+		} else {
+			result = inlineResult
+		}
 	} else {
 		result = fmt.Sprintf("%s: %s", field.Name, getTypeString(field.Type))
 	}

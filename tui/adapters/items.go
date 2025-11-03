@@ -128,7 +128,7 @@ func (i fieldItem) Description() string {
 func (i fieldItem) Details() string {
 	return text.JoinParagraphs(
 		text.H1(i.TypeName()),
-		text.GqlCode(i.gqlField.Signature()),
+		text.GqlCode(i.gqlField.FormatSignature(80)),
 		i.Description(),
 	)
 }
@@ -171,7 +171,7 @@ func (i argumentItem) Description() string {
 func (i argumentItem) Details() string {
 	return text.JoinParagraphs(
 		text.H1(i.argName),
-		text.GqlCode(i.gqlArgument.Signature()),
+		text.GqlCode(i.gqlArgument.FormatSignature(80)),
 		i.Description(),
 	)
 }
@@ -252,7 +252,7 @@ func (i typeDefItem) Details() string {
 		if len(typeDef.Fields()) > 0 {
 			var fields []string
 			for _, field := range typeDef.Fields() {
-				fields = append(fields, field.Signature())
+				fields = append(fields, field.FormatSignature(80))
 			}
 			parts = append(parts, text.GqlCode(text.JoinLines(fields...)))
 		}

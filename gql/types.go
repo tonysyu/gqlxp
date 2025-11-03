@@ -76,6 +76,13 @@ func (f *Field) Signature() string {
 	return getFieldString(f.astField)
 }
 
+// FormatSignature returns the field signature with optional multiline formatting.
+// If maxWidth <= 0, always uses inline format (same as Signature()).
+// If maxWidth > 0 and inline signature exceeds maxWidth, formats arguments on separate lines.
+func (f *Field) FormatSignature(maxWidth int) string {
+	return formatFieldStringWithWidth(f.astField, maxWidth)
+}
+
 // Arguments returns the field's arguments as wrapped Arguments
 func (f *Field) Arguments() []*Argument {
 	return wrapArguments(f.arguments)
@@ -141,6 +148,12 @@ func (a *Argument) ObjectTypeName() string {
 
 // Signature returns the full argument signature (name: Type = defaultValue)
 func (a *Argument) Signature() string {
+	return getArgumentString(a.astArg)
+}
+
+// FormatSignature returns the argument signature (always single line for arguments)
+// The maxWidth parameter is accepted for consistency with Field.FormatSignature but is ignored.
+func (a *Argument) FormatSignature(maxWidth int) string {
 	return getArgumentString(a.astArg)
 }
 

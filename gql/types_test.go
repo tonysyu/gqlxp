@@ -500,3 +500,46 @@ func TestObject_EmptyDescription(t *testing.T) {
 	obj := schema.Object["NoDesc"]
 	is.Equal(obj.Description(), "")
 }
+
+func TestField_FormatSignature(t *testing.T) {
+	is := is.New(t)
+	schema, _ := ParseSchema([]byte(`
+		type User {
+			id: ID!
+		}
+
+		type Query {
+			simple: String
+			search(query: String!, limit: Int = 10, offset: Int = 0): [User!]!
+		}
+	`))
+
+	simple := schema.Query["simple"]
+	search := schema.Query["search"]
+
+	t.Run("FormatSignature with maxWidth <= 0 uses inline format", func(t *testing.T) {
+		is.Equal(search.FormatSignature(0), "search(query: String!, limit: Int = 10, offset: Int = 0): [User!]!")
+		is.Equal(search.FormatSignature(-1), "search(query: String!, limit: Int = 10, offset: Int = 0): [User!]!")
+	})
+
+	t.Run("FormatSignature with sufficient maxWidth uses inline format", func(t *testing.T) {
+		// Inline signature is 66 characters
+		is.Equal(search.FormatSignature(100), "search(query: String!, limit: Int = 10, offset: Int = 0): [User!]!")
+		is.Equal(search.FormatSignature(66), "search(query: String!, limit: Int = 10, offset: Int = 0): [User!]!")
+	})
+
+	t.Run("FormatSignature with insufficient maxWidth uses multiline format", func(t *testing.T) {
+		expected := `search(
+  query: String!,
+  limit: Int = 10,
+  offset: Int = 0
+): [User!]!`
+		is.Equal(search.FormatSignature(50), expected)
+		is.Equal(search.FormatSignature(65), expected) // Just under the inline length
+	})
+
+	t.Run("FormatSignature with no arguments is always inline", func(t *testing.T) {
+		is.Equal(simple.FormatSignature(0), "simple: String")
+		is.Equal(simple.FormatSignature(5), "simple: String")
+	})
+}
