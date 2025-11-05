@@ -50,7 +50,7 @@ func (b *breadcrumbsModel) Render() string {
 
 	// Build breadcrumb parts with separators
 	var parts []string
-	separator := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(" > ")
+	separator := " > "
 
 	for i, crumb := range b.crumbs {
 		if i > 0 {

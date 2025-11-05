@@ -2,14 +2,27 @@ package config
 
 import "github.com/charmbracelet/lipgloss"
 
+// Colors
+// See https://hexdocs.pm/color_palette/ansi_color_codes.html for color codes
+const (
+	ColorLightGray    lipgloss.Color = "244" // gray
+	ColorMidGray      lipgloss.Color = "240" // davys_grey
+	ColorDarkGray     lipgloss.Color = "238" // dark_charcoal (dark gray)
+	ColorDimWhite     lipgloss.Color = "253" // alto (off-white)
+	ColorCream        lipgloss.Color = "230" // cream, very_pale_yellow
+	ColorDimIndigo    lipgloss.Color = "62"  // indigo, slate_blue
+	ColorBrightIndigo lipgloss.Color = "57"  // electric_indigo
+	ColorDimMagenta   lipgloss.Color = "170" // orchid (pink/purple)
+)
+
 // Layout dimensions
 const (
-	VisiblePanelCount  = 2
-	HelpHeight         = 5
-	NavbarHeight       = 3
-	BreadcrumbsHeight  = 1
-	OverlayPadding     = 1
-	OverlayMargin      = 2
+	VisiblePanelCount = 2
+	HelpHeight        = 5
+	NavbarHeight      = 3
+	BreadcrumbsHeight = 1
+	OverlayPadding    = 1
+	OverlayMargin     = 2
 )
 
 // Styles contains all lipgloss styles used in the TUI
@@ -36,22 +49,21 @@ type Styles struct {
 }
 
 // DefaultStyles returns the default style configuration
-// See https://hexdocs.pm/color_palette/ansi_color_codes.html for color codes
 func DefaultStyles() Styles {
 	return Styles{
 		FocusedPanel: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("244")). // 244 = gray
+			Foreground(ColorLightGray).
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("238")), // 238 = outer_space (dark gray)
+			BorderForeground(ColorDarkGray),
 
 		BlurredPanel: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("244")). // 244 = gray
+			Foreground(ColorLightGray).
 			Border(lipgloss.HiddenBorder()),
 
 		// Panel title styling copied from bubbles/list
 		PanelTitle: lipgloss.NewStyle().
-			Background(lipgloss.Color("62")).  // 62 = indigo, slate_blue
-			Foreground(lipgloss.Color("230")). // 230 = cream, very_pale_yellow
+			Background(ColorDimIndigo).
+			Foreground(ColorCream).
 			Padding(0, 1),
 
 		Navbar: lipgloss.NewStyle().
@@ -59,27 +71,27 @@ func DefaultStyles() Styles {
 			Margin(0, 0, 1, 0),
 
 		ActiveTab: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("230")). // 230 = cream, very_pale_yellow
-			Background(lipgloss.Color("57")).  // 57 = electric_indigo
+			Foreground(ColorCream).
+			Background(ColorBrightIndigo).
 			Padding(0, 2).
 			Bold(true),
 
 		InactiveTab: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("244")). // 244 = gray
+			Foreground(ColorLightGray).
 			Padding(0, 2),
 
 		Breadcrumbs: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("240")). // 240 = dim gray
+			Foreground(ColorMidGray).
 			Padding(0, 1),
 
 		Overlay: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("238")). // 238 = outer_space (dark gray)
+			BorderForeground(ColorDarkGray).
 			Padding(OverlayPadding).
 			Margin(OverlayMargin),
 
 		SectionLabel: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("240")). // 240 = dim gray
+			Foreground(ColorMidGray).
 			Bold(true).
 			Padding(0, 1),
 
@@ -87,16 +99,16 @@ func DefaultStyles() Styles {
 			// Use left-border to indicated selected/focused item.
 			// (Adapted from bubbles/list/defaultitem)
 			Border(lipgloss.NormalBorder(), false, false, false, true).
-			BorderForeground(lipgloss.Color("170")). // 170 = orchid (pink/purple)
-			Foreground(lipgloss.Color("170")).       // 170 = orchid (pink/purple)
+			BorderForeground(ColorDimMagenta).
+			Foreground(ColorDimMagenta).
 			Padding(0, 0, 0, 1),
 
 		UnfocusedItem: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("253")). // 253 = alto (off-white)
-			Padding(0, 0, 0, 2),               // Use left-padding 2 instead of 1 (see FocusedItem)
+			Foreground(ColorDimWhite).
+			Padding(0, 0, 0, 2), // Use left-padding 2 instead of 1 (see FocusedItem)
 		// because UnfocusedItem has no left-border
 
 		Divider: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("238")), // 238 = outer_space (dark gray)
+			Foreground(ColorDarkGray),
 	}
 }
