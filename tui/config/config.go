@@ -4,11 +4,12 @@ import "github.com/charmbracelet/lipgloss"
 
 // Layout dimensions
 const (
-	VisiblePanelCount = 2
-	HelpHeight        = 5
-	NavbarHeight      = 3
-	OverlayPadding    = 1
-	OverlayMargin     = 2
+	VisiblePanelCount  = 2
+	HelpHeight         = 5
+	NavbarHeight       = 3
+	BreadcrumbsHeight  = 1
+	OverlayPadding     = 1
+	OverlayMargin      = 2
 )
 
 // Styles contains all lipgloss styles used in the TUI
@@ -22,6 +23,7 @@ type Styles struct {
 	Navbar      lipgloss.Style
 	ActiveTab   lipgloss.Style
 	InactiveTab lipgloss.Style
+	Breadcrumbs lipgloss.Style
 
 	// Overlay style for view displaying Details of GQL Types
 	Overlay lipgloss.Style
@@ -65,6 +67,10 @@ func DefaultStyles() Styles {
 		InactiveTab: lipgloss.NewStyle().
 			Foreground(lipgloss.Color("244")). // 244 = gray
 			Padding(0, 2),
+
+		Breadcrumbs: lipgloss.NewStyle().
+			Foreground(lipgloss.Color("240")). // 240 = dim gray
+			Padding(0, 1),
 
 		Overlay: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).

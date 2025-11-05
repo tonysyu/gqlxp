@@ -217,7 +217,7 @@ func (m *mainModel) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
 
 func (m *mainModel) sizePanels() {
 	panelWidth := m.width / config.VisiblePanelCount
-	panelHeight := m.height - config.HelpHeight - config.NavbarHeight
+	panelHeight := m.height - config.HelpHeight - config.NavbarHeight - config.BreadcrumbsHeight
 	// Size only the visible panels (config.VisiblePanelCount = 2)
 	m.panelStack[m.stackPosition].SetSize(
 		panelWidth-m.styles.FocusedPanel.GetHorizontalFrameSize(),
@@ -347,6 +347,45 @@ func (m *mainModel) renderGQLTypeNavbar() string {
 	return m.styles.Navbar.Render(navbar)
 }
 
+// renderBreadcrumbs creates a breadcrumb trail showing selected items from hidden panels
+func (m *mainModel) renderBreadcrumbs() string {
+	// No breadcrumbs if we're at the first panel
+	if m.stackPosition == 0 {
+		return ""
+	}
+
+	var crumbs []string
+
+	// Collect titles from hidden panels (0 to stackPosition-1)
+	for i := 0; i < m.stackPosition; i++ {
+		if listPanel, ok := m.panelStack[i].(*components.ListPanel); ok {
+			if selectedItem := listPanel.SelectedItem(); selectedItem != nil {
+				if listItem, ok := selectedItem.(components.ListItem); ok {
+					crumbs = append(crumbs, listItem.Title())
+				}
+			}
+		}
+	}
+
+	if len(crumbs) == 0 {
+		return ""
+	}
+
+	// Build breadcrumb parts with separators
+	var parts []string
+	separator := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(" > ")
+
+	for i, crumb := range crumbs {
+		if i > 0 {
+			parts = append(parts, separator)
+		}
+		parts = append(parts, crumb)
+	}
+
+	breadcrumbText := lipgloss.JoinHorizontal(lipgloss.Left, parts...)
+	return m.styles.Breadcrumbs.Render(breadcrumbText)
+}
+
 func (m mainModel) View() string {
 	help := m.help.ShortHelpView([]key.Binding{
 		m.keymap.NextPanel,
@@ -368,8 +407,9 @@ func (m mainModel) View() string {
 	}
 
 	navbar := m.renderGQLTypeNavbar()
+	breadcrumbs := m.renderBreadcrumbs()
 	panels := lipgloss.JoinHorizontal(lipgloss.Top, views...)
-	mainView := navbar + "\n" + panels + "\n\n" + help
 
+	mainView := navbar + "\n" + breadcrumbs + "\n" + panels + "\n\n" + help
 	return mainView
 }
