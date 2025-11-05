@@ -55,6 +55,8 @@ type mainModel struct {
 	selectedGQLType gqlType
 	// Overlay for displaying ListItem.Details()
 	overlay overlayModel
+	// Breadcrumbs showing navigation path through hidden panels
+	breadcrumbs breadcrumbsModel
 
 	width          int
 	height         int
@@ -74,6 +76,7 @@ func newModel(schema adapters.SchemaView) mainModel {
 		selectedGQLType: queryType,
 		styles:          styles,
 		overlay:         newOverlayModel(styles),
+		breadcrumbs:     newBreadcrumbsModel(styles),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
 				key.WithKeys("tab", "]"),
@@ -136,6 +139,14 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.NextPanel):
 			// Move forward in stack if there's at least one more panel ahead
 			if m.stackPosition+1 < len(m.panelStack) {
+				// Add current panel's selected item to breadcrumbs before moving
+				if listPanel, ok := m.panelStack[m.stackPosition].(*components.ListPanel); ok {
+					if selectedItem := listPanel.SelectedItem(); selectedItem != nil {
+						if listItem, ok := selectedItem.(components.ListItem); ok {
+							m.breadcrumbs.Push(listItem.Title())
+						}
+					}
+				}
 				m.stackPosition++
 				// Open up child panel for ResultType if it exists
 				focusedPanel := m.panelStack[m.stackPosition]
@@ -149,6 +160,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Move backward in stack if not at the beginning
 			if m.stackPosition > 0 {
 				m.stackPosition--
+				// Remove last breadcrumb when moving backward
+				m.breadcrumbs.Pop()
 			}
 		case key.Matches(msg, m.keymap.ToggleGQLType):
 			m.incrementGQLTypeIndex(1)
@@ -255,6 +268,8 @@ func (m *mainModel) resetAndLoadMainPanel() {
 		m.panelStack[i] = components.NewStringPanel("")
 	}
 	m.stackPosition = 0
+	// Reset breadcrumbs when switching types
+	m.breadcrumbs.Reset()
 
 	// Load initial fields based on currently selected GQL type
 	m.loadMainPanel()
@@ -347,43 +362,9 @@ func (m *mainModel) renderGQLTypeNavbar() string {
 	return m.styles.Navbar.Render(navbar)
 }
 
-// renderBreadcrumbs creates a breadcrumb trail showing selected items from hidden panels
+// renderBreadcrumbs renders the breadcrumb trail
 func (m *mainModel) renderBreadcrumbs() string {
-	// No breadcrumbs if we're at the first panel
-	if m.stackPosition == 0 {
-		return ""
-	}
-
-	var crumbs []string
-
-	// Collect titles from hidden panels (0 to stackPosition-1)
-	for i := 0; i < m.stackPosition; i++ {
-		if listPanel, ok := m.panelStack[i].(*components.ListPanel); ok {
-			if selectedItem := listPanel.SelectedItem(); selectedItem != nil {
-				if listItem, ok := selectedItem.(components.ListItem); ok {
-					crumbs = append(crumbs, listItem.Title())
-				}
-			}
-		}
-	}
-
-	if len(crumbs) == 0 {
-		return ""
-	}
-
-	// Build breadcrumb parts with separators
-	var parts []string
-	separator := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(" > ")
-
-	for i, crumb := range crumbs {
-		if i > 0 {
-			parts = append(parts, separator)
-		}
-		parts = append(parts, crumb)
-	}
-
-	breadcrumbText := lipgloss.JoinHorizontal(lipgloss.Left, parts...)
-	return m.styles.Breadcrumbs.Render(breadcrumbText)
+	return m.breadcrumbs.Render()
 }
 
 func (m mainModel) View() string {
