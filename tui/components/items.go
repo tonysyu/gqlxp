@@ -22,6 +22,11 @@ type ListItem interface {
 	// Title() is used when referencing this item in lists
 	// In contrast, TypeName() is used as the title by Details()
 	TypeName() string
+
+	// RefName returns the reference name for the item.
+	// For most types, this is equivalent to Title(), but for fields, this leaves off the type and
+	// just has the field name (with no arguments)
+	RefName() string
 }
 
 var _ ListItem = (*SimpleItem)(nil)
@@ -66,6 +71,7 @@ func (si SimpleItem) Title() string       { return si.title }
 func (si SimpleItem) Description() string { return si.description }
 func (si SimpleItem) FilterValue() string { return si.Title() }
 func (si SimpleItem) TypeName() string    { return si.typename }
+func (si SimpleItem) RefName() string     { return si.typename }
 func (si SimpleItem) Details() string {
 	if si.Description() == "" {
 		return ""

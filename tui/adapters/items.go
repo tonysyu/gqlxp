@@ -120,6 +120,7 @@ func newFieldItem(gqlField *gql.Field, schema *gql.GraphQLSchema) components.Lis
 func (i fieldItem) Title() string       { return i.gqlField.Signature() }
 func (i fieldItem) FilterValue() string { return i.fieldName }
 func (i fieldItem) TypeName() string    { return i.gqlField.ObjectTypeName() }
+func (i fieldItem) RefName() string     { return i.gqlField.Name() }
 
 func (i fieldItem) Description() string {
 	return i.gqlField.Description()
@@ -163,6 +164,7 @@ func newArgumentItem(gqlArgument *gql.Argument, schema *gql.GraphQLSchema) compo
 func (i argumentItem) Title() string       { return i.gqlArgument.Signature() }
 func (i argumentItem) FilterValue() string { return i.argName }
 func (i argumentItem) TypeName() string    { return i.gqlArgument.ObjectTypeName() }
+func (i argumentItem) RefName() string     { return i.gqlArgument.Name() }
 
 func (i argumentItem) Description() string {
 	return i.gqlArgument.Description()
@@ -209,6 +211,7 @@ func newTypeDefItem(typeDef gql.TypeDef, schema *gql.GraphQLSchema) typeDefItem 
 func (i typeDefItem) Title() string       { return i.title }
 func (i typeDefItem) FilterValue() string { return i.Title() }
 func (i typeDefItem) TypeName() string    { return i.typeName }
+func (i typeDefItem) RefName() string     { return i.typeDef.Name() }
 func (i typeDefItem) Description() string { return i.typeDef.Description() }
 
 func (i typeDefItem) Details() string {

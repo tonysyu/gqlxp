@@ -143,7 +143,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if listPanel, ok := m.panelStack[m.stackPosition].(*components.ListPanel); ok {
 					if selectedItem := listPanel.SelectedItem(); selectedItem != nil {
 						if listItem, ok := selectedItem.(components.ListItem); ok {
-							m.breadcrumbs.Push(listItem.Title())
+							m.breadcrumbs.Push(listItem.RefName())
 						}
 					}
 				}
