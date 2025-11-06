@@ -54,7 +54,7 @@ func newOverlayModel(style config.Styles) overlayModel {
 		help:     help.New(),
 		keymap: overlayKeymap{
 			Close: key.NewBinding(
-				key.WithKeys(" "),
+				key.WithKeys(" ", "q"),
 				key.WithHelp("space", "close overlay"),
 			),
 			Quit: quitKeyBinding,
