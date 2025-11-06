@@ -148,6 +148,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 				m.stackPosition++
+				m.updatePanelFocusStates()
 				// Open up child panel for ResultType if it exists
 				focusedPanel := m.panelStack[m.stackPosition]
 				if listPanel, ok := focusedPanel.(*components.ListPanel); ok {
@@ -160,6 +161,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// Move backward in stack if not at the beginning
 			if m.stackPosition > 0 {
 				m.stackPosition--
+				m.updatePanelFocusStates()
 				// Remove last breadcrumb when moving backward
 				m.breadcrumbs.Pop()
 			}
@@ -245,6 +247,21 @@ func (m *mainModel) sizePanels() {
 	}
 }
 
+// updatePanelFocusStates updates focus state for all visible panels based on stackPosition
+func (m *mainModel) updatePanelFocusStates() {
+	// Blur all panels first
+	for _, panel := range m.panelStack {
+		if listPanel, ok := panel.(*components.ListPanel); ok {
+			listPanel.SetBlurred()
+		}
+	}
+
+	// Set focused state only for the currently focused panel
+	if listPanel, ok := m.panelStack[m.stackPosition].(*components.ListPanel); ok {
+		listPanel.SetFocused()
+	}
+}
+
 // handleOpenPanel handles when an item is opened
 // The new panel is added to the stack after the currently focused panel
 func (m *mainModel) handleOpenPanel(newPanel components.Panel) {
@@ -313,6 +330,7 @@ func (m *mainModel) loadMainPanel() {
 	m.panelStack[0] = components.NewListPanel(items, title)
 	// Reset to the beginning of the stack
 	m.stackPosition = 0
+	m.updatePanelFocusStates()
 
 	// Auto-open detail panel for the first item if available
 	if len(items) > 0 {

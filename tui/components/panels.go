@@ -27,12 +27,15 @@ var _ Panel = (*stringPanel)(nil)
 // ListPanel wraps a list.Model to implement the Panel interface
 type ListPanel struct {
 	ListModel         list.Model
-	lastSelectedIndex int  // Track the last selected index to detect changes
-	wasFiltering      bool // Track whether we were in filtering mode to detect exits
 	title             string
 	description       string
-	resultType        ListItem // Virtual item displayed at top
-	focusOnResultType bool     // Track whether focus is on result type or list
+	lastSelectedIndex int               // Track the last selected index to detect changes
+	wasFiltering      bool              // Track whether we were in filtering mode to detect exits
+	resultType        ListItem          // Virtual item displayed at top
+	focusOnResultType bool              // Track whether focus is on result type or list
+	isFocused         bool              // Track whether this panel is in focus
+	focusedDelegate   list.ItemDelegate // Item delegate for rendering when panel is focused
+	blurredDelegate   list.ItemDelegate // Item delegate for rendering when panel is blurred
 	styles            config.Styles
 	width             int
 	height            int
@@ -55,15 +58,26 @@ func NewListPanel[T list.Item](choices []T, title string) *ListPanel {
 	for i, choice := range choices {
 		items[i] = choice
 	}
-	m := list.New(items, list.NewDefaultDelegate(), 0, 0)
+	blurredItemDelegate := newBlurredItemDelegate()
+	m := list.New(items, blurredItemDelegate, 0, 0)
 	m.DisableQuitKeybindings()
 	m.SetShowTitle(false)
 	return &ListPanel{
 		ListModel:         m,
 		lastSelectedIndex: -1, // Initialize to -1 to trigger opening on first selection
 		title:             title,
+		blurredDelegate:   blurredItemDelegate,
+		focusedDelegate:   list.NewDefaultDelegate(),
 		styles:            config.DefaultStyles(),
 	}
+}
+
+func newBlurredItemDelegate() list.ItemDelegate {
+	delegate := list.NewDefaultDelegate()
+	// Match "Selected" styles to "Normal" styles, since blurred items shouldn't render as selected
+	delegate.Styles.SelectedTitle = delegate.Styles.NormalTitle
+	delegate.Styles.SelectedDesc = delegate.Styles.NormalDesc
+	return delegate
 }
 
 func (lp *ListPanel) Init() tea.Cmd {
@@ -155,6 +169,18 @@ func (lp *ListPanel) SetObjectType(item ListItem) {
 	lp.focusOnResultType = len(lp.ListModel.Items()) == 0
 }
 
+// Update items to display with focused style (opposite of SetBlurred)
+func (lp *ListPanel) SetFocused() {
+	lp.ListModel.SetDelegate(lp.focusedDelegate)
+	lp.isFocused = true
+}
+
+// Update items to display with blurred style (opposite of SetFocused)
+func (lp *ListPanel) SetBlurred() {
+	lp.ListModel.SetDelegate(lp.blurredDelegate)
+	lp.isFocused = false
+}
+
 // SelectedItem returns the currently selected item in the list
 func (lp *ListPanel) SelectedItem() list.Item {
 	if lp.focusOnResultType {
@@ -195,7 +221,7 @@ func (lp *ListPanel) View() string {
 
 		// Render result type with focus indicator
 		resultTypeText := lp.resultType.Title()
-		if lp.focusOnResultType {
+		if lp.focusOnResultType && lp.isFocused {
 			resultTypeText = lp.styles.FocusedItem.Render(resultTypeText)
 		} else {
 			resultTypeText = lp.styles.UnfocusedItem.Render(resultTypeText)

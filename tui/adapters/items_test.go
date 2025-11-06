@@ -54,7 +54,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 			  getAllPosts
 			  Return all posts
 			  Result Type
-			  │ [Post!]!
+			  [Post!]!
 		`)
 
 		assert.StringContains(content, expected)
@@ -307,8 +307,8 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	content := testx.NormalizeView(panel.View())
 
 	expected := testx.NormalizeView(`
-		  Result Type
-		│ String
+		Result Type
+		String
 	`)
 
 	assert.StringContains(content, expected)
