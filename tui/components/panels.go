@@ -200,6 +200,12 @@ func (lp *ListPanel) Items() []list.Item {
 
 // View renders the list panel
 func (lp *ListPanel) View() string {
+	const (
+		sectionLabelHeight = 1 // Fixed height for section labels
+		resultTypeHeight   = 1 // Fixed height for result type item
+		emptyLineHeight    = 1 // Fixed height for empty lines between sections
+	)
+
 	availableHeight := lp.height
 	parts := []string{}
 
@@ -213,11 +219,11 @@ func (lp *ListPanel) View() string {
 		availableHeight -= lipgloss.Height(desc)
 	}
 
-	// Render result type section if present
+	// Render result type section if present (fixed heights)
 	if lp.resultType != nil {
 		sectionLabel := lp.styles.SectionLabel.Render("Result Type")
 		parts = append(parts, "", sectionLabel, "") // Appending empty string adds new lines
-		availableHeight -= lipgloss.Height(sectionLabel)
+		availableHeight -= emptyLineHeight + sectionLabelHeight + emptyLineHeight
 
 		// Render result type with focus indicator
 		resultTypeText := lp.resultType.Title()
@@ -230,13 +236,13 @@ func (lp *ListPanel) View() string {
 		availableHeight -= lipgloss.Height(resultTypeText)
 	}
 
-	// Input Arguments section label if list has items
+	// Input Arguments section label if list has items (fixed heights)
 	if len(lp.ListModel.Items()) > 0 {
 		if lp.resultType != nil {
 			// Only render sectionLabel if it needs to be differentiated from "Result Type"
 			sectionLabel := lp.styles.SectionLabel.Render("Input Arguments")
 			parts = append(parts, "", sectionLabel) // Appending empty string adds new lines
-			availableHeight -= lipgloss.Height(sectionLabel)
+			availableHeight -= emptyLineHeight + sectionLabelHeight
 		}
 		lp.ListModel.SetWidth(lp.width)
 		lp.ListModel.SetHeight(availableHeight)
