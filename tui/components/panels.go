@@ -5,9 +5,12 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/reflow/wordwrap"
 	"github.com/tonysyu/gqlxp/tui/config"
 	"github.com/tonysyu/gqlxp/utils/text"
+)
+
+const (
+	maxDescriptionHeight = 5 // Maximum height for description (in lines)
 )
 
 // Panel represents a generic panel that can be displayed in the TUI
@@ -202,7 +205,6 @@ func (lp *ListPanel) Items() []list.Item {
 func (lp *ListPanel) View() string {
 	const (
 		sectionLabelHeight = 1 // Fixed height for section labels
-		resultTypeHeight   = 1 // Fixed height for result type item
 		emptyLineHeight    = 1 // Fixed height for empty lines between sections
 	)
 
@@ -214,7 +216,8 @@ func (lp *ListPanel) View() string {
 	availableHeight -= lipgloss.Height(title)
 
 	if lp.Description() != "" {
-		desc := wordwrap.String(lp.Description(), lp.width)
+		desc := text.WrapAndTruncate(lp.Description(), lp.width, maxDescriptionHeight)
+
 		parts = append(parts, desc)
 		availableHeight -= lipgloss.Height(desc)
 	}
