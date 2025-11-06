@@ -27,7 +27,8 @@ var _ Panel = (*stringPanel)(nil)
 // ListPanel wraps a list.Model to implement the Panel interface
 type ListPanel struct {
 	ListModel         list.Model
-	lastSelectedIndex int // Track the last selected index to detect changes
+	lastSelectedIndex int  // Track the last selected index to detect changes
+	wasFiltering      bool // Track whether we were in filtering mode to detect exits
 	title             string
 	description       string
 	resultType        ListItem // Virtual item displayed at top
@@ -104,9 +105,18 @@ func (lp *ListPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if !lp.focusOnResultType {
 		var cmd tea.Cmd
 		lp.ListModel, cmd = lp.ListModel.Update(msg)
+
+		// Check if we just exited filtering mode
+		// Filtering mode is when the user is actively typing the filter
+		isFiltering := lp.ListModel.FilterState() == list.Filtering
+		exitedFiltering := lp.wasFiltering && !isFiltering
+		lp.wasFiltering = isFiltering
+
 		// Check if selection has changed and auto-open detail panel
 		currentIndex := lp.ListModel.Index()
-		if currentIndex != lp.lastSelectedIndex && currentIndex >= 0 {
+		// Refresh if index changed OR if we just exited filtering (since filtering could change
+		// the selected item)
+		if (currentIndex != lp.lastSelectedIndex || exitedFiltering) && currentIndex >= 0 {
 			lp.lastSelectedIndex = currentIndex
 			if openCmd := lp.OpenSelectedItem(); openCmd != nil {
 				return lp, tea.Batch(cmd, openCmd)

@@ -277,3 +277,57 @@ func TestPanelInterfaceCompliance(t *testing.T) {
 	is.True(stringPanelInterface != nil)
 	is.True(listPanelInterface != nil)
 }
+
+func TestListPanelFilterExitRefresh(t *testing.T) {
+	is := is.New(t)
+
+	// Create items with Open capability
+	items := []ListItem{
+		testOpenableItem{
+			SimpleItem: NewSimpleItem("Apple"),
+			openPanel:  NewStringPanel("Apple subpanel"),
+		},
+		testOpenableItem{
+			SimpleItem: NewSimpleItem("Banana"),
+			openPanel:  NewStringPanel("Banana subpanel"),
+		},
+		testOpenableItem{
+			SimpleItem: NewSimpleItem("Carrot"),
+			openPanel:  NewStringPanel("Carrot subpanel"),
+		},
+	}
+	panel := NewListPanel(items, "Test Panel")
+	panel.SetSize(80, 20)
+
+	// The list.Model starts at index 0 by default, but lastSelectedIndex is -1
+	// So we need to trigger an initial update to sync them
+	_, cmd := panel.Update(tea.KeyMsg{Type: tea.KeyDown})
+	is.True(cmd != nil) // Should open panel for selected item
+	is.Equal(panel.lastSelectedIndex, 1)
+
+	// Start filtering by pressing "/"
+	_, cmd = panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
+	// wasFiltering should now be true (we're in filter mode)
+	is.True(panel.wasFiltering)
+
+	// Type a filter - the cursor might move during filtering
+	_, cmd = panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'b'}})
+	is.True(panel.wasFiltering) // Still filtering
+
+	// Accept the filter by pressing Enter
+	// This should exit filter mode and trigger a refresh even if cursor is at the same index
+	_, cmd = panel.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	// After accepting filter:
+	// 1. wasFiltering should be false (no longer in filter mode)
+	// 2. A command should be generated to refresh the inactive panel
+	is.True(!panel.wasFiltering) // Should have exited filter mode
+	is.True(cmd != nil)          // Should have generated OpenPanel command
+
+	// Verify the command is an OpenPanelMsg
+	if cmd != nil {
+		msg := cmd()
+		_, ok := msg.(OpenPanelMsg)
+		is.True(ok) // Should be OpenPanelMsg
+	}
+}
