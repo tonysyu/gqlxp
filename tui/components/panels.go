@@ -65,6 +65,7 @@ func NewListPanel[T list.Item](choices []T, title string) *ListPanel {
 	m := list.New(items, blurredItemDelegate, 0, 0)
 	m.DisableQuitKeybindings()
 	m.SetShowTitle(false)
+	m.SetShowHelp(false)
 	return &ListPanel{
 		ListModel:         m,
 		lastSelectedIndex: -1, // Initialize to -1 to trigger opening on first selection
@@ -175,12 +176,14 @@ func (lp *ListPanel) SetObjectType(item ListItem) {
 // Update items to display with focused style (opposite of SetBlurred)
 func (lp *ListPanel) SetFocused() {
 	lp.ListModel.SetDelegate(lp.focusedDelegate)
+	lp.ListModel.SetShowHelp(true)
 	lp.isFocused = true
 }
 
 // Update items to display with blurred style (opposite of SetFocused)
 func (lp *ListPanel) SetBlurred() {
 	lp.ListModel.SetDelegate(lp.blurredDelegate)
+	lp.ListModel.SetShowHelp(false)
 	lp.isFocused = false
 }
 

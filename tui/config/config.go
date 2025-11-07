@@ -81,7 +81,7 @@ func DefaultStyles() Styles {
 			Padding(0, 2),
 
 		Breadcrumbs: lipgloss.NewStyle().
-			Foreground(ColorMidGray).
+			Foreground(ColorLightGray).
 			Padding(0, 1),
 
 		Overlay: lipgloss.NewStyle().
