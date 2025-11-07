@@ -257,8 +257,8 @@ func (lp *ListPanel) View() string {
 
 	content := text.JoinLines(parts...)
 
-	// Apply fixed width style to ensure panel respects its allocated width
-	style := lipgloss.NewStyle().Width(lp.width)
+	// Apply fixed width & height style to avoid jittery panel borders
+	style := lipgloss.NewStyle().Width(lp.width).Height(lp.height)
 	return style.Render(content)
 }
 
