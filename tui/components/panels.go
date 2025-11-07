@@ -39,6 +39,7 @@ type ListPanel struct {
 	isFocused         bool              // Track whether this panel is in focus
 	focusedDelegate   list.ItemDelegate // Item delegate for rendering when panel is focused
 	blurredDelegate   list.ItemDelegate // Item delegate for rendering when panel is blurred
+	wrapperStyle      lipgloss.Style    // Current style of wrapper (focused or blurred)
 	styles            config.Styles
 	width             int
 	height            int
@@ -66,13 +67,15 @@ func NewListPanel[T list.Item](choices []T, title string) *ListPanel {
 	m.DisableQuitKeybindings()
 	m.SetShowTitle(false)
 	m.SetShowHelp(false)
+	styles := config.DefaultStyles()
 	return &ListPanel{
 		ListModel:         m,
 		lastSelectedIndex: -1, // Initialize to -1 to trigger opening on first selection
 		title:             title,
 		blurredDelegate:   blurredItemDelegate,
 		focusedDelegate:   list.NewDefaultDelegate(),
-		styles:            config.DefaultStyles(),
+		wrapperStyle:      styles.BlurredPanel,
+		styles:            styles,
 	}
 }
 
@@ -175,6 +178,7 @@ func (lp *ListPanel) SetObjectType(item ListItem) {
 
 // Update items to display with focused style (opposite of SetBlurred)
 func (lp *ListPanel) SetFocused() {
+	lp.wrapperStyle = lp.styles.FocusedPanel
 	lp.ListModel.SetDelegate(lp.focusedDelegate)
 	lp.ListModel.SetShowHelp(true)
 	lp.isFocused = true
@@ -182,6 +186,7 @@ func (lp *ListPanel) SetFocused() {
 
 // Update items to display with blurred style (opposite of SetFocused)
 func (lp *ListPanel) SetBlurred() {
+	lp.wrapperStyle = lp.styles.BlurredPanel
 	lp.ListModel.SetDelegate(lp.blurredDelegate)
 	lp.ListModel.SetShowHelp(false)
 	lp.isFocused = false
@@ -259,7 +264,8 @@ func (lp *ListPanel) View() string {
 
 	// Apply fixed width & height style to avoid jittery panel borders
 	style := lipgloss.NewStyle().Width(lp.width).Height(lp.height)
-	return style.Render(content)
+	innerPanel := style.Render(content)
+	return lp.wrapperStyle.Render(innerPanel)
 }
 
 // stringPanel displays a simple string content

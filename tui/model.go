@@ -265,8 +265,6 @@ func (m *mainModel) updatePanelFocusStates() {
 // handleOpenPanel handles when an item is opened
 // The new panel is added to the stack after the currently focused panel
 func (m *mainModel) handleOpenPanel(newPanel components.Panel) {
-	// FIXME: New Panel should not show help, but switching panels also needs to activate it.
-
 	// Truncate stack to keep only up to and including the current left panel
 	m.panelStack = m.panelStack[:m.stackPosition+1]
 	// Append the new panel - it will show on the right
@@ -399,10 +397,9 @@ func (m mainModel) View() string {
 		return m.overlay.View()
 	}
 
-	// TODO: Make panels responsible for owning rendering using configured style
-	views := []string{m.styles.FocusedPanel.Render(m.panelStack[m.stackPosition].View())}
+	views := []string{m.panelStack[m.stackPosition].View()}
 	if len(m.panelStack) > m.stackPosition+1 {
-		views = append(views, m.styles.BlurredPanel.Render(m.panelStack[m.stackPosition+1].View()))
+		views = append(views, m.panelStack[m.stackPosition+1].View())
 	}
 
 	navbar := m.renderGQLTypeNavbar()
