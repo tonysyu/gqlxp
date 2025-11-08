@@ -56,5 +56,5 @@ func (p *SchemaView) GetUnionItems() []components.ListItem {
 }
 
 func (p *SchemaView) GetDirectiveItems() []components.ListItem {
-	return adaptDirectivesToItems(gql.CollectAndSortMapValues(p.schema.Directive))
+	return adaptDirectivesToItems(gql.CollectAndSortMapValues(p.schema.Directive), &p.schema)
 }

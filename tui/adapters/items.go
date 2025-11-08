@@ -12,6 +12,7 @@ import (
 var _ components.ListItem = (*fieldItem)(nil)
 var _ components.ListItem = (*argumentItem)(nil)
 var _ components.ListItem = (*typeDefItem)(nil)
+var _ components.ListItem = (*directiveItem)(nil)
 
 func adaptFieldsToItems(queryFields []*gql.Field, schema *gql.GraphQLSchema) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(queryFields))
@@ -63,10 +64,10 @@ func adaptUnionsToItems(unions []*gql.Union, schema *gql.GraphQLSchema) []compon
 	return adaptTypeDefsToItems(unions, schema)
 }
 
-func adaptDirectivesToItems(directives []*gql.Directive) []components.ListItem {
+func adaptDirectivesToItems(directives []*gql.Directive, schema *gql.GraphQLSchema) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(directives))
 	for _, directive := range directives {
-		adaptedItems = append(adaptedItems, newDirectiveDefinitionItem(directive))
+		adaptedItems = append(adaptedItems, newDirectiveDefinitionItem(directive, schema))
 	}
 	return adaptedItems
 }
@@ -341,9 +342,52 @@ func newTypeDefItemFromArgument(argument *gql.Argument, schema *gql.GraphQLSchem
 	}
 }
 
-func newDirectiveDefinitionItem(directive *gql.Directive) components.SimpleItem {
-	return components.NewSimpleItem(
-		directive.Name(),
-		components.WithDescription(directive.Description()),
-	)
+// Adapter/delegate for gql.Directive to support ListItem interface
+type directiveItem struct {
+	gqlDirective  *gql.Directive
+	schema        *gql.GraphQLSchema
+	directiveName string
+}
+
+func newDirectiveDefinitionItem(directive *gql.Directive, schema *gql.GraphQLSchema) components.ListItem {
+	return directiveItem{
+		gqlDirective:  directive,
+		schema:        schema,
+		directiveName: directive.Name(),
+	}
+}
+
+func (i directiveItem) Title() string       { return i.gqlDirective.Signature() }
+func (i directiveItem) FilterValue() string { return i.directiveName }
+func (i directiveItem) TypeName() string    { return "@" + i.directiveName }
+func (i directiveItem) RefName() string     { return i.directiveName }
+
+func (i directiveItem) Description() string {
+	return i.gqlDirective.Description()
+}
+
+func (i directiveItem) Details() string {
+	parts := []string{
+		text.H1(i.TypeName()),
+		text.GqlCode(i.gqlDirective.FormatSignature(80)),
+		i.Description(),
+	}
+	if len(i.gqlDirective.Locations()) > 0 {
+		locationList := []string{}
+		for _, loc := range i.gqlDirective.Locations() {
+			locationList = append(locationList, "- "+loc)
+		}
+		parts = append(parts, "**Locations:**\n"+text.JoinLines(locationList...))
+	}
+	return text.JoinParagraphs(parts...)
+}
+
+// OpenPanel displays arguments of directive (if any)
+func (i directiveItem) OpenPanel() (components.Panel, bool) {
+	argumentItems := adaptArgumentsToItems(i.gqlDirective.Arguments(), i.schema)
+
+	panel := components.NewListPanel(argumentItems, "@"+i.directiveName)
+	panel.SetDescription(i.Description())
+
+	return panel, true
 }

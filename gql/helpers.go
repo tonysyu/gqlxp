@@ -81,7 +81,7 @@ func getTypeName[T gqlType](node T) string {
 // formatValue converts an AST value to its string representation
 func formatValue(value *ast.Value) string {
 	if value == nil {
-		return "null"
+		return ""
 	}
 
 	switch value.Kind {
@@ -115,52 +115,83 @@ func formatValue(value *ast.Value) string {
 }
 
 // getArgumentString returns a string representation of an argument definition
-func getArgumentString(arg *ast.ArgumentDefinition) string {
-	result := fmt.Sprintf("%s: %s", arg.Name, getTypeString(arg.Type))
-	if arg.DefaultValue != nil {
-		result += fmt.Sprintf(" = %s", formatValue(arg.DefaultValue))
+func getArgumentString(arg *Argument) string {
+	result := fmt.Sprintf("%s: %s", arg.Name(), arg.TypeString())
+	if defaultValue := arg.DefaultValue(); defaultValue != "" {
+		result = fmt.Sprintf("%s = %s", result, defaultValue)
 	}
+	return result
+}
+
+func getArgumentStringList(argList []*Argument) []string {
+	var argStringList []string
+	for _, arg := range argList {
+		argStringList = append(argStringList, getArgumentString(arg))
+	}
+	return argStringList
+}
+
+type formatOpts struct {
+	prefix   string
+	suffix   string
+	maxWidth int
+}
+
+// formatCallable returns the field signature with optional multiline formatting
+// - If maxWidth <= 0, always uses inline format
+// - If maxWidth > 0 and inline signature exceeds maxWidth, formats arguments on separate lines
+//
+// Suffix input is appended to the end of callable
+// - For GQL fields, this will be ": <field-type>""
+// - For everything else, this will be an empty string
+func formatCallable(callable Callable, opts formatOpts) string {
+	var result string
+
+	name := opts.prefix + callable.Name()
+
+	// If no arguments just return callable + suffix
+	if len(callable.Arguments()) == 0 {
+		return name + opts.suffix
+	}
+
+	inputArgs := getArgumentStringList(callable.Arguments())
+
+	// Try inline format first
+	inputArgString := strings.Join(inputArgs, ", ")
+	inlineResult := fmt.Sprintf("%s(%s)%s", name, inputArgString, opts.suffix)
+
+	// If inlineResult fits within maxWidth, just return inlineResult
+	if opts.maxWidth <= 0 || len(inlineResult) <= opts.maxWidth {
+		return inlineResult
+	}
+
+	// Format with each argument on a new line, indented
+	multilineArgs := strings.Join(inputArgs, ",\n  ")
+	result = fmt.Sprintf("%s(\n  %s\n)%s", name, multilineArgs, opts.suffix)
 	return result
 }
 
 // getFieldString returns the signature of a field including arguments and default values
 // Handles both output fields (with arguments) and input fields (with default values)
-func getFieldString(field *ast.FieldDefinition) string {
+func getFieldString(field *Field) string {
 	return formatFieldStringWithWidth(field, 0)
 }
 
 // formatFieldStringWithWidth returns the field signature with optional multiline formatting
 // If maxWidth <= 0, always uses inline format
 // If maxWidth > 0 and inline signature exceeds maxWidth, formats arguments on separate lines
-func formatFieldStringWithWidth(field *ast.FieldDefinition, maxWidth int) string {
-	var result string
-
-	// Format with arguments if present
-	if len(field.Arguments) > 0 {
-		var inputArgs []string
-		for _, arg := range field.Arguments {
-			inputArgs = append(inputArgs, getArgumentString(arg))
-		}
-
-		// Try inline format first
-		inputArgString := strings.Join(inputArgs, ", ")
-		inlineResult := fmt.Sprintf("%s(%s): %s", field.Name, inputArgString, getTypeString(field.Type))
-
-		// Check if we should use multiline format
-		if maxWidth > 0 && len(inlineResult) > maxWidth {
-			// Format with each argument on a new line, indented
-			multilineArgs := strings.Join(inputArgs, ",\n  ")
-			result = fmt.Sprintf("%s(\n  %s\n): %s", field.Name, multilineArgs, getTypeString(field.Type))
-		} else {
-			result = inlineResult
-		}
-	} else {
-		result = fmt.Sprintf("%s: %s", field.Name, getTypeString(field.Type))
-	}
+func formatFieldStringWithWidth(field *Field, maxWidth int) string {
+	result := formatCallable(
+		field,
+		formatOpts{
+			suffix:   fmt.Sprintf(": %s", field.TypeString()),
+			maxWidth: maxWidth,
+		},
+	)
 
 	// Add default value if present (for input fields on InputObjects)
-	if field.DefaultValue != nil {
-		result += fmt.Sprintf(" = %s", formatValue(field.DefaultValue))
+	if defaultValue := field.DefaultValue(); defaultValue != "" {
+		result = fmt.Sprintf("%s = %s", result, defaultValue)
 	}
 
 	return result

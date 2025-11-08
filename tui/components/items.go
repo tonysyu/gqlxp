@@ -10,7 +10,7 @@ import (
 type ListItem interface {
 	list.DefaultItem
 
-	// OpenPanel Panel to show additional information.
+	// OpenPanel Panel to show child items, field types, and inputs.
 	OpenPanel() (Panel, bool)
 
 	// Details returns markdown-formatted details for the item.

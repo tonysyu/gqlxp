@@ -406,6 +406,6 @@ func (m mainModel) View() string {
 	breadcrumbs := m.renderBreadcrumbs()
 	panels := lipgloss.JoinHorizontal(lipgloss.Top, views...)
 
-	mainView := navbar + "\n" + breadcrumbs + "\n" + panels + "\n\n" + help
+	mainView := lipgloss.JoinVertical(0, navbar, breadcrumbs, panels, help)
 	return mainView
 }

@@ -18,6 +18,14 @@ var _ TypeDef = (*Object)(nil)
 var _ TypeDef = (*Scalar)(nil)
 var _ TypeDef = (*Union)(nil)
 
+type Callable interface {
+	Name() string
+	Arguments() []*Argument
+}
+
+var _ Callable = (*Directive)(nil)
+var _ Callable = (*Field)(nil)
+
 // gqlType interface for types that have a Name field (both ast and wrapped types)
 type gqlType interface {
 	*Field | *Object | *InputObject |
@@ -73,19 +81,24 @@ func (f *Field) ObjectTypeName() string {
 //
 //	"childConnection(first: Int = 10, after: ID!): ChildConnection!"
 func (f *Field) Signature() string {
-	return getFieldString(f.astField)
+	return getFieldString(f)
 }
 
 // FormatSignature returns the field signature with optional multiline formatting.
 // If maxWidth <= 0, always uses inline format (same as Signature()).
 // If maxWidth > 0 and inline signature exceeds maxWidth, formats arguments on separate lines.
 func (f *Field) FormatSignature(maxWidth int) string {
-	return formatFieldStringWithWidth(f.astField, maxWidth)
+	return formatFieldStringWithWidth(f, maxWidth)
 }
 
 // Arguments returns the field's arguments as wrapped Arguments
 func (f *Field) Arguments() []*Argument {
 	return wrapArguments(f.arguments)
+}
+
+// Default value if defined (empty-string if not)
+func (f *Field) DefaultValue() string {
+	return formatValue(f.astField.DefaultValue)
 }
 
 // ResolveObjectTypeDef returns the TypeDef for this field's type.
@@ -114,7 +127,6 @@ func wrapFields(astFields ast.FieldList) []*Field {
 type Argument struct {
 	name        string
 	description string
-	inputType   *ast.Type
 	// Keep reference to underlying ast for operations within gql package
 	astArg *ast.ArgumentDefinition
 }
@@ -127,7 +139,6 @@ func newArgument(arg *ast.ArgumentDefinition) *Argument {
 	return &Argument{
 		name:        arg.Name,
 		description: arg.Description,
-		inputType:   arg.Type,
 		astArg:      arg,
 	}
 }
@@ -137,31 +148,35 @@ func (a *Argument) Description() string { return a.description }
 
 // TypeString returns the string representation of the argument's type
 func (a *Argument) TypeString() string {
-	return getTypeString(a.inputType)
+	return getTypeString(a.astArg.Type)
 }
 
 // ObjectTypeName returns the input type name (unwrapping List and NonNull)
 // While TypeString would return [MyInput!]!, this just returns MyInput.
 func (a *Argument) ObjectTypeName() string {
-	return getNamedTypeName(a.inputType)
+	return getNamedTypeName(a.astArg.Type)
 }
 
 // Signature returns the full argument signature (name: Type = defaultValue)
 func (a *Argument) Signature() string {
-	return getArgumentString(a.astArg)
+	return getArgumentString(a)
 }
 
 // FormatSignature returns the argument signature (always single line for arguments)
 // The maxWidth parameter is accepted for consistency with Field.FormatSignature but is ignored.
 func (a *Argument) FormatSignature(maxWidth int) string {
-	return getArgumentString(a.astArg)
+	return getArgumentString(a)
+}
+
+// Default value if defined (empty-string if not)
+func (a *Argument) DefaultValue() string {
+	return formatValue(a.astArg.DefaultValue)
 }
 
 // ResolveObjectTypeDef returns the TypeDef for this argument's input type.
 // Returns an error if the type is a built-in scalar (String, Int, Boolean, etc.)
 func (a *Argument) ResolveObjectTypeDef(schema *GraphQLSchema) (TypeDef, error) {
-	typeName := getNamedTypeName(a.inputType)
-	return schema.NamedToTypeDef(typeName)
+	return schema.NamedToTypeDef(a.ObjectTypeName())
 }
 
 // wrapArguments converts a slice of ast.ArgumentDefinition to wrapped Argument types
@@ -362,8 +377,11 @@ func (u *Union) Types() []string {
 // Directive represents GraphQL directive types.
 // See https://spec.graphql.org/October2021/#sec-Type-System.Directives
 type Directive struct {
-	name        string
-	description string
+	name         string
+	description  string
+	arguments    ast.ArgumentDefinitionList
+	locations    []string
+	isRepeatable bool
 	// Keep reference to underlying ast for operations within gql package
 	astDirective *ast.DirectiveDefinition
 }
@@ -373,15 +391,52 @@ func newDirective(directive *ast.DirectiveDefinition) *Directive {
 	if directive == nil {
 		return nil
 	}
+	// Convert DirectiveLocation to strings
+	locations := make([]string, len(directive.Locations))
+	for i, loc := range directive.Locations {
+		locations[i] = string(loc)
+	}
 	return &Directive{
 		name:         directive.Name,
 		description:  directive.Description,
+		arguments:    directive.Arguments,
+		locations:    locations,
+		isRepeatable: directive.IsRepeatable,
 		astDirective: directive,
 	}
 }
 
 func (d *Directive) Name() string        { return d.name }
 func (d *Directive) Description() string { return d.description }
+
+// Signature returns the directive signature including arguments.
+// This can be as simple as:
+//
+//	"directiveName"
+//
+// Or can be as complex as:
+//
+//	"directiveWithArgs(count: Int = 10, special: Boolean!)"
+func (d *Directive) Signature() string {
+	return formatCallable(d, formatOpts{prefix: "@"})
+}
+
+// FormatSignature returns the field signature with optional multiline formatting.
+// If maxWidth <= 0, always uses inline format (same as Signature()).
+// If maxWidth > 0 and inline signature exceeds maxWidth, formats arguments on separate lines.
+func (d *Directive) FormatSignature(maxWidth int) string {
+	return formatCallable(d, formatOpts{prefix: "@", maxWidth: maxWidth})
+}
+
+// Arguments returns the directive's arguments as wrapped Arguments
+func (d *Directive) Arguments() []*Argument {
+	return wrapArguments(d.arguments)
+}
+
+// Locations returns the directive's valid locations
+func (d *Directive) Locations() []string {
+	return d.locations
+}
 
 // EnumValue represents values on GraphQL enum types.
 // See https://spec.graphql.org/October2021/#sec-Enums

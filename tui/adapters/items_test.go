@@ -412,12 +412,12 @@ func TestDirectiveDefinitionItemCreation(t *testing.T) {
 	schema, _ := gql.ParseSchema([]byte(schemaString))
 	directive := schema.Directive["deprecated"]
 
-	item := newDirectiveDefinitionItem(directive)
-	is.Equal(item.Title(), "deprecated")
+	item := newDirectiveDefinitionItem(directive, &schema)
+	is.Equal(item.Title(), "@deprecated(reason: String = \"No longer supported\")")
 	is.Equal(item.Description(), "")
 
-	// Directive items should not be openable (they're simple items)
+	// Directive items are now openable and show their arguments
 	panel, ok := item.OpenPanel()
-	is.True(!ok)
-	is.True(panel == nil)
+	is.True(ok)
+	is.True(panel != nil)
 }
