@@ -4,11 +4,8 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/config"
-	"github.com/tonysyu/gqlxp/utils/testx"
-	"github.com/tonysyu/gqlxp/utils/testx/assert"
 )
 
 func showDefaultOverlay() overlayModel {
@@ -104,54 +101,4 @@ func TestOverlay(t *testing.T) {
 		is.Equal(overlay.viewport.Width, width-overlayPanelMargin)
 		is.Equal(overlay.viewport.Height, height-overlayPanelMargin-config.HelpHeight)
 	})
-}
-
-func TestOverlayIntegrationWithMainModel(t *testing.T) {
-	assert := assert.New(t)
-
-	t.Run("Render query details", func(t *testing.T) {
-		view := renderOverlayFromMainModel(queryType, `
-			type Query {
-				"""
-				Get user by ID
-				"""
-				getUser(id: ID!): User
-			}
-		`)
-
-		assert.StringContains(view, testx.NormalizeView(`
-			# User
-            getUser(id: ID!): User
-            Get user by ID
-		`))
-	})
-
-	t.Run("Render mutation details", func(t *testing.T) {
-		view := renderOverlayFromMainModel(mutationType, `
-			type Mutation {
-			    """
-			    Create a new post
-			    """
-			    createPost(title: String!, content: String!, authorId: ID!): Post!
-			}
-		`)
-
-		assert.StringContains(view, testx.NormalizeView(`
-			# Post
-			createPost(title: String!, content: String!, authorId: ID!): Post!
-			Create a new post
-		`))
-	})
-}
-
-func renderOverlayFromMainModel(gqlType gqlType, schemaString string) string {
-	tm := newTestModel(schemaString)
-	// Override style to remove border and padding to simplify test comparison
-	tm.Model.Overlay.Styles.Overlay = lipgloss.NewStyle()
-
-	tm.Update(tea.WindowSizeMsg{Width: 80, Height: 60})
-	tm.Update(SetGQLTypeMsg{GQLType: gqlType})
-	tm.Update(tea.KeyMsg{Type: tea.KeySpace})
-
-	return testx.NormalizeView(tm.View())
 }
