@@ -17,8 +17,8 @@ var (
 	keyPrevType  = tea.KeyMsg{Type: tea.KeyCtrlR}
 )
 
-func createTestSchema() []byte {
-	return []byte(`
+func createTestSchema() string {
+	return `
 		type Object1 {
 			field1: String!
 			field2: String!
@@ -40,37 +40,41 @@ func createTestSchema() []byte {
 			mutation1: Object1
 			mutation2: Object2
 		}
-	`)
+	`
 }
 
 // Wrapper for mainModel used to simplify testing
 type testModel struct {
-	model mainModel
+	Model mainModel
 }
 
-func newTestModel() testModel {
-	schemaView, _ := adapters.ParseSchema(createTestSchema())
+func newTestModel(schema string) testModel {
+	schemaView, _ := adapters.ParseSchemaString(schema)
 
 	model := newModel(schemaView)
 	model.width = 120
 	model.height = 40
 
-	return testModel{model: model}
+	return testModel{Model: model}
 }
 
 func (tm *testModel) Update(msg tea.Msg) {
-	model := tm.model
+	model := tm.Model
 	updatedModel, cmd := model.Update(msg)
-	tm.model = updatedModel.(mainModel)
+	tm.Model = updatedModel.(mainModel)
 	if cmd != nil {
 		// If Update returns a cmd, execute it and recursively Update model
 		tm.Update(cmd())
 	}
 }
 
+func (tm *testModel) View() string {
+	return tm.Model.View()
+}
+
 // ViewBreadcrumbs returns line of text from rendered view that represents breadcrumbs
 func (tm *testModel) ViewBreadcrumbs() string {
-	view := tm.model.View()
+	view := tm.View()
 	lines := text.SplitLines(view)
 	// NOTE: This index for the breadcrumb line is hard-coded and will change if layout changes
 	return testx.NormalizeView(lines[2])
@@ -79,7 +83,7 @@ func (tm *testModel) ViewBreadcrumbs() string {
 func TestBreadcrumbs(t *testing.T) {
 	is := is.New(t)
 
-	model := newTestModel()
+	model := newTestModel(createTestSchema())
 
 	t.Run("initial state has no breadcrumbs", func(t *testing.T) {
 		is.Equal(model.ViewBreadcrumbs(), "")

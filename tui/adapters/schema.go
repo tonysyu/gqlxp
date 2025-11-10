@@ -9,6 +9,10 @@ type SchemaView struct {
 	schema gql.GraphQLSchema
 }
 
+func ParseSchemaString(schemaContent string) (SchemaView, error) {
+	return ParseSchema([]byte(schemaContent))
+}
+
 func ParseSchema(schemaContent []byte) (SchemaView, error) {
 	schema, err := gql.ParseSchema(schemaContent)
 	if err != nil {

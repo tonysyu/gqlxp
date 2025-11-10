@@ -30,6 +30,10 @@ const (
 // availableGQLTypes defines the ordered list of GQL types for navigation
 var availableGQLTypes = []gqlType{queryType, mutationType, objectType, inputType, enumType, scalarType, interfaceType, unionType, directiveType}
 
+type SetGQLTypeMsg struct {
+	GQLType gqlType
+}
+
 var (
 	quitKeyBinding = key.NewBinding(
 		key.WithKeys("ctrl+c", "ctrl+d"),
@@ -54,13 +58,13 @@ type mainModel struct {
 	// Currently displayed GraphQL Type (see availableGQLTypes)
 	selectedGQLType gqlType
 	// Overlay for displaying ListItem.Details()
-	overlay overlayModel
+	Overlay overlayModel
 	// Breadcrumbs showing navigation path through hidden panels
 	breadcrumbs breadcrumbsModel
 
 	width          int
 	height         int
-	styles         config.Styles
+	Styles         config.Styles
 	keymap         keymap
 	globalKeyBinds []key.Binding
 	help           help.Model
@@ -74,8 +78,8 @@ func newModel(schema adapters.SchemaView) mainModel {
 		help:            help.New(),
 		schema:          schema,
 		selectedGQLType: queryType,
-		styles:          styles,
-		overlay:         newOverlayModel(styles),
+		Styles:          styles,
+		Overlay:         newOverlayModel(styles),
 		breadcrumbs:     newBreadcrumbsModel(styles),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
@@ -121,7 +125,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Try overlay first - it intercepts messages when active
 	var overlayCmd tea.Cmd
 	var intercepted bool
-	m.overlay, overlayCmd, intercepted = m.overlay.Update(msg)
+	m.Overlay, overlayCmd, intercepted = m.Overlay.Update(msg)
 	if intercepted {
 		return m, overlayCmd
 	}
@@ -172,6 +176,9 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case components.OpenPanelMsg:
 		m.handleOpenPanel(msg.Panel)
+	case SetGQLTypeMsg:
+		m.selectedGQLType = msg.GQLType
+		m.resetAndLoadMainPanel()
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
 		m.width = msg.Width
@@ -203,7 +210,7 @@ func (m *mainModel) openOverlayForSelectedItem() {
 			if listItem, ok := selectedItem.(components.ListItem); ok {
 				// Some items don't have details, so these should now open the overlay
 				if content := listItem.Details(); content != "" {
-					m.overlay.Show(content, m.width, m.height)
+					m.Overlay.Show(content, m.width, m.height)
 				}
 			}
 		}
@@ -235,14 +242,14 @@ func (m *mainModel) sizePanels() {
 	panelHeight := m.height - config.HelpHeight - config.NavbarHeight - config.BreadcrumbsHeight
 	// Size only the visible panels (config.VisiblePanelCount = 2)
 	m.panelStack[m.stackPosition].SetSize(
-		panelWidth-m.styles.FocusedPanel.GetHorizontalFrameSize(),
-		panelHeight-m.styles.FocusedPanel.GetVerticalFrameSize(),
+		panelWidth-m.Styles.FocusedPanel.GetHorizontalFrameSize(),
+		panelHeight-m.Styles.FocusedPanel.GetVerticalFrameSize(),
 	)
 	// The right panel might not exist, so check before resizing
 	if len(m.panelStack) > m.stackPosition+1 {
 		m.panelStack[m.stackPosition+1].SetSize(
-			panelWidth-m.styles.BlurredPanel.GetHorizontalFrameSize(),
-			panelHeight-m.styles.BlurredPanel.GetHorizontalFrameSize(),
+			panelWidth-m.Styles.BlurredPanel.GetHorizontalFrameSize(),
+			panelHeight-m.Styles.BlurredPanel.GetHorizontalFrameSize(),
 		)
 	}
 }
@@ -367,15 +374,15 @@ func (m *mainModel) renderGQLTypeNavbar() string {
 	for _, fieldType := range availableGQLTypes {
 		var style lipgloss.Style
 		if m.selectedGQLType == fieldType {
-			style = m.styles.ActiveTab
+			style = m.Styles.ActiveTab
 		} else {
-			style = m.styles.InactiveTab
+			style = m.Styles.InactiveTab
 		}
 		tabs = append(tabs, style.Render(string(fieldType)))
 	}
 
 	navbar := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
-	return m.styles.Navbar.Render(navbar)
+	return m.Styles.Navbar.Render(navbar)
 }
 
 // renderBreadcrumbs renders the breadcrumb trail
@@ -393,8 +400,8 @@ func (m mainModel) View() string {
 	})
 
 	// Show overlay if active, and return immediately
-	if m.overlay.IsActive() {
-		return m.overlay.View()
+	if m.Overlay.IsActive() {
+		return m.Overlay.View()
 	}
 
 	views := []string{m.panelStack[m.stackPosition].View()}

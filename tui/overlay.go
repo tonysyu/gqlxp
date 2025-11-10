@@ -21,7 +21,7 @@ type overlayModel struct {
 	renderer *glamour.TermRenderer
 	content  string // original markdown content
 	rendered string // cache rendered content
-	styles   config.Styles
+	Styles   config.Styles
 
 	width  int
 	height int
@@ -39,7 +39,7 @@ func (k overlayKeymap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Close, k.Quit}
 }
 
-func newOverlayModel(style config.Styles) overlayModel {
+func newOverlayModel(styles config.Styles) overlayModel {
 	vp := viewport.New(0, 0)
 
 	// Initialize glamour renderer once for the lifetime of the session
@@ -52,6 +52,7 @@ func newOverlayModel(style config.Styles) overlayModel {
 		viewport: vp,
 		renderer: nil,
 		help:     help.New(),
+		Styles:   styles,
 		keymap: overlayKeymap{
 			Close: key.NewBinding(
 				key.WithKeys(" ", "q"),
@@ -140,7 +141,7 @@ func (o overlayModel) View() string {
 	helpView := o.help.ShortHelpView(o.keymap.ShortHelp())
 	content := text.JoinParagraphs(o.viewport.View(), helpView)
 
-	overlay := config.DefaultStyles().Overlay.Render(content)
+	overlay := o.Styles.Overlay.Render(content)
 
 	// Center the overlay on screen
 	overlayHeight := lipgloss.Height(overlay)

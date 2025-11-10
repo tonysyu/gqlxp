@@ -30,7 +30,7 @@ func TestNewModel(t *testing.T) {
 		}
 	`
 
-	schemaView, _ := adapters.ParseSchema([]byte(schemaString))
+	schemaView, _ := adapters.ParseSchemaString(schemaString)
 	model := newModel(schemaView)
 
 	// Test initial state
@@ -144,7 +144,7 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 		directive @deprecated on FIELD_DEFINITION
 	`
 
-	schemaView, _ := adapters.ParseSchema([]byte(schemaString))
+	schemaView, _ := adapters.ParseSchemaString(schemaString)
 	model := newModel(schemaView)
 
 	// Test initial type
