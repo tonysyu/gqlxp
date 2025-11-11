@@ -92,15 +92,36 @@ func adaptEnumValuesToItems(enumNodes []*gql.EnumValue) []components.ListItem {
 	return adaptedItems
 }
 
-func formatFieldDefinitionsToCodeBlock(fieldNodes []*gql.Field) string {
+func formatFieldDefinitionsWithDescriptions(fieldNodes []*gql.Field) string {
 	if len(fieldNodes) == 0 {
 		return ""
 	}
-	var fields []string
+	var parts []string
 	for _, field := range fieldNodes {
-		fields = append(fields, field.Signature())
+		fieldParts := []string{}
+		if desc := field.Description(); desc != "" {
+			fieldParts = append(fieldParts, text.GqlDocString(desc))
+		}
+		fieldParts = append(fieldParts, field.Signature())
+		parts = append(parts, text.JoinLines(fieldParts...))
 	}
-	return text.GqlCode(text.JoinLines(fields...))
+	return text.GqlCode(text.JoinParagraphs(parts...))
+}
+
+func formatEnumValuesWithDescriptions(enumValues []*gql.EnumValue) string {
+	if len(enumValues) == 0 {
+		return ""
+	}
+	var parts []string
+	for _, val := range enumValues {
+		valParts := []string{}
+		if desc := val.Description(); desc != "" {
+			valParts = append(valParts, text.GqlDocString(desc))
+		}
+		valParts = append(valParts, val.Name())
+		parts = append(parts, text.JoinLines(valParts...))
+	}
+	return text.GqlCode(text.JoinParagraphs(parts...))
 }
 
 // Adapter/delegate for gql.FieldDefinition to support ListItem interface
@@ -229,36 +250,30 @@ func (i typeDefItem) Details() string {
 		if len(typeDef.Interfaces()) > 0 {
 			parts = append(parts, "**Implements:** "+strings.Join(typeDef.Interfaces(), ", "))
 		}
-		codeBlock := formatFieldDefinitionsToCodeBlock(typeDef.Fields())
-		if len(codeBlock) > 0 {
-			parts = append(parts, codeBlock)
+		fieldsWithDesc := formatFieldDefinitionsWithDescriptions(typeDef.Fields())
+		if len(fieldsWithDesc) > 0 {
+			parts = append(parts, fieldsWithDesc)
 		}
 	case *gql.Scalar:
 		parts = append(parts, "_Scalar type_")
 	case *gql.Interface:
-		codeBlock := formatFieldDefinitionsToCodeBlock(typeDef.Fields())
-		if len(codeBlock) > 0 {
-			parts = append(parts, codeBlock)
+		fieldsWithDesc := formatFieldDefinitionsWithDescriptions(typeDef.Fields())
+		if len(fieldsWithDesc) > 0 {
+			parts = append(parts, fieldsWithDesc)
 		}
 	case *gql.Union:
 		if len(typeDef.Types()) > 0 {
 			parts = append(parts, "**Union of:** "+strings.Join(typeDef.Types(), " | "))
 		}
 	case *gql.Enum:
-		if len(typeDef.Values()) > 0 {
-			var values []string
-			for _, val := range typeDef.Values() {
-				values = append(values, val.Name())
-			}
-			parts = append(parts, text.GqlCode(text.JoinLines(values...)))
+		valuesWithDesc := formatEnumValuesWithDescriptions(typeDef.Values())
+		if len(valuesWithDesc) > 0 {
+			parts = append(parts, valuesWithDesc)
 		}
 	case *gql.InputObject:
-		if len(typeDef.Fields()) > 0 {
-			var fields []string
-			for _, field := range typeDef.Fields() {
-				fields = append(fields, field.FormatSignature(80))
-			}
-			parts = append(parts, text.GqlCode(text.JoinLines(fields...)))
+		fieldsWithDesc := formatFieldDefinitionsWithDescriptions(typeDef.Fields())
+		if len(fieldsWithDesc) > 0 {
+			parts = append(parts, fieldsWithDesc)
 		}
 	}
 

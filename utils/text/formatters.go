@@ -1,8 +1,10 @@
 package text
 
 import (
-	"github.com/muesli/reflow/wordwrap"
+	"fmt"
 	"strings"
+
+	"github.com/muesli/reflow/wordwrap"
 )
 
 const ellipsis = "…"
@@ -44,6 +46,10 @@ func WrapAndTruncate(rawString string, maxWidth, maxLines int) string {
 
 func GqlCode(code string) string {
 	return JoinLines("```graphqls", code, "```")
+}
+
+func GqlDocString(description string) string {
+	return fmt.Sprintf(`"""%s"""`, description)
 }
 
 func H1(title string) string {

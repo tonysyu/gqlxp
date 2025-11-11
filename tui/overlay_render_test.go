@@ -68,7 +68,13 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			A user in the system
 			"""
 			type User implements Node {
+				"""
+				Unique identifier
+				"""
 				id: ID!
+				"""
+				User's full name
+				"""
 				name: String!
 				email: String!
 			}
@@ -81,8 +87,12 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 
 			**Implements:** Node
 
+			"""Unique identifier"""
 			id: ID!
+
+			"""User's full name"""
 			name: String!
+
 			email: String!
 		`))
 	})
@@ -93,7 +103,13 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			Input for creating a user
 			"""
 			input CreateUserInput {
+				"""
+				User's full name
+				"""
 				name: String!
+				"""
+				User's email address
+				"""
 				email: String!
 				age: Int
 			}
@@ -103,8 +119,12 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			# CreateUserInput
 			Input for creating a user
 
+			"""User's full name"""
 			name: String!
+
+			"""User's email address"""
 			email: String!
+
 			age: Int
 		`))
 	})
@@ -131,8 +151,12 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			# Role
 			User role in the system
 
+			"""Administrator role"""
 			ADMIN
+
+			"""Regular user role"""
 			USER
+
 			GUEST
 		`))
 	})
@@ -158,6 +182,9 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			Node interface for entities with ID
 			"""
 			interface Node {
+				"""
+				Unique identifier for the entity
+				"""
 				id: ID!
 			}
 		`)
@@ -166,6 +193,7 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			# Node
 			Node interface for entities with ID
 
+			"""Unique identifier for the entity"""
 			id: ID!
 		`))
 	})
