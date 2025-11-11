@@ -129,7 +129,7 @@ func (i fieldItem) Description() string {
 
 func (i fieldItem) Details() string {
 	return text.JoinParagraphs(
-		text.H1(i.TypeName()),
+		text.H1(i.RefName()),
 		text.GqlCode(i.gqlField.FormatSignature(80)),
 		i.Description(),
 	)

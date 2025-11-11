@@ -35,7 +35,7 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 		`)
 
 		assert.StringContains(view, testx.NormalizeView(`
-			# User
+			# getUser
             getUser(id: ID!): User
             Get user by ID
 		`))
@@ -52,7 +52,7 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 		`)
 
 		assert.StringContains(view, testx.NormalizeView(`
-			# Post
+			# createPost
 			createPost(title: String!, content: String!, authorId: ID!): Post!
 			Create a new post
 		`))
@@ -60,10 +60,14 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 
 	t.Run("Render object type details", func(t *testing.T) {
 		view := renderOverlayFromMainModel(objectType, `
+			interface Node {
+				id: ID!
+			}
+
 			"""
 			A user in the system
 			"""
-			type User {
+			type User implements Node {
 				id: ID!
 				name: String!
 				email: String!
@@ -74,6 +78,8 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			# User
 
 			A user in the system
+
+			**Implements:** Node
 
 			id: ID!
 			name: String!
@@ -142,6 +148,7 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 		assert.StringContains(view, testx.NormalizeView(`
 			# DateTime
 			DateTime scalar type
+			*Scalar type*
 		`))
 	})
 
@@ -193,6 +200,10 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			# @auth
 			@auth(requires: String!)
 			Require authentication to access
+
+			**Locations:**
+			• FIELD_DEFINITION
+			• OBJECT
 		`))
 	})
 }
