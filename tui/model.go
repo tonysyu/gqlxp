@@ -2,7 +2,6 @@ package tui
 
 import (
 	"reflect"
-	"slices"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
@@ -11,6 +10,7 @@ import (
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/components"
 	"github.com/tonysyu/gqlxp/tui/config"
+	"github.com/tonysyu/gqlxp/tui/navigation"
 )
 
 type gqlType string
@@ -48,19 +48,10 @@ type keymap = struct {
 type mainModel struct {
 	// Parsed GraphQL schema that's displayed in the TUI.
 	schema adapters.SchemaView
-	// Panels displaying list-views of GraphQL types.
-	// A list of top-level types (see availableGQLTypes) is at the bottom of the stack, and children
-	// of those types (e.g. fields, inputs, return types) are displayed in additional panels.
-	panelStack []components.Panel
-	// Position of the currently focused panel in the panelStack.
-	// This may not be the top-most item in the stack.
-	stackPosition int
-	// Currently displayed GraphQL Type (see availableGQLTypes)
-	selectedGQLType gqlType
+	// Navigation manager coordinates panel stack, breadcrumbs, and type selection
+	nav *navigation.NavigationManager
 	// Overlay for displaying ListItem.Details()
 	Overlay overlayModel
-	// Breadcrumbs showing navigation path through hidden panels
-	breadcrumbs breadcrumbsModel
 
 	width          int
 	height         int
@@ -73,14 +64,11 @@ type mainModel struct {
 func newModel(schema adapters.SchemaView) mainModel {
 	styles := config.DefaultStyles()
 	m := mainModel{
-		panelStack:      make([]components.Panel, config.VisiblePanelCount),
-		stackPosition:   0,
-		help:            help.New(),
-		schema:          schema,
-		selectedGQLType: queryType,
-		Styles:          styles,
-		Overlay:         newOverlayModel(styles),
-		breadcrumbs:     newBreadcrumbsModel(styles),
+		help:    help.New(),
+		schema:  schema,
+		Styles:  styles,
+		Overlay: newOverlayModel(styles),
+		nav:     navigation.NewNavigationManager(config.VisiblePanelCount),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
 				key.WithKeys("tab", "]"),
@@ -142,42 +130,34 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.openOverlayForSelectedItem()
 		case key.Matches(msg, m.keymap.NextPanel):
 			// Move forward in stack if there's at least one more panel ahead
-			if m.stackPosition+1 < len(m.panelStack) {
-				// Add current panel's selected item to breadcrumbs before moving
-				if listPanel, ok := m.panelStack[m.stackPosition].(*components.ListPanel); ok {
-					if selectedItem := listPanel.SelectedItem(); selectedItem != nil {
-						if listItem, ok := selectedItem.(components.ListItem); ok {
-							m.breadcrumbs.Push(listItem.RefName())
-						}
-					}
-				}
-				m.stackPosition++
+			if m.nav.NavigateForward() {
 				m.updatePanelFocusStates()
 				// Open up child panel for ResultType if it exists
-				focusedPanel := m.panelStack[m.stackPosition]
-				if listPanel, ok := focusedPanel.(*components.ListPanel); ok {
-					if openCmd := listPanel.OpenSelectedItem(); openCmd != nil {
-						cmds = append(cmds, openCmd)
+				focusedPanel := m.nav.CurrentPanel()
+				if focusedPanel != nil {
+					if listPanel, ok := focusedPanel.(*components.ListPanel); ok {
+						if openCmd := listPanel.OpenSelectedItem(); openCmd != nil {
+							cmds = append(cmds, openCmd)
+						}
 					}
 				}
 			}
 		case key.Matches(msg, m.keymap.PrevPanel):
 			// Move backward in stack if not at the beginning
-			if m.stackPosition > 0 {
-				m.stackPosition--
+			if m.nav.NavigateBackward() {
 				m.updatePanelFocusStates()
-				// Remove last breadcrumb when moving backward
-				m.breadcrumbs.Pop()
 			}
 		case key.Matches(msg, m.keymap.ToggleGQLType):
-			m.incrementGQLTypeIndex(1)
+			m.nav.CycleTypeForward()
+			m.resetAndLoadMainPanel()
 		case key.Matches(msg, m.keymap.ReverseToggleGQLType):
-			m.incrementGQLTypeIndex(-1)
+			m.nav.CycleTypeBackward()
+			m.resetAndLoadMainPanel()
 		}
 	case components.OpenPanelMsg:
 		m.handleOpenPanel(msg.Panel)
 	case SetGQLTypeMsg:
-		m.selectedGQLType = msg.GQLType
+		m.nav.SwitchType(gqlTypeToNavType(msg.GQLType))
 		m.resetAndLoadMainPanel()
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
@@ -192,10 +172,11 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Only the left (focused) panel receives input; right panel is display-only
 	shouldReceiveMsg := m.shouldFocusedPanelReceiveMessage(msg)
-	if shouldReceiveMsg {
-		newModel, cmd = m.panelStack[m.stackPosition].Update(msg)
+	if shouldReceiveMsg && m.nav.CurrentPanel() != nil {
+		currentPanel := m.nav.CurrentPanel()
+		newModel, cmd = currentPanel.Update(msg)
 		if panel, ok := newModel.(components.Panel); ok {
-			m.panelStack[m.stackPosition] = panel
+			m.nav.SetCurrentPanel(panel)
 		}
 		cmds = append(cmds, cmd)
 	}
@@ -205,7 +186,10 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *mainModel) openOverlayForSelectedItem() {
 	// Always use the left panel (first visible panel in stack)
-	if focusedPanel, ok := m.panelStack[m.stackPosition].(*components.ListPanel); ok {
+	if m.nav.CurrentPanel() == nil {
+		return
+	}
+	if focusedPanel, ok := m.nav.CurrentPanel().(*components.ListPanel); ok {
 		if selectedItem := focusedPanel.SelectedItem(); selectedItem != nil {
 			if listItem, ok := selectedItem.(components.ListItem); ok {
 				// Some items don't have details, so these should now open the overlay
@@ -241,13 +225,15 @@ func (m *mainModel) sizePanels() {
 	panelWidth := m.width / config.VisiblePanelCount
 	panelHeight := m.height - config.HelpHeight - config.NavbarHeight - config.BreadcrumbsHeight
 	// Size only the visible panels (config.VisiblePanelCount = 2)
-	m.panelStack[m.stackPosition].SetSize(
-		panelWidth-m.Styles.FocusedPanel.GetHorizontalFrameSize(),
-		panelHeight-m.Styles.FocusedPanel.GetVerticalFrameSize(),
-	)
+	if m.nav.CurrentPanel() != nil {
+		m.nav.CurrentPanel().SetSize(
+			panelWidth-m.Styles.FocusedPanel.GetHorizontalFrameSize(),
+			panelHeight-m.Styles.FocusedPanel.GetVerticalFrameSize(),
+		)
+	}
 	// The right panel might not exist, so check before resizing
-	if len(m.panelStack) > m.stackPosition+1 {
-		m.panelStack[m.stackPosition+1].SetSize(
+	if m.nav.NextPanel() != nil {
+		m.nav.NextPanel().SetSize(
 			panelWidth-m.Styles.BlurredPanel.GetHorizontalFrameSize(),
 			panelHeight-m.Styles.BlurredPanel.GetHorizontalFrameSize(),
 		)
@@ -257,26 +243,24 @@ func (m *mainModel) sizePanels() {
 // updatePanelFocusStates updates focus state for all visible panels based on stackPosition
 func (m *mainModel) updatePanelFocusStates() {
 	// Blur all panels first
-	for _, panel := range m.panelStack {
+	for _, panel := range m.nav.Stack().All() {
 		if listPanel, ok := panel.(*components.ListPanel); ok {
 			listPanel.SetBlurred()
 		}
 	}
 
 	// Set focused state only for the currently focused panel
-	if listPanel, ok := m.panelStack[m.stackPosition].(*components.ListPanel); ok {
-		listPanel.SetFocused()
+	if m.nav.CurrentPanel() != nil {
+		if listPanel, ok := m.nav.CurrentPanel().(*components.ListPanel); ok {
+			listPanel.SetFocused()
+		}
 	}
 }
 
 // handleOpenPanel handles when an item is opened
 // The new panel is added to the stack after the currently focused panel
 func (m *mainModel) handleOpenPanel(newPanel components.Panel) {
-	// Truncate stack to keep only up to and including the current left panel
-	m.panelStack = m.panelStack[:m.stackPosition+1]
-	// Append the new panel - it will show on the right
-	m.panelStack = append(m.panelStack, newPanel)
-
+	m.nav.OpenPanel(newPanel)
 	m.sizePanels()
 }
 
@@ -284,16 +268,7 @@ func (m *mainModel) handleOpenPanel(newPanel components.Panel) {
 // This method is called on initilization and when switching types, so that detail panels get
 // cleared out to avoid inconsistencies across panels.
 func (m *mainModel) resetAndLoadMainPanel() {
-	// Reset stack to initial state with empty panels
-	m.panelStack = make([]components.Panel, config.VisiblePanelCount)
-	for i := range config.VisiblePanelCount {
-		m.panelStack[i] = components.NewStringPanel("")
-	}
-	m.stackPosition = 0
-	// Reset breadcrumbs when switching types
-	m.breadcrumbs.Reset()
-
-	// Load initial fields based on currently selected GQL type
+	m.nav.Reset()
 	m.loadMainPanel()
 }
 
@@ -302,39 +277,37 @@ func (m *mainModel) loadMainPanel() {
 	var items []components.ListItem
 	var title string
 
-	switch m.selectedGQLType {
-	case queryType:
+	switch m.nav.CurrentType() {
+	case navigation.QueryType:
 		items = m.schema.GetQueryItems()
 		title = "Query Fields"
-	case mutationType:
+	case navigation.MutationType:
 		items = m.schema.GetMutationItems()
 		title = "Mutation Fields"
-	case objectType:
+	case navigation.ObjectType:
 		items = m.schema.GetObjectItems()
 		title = "Object Types"
-	case inputType:
+	case navigation.InputType:
 		items = m.schema.GetInputItems()
 		title = "Input Types"
-	case enumType:
+	case navigation.EnumType:
 		items = m.schema.GetEnumItems()
 		title = "Enum Types"
-	case scalarType:
+	case navigation.ScalarType:
 		items = m.schema.GetScalarItems()
 		title = "Scalar Types"
-	case interfaceType:
+	case navigation.InterfaceType:
 		items = m.schema.GetInterfaceItems()
 		title = "Interface Types"
-	case unionType:
+	case navigation.UnionType:
 		items = m.schema.GetUnionItems()
 		title = "Union Types"
-	case directiveType:
+	case navigation.DirectiveType:
 		items = m.schema.GetDirectiveItems()
 		title = "Directive Types"
 	}
 
-	m.panelStack[0] = components.NewListPanel(items, title)
-	// Reset to the beginning of the stack
-	m.stackPosition = 0
+	m.nav.SetCurrentPanel(components.NewListPanel(items, title))
 	m.updatePanelFocusStates()
 
 	// Auto-open detail panel for the first item if available
@@ -347,33 +320,23 @@ func (m *mainModel) loadMainPanel() {
 	}
 }
 
-// incrementGQLTypeIndex cycles through available GQL types with wraparound
-func (m *mainModel) incrementGQLTypeIndex(offset int) {
-	// Find current GQL type index
-	currentIndex := slices.IndexFunc(availableGQLTypes, func(fieldType gqlType) bool {
-		return m.selectedGQLType == fieldType
-	})
+// gqlTypeToNavType converts old gqlType to navigation.GQLType
+func gqlTypeToNavType(t gqlType) navigation.GQLType {
+	return navigation.GQLType(t)
+}
 
-	newIndex := (currentIndex + offset)
-	// Force new index to wraparound, if is out-of-bounds on either the beginning or end:
-	if newIndex < 0 {
-		newIndex = len(availableGQLTypes) - 1
-	} else if newIndex >= len(availableGQLTypes) {
-		newIndex = 0
-	}
-	m.selectedGQLType = availableGQLTypes[newIndex]
-
-	m.resetAndLoadMainPanel()
-	m.sizePanels()
+// navTypeToGQLType converts navigation.GQLType to old gqlType
+func navTypeToGQLType(t navigation.GQLType) gqlType {
+	return gqlType(t)
 }
 
 // renderGQLTypeNavbar creates the navbar showing GQL types
 func (m *mainModel) renderGQLTypeNavbar() string {
 	var tabs []string
 
-	for _, fieldType := range availableGQLTypes {
+	for _, fieldType := range m.nav.AllTypes() {
 		var style lipgloss.Style
-		if m.selectedGQLType == fieldType {
+		if m.nav.CurrentType() == fieldType {
 			style = m.Styles.ActiveTab
 		} else {
 			style = m.Styles.InactiveTab
@@ -387,7 +350,24 @@ func (m *mainModel) renderGQLTypeNavbar() string {
 
 // renderBreadcrumbs renders the breadcrumb trail
 func (m *mainModel) renderBreadcrumbs() string {
-	return m.breadcrumbs.Render()
+	crumbs := m.nav.Breadcrumbs()
+	if len(crumbs) == 0 {
+		return ""
+	}
+
+	// Build breadcrumb parts with separators
+	var parts []string
+	separator := " > "
+
+	for i, crumb := range crumbs {
+		if i > 0 {
+			parts = append(parts, separator)
+		}
+		parts = append(parts, crumb)
+	}
+
+	breadcrumbText := lipgloss.JoinHorizontal(lipgloss.Left, parts...)
+	return m.Styles.Breadcrumbs.Render(breadcrumbText)
 }
 
 func (m mainModel) View() string {
@@ -404,9 +384,12 @@ func (m mainModel) View() string {
 		return m.Overlay.View()
 	}
 
-	views := []string{m.panelStack[m.stackPosition].View()}
-	if len(m.panelStack) > m.stackPosition+1 {
-		views = append(views, m.panelStack[m.stackPosition+1].View())
+	var views []string
+	if m.nav.CurrentPanel() != nil {
+		views = append(views, m.nav.CurrentPanel().View())
+	}
+	if m.nav.NextPanel() != nil {
+		views = append(views, m.nav.NextPanel().View())
 	}
 
 	navbar := m.renderGQLTypeNavbar()

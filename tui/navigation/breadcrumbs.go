@@ -1,22 +1,15 @@
-package tui
-
-import (
-	"github.com/charmbracelet/lipgloss"
-	"github.com/tonysyu/gqlxp/tui/config"
-)
+package navigation
 
 // breadcrumbsModel maintains breadcrumb trail state for navigation
 type breadcrumbsModel struct {
 	// Stack of breadcrumb titles representing the navigation path
 	crumbs []string
-	styles config.Styles
 }
 
 // newBreadcrumbsModel creates a new breadcrumbs model
-func newBreadcrumbsModel(styles config.Styles) breadcrumbsModel {
+func newBreadcrumbsModel() breadcrumbsModel {
 	return breadcrumbsModel{
 		crumbs: []string{},
-		styles: styles,
 	}
 }
 
@@ -42,23 +35,13 @@ func (b *breadcrumbsModel) Len() int {
 	return len(b.crumbs)
 }
 
-// Render creates the breadcrumb trail view
-func (b *breadcrumbsModel) Render() string {
+// Get returns a copy of the breadcrumb trail
+func (b *breadcrumbsModel) Get() []string {
 	if len(b.crumbs) == 0 {
-		return ""
+		return nil
 	}
-
-	// Build breadcrumb parts with separators
-	var parts []string
-	separator := " > "
-
-	for i, crumb := range b.crumbs {
-		if i > 0 {
-			parts = append(parts, separator)
-		}
-		parts = append(parts, crumb)
-	}
-
-	breadcrumbText := lipgloss.JoinHorizontal(lipgloss.Left, parts...)
-	return b.styles.Breadcrumbs.Render(breadcrumbText)
+	// Return a copy to prevent external modification
+	result := make([]string, len(b.crumbs))
+	copy(result, b.crumbs)
+	return result
 }

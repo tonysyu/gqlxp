@@ -10,9 +10,14 @@ For build and development commands, see [Development Commands](development.md).
   - `GraphQLSchema` struct - Contains maps for Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, and Directive types
   - `NamedToTypeDef()` - Resolves type names to their definitions
 - **`tui`**: Terminal user interface built on Bubble Tea
-  - `mainModel` - Root model managing panels, navigation, and GQL type toggling
+  - `mainModel` - Root model coordinating UI components and user interactions
   - `overlayModel` - Detail view overlay for displaying full item information
   - `breadcrumbsModel` - Navigation path display when panels scroll off-screen
+  - **`tui/navigation`**: Navigation state management
+    - `NavigationManager` - Coordinates panel stack, breadcrumbs, and type selection
+    - `PanelStack` - Manages stack of panels with position tracking
+    - `TypeSelector` - Handles GQL type selection and cycling
+    - `BreadcrumbTracker` interface - Abstraction for breadcrumb management
   - **`tui/components`**: Reusable UI components
     - `Panel` interface - Generic panel abstraction
     - `ListItem` interface - Interactive list items with `Open()` method

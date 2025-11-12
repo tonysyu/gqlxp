@@ -8,6 +8,7 @@ import (
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/components"
 	"github.com/tonysyu/gqlxp/tui/config"
+	"github.com/tonysyu/gqlxp/tui/navigation"
 )
 
 func TestNewModel(t *testing.T) {
@@ -34,14 +35,14 @@ func TestNewModel(t *testing.T) {
 	model := newModel(schemaView)
 
 	// Test initial state
-	is.Equal(len(model.panelStack), config.VisiblePanelCount)
-	is.Equal(model.stackPosition, 0)
-	is.Equal(model.selectedGQLType, queryType)
+	is.Equal(len(model.nav.Stack().All()), config.VisiblePanelCount)
+	is.Equal(model.nav.Stack().Position(), 0)
+	is.Equal(navTypeToGQLType(model.nav.CurrentType()), queryType)
 	is.Equal(len(model.schema.GetQueryItems()), 2)    // getAllPosts, getPostById
 	is.Equal(len(model.schema.GetMutationItems()), 1) // createPost
 
 	// Test that first panel is properly initialized with Query fields
-	firstPanel := model.panelStack[0]
+	firstPanel := model.nav.Stack().All()[0]
 	// The first panel should be a list panel with Query fields
 	is.True(firstPanel != nil)
 
@@ -58,52 +59,59 @@ func TestModelPanelNavigation(t *testing.T) {
 	model := newModel(adapters.SchemaView{})
 
 	// Test initial stack position
-	is.Equal(model.stackPosition, 0)
+	is.Equal(model.nav.Stack().Position(), 0)
 
-	// Add some panels to the stack to enable navigation
-	model.panelStack = append(model.panelStack, components.NewStringPanel("test3"))
-	model.panelStack = append(model.panelStack, components.NewStringPanel("test4"))
+	// Directly add panels to the stack for testing (simulating real navigation)
+	// In real usage, panels are added via OpenPanel which truncates and appends
+	stack := model.nav.Stack()
+	allPanels := []components.Panel{
+		stack.All()[0],
+		stack.All()[1],
+		components.NewStringPanel("test3"),
+		components.NewStringPanel("test4"),
+	}
+	stack.Replace(allPanels)
 	// Now we have 4 panels total
 
 	// Test next panel navigation (move forward in stack)
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.stackPosition, 1)
+	is.Equal(model.nav.Stack().Position(), 1)
 
 	// Test another forward navigation
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.stackPosition, 2)
+	is.Equal(model.nav.Stack().Position(), 2)
 
 	// Test another forward navigation
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.stackPosition, 3)
+	is.Equal(model.nav.Stack().Position(), 3)
 
 	// Test that we can't go beyond the last panel
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.stackPosition, 3) // Should stay at 3
+	is.Equal(model.nav.Stack().Position(), 3) // Should stay at 3
 
 	// Test previous panel navigation (move backward in stack)
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.stackPosition, 2)
+	is.Equal(model.nav.Stack().Position(), 2)
 
 	// Test another backward navigation
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.stackPosition, 1)
+	is.Equal(model.nav.Stack().Position(), 1)
 
 	// Navigate to beginning
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.stackPosition, 0)
+	is.Equal(model.nav.Stack().Position(), 0)
 
 	// Test that we can't go before the beginning
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	model = updatedModel.(mainModel)
-	is.Equal(model.stackPosition, 0) // Should stay at 0
+	is.Equal(model.nav.Stack().Position(), 0) // Should stay at 0
 }
 
 func TestModelGQLTypeSwitching(t *testing.T) {
@@ -148,22 +156,26 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 	model := newModel(schemaView)
 
 	// Test initial type
-	is.Equal(model.selectedGQLType, queryType)
+	is.Equal(model.nav.CurrentType(), navigation.QueryType)
 
 	// Test forward cycling through types
-	expectedTypes := []gqlType{mutationType, objectType, inputType, enumType, scalarType, interfaceType, unionType, directiveType, queryType}
+	expectedTypes := []navigation.GQLType{
+		navigation.MutationType, navigation.ObjectType, navigation.InputType,
+		navigation.EnumType, navigation.ScalarType, navigation.InterfaceType,
+		navigation.UnionType, navigation.DirectiveType, navigation.QueryType,
+	}
 
 	for _, expectedType := range expectedTypes {
 		updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
 		model = updatedModel.(mainModel)
-		is.Equal(model.selectedGQLType, expectedType)
-		is.Equal(model.stackPosition, 0) // Stack position should reset to 0
+		is.Equal(model.nav.CurrentType(), expectedType)
+		is.Equal(model.nav.Stack().Position(), 0) // Stack position should reset to 0
 	}
 
 	// Test reverse cycling
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
 	model = updatedModel.(mainModel)
-	is.Equal(model.selectedGQLType, directiveType)
+	is.Equal(model.nav.CurrentType(), navigation.DirectiveType)
 }
 
 func TestModelWindowResize(t *testing.T) {
@@ -187,14 +199,14 @@ func TestModelWithEmptySchema(t *testing.T) {
 	model := newModel(adapters.SchemaView{})
 
 	// Model should still initialize properly
-	is.Equal(len(model.panelStack), config.VisiblePanelCount)
-	is.Equal(model.stackPosition, 0)
-	is.Equal(model.selectedGQLType, queryType)
+	is.Equal(len(model.nav.Stack().All()), config.VisiblePanelCount)
+	is.Equal(model.nav.Stack().Position(), 0)
+	is.Equal(model.nav.CurrentType(), navigation.QueryType)
 
 	// Should be able to cycle through types even with empty schema
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
 	model = updatedModel.(mainModel)
-	is.Equal(model.selectedGQLType, mutationType)
+	is.Equal(model.nav.CurrentType(), navigation.MutationType)
 }
 
 func TestModelKeyboardShortcuts(t *testing.T) {
