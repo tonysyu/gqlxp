@@ -7,14 +7,15 @@
 ### GraphQL Type Exploration
 Supports exploring all GraphQL schema types:
 - **9 Type Categories**: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive
-- **Type Cycling**: Ctrl+T cycles forward, Ctrl+R cycles backward through types
+- **Type Cycling**: Ctrl+T (or `}`) cycles forward, Ctrl+R (or `{`) cycles backward through types
 - **Auto-Loading**: Panels auto-populate when switching types
 
 ### Interactive Navigation
-- **Panel Focus**: Tab/Shift+Tab to navigate between panels
+- **Panel Focus**: Tab/Shift+Tab (or `]`/`[`) to navigate between panels
 - **Auto-Open**: Selecting items automatically opens details in adjacent panel
 - **Detail Overlay**: Space bar shows full item details in centered overlay
 - **Multi-Panel**: Supports up to 6 panels horizontally
+- **Breadcrumbs**: Shows navigation path when panels scroll off-screen
 
 ## Navigation Flow
 1. Application parses GraphQL schema from provided file path
@@ -39,6 +40,7 @@ For local development commands:
 $ just build  # Build executable to dist/gqlxp
 $ just run {{PATH_TO_GRAPHQL_SCHEMA_FILE}}  # Run with schema file
 $ just test  # Run all tests
+$ just verify  # Run tests, lint, and fix
 ```
 
 ## Developer Documentation
