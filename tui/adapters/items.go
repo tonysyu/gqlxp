@@ -14,68 +14,68 @@ var _ components.ListItem = (*argumentItem)(nil)
 var _ components.ListItem = (*typeDefItem)(nil)
 var _ components.ListItem = (*directiveItem)(nil)
 
-func adaptFieldsToItems(queryFields []*gql.Field, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptFieldsToItems(queryFields []*gql.Field, resolver gql.TypeResolver) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(queryFields))
 	for _, f := range queryFields {
-		adaptedItems = append(adaptedItems, newFieldItem(f, schema))
+		adaptedItems = append(adaptedItems, newFieldItem(f, resolver))
 	}
 	return adaptedItems
 }
 
-func adaptArgumentsToItems(arguments []*gql.Argument, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptArgumentsToItems(arguments []*gql.Argument, resolver gql.TypeResolver) []components.ListItem {
 	var items []components.ListItem
 	if len(arguments) > 0 {
 		for _, arg := range arguments {
-			items = append(items, newArgumentItem(arg, schema))
+			items = append(items, newArgumentItem(arg, resolver))
 		}
 	}
 	return items
 }
 
-func adaptTypeDefsToItems[T gql.TypeDef](typeDefs []T, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptTypeDefsToItems[T gql.TypeDef](typeDefs []T, resolver gql.TypeResolver) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(typeDefs))
 	for _, td := range typeDefs {
-		adaptedItems = append(adaptedItems, newTypeDefItem(td, schema))
+		adaptedItems = append(adaptedItems, newTypeDefItem(td, resolver))
 	}
 	return adaptedItems
 }
 
-func adaptObjectsToItems(objects []*gql.Object, schema *gql.GraphQLSchema) []components.ListItem {
-	return adaptTypeDefsToItems(objects, schema)
+func adaptObjectsToItems(objects []*gql.Object, resolver gql.TypeResolver) []components.ListItem {
+	return adaptTypeDefsToItems(objects, resolver)
 }
 
-func adaptInputObjectsToItems(inputs []*gql.InputObject, schema *gql.GraphQLSchema) []components.ListItem {
-	return adaptTypeDefsToItems(inputs, schema)
+func adaptInputObjectsToItems(inputs []*gql.InputObject, resolver gql.TypeResolver) []components.ListItem {
+	return adaptTypeDefsToItems(inputs, resolver)
 }
 
-func adaptEnumsToItems(enums []*gql.Enum, schema *gql.GraphQLSchema) []components.ListItem {
-	return adaptTypeDefsToItems(enums, schema)
+func adaptEnumsToItems(enums []*gql.Enum, resolver gql.TypeResolver) []components.ListItem {
+	return adaptTypeDefsToItems(enums, resolver)
 }
 
-func adaptScalarsToItems(scalars []*gql.Scalar, schema *gql.GraphQLSchema) []components.ListItem {
-	return adaptTypeDefsToItems(scalars, schema)
+func adaptScalarsToItems(scalars []*gql.Scalar, resolver gql.TypeResolver) []components.ListItem {
+	return adaptTypeDefsToItems(scalars, resolver)
 }
 
-func adaptInterfacesToItems(interfaces []*gql.Interface, schema *gql.GraphQLSchema) []components.ListItem {
-	return adaptTypeDefsToItems(interfaces, schema)
+func adaptInterfacesToItems(interfaces []*gql.Interface, resolver gql.TypeResolver) []components.ListItem {
+	return adaptTypeDefsToItems(interfaces, resolver)
 }
 
-func adaptUnionsToItems(unions []*gql.Union, schema *gql.GraphQLSchema) []components.ListItem {
-	return adaptTypeDefsToItems(unions, schema)
+func adaptUnionsToItems(unions []*gql.Union, resolver gql.TypeResolver) []components.ListItem {
+	return adaptTypeDefsToItems(unions, resolver)
 }
 
-func adaptDirectivesToItems(directives []*gql.Directive, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptDirectivesToItems(directives []*gql.Directive, resolver gql.TypeResolver) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(directives))
 	for _, directive := range directives {
-		adaptedItems = append(adaptedItems, newDirectiveDefinitionItem(directive, schema))
+		adaptedItems = append(adaptedItems, newDirectiveDefinitionItem(directive, resolver))
 	}
 	return adaptedItems
 }
 
-func adaptUnionTypesToItems(typeNames []string, schema *gql.GraphQLSchema) []components.ListItem {
+func adaptUnionTypesToItems(typeNames []string, resolver gql.TypeResolver) []components.ListItem {
 	adaptedItems := make([]components.ListItem, 0, len(typeNames))
 	for _, typeName := range typeNames {
-		adaptedItems = append(adaptedItems, newNamedItem(typeName, schema))
+		adaptedItems = append(adaptedItems, newNamedItem(typeName, resolver))
 	}
 	return adaptedItems
 }
@@ -127,14 +127,14 @@ func formatEnumValuesWithDescriptions(enumValues []*gql.EnumValue) string {
 // Adapter/delegate for gql.FieldDefinition to support ListItem interface
 type fieldItem struct {
 	gqlField  *gql.Field
-	schema    *gql.GraphQLSchema
+	resolver  gql.TypeResolver
 	fieldName string
 }
 
-func newFieldItem(gqlField *gql.Field, schema *gql.GraphQLSchema) components.ListItem {
+func newFieldItem(gqlField *gql.Field, resolver gql.TypeResolver) components.ListItem {
 	return fieldItem{
 		gqlField:  gqlField,
-		schema:    schema,
+		resolver:  resolver,
 		fieldName: gqlField.Name(),
 	}
 }
@@ -158,12 +158,12 @@ func (i fieldItem) Details() string {
 
 // OpenPanel displays arguments of field (if any) and the field's ObjectType
 func (i fieldItem) OpenPanel() (components.Panel, bool) {
-	argumentItems := adaptArgumentsToItems(i.gqlField.Arguments(), i.schema)
+	argumentItems := adaptArgumentsToItems(i.gqlField.Arguments(), i.resolver)
 
 	panel := components.NewListPanel(argumentItems, i.fieldName)
 	panel.SetDescription(i.Description())
 	// Set result type as virtual item at top
-	panel.SetObjectType(newTypeDefItemFromField(i.gqlField, i.schema))
+	panel.SetObjectType(newTypeDefItemFromField(i.gqlField, i.resolver))
 
 	return panel, true
 }
@@ -171,14 +171,14 @@ func (i fieldItem) OpenPanel() (components.Panel, bool) {
 // Adapter/delegate for gql.Argument to support ListItem interface
 type argumentItem struct {
 	gqlArgument *gql.Argument
-	schema      *gql.GraphQLSchema
+	resolver    gql.TypeResolver
 	argName     string
 }
 
-func newArgumentItem(gqlArgument *gql.Argument, schema *gql.GraphQLSchema) components.ListItem {
+func newArgumentItem(gqlArgument *gql.Argument, resolver gql.TypeResolver) components.ListItem {
 	return argumentItem{
 		gqlArgument: gqlArgument,
-		schema:      schema,
+		resolver:    resolver,
 		argName:     gqlArgument.Name(),
 	}
 }
@@ -207,7 +207,7 @@ func (i argumentItem) OpenPanel() (components.Panel, bool) {
 	panel.SetDescription(i.Description())
 
 	// Set the argument's type as the object type at the top
-	panel.SetObjectType(newTypeDefItemFromArgument(i.gqlArgument, i.schema))
+	panel.SetObjectType(newTypeDefItemFromArgument(i.gqlArgument, i.resolver))
 
 	return panel, true
 }
@@ -217,16 +217,16 @@ type typeDefItem struct {
 	title    string
 	typeName string
 	typeDef  gql.TypeDef
-	schema   *gql.GraphQLSchema
+	resolver gql.TypeResolver
 }
 
-func newTypeDefItem(typeDef gql.TypeDef, schema *gql.GraphQLSchema) typeDefItem {
+func newTypeDefItem(typeDef gql.TypeDef, resolver gql.TypeResolver) typeDefItem {
 	title := typeDef.Name()
 	return typeDefItem{
 		title:    title,
 		typeName: title,
 		typeDef:  typeDef,
-		schema:   schema,
+		resolver: resolver,
 	}
 }
 
@@ -287,17 +287,17 @@ func (i typeDefItem) OpenPanel() (components.Panel, bool) {
 
 	switch typeDef := (i.typeDef).(type) {
 	case *gql.Object:
-		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.schema)...)
+		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.resolver)...)
 	case *gql.Scalar:
 		// No details needed
 	case *gql.Interface:
-		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.schema)...)
+		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.resolver)...)
 	case *gql.Union:
-		detailItems = append(detailItems, adaptUnionTypesToItems(typeDef.Types(), i.schema)...)
+		detailItems = append(detailItems, adaptUnionTypesToItems(typeDef.Types(), i.resolver)...)
 	case *gql.Enum:
 		detailItems = append(detailItems, adaptEnumValuesToItems(typeDef.Values())...)
 	case *gql.InputObject:
-		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.schema)...)
+		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.resolver)...)
 	}
 
 	panel := components.NewListPanel(detailItems, i.Title())
@@ -308,20 +308,20 @@ func (i typeDefItem) OpenPanel() (components.Panel, bool) {
 	return panel, true
 }
 
-func newNamedItem(typeName string, schema *gql.GraphQLSchema) components.ListItem {
+func newNamedItem(typeName string, resolver gql.TypeResolver) components.ListItem {
 	// Try to resolve the type name to a full TypeDef
-	typeDef, err := schema.NamedToTypeDef(typeName)
+	typeDef, err := resolver.ResolveType(typeName)
 	if err != nil {
 		// Type not found or is a primitive - fallback to simple item
 		return components.NewSimpleItem(typeName)
 	}
 	// Create a typeDefItem for resolvable types
-	return newTypeDefItem(typeDef, schema)
+	return newTypeDefItem(typeDef, resolver)
 }
 
 // newTypeDefItemFromField creates a list item for a field's result type
-func newTypeDefItemFromField(field *gql.Field, schema *gql.GraphQLSchema) components.ListItem {
-	resultType, err := field.ResolveObjectTypeDef(schema)
+func newTypeDefItemFromField(field *gql.Field, resolver gql.TypeResolver) components.ListItem {
+	resultType, err := resolver.ResolveFieldType(field)
 	if err != nil {
 		// TODO: Currently, this treats any error as a built-in type, but instead we should
 		// check for _known_ built in types and handle errors intelligently.
@@ -334,13 +334,13 @@ func newTypeDefItemFromField(field *gql.Field, schema *gql.GraphQLSchema) compon
 		title:    field.TypeString(),
 		typeName: resultType.Name(),
 		typeDef:  resultType,
-		schema:   schema,
+		resolver: resolver,
 	}
 }
 
 // newTypeDefItemFromArgument creates a list item for an argument's type
-func newTypeDefItemFromArgument(argument *gql.Argument, schema *gql.GraphQLSchema) components.ListItem {
-	resultType, err := argument.ResolveObjectTypeDef(schema)
+func newTypeDefItemFromArgument(argument *gql.Argument, resolver gql.TypeResolver) components.ListItem {
+	resultType, err := resolver.ResolveArgumentType(argument)
 	if err != nil {
 		// TODO: Currently, this treats any error as a built-in type, but instead we should
 		// check for _known_ built in types and handle errors intelligently.
@@ -353,21 +353,21 @@ func newTypeDefItemFromArgument(argument *gql.Argument, schema *gql.GraphQLSchem
 		title:    argument.TypeString(),
 		typeName: resultType.Name(),
 		typeDef:  resultType,
-		schema:   schema,
+		resolver: resolver,
 	}
 }
 
 // Adapter/delegate for gql.Directive to support ListItem interface
 type directiveItem struct {
 	gqlDirective  *gql.Directive
-	schema        *gql.GraphQLSchema
+	resolver      gql.TypeResolver
 	directiveName string
 }
 
-func newDirectiveDefinitionItem(directive *gql.Directive, schema *gql.GraphQLSchema) components.ListItem {
+func newDirectiveDefinitionItem(directive *gql.Directive, resolver gql.TypeResolver) components.ListItem {
 	return directiveItem{
 		gqlDirective:  directive,
-		schema:        schema,
+		resolver:      resolver,
 		directiveName: directive.Name(),
 	}
 }
@@ -399,7 +399,7 @@ func (i directiveItem) Details() string {
 
 // OpenPanel displays arguments of directive (if any)
 func (i directiveItem) OpenPanel() (components.Panel, bool) {
-	argumentItems := adaptArgumentsToItems(i.gqlDirective.Arguments(), i.schema)
+	argumentItems := adaptArgumentsToItems(i.gqlDirective.Arguments(), i.resolver)
 
 	panel := components.NewListPanel(argumentItems, "@"+i.directiveName)
 	panel.SetDescription(i.Description())

@@ -39,10 +39,11 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
 
 	t.Run("Query field with no arguments shows description and result type", func(t *testing.T) {
 		field := schema.Query["getAllPosts"]
-		item := newFieldItem(field, &schema)
+		item := newFieldItem(field, resolver)
 		panel, _ := item.OpenPanel()
 
 		// Set a reasonable size for testing
@@ -63,7 +64,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 
 	t.Run("Query field with arguments shows all sections", func(t *testing.T) {
 		field := schema.Query["getPostById"]
-		item := newFieldItem(field, &schema)
+		item := newFieldItem(field, resolver)
 		panel, _ := item.OpenPanel()
 
 		// Set a reasonable size for testing
@@ -81,7 +82,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 
 	t.Run("Mutation field with multiple arguments shows all sections", func(t *testing.T) {
 		field := schema.Mutation["createPost"]
-		item := newFieldItem(field, &schema)
+		item := newFieldItem(field, resolver)
 		panel, _ := item.OpenPanel()
 
 		// Set a reasonable size for testing
@@ -118,9 +119,10 @@ func TestObjectDefinitionItemOpenPanel(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
 
 	userObj := schema.Object["User"]
-	item := newTypeDefItem(userObj, &schema)
+	item := newTypeDefItem(userObj, resolver)
 	panel, ok := item.OpenPanel()
 
 	is.True(ok)
@@ -151,9 +153,10 @@ func TestInputDefinitionItemOpenPanel(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
 
 	inputObj := schema.Input["CreateUserInput"]
-	item := newTypeDefItem(inputObj, &schema)
+	item := newTypeDefItem(inputObj, resolver)
 	panel, ok := item.OpenPanel()
 
 	is.True(ok)
@@ -183,9 +186,10 @@ func TestEnumDefinitionItemOpenPanel(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
 
 	enumObj := schema.Enum["Status"]
-	item := newTypeDefItem(enumObj, &schema)
+	item := newTypeDefItem(enumObj, resolver)
 	panel, ok := item.OpenPanel()
 
 	is.True(ok)
@@ -205,9 +209,10 @@ func TestScalarDefinitionItemOpenPanel(t *testing.T) {
 	schemaString := "scalar Date"
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
 
 	scalarObj := schema.Scalar["Date"]
-	item := newTypeDefItem(scalarObj, &schema)
+	item := newTypeDefItem(scalarObj, resolver)
 	panel, ok := item.OpenPanel()
 
 	is.True(ok)
@@ -230,9 +235,10 @@ func TestInterfaceDefinitionItemOpenPanel(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
 
 	interfaceObj := schema.Interface["Node"]
-	item := newTypeDefItem(interfaceObj, &schema)
+	item := newTypeDefItem(interfaceObj, resolver)
 	panel, ok := item.OpenPanel()
 
 	is.True(ok)
@@ -264,9 +270,10 @@ func TestUnionDefinitionItemOpenPanel(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
 
 	unionObj := schema.Union["SearchResult"]
-	item := newTypeDefItem(unionObj, &schema)
+	item := newTypeDefItem(unionObj, resolver)
 	panel, ok := item.OpenPanel()
 
 	is.True(ok)
@@ -292,9 +299,10 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
 
 	field := schema.Query["simpleField"]
-	item := newFieldItem(field, &schema)
+	item := newFieldItem(field, resolver)
 
 	is.Equal(item.Title(), "simpleField: String")
 	is.Equal(item.Description(), "") // No description
@@ -336,9 +344,10 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
 
 	field := schema.Query["complexField"]
-	item := newFieldItem(field, &schema)
+	item := newFieldItem(field, resolver)
 	panel, ok := item.OpenPanel()
 
 	is.True(ok)
@@ -383,10 +392,11 @@ func TestArgumentListCreation(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
 	field := schema.Query["testField"]
 
 	// Test argument items creation
-	items := adaptArgumentsToItems(field.Arguments(), &schema)
+	items := adaptArgumentsToItems(field.Arguments(), resolver)
 	is.Equal(len(items), 3)
 
 	// Test first argument
@@ -410,9 +420,10 @@ func TestDirectiveDefinitionItemCreation(t *testing.T) {
 	`
 
 	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
 	directive := schema.Directive["deprecated"]
 
-	item := newDirectiveDefinitionItem(directive, &schema)
+	item := newDirectiveDefinitionItem(directive, resolver)
 	is.Equal(item.Title(), "@deprecated(reason: String = \"No longer supported\")")
 	is.Equal(item.Description(), "")
 
