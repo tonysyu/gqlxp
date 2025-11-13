@@ -41,7 +41,7 @@ func TestShouldPanelReceiveMessage(t *testing.T) {
 		{
 			name:          "OpenPanelMsg not sent to panels",
 			displayOffset: 0,
-			msg:           components.OpenPanelMsg{Panel: components.NewStringPanel("test")},
+			msg:           components.OpenPanelMsg{Panel: components.NewEmptyListPanel("test")},
 			shouldReceive: false,
 		},
 	}

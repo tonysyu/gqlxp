@@ -67,8 +67,8 @@ func TestModelPanelNavigation(t *testing.T) {
 	allPanels := []components.Panel{
 		stack.All()[0],
 		stack.All()[1],
-		components.NewStringPanel("test3"),
-		components.NewStringPanel("test4"),
+		components.NewEmptyListPanel("test3"),
+		components.NewEmptyListPanel("test4"),
 	}
 	stack.Replace(allPanels)
 	// Now we have 4 panels total

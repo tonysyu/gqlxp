@@ -25,7 +25,6 @@ type OpenPanelMsg struct {
 }
 
 var _ Panel = (*ListPanel)(nil)
-var _ Panel = (*stringPanel)(nil)
 
 // ListPanel wraps a list.Model to implement the Panel interface
 type ListPanel struct {
@@ -55,6 +54,10 @@ func OpenPanelFromItem(item list.Item) tea.Cmd {
 		}
 	}
 	return nil
+}
+
+func NewEmptyListPanel(content string) *ListPanel {
+	return NewListPanel([]ListItem{}, content)
 }
 
 func NewListPanel[T list.Item](choices []T, title string) *ListPanel {
@@ -266,36 +269,4 @@ func (lp *ListPanel) View() string {
 	style := lipgloss.NewStyle().Width(lp.width).Height(lp.height)
 	innerPanel := style.Render(content)
 	return lp.wrapperStyle.Render(innerPanel)
-}
-
-// stringPanel displays a simple string content
-type stringPanel struct {
-	content string
-	width   int
-	height  int
-}
-
-func NewStringPanel(content string) *stringPanel {
-	return &stringPanel{content: content}
-}
-
-func (sp *stringPanel) Init() tea.Cmd {
-	return nil
-}
-
-func (sp *stringPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	return sp, nil
-}
-
-func (sp *stringPanel) View() string {
-	style := lipgloss.NewStyle().
-		Width(sp.width).
-		Height(sp.height).
-		Padding(1)
-	return style.Render(sp.content)
-}
-
-func (sp *stringPanel) SetSize(width, height int) {
-	sp.width = width
-	sp.height = height
 }

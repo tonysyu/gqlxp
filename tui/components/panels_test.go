@@ -19,65 +19,6 @@ func (i testOpenableItem) OpenPanel() (Panel, bool) {
 	return i.openPanel, true
 }
 
-func TestStringPanelBasic(t *testing.T) {
-	is := is.New(t)
-
-	content := "This is test content"
-	panel := NewStringPanel(content)
-
-	// Test basic properties
-	is.Equal(panel.content, content)
-	is.Equal(panel.width, 0)
-	is.Equal(panel.height, 0)
-
-	// Test SetSize
-	panel.SetSize(80, 20)
-	is.Equal(panel.width, 80)
-	is.Equal(panel.height, 20)
-
-	// Test that Update returns self
-	updatedPanel, cmd := panel.Update(tea.KeyMsg{})
-	is.Equal(updatedPanel, panel)
-	is.True(cmd == nil)
-}
-
-func TestStringPanelView(t *testing.T) {
-	is := is.New(t)
-
-	panel := NewStringPanel("test content")
-	panel.SetSize(50, 10)
-
-	view := panel.View()
-	is.True(strings.Contains(view, "test content"))
-}
-
-func TestStringPanelWithEmptyContent(t *testing.T) {
-	is := is.New(t)
-
-	panel := NewStringPanel("")
-	panel.SetSize(80, 20)
-
-	view := panel.View()
-	is.True(len(view) > 0) // Should still render something (padding/style)
-}
-
-func TestStringPanelWithLargeContent(t *testing.T) {
-	is := is.New(t)
-
-	// Create very long content
-	longContent := ""
-	for range 1000 {
-		longContent += "This is a very long line of content that should be handled properly. "
-	}
-
-	panel := NewStringPanel(longContent)
-	panel.SetSize(80, 20)
-
-	// Should not crash with large content
-	view := panel.View()
-	is.True(len(view) > 69000)
-}
-
 func TestListPanelBasic(t *testing.T) {
 	is := is.New(t)
 
@@ -119,7 +60,7 @@ func TestListPanelSelectionChange(t *testing.T) {
 	is := is.New(t)
 
 	// Create items with Open capability
-	testPanel := NewStringPanel("opened panel content")
+	testPanel := NewEmptyListPanel("opened panel content")
 	items := []ListItem{
 		testOpenableItem{
 			SimpleItem: NewSimpleItem("Item 1"),
@@ -143,7 +84,7 @@ func TestListPanelAutoOpen(t *testing.T) {
 	is := is.New(t)
 
 	// Create items with Open capability
-	testPanel := NewStringPanel("opened panel content")
+	testPanel := NewEmptyListPanel("opened panel content")
 	items := []ListItem{
 		testOpenableItem{
 			SimpleItem: NewSimpleItem("Test Field"),
@@ -205,7 +146,7 @@ func TestPanelSizeEdgeCases(t *testing.T) {
 	is := is.New(t)
 
 	// Test with very small sizes
-	stringPanel := NewStringPanel("test")
+	stringPanel := NewEmptyListPanel("test")
 	stringPanel.SetSize(1, 1)
 	view := stringPanel.View()
 	is.True(len(view) >= 0) // Should not crash
@@ -254,7 +195,7 @@ func TestPanelInterfaceCompliance(t *testing.T) {
 	is := is.New(t)
 
 	// Test that both panel types implement Panel interface
-	var stringPanelInterface Panel = NewStringPanel("test")
+	var stringPanelInterface Panel = NewEmptyListPanel("test")
 	var listPanelInterface Panel = NewListPanel([]ListItem{}, "test")
 
 	// Test that they can be used as Panels
@@ -285,15 +226,15 @@ func TestListPanelFilterExitRefresh(t *testing.T) {
 	items := []ListItem{
 		testOpenableItem{
 			SimpleItem: NewSimpleItem("Apple"),
-			openPanel:  NewStringPanel("Apple subpanel"),
+			openPanel:  NewEmptyListPanel("Apple subpanel"),
 		},
 		testOpenableItem{
 			SimpleItem: NewSimpleItem("Banana"),
-			openPanel:  NewStringPanel("Banana subpanel"),
+			openPanel:  NewEmptyListPanel("Banana subpanel"),
 		},
 		testOpenableItem{
 			SimpleItem: NewSimpleItem("Carrot"),
-			openPanel:  NewStringPanel("Carrot subpanel"),
+			openPanel:  NewEmptyListPanel("Carrot subpanel"),
 		},
 	}
 	panel := NewListPanel(items, "Test Panel")

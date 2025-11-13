@@ -112,7 +112,7 @@ func (nm *NavigationManager) Breadcrumbs() []string {
 func (nm *NavigationManager) Reset() {
 	initialPanels := make([]components.Panel, nm.visiblePanels)
 	for i := range nm.visiblePanels {
-		initialPanels[i] = components.NewStringPanel("")
+		initialPanels[i] = components.NewListPanel([]components.ListItem{}, "")
 	}
 	nm.stack.Replace(initialPanels)
 	nm.breadcrumbs.Reset()

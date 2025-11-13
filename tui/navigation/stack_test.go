@@ -18,8 +18,8 @@ func TestPanelStack_NewPanelStack(t *testing.T) {
 
 func TestPanelStack_Push(t *testing.T) {
 	stack := NewPanelStack(2)
-	p1 := components.NewStringPanel("1")
-	p2 := components.NewStringPanel("2")
+	p1 := components.NewEmptyListPanel("1")
+	p2 := components.NewEmptyListPanel("2")
 
 	stack.Push(p1)
 	if stack.Len() != 1 {
@@ -40,10 +40,10 @@ func TestPanelStack_Push(t *testing.T) {
 
 func TestPanelStack_Push_TruncatesAfterCurrent(t *testing.T) {
 	stack := NewPanelStack(3)
-	p1 := components.NewStringPanel("1")
-	p2 := components.NewStringPanel("2")
-	p3 := components.NewStringPanel("3")
-	p4 := components.NewStringPanel("4")
+	p1 := components.NewEmptyListPanel("1")
+	p2 := components.NewEmptyListPanel("2")
+	p3 := components.NewEmptyListPanel("3")
+	p4 := components.NewEmptyListPanel("4")
 
 	stack.Push(p1)
 	stack.Push(p2)
@@ -65,8 +65,8 @@ func TestPanelStack_Push_TruncatesAfterCurrent(t *testing.T) {
 
 func TestPanelStack_MoveForward(t *testing.T) {
 	stack := NewPanelStack(2)
-	p1 := components.NewStringPanel("1")
-	p2 := components.NewStringPanel("2")
+	p1 := components.NewEmptyListPanel("1")
+	p2 := components.NewEmptyListPanel("2")
 
 	stack.Push(p1)
 	stack.Push(p2)
@@ -94,8 +94,8 @@ func TestPanelStack_MoveForward(t *testing.T) {
 
 func TestPanelStack_MoveBackward(t *testing.T) {
 	stack := NewPanelStack(2)
-	p1 := components.NewStringPanel("1")
-	p2 := components.NewStringPanel("2")
+	p1 := components.NewEmptyListPanel("1")
+	p2 := components.NewEmptyListPanel("2")
 
 	stack.Push(p1)
 	stack.Push(p2)
@@ -129,7 +129,7 @@ func TestPanelStack_Current(t *testing.T) {
 		t.Error("expected nil for empty stack")
 	}
 
-	p1 := components.NewStringPanel("1")
+	p1 := components.NewEmptyListPanel("1")
 	stack.Push(p1)
 	if stack.Current() != p1 {
 		t.Error("expected current to be p1")
@@ -138,8 +138,8 @@ func TestPanelStack_Current(t *testing.T) {
 
 func TestPanelStack_Next(t *testing.T) {
 	stack := NewPanelStack(2)
-	p1 := components.NewStringPanel("1")
-	p2 := components.NewStringPanel("2")
+	p1 := components.NewEmptyListPanel("1")
+	p2 := components.NewEmptyListPanel("2")
 
 	stack.Push(p1)
 	if stack.Next() != nil {
@@ -159,9 +159,9 @@ func TestPanelStack_Next(t *testing.T) {
 
 func TestPanelStack_Replace(t *testing.T) {
 	stack := NewPanelStack(2)
-	p1 := components.NewStringPanel("1")
-	p2 := components.NewStringPanel("2")
-	p3 := components.NewStringPanel("3")
+	p1 := components.NewEmptyListPanel("1")
+	p2 := components.NewEmptyListPanel("2")
+	p3 := components.NewEmptyListPanel("3")
 
 	stack.Push(p1)
 	stack.Push(p2)
@@ -184,8 +184,8 @@ func TestPanelStack_Replace(t *testing.T) {
 
 func TestPanelStack_All(t *testing.T) {
 	stack := NewPanelStack(3)
-	p1 := components.NewStringPanel("1")
-	p2 := components.NewStringPanel("2")
+	p1 := components.NewEmptyListPanel("1")
+	p2 := components.NewEmptyListPanel("2")
 
 	stack.Push(p1)
 	stack.Push(p2)

@@ -23,8 +23,8 @@ func TestNavigationManager_NewNavigationManager(t *testing.T) {
 func TestNavigationManager_NavigateForward(t *testing.T) {
 	nm := NewNavigationManager(2)
 
-	p1 := components.NewStringPanel("1")
-	p2 := components.NewStringPanel("2")
+	p1 := components.NewEmptyListPanel("1")
+	p2 := components.NewEmptyListPanel("2")
 	nm.OpenPanel(p1)
 	nm.OpenPanel(p2)
 
@@ -48,8 +48,8 @@ func TestNavigationManager_NavigateForward(t *testing.T) {
 func TestNavigationManager_NavigateBackward(t *testing.T) {
 	nm := NewNavigationManager(2)
 
-	p1 := components.NewStringPanel("1")
-	p2 := components.NewStringPanel("2")
+	p1 := components.NewEmptyListPanel("1")
+	p2 := components.NewEmptyListPanel("2")
 	nm.OpenPanel(p1)
 	nm.OpenPanel(p2)
 	nm.NavigateForward()
@@ -67,7 +67,7 @@ func TestNavigationManager_NavigateBackward(t *testing.T) {
 func TestNavigationManager_OpenPanel(t *testing.T) {
 	nm := NewNavigationManager(2)
 
-	p1 := components.NewStringPanel("1")
+	p1 := components.NewEmptyListPanel("1")
 	nm.OpenPanel(p1)
 
 	if nm.Stack().Len() != 1 {
@@ -83,9 +83,9 @@ func TestNavigationManager_SwitchType(t *testing.T) {
 
 	// Add panels and navigate
 	// Need to navigate between OpenPanel calls to avoid truncation
-	p1 := components.NewStringPanel("1")
-	p2 := components.NewStringPanel("2")
-	p3 := components.NewStringPanel("3")
+	p1 := components.NewEmptyListPanel("1")
+	p2 := components.NewEmptyListPanel("2")
+	p3 := components.NewEmptyListPanel("3")
 	nm.OpenPanel(p1)
 	nm.OpenPanel(p2)
 	nm.NavigateForward() // Move to position 1
@@ -158,9 +158,9 @@ func TestNavigationManager_Breadcrumbs(t *testing.T) {
 	// Add panels and navigate - need to navigate between OpenPanel calls
 	// Note: These tests use StringPanels which don't produce breadcrumbs.
 	// For proper breadcrumb testing, use ListPanels with selected items.
-	p1 := components.NewStringPanel("1")
-	p2 := components.NewStringPanel("2")
-	p3 := components.NewStringPanel("3")
+	p1 := components.NewEmptyListPanel("1")
+	p2 := components.NewEmptyListPanel("2")
+	p3 := components.NewEmptyListPanel("3")
 	nm.OpenPanel(p1)
 	nm.OpenPanel(p2)
 	nm.NavigateForward()
