@@ -13,21 +13,13 @@ const (
 	maxDescriptionHeight = 5 // Maximum height for description (in lines)
 )
 
-// Panel represents a generic panel that can be displayed in the TUI
-type Panel interface {
-	tea.Model
-	SetSize(width, height int)
-}
-
 // OpenPanelMsg is sent when an item should be opened
 type OpenPanelMsg struct {
-	Panel Panel
+	Panel *Panel
 }
 
-var _ Panel = (*ListPanel)(nil)
-
-// ListPanel wraps a list.Model to implement the Panel interface
-type ListPanel struct {
+// Panel wraps a list.Model to provide panel functionality in the TUI
+type Panel struct {
 	ListModel         list.Model
 	title             string
 	description       string
@@ -56,11 +48,11 @@ func OpenPanelFromItem(item list.Item) tea.Cmd {
 	return nil
 }
 
-func NewEmptyListPanel(content string) *ListPanel {
-	return NewListPanel([]ListItem{}, content)
+func NewEmptyPanel(content string) *Panel {
+	return NewPanel([]ListItem{}, content)
 }
 
-func NewListPanel[T list.Item](choices []T, title string) *ListPanel {
+func NewPanel[T list.Item](choices []T, title string) *Panel {
 	items := make([]list.Item, len(choices))
 	for i, choice := range choices {
 		items[i] = choice
@@ -71,7 +63,7 @@ func NewListPanel[T list.Item](choices []T, title string) *ListPanel {
 	m.SetShowTitle(false)
 	m.SetShowHelp(false)
 	styles := config.DefaultStyles()
-	return &ListPanel{
+	return &Panel{
 		ListModel:         m,
 		lastSelectedIndex: -1, // Initialize to -1 to trigger opening on first selection
 		title:             title,
@@ -90,35 +82,35 @@ func newBlurredItemDelegate() list.ItemDelegate {
 	return delegate
 }
 
-func (lp *ListPanel) Init() tea.Cmd {
+func (p *Panel) Init() tea.Cmd {
 	return nil
 }
 
-func (lp *ListPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (p *Panel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Handle navigation when result type is present
-	if lp.resultType != nil {
+	if p.resultType != nil {
 		if keyMsg, ok := msg.(tea.KeyMsg); ok {
 			switch {
-			case key.Matches(keyMsg, lp.ListModel.KeyMap.CursorDown):
-				if lp.focusOnResultType {
+			case key.Matches(keyMsg, p.ListModel.KeyMap.CursorDown):
+				if p.focusOnResultType {
 					// Move from result type to first list item
-					lp.focusOnResultType = false
-					if len(lp.ListModel.Items()) > 0 {
-						lp.ListModel.Select(0)
-						lp.lastSelectedIndex = 0
-						return lp, lp.OpenSelectedItem()
+					p.focusOnResultType = false
+					if len(p.ListModel.Items()) > 0 {
+						p.ListModel.Select(0)
+						p.lastSelectedIndex = 0
+						return p, p.OpenSelectedItem()
 					}
-					return lp, nil
+					return p, nil
 				}
 				// Otherwise, let list handle it below
 
-			case key.Matches(keyMsg, lp.ListModel.KeyMap.CursorUp):
-				if !lp.focusOnResultType && lp.ListModel.Index() == 0 {
+			case key.Matches(keyMsg, p.ListModel.KeyMap.CursorUp):
+				if !p.focusOnResultType && p.ListModel.Index() == 0 {
 					// Move from first list item back to result type
-					lp.ListModel.Select(-1)
-					lp.lastSelectedIndex = -1
-					lp.focusOnResultType = true
-					return lp, lp.OpenSelectedItem()
+					p.ListModel.Select(-1)
+					p.lastSelectedIndex = -1
+					p.focusOnResultType = true
+					return p, p.OpenSelectedItem()
 				}
 				// Otherwise, let list handle it below
 			}
@@ -126,147 +118,147 @@ func (lp *ListPanel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	// Only update list if focus is on list (or no result type)
-	if !lp.focusOnResultType {
+	if !p.focusOnResultType {
 		var cmd tea.Cmd
-		lp.ListModel, cmd = lp.ListModel.Update(msg)
+		p.ListModel, cmd = p.ListModel.Update(msg)
 
 		// Check if we just exited filtering mode
 		// Filtering mode is when the user is actively typing the filter
-		isFiltering := lp.ListModel.FilterState() == list.Filtering
-		exitedFiltering := lp.wasFiltering && !isFiltering
-		lp.wasFiltering = isFiltering
+		isFiltering := p.ListModel.FilterState() == list.Filtering
+		exitedFiltering := p.wasFiltering && !isFiltering
+		p.wasFiltering = isFiltering
 
 		// Check if selection has changed and auto-open detail panel
-		currentIndex := lp.ListModel.Index()
+		currentIndex := p.ListModel.Index()
 		// Refresh if index changed OR if we just exited filtering (since filtering could change
 		// the selected item)
-		if (currentIndex != lp.lastSelectedIndex || exitedFiltering) && currentIndex >= 0 {
-			lp.lastSelectedIndex = currentIndex
-			if openCmd := lp.OpenSelectedItem(); openCmd != nil {
-				return lp, tea.Batch(cmd, openCmd)
+		if (currentIndex != p.lastSelectedIndex || exitedFiltering) && currentIndex >= 0 {
+			p.lastSelectedIndex = currentIndex
+			if openCmd := p.OpenSelectedItem(); openCmd != nil {
+				return p, tea.Batch(cmd, openCmd)
 			}
 		}
-		return lp, cmd
+		return p, cmd
 	}
 
-	return lp, nil
+	return p, nil
 }
 
-func (lp *ListPanel) SetSize(width, height int) {
-	lp.width = width
-	lp.height = height
+func (p *Panel) SetSize(width, height int) {
+	p.width = width
+	p.height = height
 }
 
-func (lp *ListPanel) SetTitle(title string) {
-	lp.title = title
+func (p *Panel) SetTitle(title string) {
+	p.title = title
 }
 
-func (lp *ListPanel) Title() string {
-	return lp.title
+func (p *Panel) Title() string {
+	return p.title
 }
 
-func (lp *ListPanel) SetDescription(description string) {
-	lp.description = description
+func (p *Panel) SetDescription(description string) {
+	p.description = description
 }
 
-func (lp *ListPanel) Description() string {
-	return lp.description
+func (p *Panel) Description() string {
+	return p.description
 }
 
-func (lp *ListPanel) SetObjectType(item ListItem) {
-	lp.resultType = item
+func (p *Panel) SetObjectType(item ListItem) {
+	p.resultType = item
 	// If there are no items in the list, focus on result type; otherwise focus on first list item
-	lp.focusOnResultType = len(lp.ListModel.Items()) == 0
+	p.focusOnResultType = len(p.ListModel.Items()) == 0
 }
 
 // Update items to display with focused style (opposite of SetBlurred)
-func (lp *ListPanel) SetFocused() {
-	lp.wrapperStyle = lp.styles.FocusedPanel
-	lp.ListModel.SetDelegate(lp.focusedDelegate)
-	lp.ListModel.SetShowHelp(true)
-	lp.isFocused = true
+func (p *Panel) SetFocused() {
+	p.wrapperStyle = p.styles.FocusedPanel
+	p.ListModel.SetDelegate(p.focusedDelegate)
+	p.ListModel.SetShowHelp(true)
+	p.isFocused = true
 }
 
 // Update items to display with blurred style (opposite of SetFocused)
-func (lp *ListPanel) SetBlurred() {
-	lp.wrapperStyle = lp.styles.BlurredPanel
-	lp.ListModel.SetDelegate(lp.blurredDelegate)
-	lp.ListModel.SetShowHelp(false)
-	lp.isFocused = false
+func (p *Panel) SetBlurred() {
+	p.wrapperStyle = p.styles.BlurredPanel
+	p.ListModel.SetDelegate(p.blurredDelegate)
+	p.ListModel.SetShowHelp(false)
+	p.isFocused = false
 }
 
 // SelectedItem returns the currently selected item in the list
-func (lp *ListPanel) SelectedItem() list.Item {
-	if lp.focusOnResultType {
-		return lp.resultType
+func (p *Panel) SelectedItem() list.Item {
+	if p.focusOnResultType {
+		return p.resultType
 	}
-	return lp.ListModel.SelectedItem()
+	return p.ListModel.SelectedItem()
 }
 
-func (lp *ListPanel) OpenSelectedItem() tea.Cmd {
-	return OpenPanelFromItem(lp.SelectedItem())
+func (p *Panel) OpenSelectedItem() tea.Cmd {
+	return OpenPanelFromItem(p.SelectedItem())
 }
 
 // Items returns the items in the list
-func (lp *ListPanel) Items() []list.Item {
-	return lp.ListModel.Items()
+func (p *Panel) Items() []list.Item {
+	return p.ListModel.Items()
 }
 
-// View renders the list panel
-func (lp *ListPanel) View() string {
+// View renders the panel
+func (p *Panel) View() string {
 	const (
 		sectionLabelHeight = 1 // Fixed height for section labels
 		emptyLineHeight    = 1 // Fixed height for empty lines between sections
 	)
 
-	availableHeight := lp.height
+	availableHeight := p.height
 	parts := []string{}
 
-	title := lp.styles.PanelTitle.Render(lp.Title())
+	title := p.styles.PanelTitle.Render(p.Title())
 	parts = append(parts, title)
 	availableHeight -= lipgloss.Height(title)
 
-	if lp.Description() != "" {
-		desc := text.WrapAndTruncate(lp.Description(), lp.width, maxDescriptionHeight)
+	if p.Description() != "" {
+		desc := text.WrapAndTruncate(p.Description(), p.width, maxDescriptionHeight)
 
 		parts = append(parts, desc)
 		availableHeight -= lipgloss.Height(desc)
 	}
 
 	// Render result type section if present (fixed heights)
-	if lp.resultType != nil {
-		sectionLabel := lp.styles.SectionLabel.Render("Result Type")
+	if p.resultType != nil {
+		sectionLabel := p.styles.SectionLabel.Render("Result Type")
 		parts = append(parts, "", sectionLabel, "") // Appending empty string adds new lines
 		availableHeight -= emptyLineHeight + sectionLabelHeight + emptyLineHeight
 
 		// Render result type with focus indicator
-		resultTypeText := lp.resultType.Title()
-		if lp.focusOnResultType && lp.isFocused {
-			resultTypeText = lp.styles.FocusedItem.Render(resultTypeText)
+		resultTypeText := p.resultType.Title()
+		if p.focusOnResultType && p.isFocused {
+			resultTypeText = p.styles.FocusedItem.Render(resultTypeText)
 		} else {
-			resultTypeText = lp.styles.UnfocusedItem.Render(resultTypeText)
+			resultTypeText = p.styles.UnfocusedItem.Render(resultTypeText)
 		}
 		parts = append(parts, resultTypeText)
 		availableHeight -= lipgloss.Height(resultTypeText)
 	}
 
 	// Input Arguments section label if list has items (fixed heights)
-	if len(lp.ListModel.Items()) > 0 {
-		if lp.resultType != nil {
+	if len(p.ListModel.Items()) > 0 {
+		if p.resultType != nil {
 			// Only render sectionLabel if it needs to be differentiated from "Result Type"
-			sectionLabel := lp.styles.SectionLabel.Render("Input Arguments")
+			sectionLabel := p.styles.SectionLabel.Render("Input Arguments")
 			parts = append(parts, "", sectionLabel) // Appending empty string adds new lines
 			availableHeight -= emptyLineHeight + sectionLabelHeight
 		}
-		lp.ListModel.SetWidth(lp.width)
-		lp.ListModel.SetHeight(availableHeight)
-		parts = append(parts, lp.ListModel.View())
+		p.ListModel.SetWidth(p.width)
+		p.ListModel.SetHeight(availableHeight)
+		parts = append(parts, p.ListModel.View())
 	}
 
 	content := text.JoinLines(parts...)
 
 	// Apply fixed width & height style to avoid jittery panel borders
-	style := lipgloss.NewStyle().Width(lp.width).Height(lp.height)
+	style := lipgloss.NewStyle().Width(p.width).Height(p.height)
 	innerPanel := style.Render(content)
-	return lp.wrapperStyle.Render(innerPanel)
+	return p.wrapperStyle.Render(innerPanel)
 }

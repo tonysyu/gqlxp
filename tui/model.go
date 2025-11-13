@@ -135,10 +135,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// Open up child panel for ResultType if it exists
 				focusedPanel := m.nav.CurrentPanel()
 				if focusedPanel != nil {
-					if listPanel, ok := focusedPanel.(*components.ListPanel); ok {
-						if openCmd := listPanel.OpenSelectedItem(); openCmd != nil {
-							cmds = append(cmds, openCmd)
-						}
+					if openCmd := focusedPanel.OpenSelectedItem(); openCmd != nil {
+						cmds = append(cmds, openCmd)
 					}
 				}
 			}
@@ -175,7 +173,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if shouldReceiveMsg && m.nav.CurrentPanel() != nil {
 		currentPanel := m.nav.CurrentPanel()
 		newModel, cmd = currentPanel.Update(msg)
-		if panel, ok := newModel.(components.Panel); ok {
+		if panel, ok := newModel.(*components.Panel); ok {
 			m.nav.SetCurrentPanel(panel)
 		}
 		cmds = append(cmds, cmd)
@@ -189,13 +187,12 @@ func (m *mainModel) openOverlayForSelectedItem() {
 	if m.nav.CurrentPanel() == nil {
 		return
 	}
-	if focusedPanel, ok := m.nav.CurrentPanel().(*components.ListPanel); ok {
-		if selectedItem := focusedPanel.SelectedItem(); selectedItem != nil {
-			if listItem, ok := selectedItem.(components.ListItem); ok {
-				// Some items don't have details, so these should now open the overlay
-				if content := listItem.Details(); content != "" {
-					m.Overlay.Show(content, m.width, m.height)
-				}
+	focusedPanel := m.nav.CurrentPanel()
+	if selectedItem := focusedPanel.SelectedItem(); selectedItem != nil {
+		if listItem, ok := selectedItem.(components.ListItem); ok {
+			// Some items don't have details, so these should now open the overlay
+			if content := listItem.Details(); content != "" {
+				m.Overlay.Show(content, m.width, m.height)
 			}
 		}
 	}
@@ -244,22 +241,20 @@ func (m *mainModel) sizePanels() {
 func (m *mainModel) updatePanelFocusStates() {
 	// Blur all panels first
 	for _, panel := range m.nav.Stack().All() {
-		if listPanel, ok := panel.(*components.ListPanel); ok {
-			listPanel.SetBlurred()
+		if panel != nil {
+			panel.SetBlurred()
 		}
 	}
 
 	// Set focused state only for the currently focused panel
 	if m.nav.CurrentPanel() != nil {
-		if listPanel, ok := m.nav.CurrentPanel().(*components.ListPanel); ok {
-			listPanel.SetFocused()
-		}
+		m.nav.CurrentPanel().SetFocused()
 	}
 }
 
 // handleOpenPanel handles when an item is opened
 // The new panel is added to the stack after the currently focused panel
-func (m *mainModel) handleOpenPanel(newPanel components.Panel) {
+func (m *mainModel) handleOpenPanel(newPanel *components.Panel) {
 	m.nav.OpenPanel(newPanel)
 	m.sizePanels()
 }
@@ -307,7 +302,7 @@ func (m *mainModel) loadMainPanel() {
 		title = "Directive Types"
 	}
 
-	m.nav.SetCurrentPanel(components.NewListPanel(items, title))
+	m.nav.SetCurrentPanel(components.NewPanel(items, title))
 	m.updatePanelFocusStates()
 
 	// Auto-open detail panel for the first item if available

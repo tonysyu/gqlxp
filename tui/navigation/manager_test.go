@@ -23,8 +23,8 @@ func TestNavigationManager_NewNavigationManager(t *testing.T) {
 func TestNavigationManager_NavigateForward(t *testing.T) {
 	nm := NewNavigationManager(2)
 
-	p1 := components.NewEmptyListPanel("1")
-	p2 := components.NewEmptyListPanel("2")
+	p1 := components.NewEmptyPanel("1")
+	p2 := components.NewEmptyPanel("2")
 	nm.OpenPanel(p1)
 	nm.OpenPanel(p2)
 
@@ -32,8 +32,7 @@ func TestNavigationManager_NavigateForward(t *testing.T) {
 	if !moved {
 		t.Error("expected navigate forward to succeed")
 	}
-	// Note: Breadcrumbs are only extracted from ListPanels with selected items
-	// StringPanels don't produce breadcrumbs, so breadcrumbs will be empty
+
 	if nm.Stack().Position() != 1 {
 		t.Errorf("expected position 1, got %d", nm.Stack().Position())
 	}
@@ -48,8 +47,8 @@ func TestNavigationManager_NavigateForward(t *testing.T) {
 func TestNavigationManager_NavigateBackward(t *testing.T) {
 	nm := NewNavigationManager(2)
 
-	p1 := components.NewEmptyListPanel("1")
-	p2 := components.NewEmptyListPanel("2")
+	p1 := components.NewEmptyPanel("1")
+	p2 := components.NewEmptyPanel("2")
 	nm.OpenPanel(p1)
 	nm.OpenPanel(p2)
 	nm.NavigateForward()
@@ -58,7 +57,6 @@ func TestNavigationManager_NavigateBackward(t *testing.T) {
 	if !moved {
 		t.Error("expected navigate backward to succeed")
 	}
-	// Breadcrumbs remain empty since StringPanels don't produce breadcrumbs
 	if nm.Stack().Position() != 0 {
 		t.Errorf("expected position 0, got %d", nm.Stack().Position())
 	}
@@ -67,7 +65,7 @@ func TestNavigationManager_NavigateBackward(t *testing.T) {
 func TestNavigationManager_OpenPanel(t *testing.T) {
 	nm := NewNavigationManager(2)
 
-	p1 := components.NewEmptyListPanel("1")
+	p1 := components.NewEmptyPanel("1")
 	nm.OpenPanel(p1)
 
 	if nm.Stack().Len() != 1 {
@@ -83,9 +81,9 @@ func TestNavigationManager_SwitchType(t *testing.T) {
 
 	// Add panels and navigate
 	// Need to navigate between OpenPanel calls to avoid truncation
-	p1 := components.NewEmptyListPanel("1")
-	p2 := components.NewEmptyListPanel("2")
-	p3 := components.NewEmptyListPanel("3")
+	p1 := components.NewEmptyPanel("1")
+	p2 := components.NewEmptyPanel("2")
+	p3 := components.NewEmptyPanel("3")
 	nm.OpenPanel(p1)
 	nm.OpenPanel(p2)
 	nm.NavigateForward() // Move to position 1
@@ -144,33 +142,5 @@ func TestNavigationManager_AllTypes(t *testing.T) {
 	}
 	if allTypes[0] != QueryType {
 		t.Errorf("expected first type to be QueryType, got %v", allTypes[0])
-	}
-}
-
-func TestNavigationManager_Breadcrumbs(t *testing.T) {
-	nm := NewNavigationManager(2)
-
-	// Initially empty
-	if nm.Breadcrumbs() != nil {
-		t.Error("expected initial breadcrumbs to be nil/empty")
-	}
-
-	// Add panels and navigate - need to navigate between OpenPanel calls
-	// Note: These tests use StringPanels which don't produce breadcrumbs.
-	// For proper breadcrumb testing, use ListPanels with selected items.
-	p1 := components.NewEmptyListPanel("1")
-	p2 := components.NewEmptyListPanel("2")
-	p3 := components.NewEmptyListPanel("3")
-	nm.OpenPanel(p1)
-	nm.OpenPanel(p2)
-	nm.NavigateForward()
-
-	nm.OpenPanel(p3)
-	nm.NavigateForward()
-
-	// Breadcrumbs should be empty since StringPanels don't provide breadcrumb titles
-	breadcrumbs := nm.Breadcrumbs()
-	if breadcrumbs != nil {
-		t.Errorf("expected breadcrumbs to be empty for StringPanels, got %v", breadcrumbs)
 	}
 }

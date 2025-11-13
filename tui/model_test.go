@@ -64,11 +64,11 @@ func TestModelPanelNavigation(t *testing.T) {
 	// Directly add panels to the stack for testing (simulating real navigation)
 	// In real usage, panels are added via OpenPanel which truncates and appends
 	stack := model.nav.Stack()
-	allPanels := []components.Panel{
+	allPanels := []*components.Panel{
 		stack.All()[0],
 		stack.All()[1],
-		components.NewEmptyListPanel("test3"),
-		components.NewEmptyListPanel("test4"),
+		components.NewEmptyPanel("test3"),
+		components.NewEmptyPanel("test4"),
 	}
 	stack.Replace(allPanels)
 	// Now we have 4 panels total

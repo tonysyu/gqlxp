@@ -25,8 +25,8 @@ func (nm *NavigationManager) NavigateForward() bool {
 	if nm.stack.position+1 < len(nm.stack.panels) {
 		// Extract breadcrumb title from current panel before moving forward
 		breadcrumbTitle := ""
-		if listPanel, ok := nm.stack.Current().(*components.ListPanel); ok {
-			if selectedItem := listPanel.SelectedItem(); selectedItem != nil {
+		if currentPanel := nm.stack.Current(); currentPanel != nil {
+			if selectedItem := currentPanel.SelectedItem(); selectedItem != nil {
 				if listItem, ok := selectedItem.(components.ListItem); ok {
 					breadcrumbTitle = listItem.RefName()
 				}
@@ -51,7 +51,7 @@ func (nm *NavigationManager) NavigateBackward() bool {
 }
 
 // OpenPanel pushes new panel onto stack
-func (nm *NavigationManager) OpenPanel(panel components.Panel) {
+func (nm *NavigationManager) OpenPanel(panel *components.Panel) {
 	nm.stack.Push(panel)
 }
 
@@ -79,17 +79,17 @@ func (nm *NavigationManager) Stack() *PanelStack {
 }
 
 // CurrentPanel returns the current panel from the stack
-func (nm *NavigationManager) CurrentPanel() components.Panel {
+func (nm *NavigationManager) CurrentPanel() *components.Panel {
 	return nm.stack.Current()
 }
 
 // SetCurrentPanel sets the panel at the current stack position
-func (nm *NavigationManager) SetCurrentPanel(panel components.Panel) {
+func (nm *NavigationManager) SetCurrentPanel(panel *components.Panel) {
 	nm.stack.panels[nm.stack.position] = panel
 }
 
 // NextPanel returns the panel after the current position (right panel)
-func (nm *NavigationManager) NextPanel() components.Panel {
+func (nm *NavigationManager) NextPanel() *components.Panel {
 	return nm.stack.Next()
 }
 
@@ -110,9 +110,9 @@ func (nm *NavigationManager) Breadcrumbs() []string {
 
 // Reset clears the panel stack to initial state with empty panels and resets breadcrumbs
 func (nm *NavigationManager) Reset() {
-	initialPanels := make([]components.Panel, nm.visiblePanels)
+	initialPanels := make([]*components.Panel, nm.visiblePanels)
 	for i := range nm.visiblePanels {
-		initialPanels[i] = components.NewListPanel([]components.ListItem{}, "")
+		initialPanels[i] = components.NewPanel([]components.ListItem{}, "")
 	}
 	nm.stack.Replace(initialPanels)
 	nm.breadcrumbs.Reset()

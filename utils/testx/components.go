@@ -9,7 +9,7 @@ import (
 	"github.com/tonysyu/gqlxp/tui/components"
 )
 
-// RenderMinimalPanel drastically simplifies ListPanel rendering to create simpler tests
+// RenderMinimalPanel drastically simplifies Panel rendering to create simpler tests
 //
 // In particular, this will create a panel with the following characteristics:
 // 1. Empty lines removed (using NormalizeView)
@@ -17,12 +17,10 @@ import (
 // 3. No selection indicator
 // 4. No "status bar" (item count)
 // 4. No help
-func RenderMinimalPanel(panel components.Panel) string {
-	if lp, ok := panel.(*components.ListPanel); ok {
-		lp.ListModel.SetDelegate(minimalItemDelegate{})
-		lp.ListModel.SetShowStatusBar(false)
-		lp.ListModel.ShowHelp()
-	}
+func RenderMinimalPanel(panel *components.Panel) string {
+	panel.ListModel.SetDelegate(minimalItemDelegate{})
+	panel.ListModel.SetShowStatusBar(false)
+	panel.ListModel.ShowHelp()
 	content := NormalizeView(panel.View())
 	return content
 }

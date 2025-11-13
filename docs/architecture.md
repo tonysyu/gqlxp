@@ -19,9 +19,8 @@ For build and development commands, see [Development Commands](development.md).
     - `TypeSelector` - Handles GQL type selection and cycling
     - `BreadcrumbTracker` interface - Abstraction for breadcrumb management
   - **`tui/components`**: Reusable UI components
-    - `Panel` interface - Generic panel abstraction
+    - `Panel` - Panel displaying lists with auto-open behavior
     - `ListItem` interface - Interactive list items with `Open()` method
-    - `ListPanel` - Panel displaying lists with auto-open behavior
     - `SimpleItem` - Basic ListItem implementation
   - **`tui/adapters`**: Converts GraphQL AST types to UI components
   - **`tui/config`**: Configuration and styling

@@ -11,7 +11,7 @@ type ListItem interface {
 	list.DefaultItem
 
 	// OpenPanel Panel to show child items, field types, and inputs.
-	OpenPanel() (Panel, bool)
+	OpenPanel() (*Panel, bool)
 
 	// Details returns markdown-formatted details for the item.
 	// The gqlxp TUI renders details in an overlay pane.
@@ -81,4 +81,4 @@ func (si SimpleItem) Details() string {
 		si.Description(),
 	)
 }
-func (si SimpleItem) OpenPanel() (Panel, bool) { return nil, false }
+func (si SimpleItem) OpenPanel() (*Panel, bool) { return nil, false }

@@ -157,10 +157,10 @@ func (i fieldItem) Details() string {
 }
 
 // OpenPanel displays arguments of field (if any) and the field's ObjectType
-func (i fieldItem) OpenPanel() (components.Panel, bool) {
+func (i fieldItem) OpenPanel() (*components.Panel, bool) {
 	argumentItems := adaptArgumentsToItems(i.gqlField.Arguments(), i.resolver)
 
-	panel := components.NewListPanel(argumentItems, i.fieldName)
+	panel := components.NewPanel(argumentItems, i.fieldName)
 	panel.SetDescription(i.Description())
 	// Set result type as virtual item at top
 	panel.SetObjectType(newTypeDefItemFromField(i.gqlField, i.resolver))
@@ -201,9 +201,9 @@ func (i argumentItem) Details() string {
 }
 
 // OpenPanel displays the argument's type definition
-func (i argumentItem) OpenPanel() (components.Panel, bool) {
+func (i argumentItem) OpenPanel() (*components.Panel, bool) {
 	// Create an empty panel for the argument (similar to how fieldItem creates a panel for arguments)
-	panel := components.NewListPanel([]components.ListItem{}, i.argName)
+	panel := components.NewPanel([]components.ListItem{}, i.argName)
 	panel.SetDescription(i.Description())
 
 	// Set the argument's type as the object type at the top
@@ -281,7 +281,7 @@ func (i typeDefItem) Details() string {
 }
 
 // OpenPanel displays list of fields on type (if any)
-func (i typeDefItem) OpenPanel() (components.Panel, bool) {
+func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 	// Create list items for the detail view
 	var detailItems []components.ListItem
 
@@ -300,7 +300,7 @@ func (i typeDefItem) OpenPanel() (components.Panel, bool) {
 		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.resolver)...)
 	}
 
-	panel := components.NewListPanel(detailItems, i.Title())
+	panel := components.NewPanel(detailItems, i.Title())
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
 		panel.SetDescription(desc)
@@ -398,10 +398,10 @@ func (i directiveItem) Details() string {
 }
 
 // OpenPanel displays arguments of directive (if any)
-func (i directiveItem) OpenPanel() (components.Panel, bool) {
+func (i directiveItem) OpenPanel() (*components.Panel, bool) {
 	argumentItems := adaptArgumentsToItems(i.gqlDirective.Arguments(), i.resolver)
 
-	panel := components.NewListPanel(argumentItems, "@"+i.directiveName)
+	panel := components.NewPanel(argumentItems, "@"+i.directiveName)
 	panel.SetDescription(i.Description())
 
 	return panel, true
