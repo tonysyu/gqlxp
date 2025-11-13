@@ -17,12 +17,14 @@ const (
 
 // Layout dimensions
 const (
-	VisiblePanelCount = 2
-	HelpHeight        = 5
-	NavbarHeight      = 3
-	BreadcrumbsHeight = 1
-	OverlayPadding    = 1
-	OverlayMargin     = 2
+	VisiblePanelCount  = 2
+	HelpHeight         = 5
+	NavbarHeight       = 3
+	BreadcrumbsHeight  = 1
+	PanelTitleHPadding = 1
+	ItemLeftPadding    = 2
+	OverlayPadding     = 1
+	OverlayMargin      = 2
 )
 
 // Styles contains all lipgloss styles used in the TUI
@@ -65,7 +67,7 @@ func DefaultStyles() Styles {
 		PanelTitle: lipgloss.NewStyle().
 			Background(ColorDimIndigo).
 			Foreground(ColorCream).
-			Padding(0, 1),
+			Padding(0, PanelTitleHPadding),
 
 		Navbar: lipgloss.NewStyle().
 			Padding(0, 1).
@@ -105,12 +107,11 @@ func DefaultStyles() Styles {
 			Border(lipgloss.NormalBorder(), false, false, false, true).
 			BorderForeground(ColorDimMagenta).
 			Foreground(ColorDimMagenta).
-			Padding(0, 0, 0, 1),
+			Padding(0, 0, 0, ItemLeftPadding-1), // Subtract 1 due to left-border
 
 		UnfocusedItem: lipgloss.NewStyle().
 			Foreground(ColorDimWhite).
-			Padding(0, 0, 0, 2), // Use left-padding 2 instead of 1 (see FocusedItem)
-		// because UnfocusedItem has no left-border
+			Padding(0, 0, 0, ItemLeftPadding),
 
 		Divider: lipgloss.NewStyle().
 			Foreground(ColorDarkGray),

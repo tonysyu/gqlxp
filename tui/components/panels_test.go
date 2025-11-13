@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/matryer/is"
+	"github.com/tonysyu/gqlxp/utils/testx/assert"
 )
 
 // testOpenableItem is a test helper that implements ListItem with a working Open() method
@@ -237,4 +238,31 @@ func TestPanelFilterExitRefresh(t *testing.T) {
 		_, ok := msg.(OpenPanelMsg)
 		is.True(ok) // Should be OpenPanelMsg
 	}
+}
+
+func TestPanelTitleTruncation(t *testing.T) {
+	assert := assert.New(t)
+
+	panel := NewPanel([]ListItem{}, "This is a very long title that should be truncated")
+	// Set a narrow width that should trigger truncation
+	panel.SetSize(20, 10)
+
+	view := panel.View()
+
+	// PanelTitleHPadding is 1, so effective width for text is width - 2*1 = 18
+	assert.StringContains(view, "This is a very lo…")
+}
+
+func TestPanelResultTypeTruncation(t *testing.T) {
+	assert := assert.New(t)
+
+	panel := NewPanel([]ListItem{}, "Test Panel")
+	panel.SetObjectType(NewSimpleItem("VeryLongResultTypeNameThatShouldBeTruncated"))
+	// Set a narrow width that should trigger truncation
+	panel.SetSize(20, 10)
+
+	view := panel.View()
+
+	// ItemLeftPadding is 2, so effective width for text is width - 2 = 18
+	assert.StringContains(view, "VeryLongResultTyp…")
 }

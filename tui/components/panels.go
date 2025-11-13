@@ -214,7 +214,8 @@ func (p *Panel) View() string {
 	availableHeight := p.height
 	parts := []string{}
 
-	title := p.styles.PanelTitle.Render(p.Title())
+	truncatedTitle := text.Truncate(p.Title(), p.width-2*config.PanelTitleHPadding)
+	title := p.styles.PanelTitle.Render(truncatedTitle)
 	parts = append(parts, title)
 	availableHeight -= lipgloss.Height(title)
 
@@ -232,14 +233,14 @@ func (p *Panel) View() string {
 		availableHeight -= emptyLineHeight + sectionLabelHeight + emptyLineHeight
 
 		// Render result type with focus indicator
-		resultTypeText := p.resultType.Title()
+		truncatedResultType := text.Truncate(p.resultType.Title(), p.width-config.ItemLeftPadding)
 		if p.focusOnResultType && p.isFocused {
-			resultTypeText = p.styles.FocusedItem.Render(resultTypeText)
+			truncatedResultType = p.styles.FocusedItem.Render(truncatedResultType)
 		} else {
-			resultTypeText = p.styles.UnfocusedItem.Render(resultTypeText)
+			truncatedResultType = p.styles.UnfocusedItem.Render(truncatedResultType)
 		}
-		parts = append(parts, resultTypeText)
-		availableHeight -= lipgloss.Height(resultTypeText)
+		parts = append(parts, truncatedResultType)
+		availableHeight -= lipgloss.Height(truncatedResultType)
 	}
 
 	// Input Arguments section label if list has items (fixed heights)

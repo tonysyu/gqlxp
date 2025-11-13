@@ -21,6 +21,22 @@ func SplitLines(text string) []string {
 	return strings.Split(text, "\n")
 }
 
+func Truncate(text string, maxWidth int) string {
+	// Remove any newlines first to ensure single line
+	text = strings.ReplaceAll(text, "\n", " ")
+
+	if len(text) <= maxWidth {
+		return text
+	}
+
+	if maxWidth <= 0 {
+		return ""
+	}
+
+	// Truncate and add ellipsis
+	return text[:maxWidth-1] + ellipsis
+}
+
 func WrapAndTruncate(rawString string, maxWidth, maxLines int) string {
 	text := wordwrap.String(rawString, maxWidth)
 	textLines := SplitLines(text)
