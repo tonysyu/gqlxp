@@ -396,7 +396,7 @@ func TestArgumentListCreation(t *testing.T) {
 	field := schema.Query["testField"]
 
 	// Test argument items creation
-	items := adaptArgumentsToItems(field.Arguments(), resolver)
+	items := AdaptArguments(field.Arguments(), resolver)
 	is.Equal(len(items), 3)
 
 	// Test first argument

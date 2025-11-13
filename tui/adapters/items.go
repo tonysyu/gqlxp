@@ -14,84 +14,6 @@ var _ components.ListItem = (*argumentItem)(nil)
 var _ components.ListItem = (*typeDefItem)(nil)
 var _ components.ListItem = (*directiveItem)(nil)
 
-func adaptFieldsToItems(queryFields []*gql.Field, resolver gql.TypeResolver) []components.ListItem {
-	adaptedItems := make([]components.ListItem, 0, len(queryFields))
-	for _, f := range queryFields {
-		adaptedItems = append(adaptedItems, newFieldItem(f, resolver))
-	}
-	return adaptedItems
-}
-
-func adaptArgumentsToItems(arguments []*gql.Argument, resolver gql.TypeResolver) []components.ListItem {
-	var items []components.ListItem
-	if len(arguments) > 0 {
-		for _, arg := range arguments {
-			items = append(items, newArgumentItem(arg, resolver))
-		}
-	}
-	return items
-}
-
-func adaptTypeDefsToItems[T gql.TypeDef](typeDefs []T, resolver gql.TypeResolver) []components.ListItem {
-	adaptedItems := make([]components.ListItem, 0, len(typeDefs))
-	for _, td := range typeDefs {
-		adaptedItems = append(adaptedItems, newTypeDefItem(td, resolver))
-	}
-	return adaptedItems
-}
-
-func adaptObjectsToItems(objects []*gql.Object, resolver gql.TypeResolver) []components.ListItem {
-	return adaptTypeDefsToItems(objects, resolver)
-}
-
-func adaptInputObjectsToItems(inputs []*gql.InputObject, resolver gql.TypeResolver) []components.ListItem {
-	return adaptTypeDefsToItems(inputs, resolver)
-}
-
-func adaptEnumsToItems(enums []*gql.Enum, resolver gql.TypeResolver) []components.ListItem {
-	return adaptTypeDefsToItems(enums, resolver)
-}
-
-func adaptScalarsToItems(scalars []*gql.Scalar, resolver gql.TypeResolver) []components.ListItem {
-	return adaptTypeDefsToItems(scalars, resolver)
-}
-
-func adaptInterfacesToItems(interfaces []*gql.Interface, resolver gql.TypeResolver) []components.ListItem {
-	return adaptTypeDefsToItems(interfaces, resolver)
-}
-
-func adaptUnionsToItems(unions []*gql.Union, resolver gql.TypeResolver) []components.ListItem {
-	return adaptTypeDefsToItems(unions, resolver)
-}
-
-func adaptDirectivesToItems(directives []*gql.Directive, resolver gql.TypeResolver) []components.ListItem {
-	adaptedItems := make([]components.ListItem, 0, len(directives))
-	for _, directive := range directives {
-		adaptedItems = append(adaptedItems, newDirectiveDefinitionItem(directive, resolver))
-	}
-	return adaptedItems
-}
-
-func adaptUnionTypesToItems(typeNames []string, resolver gql.TypeResolver) []components.ListItem {
-	adaptedItems := make([]components.ListItem, 0, len(typeNames))
-	for _, typeName := range typeNames {
-		adaptedItems = append(adaptedItems, newNamedItem(typeName, resolver))
-	}
-	return adaptedItems
-}
-
-func adaptEnumValuesToItems(enumNodes []*gql.EnumValue) []components.ListItem {
-	adaptedItems := make([]components.ListItem, 0, len(enumNodes))
-	for _, node := range enumNodes {
-		item := components.NewSimpleItem(
-			node.Name(),
-			components.WithDescription(node.Description()),
-		)
-		adaptedItems = append(adaptedItems, item)
-	}
-	return adaptedItems
-}
-
 func formatFieldDefinitionsWithDescriptions(fieldNodes []*gql.Field) string {
 	if len(fieldNodes) == 0 {
 		return ""
@@ -158,7 +80,7 @@ func (i fieldItem) Details() string {
 
 // OpenPanel displays arguments of field (if any) and the field's ObjectType
 func (i fieldItem) OpenPanel() (*components.Panel, bool) {
-	argumentItems := adaptArgumentsToItems(i.gqlField.Arguments(), i.resolver)
+	argumentItems := AdaptArguments(i.gqlField.Arguments(), i.resolver)
 
 	panel := components.NewPanel(argumentItems, i.fieldName)
 	panel.SetDescription(i.Description())
@@ -287,17 +209,17 @@ func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 
 	switch typeDef := (i.typeDef).(type) {
 	case *gql.Object:
-		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.resolver)...)
+		detailItems = append(detailItems, AdaptFields(typeDef.Fields(), i.resolver)...)
 	case *gql.Scalar:
 		// No details needed
 	case *gql.Interface:
-		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.resolver)...)
+		detailItems = append(detailItems, AdaptFields(typeDef.Fields(), i.resolver)...)
 	case *gql.Union:
-		detailItems = append(detailItems, adaptUnionTypesToItems(typeDef.Types(), i.resolver)...)
+		detailItems = append(detailItems, AdaptUnionTypes(typeDef.Types(), i.resolver)...)
 	case *gql.Enum:
-		detailItems = append(detailItems, adaptEnumValuesToItems(typeDef.Values())...)
+		detailItems = append(detailItems, AdaptEnumValues(typeDef.Values())...)
 	case *gql.InputObject:
-		detailItems = append(detailItems, adaptFieldsToItems(typeDef.Fields(), i.resolver)...)
+		detailItems = append(detailItems, AdaptFields(typeDef.Fields(), i.resolver)...)
 	}
 
 	panel := components.NewPanel(detailItems, i.Title())
@@ -399,7 +321,7 @@ func (i directiveItem) Details() string {
 
 // OpenPanel displays arguments of directive (if any)
 func (i directiveItem) OpenPanel() (*components.Panel, bool) {
-	argumentItems := adaptArgumentsToItems(i.gqlDirective.Arguments(), i.resolver)
+	argumentItems := AdaptArguments(i.gqlDirective.Arguments(), i.resolver)
 
 	panel := components.NewPanel(argumentItems, "@"+i.directiveName)
 	panel.SetDescription(i.Description())
