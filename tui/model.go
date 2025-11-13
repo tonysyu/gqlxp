@@ -358,7 +358,12 @@ func (m *mainModel) renderBreadcrumbs() string {
 		if i > 0 {
 			parts = append(parts, separator)
 		}
-		parts = append(parts, crumb)
+		// Apply special color to the last breadcrumb
+		if i == len(crumbs)-1 {
+			parts = append(parts, m.Styles.CurrentBreadcrumb.Render(crumb))
+		} else {
+			parts = append(parts, crumb)
+		}
 	}
 
 	breadcrumbText := lipgloss.JoinHorizontal(lipgloss.Left, parts...)

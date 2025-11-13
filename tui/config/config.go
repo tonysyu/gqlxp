@@ -33,10 +33,11 @@ type Styles struct {
 	PanelTitle   lipgloss.Style
 
 	// Navigation styles for navbar dislplaying GQL Type selection
-	Navbar      lipgloss.Style
-	ActiveTab   lipgloss.Style
-	InactiveTab lipgloss.Style
-	Breadcrumbs lipgloss.Style
+	Navbar            lipgloss.Style
+	ActiveTab         lipgloss.Style
+	InactiveTab       lipgloss.Style
+	Breadcrumbs       lipgloss.Style
+	CurrentBreadcrumb lipgloss.Style
 
 	// Overlay style for view displaying Details of GQL Types
 	Overlay lipgloss.Style
@@ -83,6 +84,9 @@ func DefaultStyles() Styles {
 		Breadcrumbs: lipgloss.NewStyle().
 			Foreground(ColorLightGray).
 			Padding(0, 1),
+
+		CurrentBreadcrumb: lipgloss.NewStyle().
+			Foreground(ColorDimIndigo),
 
 		Overlay: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
