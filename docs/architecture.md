@@ -4,7 +4,12 @@ For build and development commands, see [Development Commands](development.md).
 
 ## Package Structure
 - **`cmd/gqlxp`**: Main application entry point
-  - `main()` - Reads schema file and starts TUI
+  - `main()` - Reads schema file or loads from library and starts TUI
+  - Library subcommands (add, list, remove)
+- **`library`**: Schema library with persistent storage
+  - `Library` interface - Schema management operations
+  - `FileLibrary` - File-based storage implementation
+  - Metadata storage in `~/.config/gqlxp/schemas/`
 - **`gql`**: GraphQL schema parsing and type extraction
   - `ParseSchema()` - Parses GraphQL schema and extracts all type definitions
   - `GraphQLSchema` struct - Contains maps for Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, and Directive types

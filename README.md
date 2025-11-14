@@ -35,6 +35,26 @@ $ just build
 $ ./dist/gqlxp examples/github.graphqls
 ```
 
+### Library Mode
+
+Persist schemas in a local library for quick access:
+
+```sh
+# Add a schema to the library
+$ ./dist/gqlxp library add github-api examples/github.graphqls
+
+# List schemas in library
+$ ./dist/gqlxp library list
+
+# Explore schema from library
+$ ./dist/gqlxp --library github-api
+
+# Remove schema from library
+$ ./dist/gqlxp library remove github-api
+```
+
+Schemas are stored in `~/.config/gqlxp/schemas/` on macOS/Linux or `%APPDATA%\gqlxp\schemas\` on Windows.
+
 For local development commands:
 ```sh
 $ just build  # Build executable to dist/gqlxp
@@ -49,3 +69,4 @@ $ just verify  # Run tests, lint, and fix
     - [Development Commands](docs/development.md)
     - [Architecture](docs/architecture.md)
     - [Coding Best Practices](docs/coding.md)
+    - [Schema Library](docs/schema-library.md)
