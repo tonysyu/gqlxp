@@ -45,6 +45,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Cross-reference instead of duplicating content
 - Avoid referencing specific code locations (file:line)
 
+## CODE STYLE AND ORGANIZATION RULE
+
+**Follow established coding practices and architecture patterns:**
+- Apply coding best practices from [docs/coding.md](docs/coding.md) (minimize public API, testing conventions, error handling)
+- Follow package structure and organization patterns from [docs/architecture.md](docs/architecture.md)
+- Maintain consistency with existing code organization and suggest refactoring when
+appropriate
+
 ## Project Information
 
 For project overview, development commands, and architecture details, refer to:

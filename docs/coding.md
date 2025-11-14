@@ -11,6 +11,7 @@
 
 - Prefer `package foo_test` (black-box) for public API tests
 - Use `package foo` (white-box) only when testing private implementation
+- Use `"github.com/matryer/is"` instead of `t.Error`/`t.Errorf`
 
 ## Error Handling
 
