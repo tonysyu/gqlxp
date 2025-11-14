@@ -5,7 +5,7 @@ Currently, gqlxp only supports exploring GraphQL schemas provided via command-li
 
 ## What Changes
 - Store GraphQL schemas in `~/.config/gqlxp/schemas/`
-- Store schema metadata in `~/.config/gqlxp/metadata/`
+- Store all schema metadata in single file `~/.config/gqlxp/schemas/metadata.json` with schema-id as top-level keys
 - Support schema-specific metadata:
   - Display names for schemas
   - Favorited type names for quick access

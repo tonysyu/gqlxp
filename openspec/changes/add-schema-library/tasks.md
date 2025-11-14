@@ -4,7 +4,7 @@
 - [ ] 1.1 Create `library` package with schema storage interface
 - [ ] 1.2 Implement config directory creation (`~/.config/gqlxp/`)
 - [ ] 1.3 Implement schema storage (save/load GraphQL schema files)
-- [ ] 1.4 Implement metadata storage (JSON format for schema metadata)
+- [ ] 1.4 Implement metadata storage (single `schemas/metadata.json` file with schema-id keys)
 - [ ] 1.5 Define metadata schema (name, favorites, URL patterns)
 - [ ] 1.6 Add tests for library package
 

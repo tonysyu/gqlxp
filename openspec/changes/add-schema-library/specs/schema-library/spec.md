@@ -7,7 +7,7 @@ The system SHALL create a configuration directory structure on first use in the 
 
 #### Scenario: First-time initialization
 - **WHEN** the library feature is used for the first time
-- **THEN** the config directory structure is created with `schemas/` and `metadata/` subdirectories
+- **THEN** the config directory is created with a `schemas/` subdirectory and empty `schemas/metadata.json` file
 
 #### Scenario: Directory already exists
 - **WHEN** the config directory already exists
@@ -33,23 +33,27 @@ The system SHALL store GraphQL schema files in the config directory with a uniqu
 - **THEN** the schema content is loaded from the stored file
 
 ### Requirement: Schema Metadata Persistence
-The system SHALL store schema metadata as JSON files with support for display names, favorites, and URL patterns.
+The system SHALL store schema metadata in a single JSON file (`schemas/metadata.json`) with schema-id as top-level keys, supporting display names, favorites, and URL patterns.
 
 #### Scenario: Create metadata for new schema
 - **WHEN** a schema is added to the library
-- **THEN** a metadata file is created at `metadata/<schema-id>.json` with default values
+- **THEN** an entry is added to `schemas/metadata.json` with the schema-id as key and default metadata values
 
 #### Scenario: Update metadata
 - **WHEN** metadata is modified (display name, favorites, URL patterns)
-- **THEN** the metadata file is atomically updated with the new values
+- **THEN** the `schemas/metadata.json` file is atomically updated with the new values
 
 #### Scenario: Load metadata
 - **WHEN** a schema is retrieved from the library
-- **THEN** the associated metadata is loaded and returned with the schema
+- **THEN** the associated metadata is loaded from `schemas/metadata.json` using the schema-id as key
 
 #### Scenario: Invalid metadata JSON
-- **WHEN** a metadata file contains invalid JSON
-- **THEN** an error is logged and default metadata is used
+- **WHEN** the `schemas/metadata.json` file contains invalid JSON
+- **THEN** an error is logged and an empty metadata object is used
+
+#### Scenario: Missing metadata entry
+- **WHEN** a schema exists but has no metadata entry in `schemas/metadata.json`
+- **THEN** default metadata values are used for that schema
 
 ### Requirement: Favorite Types Management
 The system SHALL support marking type names as favorites for quick access within each schema.
@@ -101,7 +105,7 @@ The system SHALL support removing schemas and their associated metadata from the
 
 #### Scenario: Remove existing schema
 - **WHEN** a user removes a schema by ID
-- **THEN** both the schema file and metadata file are deleted
+- **THEN** the schema file is deleted and its entry is removed from `schemas/metadata.json`
 
 #### Scenario: Remove non-existent schema
 - **WHEN** a user attempts to remove a schema that doesn't exist

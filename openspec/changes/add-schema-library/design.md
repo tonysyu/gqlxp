@@ -21,15 +21,15 @@ gqlxp currently operates as a single-session tool that loads schemas from file p
 ## Decisions
 
 ### Decision 1: File-Based Storage Format
-**What**: Use file system with JSON metadata files
+**What**: Use file system with single JSON metadata file
 - Schemas stored as `.graphqls` files in `~/.config/gqlxp/schemas/<schema-id>.graphqls`
-- Metadata stored as JSON in `~/.config/gqlxp/metadata/<schema-id>.json`
+- All metadata stored in single JSON file at `~/.config/gqlxp/schemas/metadata.json` with schema-id as top-level keys
 
-**Why**: Simple, portable, human-readable, no external dependencies
+**Why**: Simple, portable, human-readable, no external dependencies; easier to manage than multiple files for small libraries
 
 **Alternatives considered**:
+- Per-schema metadata files: More file operations; harder to enumerate all schemas
 - SQLite database: Overkill for simple key-value storage; adds dependency
-- Single JSON file: Difficult to manage with large schemas; atomic write issues
 
 ### Decision 2: Schema ID Format
 **What**: Use sanitized schema name as ID (lowercase, alphanumeric + hyphens)
@@ -41,24 +41,37 @@ gqlxp currently operates as a single-session tool that loads schemas from file p
 - Hash of schema content: Not stable across metadata-only updates
 
 ### Decision 3: Metadata Schema
-**What**: JSON structure per schema:
+**What**: Single JSON file (`~/.config/gqlxp/schemas/metadata.json`) with schema-id as top-level keys:
 ```json
 {
-  "id": "github-api",
-  "displayName": "GitHub GraphQL API",
-  "sourceFile": "/path/to/original/github.graphqls",
-  "favorites": ["Query", "Repository", "User"],
-  "urlPatterns": {
-    "Query": "https://docs.github.com/graphql/reference/queries#${field}",
-    "Mutation": "https://docs.github.com/graphql/reference/mutations#${field}",
-    "*": "https://docs.github.com/graphql/reference/objects#${type}"
+  "github-api": {
+    "displayName": "GitHub GraphQL API",
+    "sourceFile": "/path/to/original/github.graphqls",
+    "favorites": ["Query", "Repository", "User"],
+    "urlPatterns": {
+      "Query": "https://docs.github.com/graphql/reference/queries#${field}",
+      "Mutation": "https://docs.github.com/graphql/reference/mutations#${field}",
+      "*": "https://docs.github.com/graphql/reference/objects#${type}"
+    },
+    "createdAt": "2025-11-13T10:30:00Z",
+    "updatedAt": "2025-11-13T10:30:00Z"
   },
-  "createdAt": "2025-11-13T10:30:00Z",
-  "updatedAt": "2025-11-13T10:30:00Z"
+  "shopify-api": {
+    "displayName": "Shopify Storefront API",
+    "sourceFile": "/path/to/shopify.graphqls",
+    "favorites": ["Product", "Collection"],
+    "urlPatterns": {
+      "*": "https://shopify.dev/docs/api/storefront#${type}"
+    },
+    "createdAt": "2025-11-13T11:00:00Z",
+    "updatedAt": "2025-11-13T11:00:00Z"
+  }
 }
 ```
 
 **Why**:
+- Single file easier to manage for small libraries
+- Schema-id as key enables quick lookup
 - URL patterns use simple template syntax (`${type}`, `${field}`)
 - Wildcards (`*`) provide fallback patterns
 - Timestamps for debugging and potential future sorting
