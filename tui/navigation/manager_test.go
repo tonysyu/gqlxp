@@ -3,24 +3,21 @@ package navigation
 import (
 	"testing"
 
+	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/components"
 )
 
 func TestNavigationManager_NewNavigationManager(t *testing.T) {
+	is := is.New(t)
 	nm := NewNavigationManager(2)
 
-	if nm.Stack() == nil {
-		t.Error("expected stack to be initialized")
-	}
-	if nm.CurrentType() != QueryType {
-		t.Errorf("expected default type to be QueryType, got %v", nm.CurrentType())
-	}
-	if nm.Breadcrumbs() != nil {
-		t.Error("expected initial breadcrumbs to be nil/empty")
-	}
+	is.True(nm.Stack() != nil)
+	is.Equal(nm.CurrentType(), QueryType)
+	is.Equal(nm.Breadcrumbs(), nil)
 }
 
 func TestNavigationManager_NavigateForward(t *testing.T) {
+	is := is.New(t)
 	nm := NewNavigationManager(2)
 
 	p1 := components.NewEmptyPanel("1")
@@ -29,22 +26,17 @@ func TestNavigationManager_NavigateForward(t *testing.T) {
 	nm.OpenPanel(p2)
 
 	moved := nm.NavigateForward()
-	if !moved {
-		t.Error("expected navigate forward to succeed")
-	}
+	is.True(moved)
 
-	if nm.Stack().Position() != 1 {
-		t.Errorf("expected position 1, got %d", nm.Stack().Position())
-	}
+	is.Equal(nm.Stack().Position(), 1)
 
 	// Can't move past end
 	moved = nm.NavigateForward()
-	if moved {
-		t.Error("expected navigate forward to fail at end")
-	}
+	is.True(!moved)
 }
 
 func TestNavigationManager_NavigateBackward(t *testing.T) {
+	is := is.New(t)
 	nm := NewNavigationManager(2)
 
 	p1 := components.NewEmptyPanel("1")
@@ -54,29 +46,23 @@ func TestNavigationManager_NavigateBackward(t *testing.T) {
 	nm.NavigateForward()
 
 	moved := nm.NavigateBackward()
-	if !moved {
-		t.Error("expected navigate backward to succeed")
-	}
-	if nm.Stack().Position() != 0 {
-		t.Errorf("expected position 0, got %d", nm.Stack().Position())
-	}
+	is.True(moved)
+	is.Equal(nm.Stack().Position(), 0)
 }
 
 func TestNavigationManager_OpenPanel(t *testing.T) {
+	is := is.New(t)
 	nm := NewNavigationManager(2)
 
 	p1 := components.NewEmptyPanel("1")
 	nm.OpenPanel(p1)
 
-	if nm.Stack().Len() != 1 {
-		t.Errorf("expected 1 panel in stack, got %d", nm.Stack().Len())
-	}
-	if nm.CurrentPanel() != p1 {
-		t.Error("expected current panel to be p1")
-	}
+	is.Equal(nm.Stack().Len(), 1)
+	is.Equal(nm.CurrentPanel(), p1)
 }
 
 func TestNavigationManager_SwitchType(t *testing.T) {
+	is := is.New(t)
 	nm := NewNavigationManager(2)
 
 	// Add panels and navigate
@@ -92,55 +78,38 @@ func TestNavigationManager_SwitchType(t *testing.T) {
 
 	nm.SwitchType(MutationType)
 
-	if nm.CurrentType() != MutationType {
-		t.Errorf("expected current type to be MutationType, got %v", nm.CurrentType())
-	}
+	is.Equal(nm.CurrentType(), MutationType)
 	breadcrumbs := nm.Breadcrumbs()
-	if breadcrumbs != nil {
-		t.Errorf("expected breadcrumbs to be reset (nil/empty), got %v", breadcrumbs)
-	}
+	is.Equal(breadcrumbs, nil)
 }
 
 func TestNavigationManager_CycleTypeForward(t *testing.T) {
+	is := is.New(t)
 	nm := NewNavigationManager(2)
 
-	if nm.CurrentType() != QueryType {
-		t.Error("setup error: should start with QueryType")
-	}
+	is.Equal(nm.CurrentType(), QueryType)
 
 	newType := nm.CycleTypeForward()
-	if newType != MutationType {
-		t.Errorf("expected MutationType, got %v", newType)
-	}
-	if nm.CurrentType() != MutationType {
-		t.Errorf("expected current type to be MutationType, got %v", nm.CurrentType())
-	}
+	is.Equal(newType, MutationType)
+	is.Equal(nm.CurrentType(), MutationType)
 }
 
 func TestNavigationManager_CycleTypeBackward(t *testing.T) {
+	is := is.New(t)
 	nm := NewNavigationManager(2)
 
-	if nm.CurrentType() != QueryType {
-		t.Error("setup error: should start with QueryType")
-	}
+	is.Equal(nm.CurrentType(), QueryType)
 
 	newType := nm.CycleTypeBackward()
-	if newType != DirectiveType {
-		t.Errorf("expected DirectiveType (wraparound), got %v", newType)
-	}
-	if nm.CurrentType() != DirectiveType {
-		t.Errorf("expected current type to be DirectiveType, got %v", nm.CurrentType())
-	}
+	is.Equal(newType, DirectiveType)
+	is.Equal(nm.CurrentType(), DirectiveType)
 }
 
 func TestNavigationManager_AllTypes(t *testing.T) {
+	is := is.New(t)
 	nm := NewNavigationManager(2)
 
 	allTypes := nm.AllTypes()
-	if len(allTypes) != 9 {
-		t.Errorf("expected 9 types, got %d", len(allTypes))
-	}
-	if allTypes[0] != QueryType {
-		t.Errorf("expected first type to be QueryType, got %v", allTypes[0])
-	}
+	is.Equal(len(allTypes), 9)
+	is.Equal(allTypes[0], QueryType)
 }
