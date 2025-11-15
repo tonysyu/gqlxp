@@ -43,8 +43,10 @@ func main() {
 	// Handle flags
 	if command == "--library" {
 		if len(os.Args) == 2 {
-			// Library selection mode (future TUI enhancement)
-			abort("Library selection mode not yet implemented. Use: gqlxp library list")
+			// Library selection mode
+			if _, err := tui.StartSchemaSelector(); err != nil {
+				abort(fmt.Sprintf("Error starting library selector: %v", err))
+			}
 		} else if len(os.Args) == 3 {
 			// Direct library schema load
 			schemaID := os.Args[2]
@@ -63,6 +65,7 @@ func main() {
 func showUsage() {
 	usage := `Usage:
   gqlxp <schema-file>              Load schema from file path
+  gqlxp --library                  Select schema from library
   gqlxp --library <schema-id>      Load schema from library
   gqlxp library add <id> <file>    Add schema to library
   gqlxp library list               List schemas in library
@@ -105,7 +108,7 @@ func loadAndStartFromLibrary(schemaID string) {
 		abort(fmt.Sprintf("Error parsing schema: %v", err))
 	}
 
-	if _, err := tui.Start(parsedSchema); err != nil {
+	if _, err := tui.StartWithLibraryData(parsedSchema, schemaID, schema.Metadata); err != nil {
 		abort(fmt.Sprintf("Error starting tui: %v", err))
 	}
 }

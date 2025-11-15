@@ -37,7 +37,7 @@ $ ./dist/gqlxp examples/github.graphqls
 
 ### Library Mode
 
-Persist schemas in a local library for quick access:
+Persist schemas in a local library for quick access with favorites and documentation links:
 
 ```sh
 # Add a schema to the library
@@ -46,14 +46,20 @@ $ ./dist/gqlxp library add github-api examples/github.graphqls
 # List schemas in library
 $ ./dist/gqlxp library list
 
-# Explore schema from library
+# Interactive schema selector
+$ ./dist/gqlxp --library
+
+# Explore specific schema from library
 $ ./dist/gqlxp --library github-api
 
 # Remove schema from library
 $ ./dist/gqlxp library remove github-api
 ```
 
-Schemas are stored in `~/.config/gqlxp/schemas/` on macOS/Linux or `%APPDATA%\gqlxp\schemas\` on Windows.
+**Library Features:**
+- **Schema Selector**: Run `gqlxp --library` to open interactive schema picker
+- **Favorites**: Press `f` to favorite/unfavorite types for quick identification (marked with ★)
+- **Persistent Storage**: Schemas stored in `~/.config/gqlxp/schemas/` on macOS/Linux or `%APPDATA%\gqlxp\schemas\` on Windows
 
 For local development commands:
 ```sh

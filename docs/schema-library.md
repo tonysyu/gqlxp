@@ -112,18 +112,34 @@ gqlxp library add <schema-id> <file-path>
 # List schemas
 gqlxp library list
 
-# Load from library
+# Interactive schema selector
+gqlxp --library
+
+# Load specific schema from library
 gqlxp --library <schema-id>
 
 # Remove schema
 gqlxp library remove <schema-id>
 ```
 
+## TUI Features
+
+When exploring schemas from the library, additional features are available:
+
+**Schema Selector** (`gqlxp --library`)
+- Interactive list of all schemas in library
+- Filter/search by schema ID or display name
+- Enter to select and open schema
+
+**Favorites** (Press `f`)
+- Mark types as favorites for quick identification
+- Favorited types show ★ indicator in type lists
+- Favorites persist across sessions in `metadata.json`
+- Toggle on/off by pressing `f` on selected type
+
 ## Future Enhancements
 
 **Not yet implemented:**
-- Interactive TUI schema selector
-- Favorites visual indicators
-- URL opening for selected types
 - Display name customization via CLI
 - URL pattern management via CLI
+- Bulk import/export of schemas

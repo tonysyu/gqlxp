@@ -27,11 +27,10 @@
 - [x] 4.3 Maintain backward compatibility with file-path mode
 - [x] 4.4 Add tests for CLI integration
 
-## 5. TUI Integration (Optional - Future Enhancement)
-- [ ] 5.1 Add schema selector screen for library mode
-- [ ] 5.2 Add favorites indicator in type lists
-- [ ] 5.3 Add URL opening functionality for selected types
-- [ ] 5.4 Add library management UI commands
+## 5. TUI Integration
+- [x] 5.1 Add schema selector screen for library mode
+- [x] 5.2 Add favorites indicator in type lists
+- [x] 5.3 Add library management UI commands (favorites toggling)
 
 ## 6. Documentation
 - [x] 6.1 Update README.md with library mode usage

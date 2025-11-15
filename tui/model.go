@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/components"
 	"github.com/tonysyu/gqlxp/tui/config"
@@ -42,7 +43,7 @@ var (
 )
 
 type keymap = struct {
-	NextPanel, PrevPanel, Quit, ToggleGQLType, ReverseToggleGQLType, ToggleOverlay key.Binding
+	NextPanel, PrevPanel, Quit, ToggleGQLType, ReverseToggleGQLType, ToggleOverlay, ToggleFavorite key.Binding
 }
 
 type mainModel struct {
@@ -52,6 +53,11 @@ type mainModel struct {
 	nav *navigation.NavigationManager
 	// Overlay for displaying ListItem.Details()
 	Overlay overlayModel
+
+	// Library integration (optional)
+	schemaID       string   // Schema ID if loaded from library
+	favorites      []string // List of favorited type names
+	hasLibraryData bool     // Whether this schema has library metadata
 
 	width          int
 	height         int
@@ -91,6 +97,10 @@ func newModel(schema adapters.SchemaView) mainModel {
 				key.WithKeys(" "),
 				key.WithHelp("space", "overlay"),
 			),
+			ToggleFavorite: key.NewBinding(
+				key.WithKeys("f"),
+				key.WithHelp("f", "favorite"),
+			),
 		},
 	}
 
@@ -128,6 +138,10 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, m.keymap.ToggleOverlay):
 			m.openOverlayForSelectedItem()
+		case key.Matches(msg, m.keymap.ToggleFavorite):
+			if m.hasLibraryData {
+				return m, m.toggleFavoriteForSelectedItem()
+			}
 		case key.Matches(msg, m.keymap.NextPanel):
 			// Move forward in stack if there's at least one more panel ahead
 			if m.nav.NavigateForward() {
@@ -302,6 +316,11 @@ func (m *mainModel) loadMainPanel() {
 		title = "Directive Types"
 	}
 
+	// Wrap items with favorites indicator if library data is available
+	if m.hasLibraryData {
+		items = wrapItemsWithFavorites(items, m.favorites)
+	}
+
 	m.nav.SetCurrentPanel(components.NewPanel(items, title))
 	m.updatePanelFocusStates()
 
@@ -312,6 +331,49 @@ func (m *mainModel) loadMainPanel() {
 				m.handleOpenPanel(newPanel)
 			}
 		}
+	}
+}
+
+// toggleFavoriteForSelectedItem toggles favorite status for selected item
+func (m *mainModel) toggleFavoriteForSelectedItem() tea.Cmd {
+	if m.nav.CurrentPanel() == nil {
+		return nil
+	}
+	panel := m.nav.CurrentPanel()
+	if selectedItem := panel.SelectedItem(); selectedItem != nil {
+		if listItem, ok := selectedItem.(components.ListItem); ok {
+			typeName := listItem.TypeName()
+			return m.toggleFavorite(typeName)
+		}
+	}
+	return nil
+}
+
+// toggleFavorite toggles favorite status and saves to library
+func (m *mainModel) toggleFavorite(typeName string) tea.Cmd {
+	return func() tea.Msg {
+		lib := library.NewLibrary()
+
+		// Check if already favorited
+		isFav := false
+		for i, fav := range m.favorites {
+			if fav == typeName {
+				// Remove from favorites
+				m.favorites = append(m.favorites[:i], m.favorites[i+1:]...)
+				_ = lib.RemoveFavorite(m.schemaID, typeName)
+				isFav = true
+				break
+			}
+		}
+
+		if !isFav {
+			// Add to favorites
+			m.favorites = append(m.favorites, typeName)
+			_ = lib.AddFavorite(m.schemaID, typeName)
+		}
+
+		// Reload main panel to update favorites indicator
+		return SetGQLTypeMsg{GQLType: navTypeToGQLType(m.nav.CurrentType())}
 	}
 }
 
@@ -371,13 +433,20 @@ func (m *mainModel) renderBreadcrumbs() string {
 }
 
 func (m mainModel) View() string {
-	help := m.help.ShortHelpView([]key.Binding{
+	// Build help key bindings
+	helpBindings := []key.Binding{
 		m.keymap.NextPanel,
 		m.keymap.PrevPanel,
 		m.keymap.ToggleGQLType,
 		m.keymap.ToggleOverlay,
-		m.keymap.Quit,
-	})
+	}
+	// Add library-specific keybindings if available
+	if m.hasLibraryData {
+		helpBindings = append(helpBindings, m.keymap.ToggleFavorite)
+	}
+	helpBindings = append(helpBindings, m.keymap.Quit)
+
+	help := m.help.ShortHelpView(helpBindings)
 
 	// Show overlay if active, and return immediately
 	if m.Overlay.IsActive() {
