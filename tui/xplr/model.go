@@ -38,7 +38,8 @@ type SetGQLTypeMsg struct {
 }
 
 type FavoriteToggledMsg struct {
-	Favorites []string
+	Favorites              []string
+	SelectedItemIdentifier string // The identifier of the item that was selected when toggling
 }
 
 // SchemaLoadedMsg is sent when a schema is loaded or updated
@@ -135,6 +136,17 @@ func NewEmpty() Model {
 func New(schema adapters.SchemaView) Model {
 	m := NewEmpty()
 	m.schema = schema
+	m.resetAndLoadMainPanel()
+	return m
+}
+
+// NewFromSchemaLibrary creates a new schema explorer model with library metadata
+func NewFromSchemaLibrary(schema adapters.SchemaView, schemaID string, metadata library.SchemaMetadata) Model {
+	m := NewEmpty()
+	m.schema = schema
+	m.schemaID = schemaID
+	m.favorites = metadata.Favorites
+	m.hasLibraryData = true
 	m.resetAndLoadMainPanel()
 	return m
 }
@@ -246,6 +258,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case FavoriteToggledMsg:
 		m.favorites = msg.Favorites
 		m.resetAndLoadMainPanel()
+		// Restore selection to the item that was selected when toggling
+		m.restoreSelection(msg.SelectedItemIdentifier)
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
 		m.width = msg.Width
@@ -393,7 +407,8 @@ func (m *Model) loadMainPanel() {
 
 	// Wrap items with favorites indicator if library data is available
 	if m.hasLibraryData {
-		items = wrapItemsWithFavorites(items, m.favorites)
+		// For top-level panels, we check RefName (field names); otherwise TypeName
+		items = wrapItemsWithFavorites(items, m.favorites, true)
 	}
 
 	m.nav.SetCurrentPanel(components.NewPanel(items, title))
@@ -417,15 +432,44 @@ func (m *Model) toggleFavoriteForSelectedItem() tea.Cmd {
 	panel := m.nav.CurrentPanel()
 	if selectedItem := panel.SelectedItem(); selectedItem != nil {
 		if listItem, ok := selectedItem.(components.ListItem); ok {
-			typeName := listItem.TypeName()
-			return m.toggleFavorite(typeName)
+			// Use context-aware name selection:
+			// - For top-level panels (Query, Mutation, Object, etc.), use RefName() to store field names
+			// - For other panels, use TypeName() to store type names
+			var favoriteName string
+			if m.nav.IsAtTopLevelPanel() {
+				favoriteName = listItem.RefName()
+			} else {
+				favoriteName = listItem.TypeName()
+			}
+			// Preserve the selected item identifier for restoring selection after refresh
+			selectedIdentifier := listItem.RefName()
+			return m.toggleFavorite(favoriteName, selectedIdentifier)
 		}
 	}
 	return nil
 }
 
+// restoreSelection finds and selects an item by its RefName in the current panel
+func (m *Model) restoreSelection(identifier string) {
+	if identifier == "" || m.nav.CurrentPanel() == nil {
+		return
+	}
+
+	panel := m.nav.CurrentPanel()
+	items := panel.Items()
+
+	for i, item := range items {
+		if listItem, ok := item.(components.ListItem); ok {
+			if listItem.RefName() == identifier {
+				panel.ListModel.Select(i)
+				return
+			}
+		}
+	}
+}
+
 // toggleFavorite toggles favorite status and saves to library
-func (m *Model) toggleFavorite(typeName string) tea.Cmd {
+func (m *Model) toggleFavorite(typeName string, selectedIdentifier string) tea.Cmd {
 	return func() tea.Msg {
 		lib := library.NewLibrary()
 
@@ -439,10 +483,16 @@ func (m *Model) toggleFavorite(typeName string) tea.Cmd {
 		schema, err := lib.Get(m.schemaID)
 		if err != nil {
 			// On error, return current favorites unchanged
-			return FavoriteToggledMsg{Favorites: m.favorites}
+			return FavoriteToggledMsg{
+				Favorites:              m.favorites,
+				SelectedItemIdentifier: selectedIdentifier,
+			}
 		}
 
-		return FavoriteToggledMsg{Favorites: schema.Metadata.Favorites}
+		return FavoriteToggledMsg{
+			Favorites:              schema.Metadata.Favorites,
+			SelectedItemIdentifier: selectedIdentifier,
+		}
 	}
 }
 

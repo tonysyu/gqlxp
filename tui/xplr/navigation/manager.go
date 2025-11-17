@@ -117,3 +117,9 @@ func (nm *NavigationManager) Reset() {
 	nm.stack.Replace(initialPanels)
 	nm.breadcrumbs.Reset()
 }
+
+// IsAtTopLevelPanel returns true if the current panel is the first panel (position 0)
+// which corresponds to top-level GQL type panels (Query, Mutation, Object, etc.)
+func (nm *NavigationManager) IsAtTopLevelPanel() bool {
+	return nm.stack.Position() == 0
+}

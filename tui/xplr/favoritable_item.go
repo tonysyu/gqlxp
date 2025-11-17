@@ -13,10 +13,17 @@ type favoritableItem struct {
 }
 
 // wrapItemsWithFavorites wraps items to add favorite indicators
-func wrapItemsWithFavorites(items []components.ListItem, favorites []string) []components.ListItem {
+// For top-level panels, it checks RefName() against favorites (field names)
+// For other items, it checks TypeName() against favorites (type names)
+func wrapItemsWithFavorites(items []components.ListItem, favorites []string, isTopLevel bool) []components.ListItem {
 	wrapped := make([]components.ListItem, len(items))
 	for i, item := range items {
-		isFavorite := slices.Contains(favorites, item.TypeName())
+		var isFavorite bool
+		if isTopLevel {
+			isFavorite = slices.Contains(favorites, item.RefName())
+		} else {
+			isFavorite = slices.Contains(favorites, item.TypeName())
+		}
 		wrapped[i] = newFavoritableItem(item, isFavorite)
 	}
 	return wrapped
@@ -58,5 +65,10 @@ func (f *favoritableItem) Details() string {
 }
 
 func (f *favoritableItem) OpenPanel() (*components.Panel, bool) {
-	return f.wrapped.OpenPanel()
+	panel, ok := f.wrapped.OpenPanel()
+	if ok && panel != nil && f.isFavorite {
+		// Add favorite indicator to panel title
+		panel.SetTitle("★ " + panel.Title())
+	}
+	return panel, ok
 }

@@ -50,14 +50,9 @@ func newModelWithXplr(schema adapters.SchemaView) Model {
 
 // newModelWithXplrAndLibrary creates a model starting in explorer mode with library data
 func newModelWithXplrAndLibrary(schema adapters.SchemaView, schemaID string, metadata library.SchemaMetadata) Model {
-	xplrModel := xplr.New(schema)
-	xplrModel.SetSchemaID(schemaID)
-	xplrModel.SetFavorites(metadata.Favorites)
-	xplrModel.SetHasLibraryData(true)
-
 	return Model{
 		state: xplrView,
-		xplr:  xplrModel,
+		xplr:  xplr.NewFromSchemaLibrary(schema, schemaID, metadata),
 	}
 }
 
