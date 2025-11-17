@@ -1,4 +1,4 @@
-package tui
+package xplr
 
 import (
 	"reflect"
@@ -9,9 +9,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/adapters"
-	"github.com/tonysyu/gqlxp/tui/components"
 	"github.com/tonysyu/gqlxp/tui/config"
-	"github.com/tonysyu/gqlxp/tui/navigation"
+	"github.com/tonysyu/gqlxp/tui/overlay"
+	"github.com/tonysyu/gqlxp/tui/xplr/components"
+	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 	"slices"
 )
 
@@ -51,13 +52,14 @@ type keymap = struct {
 	NextPanel, PrevPanel, Quit, ToggleGQLType, ReverseToggleGQLType, ToggleOverlay, ToggleFavorite key.Binding
 }
 
-type mainModel struct {
+// Model is the main schema explorer model
+type Model struct {
 	// Parsed GraphQL schema that's displayed in the TUI.
 	schema adapters.SchemaView
 	// Navigation manager coordinates panel stack, breadcrumbs, and type selection
 	nav *navigation.NavigationManager
 	// Overlay for displaying ListItem.Details()
-	Overlay overlayModel
+	Overlay overlay.Model
 
 	// Library integration (optional)
 	schemaID       string   // Schema ID if loaded from library
@@ -72,13 +74,14 @@ type mainModel struct {
 	help           help.Model
 }
 
-func newModel(schema adapters.SchemaView) mainModel {
+// New creates a new schema explorer model
+func New(schema adapters.SchemaView) Model {
 	styles := config.DefaultStyles()
-	m := mainModel{
+	m := Model{
 		help:    help.New(),
 		schema:  schema,
 		Styles:  styles,
-		Overlay: newOverlayModel(styles),
+		Overlay: overlay.New(styles),
 		nav:     navigation.NewNavigationManager(config.VisiblePanelCount),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
@@ -120,11 +123,26 @@ func newModel(schema adapters.SchemaView) mainModel {
 	return m
 }
 
-func (m mainModel) Init() tea.Cmd {
+// SetSchemaID sets the schema ID for library integration
+func (m *Model) SetSchemaID(id string) {
+	m.schemaID = id
+}
+
+// SetFavorites sets the favorites list
+func (m *Model) SetFavorites(favorites []string) {
+	m.favorites = favorites
+}
+
+// SetHasLibraryData sets whether this schema has library metadata
+func (m *Model) SetHasLibraryData(has bool) {
+	m.hasLibraryData = has
+}
+
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Try overlay first - it intercepts messages when active
 	var overlayCmd tea.Cmd
 	var intercepted bool
@@ -204,7 +222,7 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *mainModel) openOverlayForSelectedItem() {
+func (m *Model) openOverlayForSelectedItem() {
 	// Always use the left panel (first visible panel in stack)
 	if m.nav.CurrentPanel() == nil {
 		return
@@ -221,7 +239,7 @@ func (m *mainModel) openOverlayForSelectedItem() {
 }
 
 // shouldFocusedPanelReceiveMessage determines if the focused panel should receive a message
-func (m *mainModel) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
+func (m *Model) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Global navigation keys handled by main model should not go to panels
@@ -240,7 +258,7 @@ func (m *mainModel) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
 	}
 }
 
-func (m *mainModel) sizePanels() {
+func (m *Model) sizePanels() {
 	panelWidth := m.width / config.VisiblePanelCount
 	panelHeight := m.height - config.HelpHeight - config.NavbarHeight - config.BreadcrumbsHeight
 	// Size only the visible panels (config.VisiblePanelCount = 2)
@@ -260,7 +278,7 @@ func (m *mainModel) sizePanels() {
 }
 
 // updatePanelFocusStates updates focus state for all visible panels based on stackPosition
-func (m *mainModel) updatePanelFocusStates() {
+func (m *Model) updatePanelFocusStates() {
 	// Blur all panels first
 	for _, panel := range m.nav.Stack().All() {
 		if panel != nil {
@@ -276,7 +294,7 @@ func (m *mainModel) updatePanelFocusStates() {
 
 // handleOpenPanel handles when an item is opened
 // The new panel is added to the stack after the currently focused panel
-func (m *mainModel) handleOpenPanel(newPanel *components.Panel) {
+func (m *Model) handleOpenPanel(newPanel *components.Panel) {
 	m.nav.OpenPanel(newPanel)
 	m.sizePanels()
 }
@@ -284,13 +302,13 @@ func (m *mainModel) handleOpenPanel(newPanel *components.Panel) {
 // resetAndLoadMainPanel defines initial panels and loads currently selected GQL type.
 // This method is called on initilization and when switching types, so that detail panels get
 // cleared out to avoid inconsistencies across panels.
-func (m *mainModel) resetAndLoadMainPanel() {
+func (m *Model) resetAndLoadMainPanel() {
 	m.nav.Reset()
 	m.loadMainPanel()
 }
 
 // loadMainPanel loads the the currently selected GQL type in the main (left-most) panel
-func (m *mainModel) loadMainPanel() {
+func (m *Model) loadMainPanel() {
 	var items []components.ListItem
 	var title string
 
@@ -343,7 +361,7 @@ func (m *mainModel) loadMainPanel() {
 }
 
 // toggleFavoriteForSelectedItem toggles favorite status for selected item
-func (m *mainModel) toggleFavoriteForSelectedItem() tea.Cmd {
+func (m *Model) toggleFavoriteForSelectedItem() tea.Cmd {
 	if m.nav.CurrentPanel() == nil {
 		return nil
 	}
@@ -358,7 +376,7 @@ func (m *mainModel) toggleFavoriteForSelectedItem() tea.Cmd {
 }
 
 // toggleFavorite toggles favorite status and saves to library
-func (m *mainModel) toggleFavorite(typeName string) tea.Cmd {
+func (m *Model) toggleFavorite(typeName string) tea.Cmd {
 	return func() tea.Msg {
 		lib := library.NewLibrary()
 
@@ -390,7 +408,7 @@ func navTypeToGQLType(t navigation.GQLType) gqlType {
 }
 
 // renderGQLTypeNavbar creates the navbar showing GQL types
-func (m *mainModel) renderGQLTypeNavbar() string {
+func (m *Model) renderGQLTypeNavbar() string {
 	var tabs []string
 
 	for _, fieldType := range m.nav.AllTypes() {
@@ -408,7 +426,7 @@ func (m *mainModel) renderGQLTypeNavbar() string {
 }
 
 // renderBreadcrumbs renders the breadcrumb trail
-func (m *mainModel) renderBreadcrumbs() string {
+func (m *Model) renderBreadcrumbs() string {
 	crumbs := m.nav.Breadcrumbs()
 	if len(crumbs) == 0 {
 		return ""
@@ -434,7 +452,7 @@ func (m *mainModel) renderBreadcrumbs() string {
 	return m.Styles.Breadcrumbs.Render(breadcrumbText)
 }
 
-func (m mainModel) View() string {
+func (m Model) View() string {
 	// Build help key bindings
 	helpBindings := []key.Binding{
 		m.keymap.NextPanel,

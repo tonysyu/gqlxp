@@ -1,4 +1,4 @@
-package tui
+package xplr
 
 import (
 	"testing"
@@ -45,13 +45,13 @@ func createTestSchema() string {
 
 // Wrapper for mainModel used to simplify testing
 type testModel struct {
-	Model mainModel
+	Model Model
 }
 
 func newTestModel(schema string) testModel {
 	schemaView, _ := adapters.ParseSchemaString(schema)
 
-	model := newModel(schemaView)
+	model := New(schemaView)
 	model.width = 120
 	model.height = 40
 
@@ -61,7 +61,7 @@ func newTestModel(schema string) testModel {
 func (tm *testModel) Update(msg tea.Msg) {
 	model := tm.Model
 	updatedModel, cmd := model.Update(msg)
-	tm.Model = updatedModel.(mainModel)
+	tm.Model = updatedModel.(Model)
 	if cmd != nil {
 		// If Update returns a cmd, execute it and recursively Update model
 		tm.Update(cmd())

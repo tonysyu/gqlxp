@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/tonysyu/gqlxp/tui/components"
+	"github.com/tonysyu/gqlxp/tui/xplr/components"
 )
 
 // RenderMinimalPanel drastically simplifies Panel rendering to create simpler tests

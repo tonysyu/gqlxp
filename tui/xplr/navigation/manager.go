@@ -1,6 +1,6 @@
 package navigation
 
-import "github.com/tonysyu/gqlxp/tui/components"
+import "github.com/tonysyu/gqlxp/tui/xplr/components"
 
 // NavigationManager coordinates panel stack, breadcrumbs, and type selection
 type NavigationManager struct {

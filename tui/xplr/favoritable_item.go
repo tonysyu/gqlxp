@@ -1,9 +1,9 @@
-package tui
+package xplr
 
 import (
 	"slices"
 
-	"github.com/tonysyu/gqlxp/tui/components"
+	"github.com/tonysyu/gqlxp/tui/xplr/components"
 )
 
 // favoritableItem wraps a ListItem and adds a favorite indicator to the title

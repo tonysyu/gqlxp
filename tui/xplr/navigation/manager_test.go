@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/matryer/is"
-	"github.com/tonysyu/gqlxp/tui/components"
+	"github.com/tonysyu/gqlxp/tui/xplr/components"
 )
 
 func TestNavigationManager_NewNavigationManager(t *testing.T) {

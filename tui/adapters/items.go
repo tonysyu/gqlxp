@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/tonysyu/gqlxp/gql"
-	"github.com/tonysyu/gqlxp/tui/components"
+	"github.com/tonysyu/gqlxp/tui/xplr/components"
 	"github.com/tonysyu/gqlxp/utils/text"
 )
 

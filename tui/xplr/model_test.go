@@ -1,4 +1,4 @@
-package tui
+package xplr
 
 import (
 	"testing"
@@ -6,9 +6,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/adapters"
-	"github.com/tonysyu/gqlxp/tui/components"
 	"github.com/tonysyu/gqlxp/tui/config"
-	"github.com/tonysyu/gqlxp/tui/navigation"
+	"github.com/tonysyu/gqlxp/tui/xplr/components"
+	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 )
 
 func TestNewModel(t *testing.T) {
@@ -32,7 +32,7 @@ func TestNewModel(t *testing.T) {
 	`
 
 	schemaView, _ := adapters.ParseSchemaString(schemaString)
-	model := newModel(schemaView)
+	model := New(schemaView)
 
 	// Test initial state
 	is.Equal(len(model.nav.Stack().All()), config.VisiblePanelCount)
@@ -56,7 +56,7 @@ func TestNewModel(t *testing.T) {
 func TestModelPanelNavigation(t *testing.T) {
 	is := is.New(t)
 
-	model := newModel(adapters.SchemaView{})
+	model := New(adapters.SchemaView{})
 
 	// Test initial stack position
 	is.Equal(model.nav.Stack().Position(), 0)
@@ -75,42 +75,42 @@ func TestModelPanelNavigation(t *testing.T) {
 
 	// Test next panel navigation (move forward in stack)
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	model = updatedModel.(mainModel)
+	model = updatedModel.(Model)
 	is.Equal(model.nav.Stack().Position(), 1)
 
 	// Test another forward navigation
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	model = updatedModel.(mainModel)
+	model = updatedModel.(Model)
 	is.Equal(model.nav.Stack().Position(), 2)
 
 	// Test another forward navigation
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	model = updatedModel.(mainModel)
+	model = updatedModel.(Model)
 	is.Equal(model.nav.Stack().Position(), 3)
 
 	// Test that we can't go beyond the last panel
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	model = updatedModel.(mainModel)
+	model = updatedModel.(Model)
 	is.Equal(model.nav.Stack().Position(), 3) // Should stay at 3
 
 	// Test previous panel navigation (move backward in stack)
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	model = updatedModel.(mainModel)
+	model = updatedModel.(Model)
 	is.Equal(model.nav.Stack().Position(), 2)
 
 	// Test another backward navigation
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	model = updatedModel.(mainModel)
+	model = updatedModel.(Model)
 	is.Equal(model.nav.Stack().Position(), 1)
 
 	// Navigate to beginning
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	model = updatedModel.(mainModel)
+	model = updatedModel.(Model)
 	is.Equal(model.nav.Stack().Position(), 0)
 
 	// Test that we can't go before the beginning
 	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	model = updatedModel.(mainModel)
+	model = updatedModel.(Model)
 	is.Equal(model.nav.Stack().Position(), 0) // Should stay at 0
 }
 
@@ -153,7 +153,7 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 	`
 
 	schemaView, _ := adapters.ParseSchemaString(schemaString)
-	model := newModel(schemaView)
+	model := New(schemaView)
 
 	// Test initial type
 	is.Equal(model.nav.CurrentType(), navigation.QueryType)
@@ -167,26 +167,26 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 
 	for _, expectedType := range expectedTypes {
 		updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
-		model = updatedModel.(mainModel)
+		model = updatedModel.(Model)
 		is.Equal(model.nav.CurrentType(), expectedType)
 		is.Equal(model.nav.Stack().Position(), 0) // Stack position should reset to 0
 	}
 
 	// Test reverse cycling
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
-	model = updatedModel.(mainModel)
+	model = updatedModel.(Model)
 	is.Equal(model.nav.CurrentType(), navigation.DirectiveType)
 }
 
 func TestModelWindowResize(t *testing.T) {
 	is := is.New(t)
 
-	model := newModel(adapters.SchemaView{})
+	model := New(adapters.SchemaView{})
 
 	// Test window resize
 	newWidth, newHeight := 120, 40
 	updatedModel, _ := model.Update(tea.WindowSizeMsg{Width: newWidth, Height: newHeight})
-	model = updatedModel.(mainModel)
+	model = updatedModel.(Model)
 
 	is.Equal(model.width, newWidth)
 	is.Equal(model.height, newHeight)
@@ -196,7 +196,7 @@ func TestModelWithEmptySchema(t *testing.T) {
 	is := is.New(t)
 
 	// Test with completely empty schema
-	model := newModel(adapters.SchemaView{})
+	model := New(adapters.SchemaView{})
 
 	// Model should still initialize properly
 	is.Equal(len(model.nav.Stack().All()), config.VisiblePanelCount)
@@ -205,14 +205,14 @@ func TestModelWithEmptySchema(t *testing.T) {
 
 	// Should be able to cycle through types even with empty schema
 	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
-	model = updatedModel.(mainModel)
+	model = updatedModel.(Model)
 	is.Equal(model.nav.CurrentType(), navigation.MutationType)
 }
 
 func TestModelKeyboardShortcuts(t *testing.T) {
 	is := is.New(t)
 
-	model := newModel(adapters.SchemaView{})
+	model := New(adapters.SchemaView{})
 
 	// Test all keyboard shortcuts don't crash
 	shortcuts := []tea.KeyMsg{

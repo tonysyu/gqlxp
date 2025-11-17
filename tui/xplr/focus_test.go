@@ -1,4 +1,4 @@
-package tui
+package xplr
 
 import (
 	"testing"
@@ -6,13 +6,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/adapters"
-	"github.com/tonysyu/gqlxp/tui/components"
+	"github.com/tonysyu/gqlxp/tui/xplr/components"
 )
 
 func TestShouldPanelReceiveMessage(t *testing.T) {
 	is := is.New(t)
 
-	model := newModel(adapters.SchemaView{})
+	model := New(adapters.SchemaView{})
 
 	tests := []struct {
 		name          string
@@ -57,7 +57,7 @@ func TestShouldPanelReceiveMessage(t *testing.T) {
 func TestGlobalNavigationKeysNotSentToPanels(t *testing.T) {
 	is := is.New(t)
 
-	model := newModel(adapters.SchemaView{})
+	model := New(adapters.SchemaView{})
 
 	// Test all global navigation keys
 	globalKeys := []tea.KeyMsg{

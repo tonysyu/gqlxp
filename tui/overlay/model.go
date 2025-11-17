@@ -1,4 +1,4 @@
-package tui
+package overlay
 
 import (
 	"github.com/charmbracelet/bubbles/help"
@@ -11,11 +11,18 @@ import (
 	"github.com/tonysyu/gqlxp/utils/text"
 )
 
+var (
+	quitKeyBinding = key.NewBinding(
+		key.WithKeys("ctrl+c", "ctrl+d"),
+		key.WithHelp("ctrl+c", "quit"),
+	)
+)
+
 // Panel inside the overlay must be inset by padding, margin, and a 1-char border on all sides.
 var overlayPanelMargin = 2 * (config.OverlayMargin + config.OverlayPadding + 1)
 
-// overlayModel manages overlay display and message interception
-type overlayModel struct {
+// Model manages overlay display and message interception
+type Model struct {
 	active   bool
 	viewport viewport.Model
 	renderer *glamour.TermRenderer
@@ -39,7 +46,8 @@ func (k overlayKeymap) ShortHelp() []key.Binding {
 	return []key.Binding{k.Close, k.Quit}
 }
 
-func newOverlayModel(styles config.Styles) overlayModel {
+// New creates a new overlay model
+func New(styles config.Styles) Model {
 	vp := viewport.New(0, 0)
 
 	// Initialize glamour renderer once for the lifetime of the session
@@ -47,7 +55,7 @@ func newOverlayModel(styles config.Styles) overlayModel {
 		glamour.WithAutoStyle(),
 	)
 	// If glamour fails, renderer will be nil and we'll use plain content
-	model := overlayModel{
+	model := Model{
 		active:   false,
 		viewport: vp,
 		renderer: nil,
@@ -71,7 +79,7 @@ func newOverlayModel(styles config.Styles) overlayModel {
 
 // Update processes messages and returns (model, cmd, intercepted)
 // intercepted=true means the message was handled and should not be passed to main panels
-func (o overlayModel) Update(msg tea.Msg) (overlayModel, tea.Cmd, bool) {
+func (o Model) Update(msg tea.Msg) (Model, tea.Cmd, bool) {
 	if !o.active {
 		return o, nil, false // pass through to main model
 	}
@@ -98,7 +106,7 @@ func (o overlayModel) Update(msg tea.Msg) (overlayModel, tea.Cmd, bool) {
 }
 
 // Show activates the overlay with the given markdown content and size
-func (o *overlayModel) Show(content string, width, height int) {
+func (o *Model) Show(content string, width, height int) {
 	o.content = content
 	o.active = true
 
@@ -124,17 +132,17 @@ func (o *overlayModel) Show(content string, width, height int) {
 }
 
 // Hide deactivates the overlay
-func (o *overlayModel) Hide() {
+func (o *Model) Hide() {
 	o.active = false
 }
 
 // IsActive returns whether the overlay is currently shown
-func (o overlayModel) IsActive() bool {
+func (o Model) IsActive() bool {
 	return o.active
 }
 
 // View renders the overlay viewport content with help
-func (o overlayModel) View() string {
+func (o Model) View() string {
 	if !o.active {
 		return ""
 	}

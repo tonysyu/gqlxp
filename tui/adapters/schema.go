@@ -2,7 +2,7 @@ package adapters
 
 import (
 	"github.com/tonysyu/gqlxp/gql"
-	"github.com/tonysyu/gqlxp/tui/components"
+	"github.com/tonysyu/gqlxp/tui/xplr/components"
 )
 
 type SchemaView struct {

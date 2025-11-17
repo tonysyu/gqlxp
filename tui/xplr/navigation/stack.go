@@ -1,6 +1,6 @@
 package navigation
 
-import "github.com/tonysyu/gqlxp/tui/components"
+import "github.com/tonysyu/gqlxp/tui/xplr/components"
 
 // PanelStack manages a stack of panels with navigation
 type PanelStack struct {

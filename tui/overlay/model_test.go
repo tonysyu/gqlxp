@@ -1,4 +1,4 @@
-package tui
+package overlay
 
 import (
 	"testing"
@@ -8,15 +8,15 @@ import (
 	"github.com/tonysyu/gqlxp/tui/config"
 )
 
-func showDefaultOverlay() overlayModel {
-	overlay := newOverlayModel(config.DefaultStyles())
+func showDefaultOverlay() Model {
+	overlay := New(config.DefaultStyles())
 	overlay.Show("test content", 100, 50)
 	return overlay
 }
 
 func TestOverlay(t *testing.T) {
 	is := is.New(t)
-	overlay := newOverlayModel(config.DefaultStyles())
+	overlay := New(config.DefaultStyles())
 
 	t.Run("NewOverlayModel initializes correctly", func(t *testing.T) {
 		is.Equal(overlay.active, false)
@@ -95,7 +95,7 @@ func TestOverlay(t *testing.T) {
 
 	t.Run("Show sets viewport size with margin", func(t *testing.T) {
 		width, height := 200, 100
-		overlay := newOverlayModel(config.DefaultStyles())
+		overlay := New(config.DefaultStyles())
 		overlay.Show("test content", width, height)
 
 		is.Equal(overlay.viewport.Width, width-overlayPanelMargin)

@@ -1,4 +1,4 @@
-package tui
+package libselect
 
 import (
 	"fmt"
@@ -12,8 +12,15 @@ import (
 	"github.com/tonysyu/gqlxp/tui/config"
 )
 
-// schemaSelectorModel is the TUI for selecting a schema from the library
-type schemaSelectorModel struct {
+var (
+	quitKeyBinding = key.NewBinding(
+		key.WithKeys("ctrl+c", "ctrl+d"),
+		key.WithHelp("ctrl+c", "quit"),
+	)
+)
+
+// Model is the TUI for selecting a schema from the library
+type Model struct {
 	list   list.Model
 	lib    library.Library
 	styles config.Styles
@@ -37,13 +44,13 @@ type SchemaSelectedMsg struct {
 	Metadata library.SchemaMetadata
 }
 
-func newSchemaSelectorModel(lib library.Library) (schemaSelectorModel, error) {
+func newModel(lib library.Library) (Model, error) {
 	styles := config.DefaultStyles()
 
 	// Load schemas from library
 	schemas, err := lib.List()
 	if err != nil {
-		return schemaSelectorModel{}, fmt.Errorf("failed to load schemas: %w", err)
+		return Model{}, fmt.Errorf("failed to load schemas: %w", err)
 	}
 
 	// Convert to list items
@@ -68,18 +75,18 @@ func newSchemaSelectorModel(lib library.Library) (schemaSelectorModel, error) {
 		}
 	}
 
-	return schemaSelectorModel{
+	return Model{
 		list:   listModel,
 		lib:    lib,
 		styles: styles,
 	}, nil
 }
 
-func (m schemaSelectorModel) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m schemaSelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -95,13 +102,6 @@ func (m schemaSelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		m.list.SetSize(msg.Width, msg.Height-2)
-	case SchemaSelectedMsg:
-		// Transition to main schema viewer with library data
-		m := newModel(msg.Schema)
-		m.schemaID = msg.SchemaID
-		m.favorites = msg.Metadata.Favorites
-		m.hasLibraryData = true
-		return m, nil
 	}
 
 	var cmd tea.Cmd
@@ -109,7 +109,7 @@ func (m schemaSelectorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m schemaSelectorModel) loadSchema(schemaID string) tea.Cmd {
+func (m Model) loadSchema(schemaID string) tea.Cmd {
 	return func() tea.Msg {
 		schema, err := m.lib.Get(schemaID)
 		if err != nil {
@@ -131,7 +131,7 @@ func (m schemaSelectorModel) loadSchema(schemaID string) tea.Cmd {
 	}
 }
 
-func (m schemaSelectorModel) View() string {
+func (m Model) View() string {
 	if len(m.list.Items()) == 0 {
 		emptyMsg := lipgloss.NewStyle().
 			Width(m.width).
@@ -143,10 +143,10 @@ func (m schemaSelectorModel) View() string {
 	return m.list.View()
 }
 
-// StartSchemaSelector starts the schema selector TUI
-func StartSchemaSelector() (tea.Model, error) {
+// Start starts the schema selector TUI
+func Start() (tea.Model, error) {
 	lib := library.NewLibrary()
-	model, err := newSchemaSelectorModel(lib)
+	model, err := newModel(lib)
 	if err != nil {
 		return nil, err
 	}

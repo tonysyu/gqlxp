@@ -6,7 +6,7 @@ import (
 
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/gql"
-	"github.com/tonysyu/gqlxp/tui/components"
+	"github.com/tonysyu/gqlxp/tui/xplr/components"
 	"github.com/tonysyu/gqlxp/utils/testx"
 	"github.com/tonysyu/gqlxp/utils/testx/assert"
 )
