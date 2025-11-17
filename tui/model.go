@@ -12,6 +12,7 @@ import (
 	"github.com/tonysyu/gqlxp/tui/components"
 	"github.com/tonysyu/gqlxp/tui/config"
 	"github.com/tonysyu/gqlxp/tui/navigation"
+	"slices"
 )
 
 type gqlType string
@@ -33,6 +34,10 @@ var availableGQLTypes = []gqlType{queryType, mutationType, objectType, inputType
 
 type SetGQLTypeMsg struct {
 	GQLType gqlType
+}
+
+type FavoriteToggledMsg struct {
+	Favorites []string
 }
 
 var (
@@ -170,6 +175,9 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.handleOpenPanel(msg.Panel)
 	case SetGQLTypeMsg:
 		m.nav.SwitchType(gqlTypeToNavType(msg.GQLType))
+		m.resetAndLoadMainPanel()
+	case FavoriteToggledMsg:
+		m.favorites = msg.Favorites
 		m.resetAndLoadMainPanel()
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
@@ -354,26 +362,20 @@ func (m *mainModel) toggleFavorite(typeName string) tea.Cmd {
 	return func() tea.Msg {
 		lib := library.NewLibrary()
 
-		// Check if already favorited
-		isFav := false
-		for i, fav := range m.favorites {
-			if fav == typeName {
-				// Remove from favorites
-				m.favorites = append(m.favorites[:i], m.favorites[i+1:]...)
-				_ = lib.RemoveFavorite(m.schemaID, typeName)
-				isFav = true
-				break
-			}
-		}
-
-		if !isFav {
-			// Add to favorites
-			m.favorites = append(m.favorites, typeName)
+		if slices.Contains(m.favorites, typeName) {
+			_ = lib.RemoveFavorite(m.schemaID, typeName)
+		} else {
 			_ = lib.AddFavorite(m.schemaID, typeName)
 		}
 
-		// Reload main panel to update favorites indicator
-		return SetGQLTypeMsg{GQLType: navTypeToGQLType(m.nav.CurrentType())}
+		// Reload favorites from library to get fresh state
+		schema, err := lib.Get(m.schemaID)
+		if err != nil {
+			// On error, return current favorites unchanged
+			return FavoriteToggledMsg{Favorites: m.favorites}
+		}
+
+		return FavoriteToggledMsg{Favorites: schema.Metadata.Favorites}
 	}
 }
 
