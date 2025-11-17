@@ -44,7 +44,8 @@ type SchemaSelectedMsg struct {
 	Metadata library.SchemaMetadata
 }
 
-func newModel(lib library.Library) (Model, error) {
+// New creates a new library selection model
+func New(lib library.Library) (Model, error) {
 	styles := config.DefaultStyles()
 
 	// Load schemas from library
@@ -146,7 +147,7 @@ func (m Model) View() string {
 // Start starts the schema selector TUI
 func Start() (tea.Model, error) {
 	lib := library.NewLibrary()
-	model, err := newModel(lib)
+	model, err := New(lib)
 	if err != nil {
 		return nil, err
 	}

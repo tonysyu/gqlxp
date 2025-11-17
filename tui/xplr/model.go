@@ -41,6 +41,14 @@ type FavoriteToggledMsg struct {
 	Favorites []string
 }
 
+// SchemaLoadedMsg is sent when a schema is loaded or updated
+type SchemaLoadedMsg struct {
+	Schema         adapters.SchemaView
+	SchemaID       string
+	Favorites      []string
+	HasLibraryData bool
+}
+
 var (
 	quitKeyBinding = key.NewBinding(
 		key.WithKeys("ctrl+c", "ctrl+d"),
@@ -74,12 +82,12 @@ type Model struct {
 	help           help.Model
 }
 
-// New creates a new schema explorer model
-func New(schema adapters.SchemaView) Model {
+// NewEmpty creates a new schema explorer model without a schema
+// The schema can be loaded later via SchemaLoadedMsg
+func NewEmpty() Model {
 	styles := config.DefaultStyles()
 	m := Model{
 		help:    help.New(),
-		schema:  schema,
 		Styles:  styles,
 		Overlay: overlay.New(styles),
 		nav:     navigation.NewNavigationManager(config.VisiblePanelCount),
@@ -119,6 +127,14 @@ func New(schema adapters.SchemaView) Model {
 		m.globalKeyBinds[i] = v.Field(i).Interface().(key.Binding)
 	}
 
+	// Don't load panels until schema is provided
+	return m
+}
+
+// New creates a new schema explorer model
+func New(schema adapters.SchemaView) Model {
+	m := NewEmpty()
+	m.schema = schema
 	m.resetAndLoadMainPanel()
 	return m
 }
@@ -128,14 +144,39 @@ func (m *Model) SetSchemaID(id string) {
 	m.schemaID = id
 }
 
+// GetSchemaID returns the schema ID
+func (m Model) GetSchemaID() string {
+	return m.schemaID
+}
+
 // SetFavorites sets the favorites list
 func (m *Model) SetFavorites(favorites []string) {
 	m.favorites = favorites
 }
 
+// GetFavorites returns the favorites list
+func (m Model) GetFavorites() []string {
+	return m.favorites
+}
+
 // SetHasLibraryData sets whether this schema has library metadata
 func (m *Model) SetHasLibraryData(has bool) {
 	m.hasLibraryData = has
+}
+
+// HasLibraryData returns whether this schema has library metadata
+func (m Model) HasLibraryData() bool {
+	return m.hasLibraryData
+}
+
+// Width returns the current width
+func (m Model) Width() int {
+	return m.width
+}
+
+// Height returns the current height
+func (m Model) Height() int {
+	return m.height
 }
 
 func (m Model) Init() tea.Cmd {
@@ -155,6 +196,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Handle global messages
 	switch msg := msg.(type) {
+	case SchemaLoadedMsg:
+		// Update schema and related properties
+		m.schema = msg.Schema
+		m.schemaID = msg.SchemaID
+		m.favorites = msg.Favorites
+		m.hasLibraryData = msg.HasLibraryData
+		m.resetAndLoadMainPanel()
+		return m, nil
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keymap.Quit):
