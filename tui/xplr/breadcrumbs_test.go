@@ -59,9 +59,8 @@ func newTestModel(schema string) testModel {
 }
 
 func (tm *testModel) Update(msg tea.Msg) {
-	model := tm.Model
-	updatedModel, cmd := model.Update(msg)
-	tm.Model = updatedModel.(Model)
+	var cmd tea.Cmd
+	tm.Model, cmd = tm.Model.Update(msg)
 	if cmd != nil {
 		// If Update returns a cmd, execute it and recursively Update model
 		tm.Update(cmd())

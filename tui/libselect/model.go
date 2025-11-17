@@ -87,7 +87,7 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -142,15 +142,4 @@ func (m Model) View() string {
 		return emptyMsg
 	}
 	return m.list.View()
-}
-
-// Start starts the schema selector TUI
-func Start() (tea.Model, error) {
-	lib := library.NewLibrary()
-	model, err := New(lib)
-	if err != nil {
-		return nil, err
-	}
-	p := tea.NewProgram(model)
-	return p.Run()
 }

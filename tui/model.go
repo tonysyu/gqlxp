@@ -21,6 +21,8 @@ type Model struct {
 	state     sessionState
 	libselect libselect.Model
 	xplr      xplr.Model
+	width     int
+	height    int
 }
 
 // newModelWithLibselect creates a model starting in library selection mode
@@ -73,6 +75,22 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
+	// Track window size at top level and forward to active submodel
+	// Also forward to xplr if we're in libselect mode (so xplr has correct size on transition)
+	if windowMsg, ok := msg.(tea.WindowSizeMsg); ok {
+		m.width = windowMsg.Width
+		m.height = windowMsg.Height
+
+		// Always forward to the xplr model (even when not active)
+		// This ensures it has correct dimensions when we transition to it
+		m.xplr, _ = m.xplr.Update(windowMsg)
+
+		// Also forward to libselect if it's the active view
+		if m.state == libselectView {
+			m.libselect, _ = m.libselect.Update(windowMsg)
+		}
+	}
+
 	// Handle transitions between submodes
 	switch msg := msg.(type) {
 	case libselect.SchemaSelectedMsg:
@@ -84,28 +102,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			Favorites:      msg.Metadata.Favorites,
 			HasLibraryData: true,
 		}
-		var subModel tea.Model
-		subModel, cmd = m.xplr.Update(schemaLoadedMsg)
-		if updated, ok := subModel.(xplr.Model); ok {
-			m.xplr = updated
-		}
+		m.xplr, cmd = m.xplr.Update(schemaLoadedMsg)
 		return m, tea.Batch(cmd, m.xplr.Init())
 	}
 
 	// Delegate to active submodel
-	var subModel tea.Model
 	switch m.state {
 	case libselectView:
-		subModel, cmd = m.libselect.Update(msg)
-		if updated, ok := subModel.(libselect.Model); ok {
-			m.libselect = updated
-		}
+		m.libselect, cmd = m.libselect.Update(msg)
 		return m, cmd
 	case xplrView:
-		subModel, cmd = m.xplr.Update(msg)
-		if updated, ok := subModel.(xplr.Model); ok {
-			m.xplr = updated
-		}
+		m.xplr, cmd = m.xplr.Update(msg)
 		return m, cmd
 	default:
 		return m, nil

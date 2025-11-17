@@ -74,43 +74,35 @@ func TestModelPanelNavigation(t *testing.T) {
 	// Now we have 4 panels total
 
 	// Test next panel navigation (move forward in stack)
-	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	model = updatedModel.(Model)
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	is.Equal(model.nav.Stack().Position(), 1)
 
 	// Test another forward navigation
-	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	model = updatedModel.(Model)
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	is.Equal(model.nav.Stack().Position(), 2)
 
 	// Test another forward navigation
-	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	model = updatedModel.(Model)
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	is.Equal(model.nav.Stack().Position(), 3)
 
 	// Test that we can't go beyond the last panel
-	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
-	model = updatedModel.(Model)
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
 	is.Equal(model.nav.Stack().Position(), 3) // Should stay at 3
 
 	// Test previous panel navigation (move backward in stack)
-	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	model = updatedModel.(Model)
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	is.Equal(model.nav.Stack().Position(), 2)
 
 	// Test another backward navigation
-	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	model = updatedModel.(Model)
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	is.Equal(model.nav.Stack().Position(), 1)
 
 	// Navigate to beginning
-	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	model = updatedModel.(Model)
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	is.Equal(model.nav.Stack().Position(), 0)
 
 	// Test that we can't go before the beginning
-	updatedModel, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
-	model = updatedModel.(Model)
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
 	is.Equal(model.nav.Stack().Position(), 0) // Should stay at 0
 }
 
@@ -166,15 +158,13 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 	}
 
 	for _, expectedType := range expectedTypes {
-		updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
-		model = updatedModel.(Model)
+		model, _ = model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
 		is.Equal(model.nav.CurrentType(), expectedType)
 		is.Equal(model.nav.Stack().Position(), 0) // Stack position should reset to 0
 	}
 
 	// Test reverse cycling
-	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
-	model = updatedModel.(Model)
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
 	is.Equal(model.nav.CurrentType(), navigation.DirectiveType)
 }
 
@@ -185,8 +175,7 @@ func TestModelWindowResize(t *testing.T) {
 
 	// Test window resize
 	newWidth, newHeight := 120, 40
-	updatedModel, _ := model.Update(tea.WindowSizeMsg{Width: newWidth, Height: newHeight})
-	model = updatedModel.(Model)
+	model, _ = model.Update(tea.WindowSizeMsg{Width: newWidth, Height: newHeight})
 
 	is.Equal(model.width, newWidth)
 	is.Equal(model.height, newHeight)
@@ -204,8 +193,7 @@ func TestModelWithEmptySchema(t *testing.T) {
 	is.Equal(model.nav.CurrentType(), navigation.QueryType)
 
 	// Should be able to cycle through types even with empty schema
-	updatedModel, _ := model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
-	model = updatedModel.(Model)
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
 	is.Equal(model.nav.CurrentType(), navigation.MutationType)
 }
 

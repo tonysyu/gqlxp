@@ -152,3 +152,57 @@ func TestModel_LibselectModeHandlesMessagesCorrectly(t *testing.T) {
 	is.True(ok)
 	is.Equal(m.state, libselectView) // Should still be in libselect view
 }
+
+func TestModel_ForwardsWindowSizeOnTransition(t *testing.T) {
+	is := is.New(t)
+
+	// Setup test library
+	tmpDir, cleanup := setupTestLibrary(t)
+	defer cleanup()
+
+	// Create test schema
+	schemaContent := `
+		type Query {
+			hello: String!
+		}
+	`
+	schemaFile := createTestSchema(t, tmpDir, schemaContent)
+
+	// Add schema to library
+	lib := library.NewLibrary()
+	err := lib.Add("test-schema", "Test Schema", schemaFile)
+	is.NoErr(err)
+
+	// Create model starting in libselect mode
+	model, err := newModelWithLibselect()
+	is.NoErr(err)
+
+	// Send window size message while in libselect mode
+	windowMsg := tea.WindowSizeMsg{Width: 120, Height: 60}
+	updatedModel, _ := model.Update(windowMsg)
+	model, ok := updatedModel.(Model)
+	is.True(ok)
+
+	// Verify top-level model stored the window size
+	is.Equal(model.width, 120)
+	is.Equal(model.height, 60)
+
+	// Transition to xplr by selecting a schema
+	parsedSchema, err := adapters.ParseSchemaString(schemaContent)
+	is.NoErr(err)
+
+	schemaMsg := libselect.SchemaSelectedMsg{
+		SchemaID: "test-schema",
+		Schema:   parsedSchema,
+		Metadata: library.SchemaMetadata{},
+	}
+
+	updatedModel, _ = model.Update(schemaMsg)
+	model, ok = updatedModel.(Model)
+	is.True(ok)
+	is.Equal(model.state, xplrView)
+
+	// Verify xplr model received the window size
+	is.Equal(model.xplr.Width(), 120)
+	is.Equal(model.xplr.Height(), 60)
+}
