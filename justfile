@@ -13,6 +13,16 @@ run schemaPath:
 run-with-log schemaPath:
     GQLXP_LOGFILE=debug.log go run ./cmd/gqlxp {{schemaPath}}
 
+# Document public signatures for package
+[group('code')]
+doc pkg:
+    go doc {{pkg}} | bat -l go
+
+# Show all documenttion for package
+[group('code')]
+doc-all pkg:
+    go doc -all {{pkg}} | bat -l go
+
 # Run tests (defaults to all tests in projects)
 [group('code')]
 test target=tests:
@@ -41,3 +51,8 @@ verify: && test lint-fix
 [group('deploy')]
 build:
     go build -o dist/gqlxp ./cmd/gqlxp
+
+# Install executable
+[group('deploy')]
+install:
+    go install ./cmd/gqlxp
