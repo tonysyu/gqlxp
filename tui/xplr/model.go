@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/library"
@@ -38,8 +39,7 @@ type SetGQLTypeMsg struct {
 }
 
 type FavoriteToggledMsg struct {
-	Favorites              []string
-	SelectedItemIdentifier string // The identifier of the item that was selected when toggling
+	Favorites []string
 }
 
 // SchemaLoadedMsg is sent when a schema is loaded or updated
@@ -257,9 +257,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.resetAndLoadMainPanel()
 	case FavoriteToggledMsg:
 		m.favorites = msg.Favorites
-		m.resetAndLoadMainPanel()
-		// Restore selection to the item that was selected when toggling
-		m.restoreSelection(msg.SelectedItemIdentifier)
+		// Refresh panels in place instead of resetting to preserve navigation state
+		m.refreshPanelsWithFavorites()
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
 		m.width = msg.Width
@@ -441,35 +440,50 @@ func (m *Model) toggleFavoriteForSelectedItem() tea.Cmd {
 			} else {
 				favoriteName = listItem.TypeName()
 			}
-			// Preserve the selected item identifier for restoring selection after refresh
-			selectedIdentifier := listItem.RefName()
-			return m.toggleFavorite(favoriteName, selectedIdentifier)
+			return m.toggleFavorite(favoriteName)
 		}
 	}
 	return nil
 }
 
-// restoreSelection finds and selects an item by its RefName in the current panel
-func (m *Model) restoreSelection(identifier string) {
-	if identifier == "" || m.nav.CurrentPanel() == nil {
-		return
-	}
+// refreshPanelsWithFavorites updates all panels in the stack to reflect current favorites
+// without resetting navigation state. This preserves panel stack, selections, and scroll positions.
+func (m *Model) refreshPanelsWithFavorites() {
+	for panelIndex, panel := range m.nav.Stack().All() {
+		if panel == nil {
+			continue
+		}
 
-	panel := m.nav.CurrentPanel()
-	items := panel.Items()
+		items := panel.Items()
+		if len(items) == 0 {
+			continue
+		}
 
-	for i, item := range items {
-		if listItem, ok := item.(components.ListItem); ok {
-			if listItem.RefName() == identifier {
-				panel.ListModel.Select(i)
-				return
+		// Unwrap items to get original items, then re-wrap with updated favorites
+		unwrappedItems := make([]components.ListItem, len(items))
+		for i, item := range items {
+			if listItem, ok := item.(components.ListItem); ok {
+				unwrappedItems[i] = unwrapFavoritableItem(listItem)
 			}
 		}
+
+		// Determine if this is a top-level panel (position 0 in the stack)
+		// Top-level panels use RefName for favorites, others use TypeName
+		isTopLevel := panelIndex == 0
+		refreshedItems := wrapItemsWithFavorites(unwrappedItems, m.favorites, isTopLevel)
+
+		// Convert to []list.Item for SetItems
+		listItems := make([]list.Item, len(refreshedItems))
+		for i, item := range refreshedItems {
+			listItems[i] = item
+		}
+
+		panel.SetItems(listItems)
 	}
 }
 
 // toggleFavorite toggles favorite status and saves to library
-func (m *Model) toggleFavorite(typeName string, selectedIdentifier string) tea.Cmd {
+func (m *Model) toggleFavorite(typeName string) tea.Cmd {
 	return func() tea.Msg {
 		lib := library.NewLibrary()
 
@@ -484,14 +498,12 @@ func (m *Model) toggleFavorite(typeName string, selectedIdentifier string) tea.C
 		if err != nil {
 			// On error, return current favorites unchanged
 			return FavoriteToggledMsg{
-				Favorites:              m.favorites,
-				SelectedItemIdentifier: selectedIdentifier,
+				Favorites: m.favorites,
 			}
 		}
 
 		return FavoriteToggledMsg{
-			Favorites:              schema.Metadata.Favorites,
-			SelectedItemIdentifier: selectedIdentifier,
+			Favorites: schema.Metadata.Favorites,
 		}
 	}
 }

@@ -72,3 +72,11 @@ func (f *favoritableItem) OpenPanel() (*components.Panel, bool) {
 	}
 	return panel, ok
 }
+
+// unwrapFavoritableItem extracts the original item from a favoritableItem wrapper
+func unwrapFavoritableItem(item components.ListItem) components.ListItem {
+	if f, ok := item.(*favoritableItem); ok {
+		return f.wrapped
+	}
+	return item
+}

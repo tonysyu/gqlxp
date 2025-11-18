@@ -204,6 +204,16 @@ func (p *Panel) Items() []list.Item {
 	return p.ListModel.Items()
 }
 
+// SetItems replaces the items in the list while preserving the current selection index
+func (p *Panel) SetItems(items []list.Item) {
+	currentIndex := p.ListModel.Index()
+	p.ListModel.SetItems(items)
+	// Restore selection if it's still valid
+	if currentIndex >= 0 && currentIndex < len(items) {
+		p.ListModel.Select(currentIndex)
+	}
+}
+
 // View renders the panel
 func (p *Panel) View() string {
 	const (
