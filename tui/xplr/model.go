@@ -424,22 +424,22 @@ func (m *Model) loadMainPanel() {
 }
 
 // toggleFavoriteForSelectedItem toggles favorite status for selected item
+// Only top-level panels can favorite items
 func (m *Model) toggleFavoriteForSelectedItem() tea.Cmd {
 	if m.nav.CurrentPanel() == nil {
 		return nil
 	}
+
+	// Only allow favoriting at the top level
+	if !m.nav.IsAtTopLevelPanel() {
+		return nil
+	}
+
 	panel := m.nav.CurrentPanel()
 	if selectedItem := panel.SelectedItem(); selectedItem != nil {
 		if listItem, ok := selectedItem.(components.ListItem); ok {
-			// Use context-aware name selection:
-			// - For top-level panels (Query, Mutation, Object, etc.), use RefName() to store field names
-			// - For other panels, use TypeName() to store type names
-			var favoriteName string
-			if m.nav.IsAtTopLevelPanel() {
-				favoriteName = listItem.RefName()
-			} else {
-				favoriteName = listItem.TypeName()
-			}
+			// For top-level panels, use RefName() to store field names
+			favoriteName := listItem.RefName()
 			return m.toggleFavorite(favoriteName)
 		}
 	}
@@ -448,6 +448,7 @@ func (m *Model) toggleFavoriteForSelectedItem() tea.Cmd {
 
 // refreshPanelsWithFavorites updates all panels in the stack to reflect current favorites
 // without resetting navigation state. This preserves panel stack, selections, and scroll positions.
+// Only the top-level panel (position 0) can have favorites.
 func (m *Model) refreshPanelsWithFavorites() {
 	for panelIndex, panel := range m.nav.Stack().All() {
 		if panel == nil {
@@ -459,7 +460,7 @@ func (m *Model) refreshPanelsWithFavorites() {
 			continue
 		}
 
-		// Unwrap items to get original items, then re-wrap with updated favorites
+		// Unwrap items to get original items
 		unwrappedItems := make([]components.ListItem, len(items))
 		for i, item := range items {
 			if listItem, ok := item.(components.ListItem); ok {
@@ -467,10 +468,14 @@ func (m *Model) refreshPanelsWithFavorites() {
 			}
 		}
 
-		// Determine if this is a top-level panel (position 0 in the stack)
-		// Top-level panels use RefName for favorites, others use TypeName
+		// Only wrap top-level panel (position 0) with favorites
+		var refreshedItems []components.ListItem
 		isTopLevel := panelIndex == 0
-		refreshedItems := wrapItemsWithFavorites(unwrappedItems, m.favorites, isTopLevel)
+		if isTopLevel {
+			refreshedItems = wrapItemsWithFavorites(unwrappedItems, m.favorites, true)
+		} else {
+			refreshedItems = unwrappedItems
+		}
 
 		// Convert to []list.Item for SetItems
 		listItems := make([]list.Item, len(refreshedItems))

@@ -13,16 +13,13 @@ type favoritableItem struct {
 }
 
 // wrapItemsWithFavorites wraps items to add favorite indicators
-// For top-level panels, it checks RefName() against favorites (field names)
-// For other items, it checks TypeName() against favorites (type names)
+// Only used for top-level panels - checks RefName() against favorites (field names)
 func wrapItemsWithFavorites(items []components.ListItem, favorites []string, isTopLevel bool) []components.ListItem {
 	wrapped := make([]components.ListItem, len(items))
 	for i, item := range items {
 		var isFavorite bool
 		if isTopLevel {
 			isFavorite = slices.Contains(favorites, item.RefName())
-		} else {
-			isFavorite = slices.Contains(favorites, item.TypeName())
 		}
 		wrapped[i] = newFavoritableItem(item, isFavorite)
 	}
