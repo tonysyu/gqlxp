@@ -1,6 +1,8 @@
 package library
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -35,6 +37,12 @@ type Library interface {
 
 	// SetURLPattern sets a URL pattern for a type.
 	SetURLPattern(id string, typePattern string, urlPattern string) error
+
+	// FindByPath finds a schema by absolute file path.
+	FindByPath(absolutePath string) (*Schema, error)
+
+	// UpdateContent updates the schema content and hash, preserving other metadata.
+	UpdateContent(id string, content []byte) error
 }
 
 // FileLibrary implements Library using file-based storage.
@@ -78,6 +86,12 @@ func SanitizeSchemaID(s string) string {
 	s = re.ReplaceAllString(s, "-")
 
 	return s
+}
+
+// CalculateFileHash computes SHA-256 hash of file contents.
+func CalculateFileHash(content []byte) string {
+	hash := sha256.Sum256(content)
+	return hex.EncodeToString(hash[:])
 }
 
 // schemaFilePath returns the path to a schema file.
@@ -165,6 +179,15 @@ func (l *FileLibrary) Add(id string, displayName string, sourcePath string) erro
 		return fmt.Errorf("failed to read source schema file: %w", err)
 	}
 
+	// Calculate file hash
+	fileHash := CalculateFileHash(content)
+
+	// Convert source path to absolute
+	absPath, err := filepath.Abs(sourcePath)
+	if err != nil {
+		return fmt.Errorf("failed to convert source path to absolute: %w", err)
+	}
+
 	// Write schema file
 	if err := os.WriteFile(schemaFile, content, 0644); err != nil {
 		return fmt.Errorf("failed to write schema file: %w", err)
@@ -180,7 +203,8 @@ func (l *FileLibrary) Add(id string, displayName string, sourcePath string) erro
 	now := time.Now()
 	allMetadata[id] = SchemaMetadata{
 		DisplayName: displayName,
-		SourceFile:  sourcePath,
+		SourceFile:  absPath,
+		FileHash:    fileHash,
 		Favorites:   []string{},
 		URLPatterns: make(map[string]string),
 		CreatedAt:   now,
@@ -390,5 +414,51 @@ func (l *FileLibrary) SetURLPattern(id string, typePattern string, urlPattern st
 	}
 
 	schema.Metadata.URLPatterns[typePattern] = urlPattern
+	return l.UpdateMetadata(id, schema.Metadata)
+}
+
+// FindByPath implements Library.FindByPath.
+func (l *FileLibrary) FindByPath(absolutePath string) (*Schema, error) {
+	// Load all metadata
+	allMetadata, err := loadAllMetadata()
+	if err != nil {
+		return nil, err
+	}
+
+	// Search for matching path
+	for id, metadata := range allMetadata {
+		if metadata.SourceFile == absolutePath {
+			return l.Get(id)
+		}
+	}
+
+	return nil, fmt.Errorf("no schema found with source file: %s", absolutePath)
+}
+
+// UpdateContent implements Library.UpdateContent.
+func (l *FileLibrary) UpdateContent(id string, content []byte) error {
+	// Get existing schema to ensure it exists
+	schema, err := l.Get(id)
+	if err != nil {
+		return err
+	}
+
+	// Calculate new hash
+	newHash := CalculateFileHash(content)
+
+	// Update schema file
+	schemaFile, err := schemaFilePath(id)
+	if err != nil {
+		return err
+	}
+
+	if err := os.WriteFile(schemaFile, content, 0644); err != nil {
+		return fmt.Errorf("failed to write schema file: %w", err)
+	}
+
+	// Update metadata with new hash and timestamp
+	schema.Metadata.FileHash = newHash
+	schema.Metadata.UpdatedAt = time.Now()
+
 	return l.UpdateMetadata(id, schema.Metadata)
 }

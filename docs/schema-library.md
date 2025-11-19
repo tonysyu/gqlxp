@@ -2,7 +2,7 @@
 
 ## Overview
 
-Schema library provides persistent storage for GraphQL schemas with associated metadata like favorites and URL patterns.
+Schema library provides persistent storage for GraphQL schemas with automatic integration, file hash tracking, and metadata like favorites and URL patterns. Schemas are automatically saved to the library when loaded from files.
 
 ## Storage Structure
 
@@ -27,6 +27,7 @@ All schema metadata is stored in `schemas/metadata.json` with schema-id as top-l
   "github-api": {
     "displayName": "GitHub GraphQL API",
     "sourceFile": "/path/to/original/github.graphqls",
+    "fileHash": "a3f2c8b1...",
     "favorites": ["Query", "Repository", "User"],
     "urlPatterns": {
       "Query": "https://docs.github.com/graphql/reference/queries#${field}",
@@ -41,7 +42,8 @@ All schema metadata is stored in `schemas/metadata.json` with schema-id as top-l
 
 **Fields:**
 - `displayName`: Human-readable schema name
-- `sourceFile`: Original file path (for reference)
+- `sourceFile`: Absolute path to original file
+- `fileHash`: SHA-256 hash of schema content (for change detection)
 - `favorites`: List of favorited type names
 - `urlPatterns`: URL templates for documentation links
   - Type-specific patterns (e.g., "Query", "Mutation")
@@ -93,6 +95,8 @@ type Library interface {
     AddFavorite(id, typeName string) error
     RemoveFavorite(id, typeName string) error
     SetURLPattern(id, typePattern, urlPattern string) error
+    FindByPath(absolutePath string) (*Schema, error)
+    UpdateContent(id string, content []byte) error
 }
 ```
 
@@ -106,30 +110,26 @@ type Library interface {
 ## CLI Usage
 
 ```sh
-# Add schema
-gqlxp library add <schema-id> <file-path>
+# Load schema file (automatically saved to library on first use)
+gqlxp examples/github.graphqls
+# Prompts for schema ID and display name on first use
+# Detects changes and prompts for update on subsequent uses
 
-# List schemas
-gqlxp library list
+# Open library selector (when no arguments provided)
+gqlxp
 
-# Interactive schema selector
-gqlxp --library
-
-# Load specific schema from library
-gqlxp --library <schema-id>
-
-# Remove schema
-gqlxp library remove <schema-id>
+# Note: Schemas can be removed via the TUI selector interface
 ```
 
 ## TUI Features
 
-When exploring schemas from the library, additional features are available:
+All schemas are now library-backed with access to:
 
-**Schema Selector** (`gqlxp --library`)
+**Schema Selector** (`gqlxp` with no args)
 - Interactive list of all schemas in library
 - Filter/search by schema ID or display name
 - Enter to select and open schema
+- Delete key to remove schemas from library
 
 **Favorites** (Press `f`)
 - Mark types as favorites for quick identification
@@ -137,9 +137,13 @@ When exploring schemas from the library, additional features are available:
 - Favorites persist across sessions in `metadata.json`
 - Toggle on/off by pressing `f` on selected type
 
-## Future Enhancements
+## Automatic Library Integration
 
-**Not yet implemented:**
-- Display name customization via CLI
-- URL pattern management via CLI
-- Bulk import/export of schemas
+**Workflow:**
+1. Load schema file with `gqlxp <file-path>`
+2. System checks library for existing entry by file path
+3. If new: prompts for schema ID and display name, saves to library
+4. If exists: compares file hash
+   - Hash match: loads existing library version
+   - Hash mismatch: prompts to update library or use existing version
+5. All TUI sessions are library-backed with full metadata support

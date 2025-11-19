@@ -162,8 +162,14 @@ func TestLibrary_Get(t *testing.T) {
 		is.NoErr(err)
 		is.Equal(schema.ID, "test-schema")
 		is.Equal(schema.Metadata.DisplayName, "Test Schema")
-		is.Equal(schema.Metadata.SourceFile, schemaFile)
+
+		// SourceFile should be stored as absolute path
+		absPath, _ := filepath.Abs(schemaFile)
+		is.Equal(schema.Metadata.SourceFile, absPath)
 		is.Equal(string(schema.Content), schemaContent)
+
+		// Verify file hash is stored
+		is.True(schema.Metadata.FileHash != "")
 	})
 
 	t.Run("get non-existent schema fails", func(t *testing.T) {
@@ -456,5 +462,98 @@ func TestInitConfigDir(t *testing.T) {
 
 		err = library.InitConfigDir()
 		is.NoErr(err)
+	})
+}
+
+func TestLibrary_FindByPath(t *testing.T) {
+	is := is.New(t)
+	tmpDir, cleanup := setupTestLibrary(t)
+	defer cleanup()
+
+	lib := library.NewLibrary()
+	schemaContent := `type Query { hello: String }`
+	schemaFile := createTestSchema(t, tmpDir, schemaContent)
+
+	// Get absolute path for comparison
+	absPath, err := filepath.Abs(schemaFile)
+	is.NoErr(err)
+
+	err = lib.Add("test-schema", "Test Schema", schemaFile)
+	is.NoErr(err)
+
+	t.Run("find schema by absolute path", func(t *testing.T) {
+		schema, err := lib.FindByPath(absPath)
+		is.NoErr(err)
+		is.Equal(schema.ID, "test-schema")
+		is.Equal(schema.Metadata.DisplayName, "Test Schema")
+		is.Equal(schema.Metadata.SourceFile, absPath)
+	})
+
+	t.Run("find schema by non-existent path fails", func(t *testing.T) {
+		_, err := lib.FindByPath("/nonexistent/path.graphqls")
+		is.True(err != nil)
+	})
+
+	t.Run("find schema by relative path fails", func(t *testing.T) {
+		// Relative path should not match since we store absolute paths
+		_, err := lib.FindByPath("test-schema.graphqls")
+		is.True(err != nil)
+	})
+}
+
+func TestLibrary_UpdateContent(t *testing.T) {
+	is := is.New(t)
+	tmpDir, cleanup := setupTestLibrary(t)
+	defer cleanup()
+
+	lib := library.NewLibrary()
+	schemaContent := `type Query { hello: String }`
+	schemaFile := createTestSchema(t, tmpDir, schemaContent)
+
+	err := lib.Add("test-schema", "Test Schema", schemaFile)
+	is.NoErr(err)
+
+	// Add a favorite to verify it's preserved
+	err = lib.AddFavorite("test-schema", "Query")
+	is.NoErr(err)
+
+	// Set a URL pattern to verify it's preserved
+	err = lib.SetURLPattern("test-schema", "Query", "https://example.com/${field}")
+	is.NoErr(err)
+
+	// Get original metadata
+	originalSchema, err := lib.Get("test-schema")
+	is.NoErr(err)
+	originalHash := originalSchema.Metadata.FileHash
+	originalCreatedAt := originalSchema.Metadata.CreatedAt
+
+	t.Run("update content successfully", func(t *testing.T) {
+		newContent := []byte(`type Query { world: String }`)
+		err := lib.UpdateContent("test-schema", newContent)
+		is.NoErr(err)
+
+		// Verify content was updated
+		schema, err := lib.Get("test-schema")
+		is.NoErr(err)
+		is.Equal(string(schema.Content), string(newContent))
+
+		// Verify hash was updated
+		is.True(schema.Metadata.FileHash != originalHash)
+		is.True(schema.Metadata.FileHash != "")
+
+		// Verify UpdatedAt was updated
+		is.True(schema.Metadata.UpdatedAt.After(originalSchema.Metadata.UpdatedAt))
+
+		// Verify other metadata was preserved
+		is.Equal(schema.Metadata.DisplayName, "Test Schema")
+		is.Equal(schema.Metadata.CreatedAt, originalCreatedAt)
+		is.Equal(len(schema.Metadata.Favorites), 1)
+		is.Equal(schema.Metadata.Favorites[0], "Query")
+		is.Equal(schema.Metadata.URLPatterns["Query"], "https://example.com/${field}")
+	})
+
+	t.Run("update content for non-existent schema fails", func(t *testing.T) {
+		err := lib.UpdateContent("nonexistent-schema", []byte("content"))
+		is.True(err != nil)
 	})
 }

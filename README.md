@@ -22,45 +22,42 @@ Supports exploring all GraphQL schema types:
 2. Displays Query fields by default in main panel
 3. Selecting items auto-opens details in adjacent panel
 4. Tab/Shift+Tab navigates between panels
-5. Ctrl+T/Ctrl+R cycles through 9 GQL type categories
+5. Ctrl+T/Ctrl+R cycles through GQL type categories
 6. Space bar opens detail overlay for focused item
 
 ## Usage
 
-Currently, there's no installer or executable distribution. Build from source using:
+Currently, there's no installer or executable distribution. Install from source using:
 
 ```sh
 $ git clone https://github.com/tonysyu/gqlxp
-$ just build
-$ ./dist/gqlxp examples/github.graphqls
+$ just install
 ```
 
-### Library Mode
-
-Persist schemas in a local library for quick access with favorites and documentation links:
-
+Then open a schema file to explore:
 ```sh
-# Add a schema to the library
-$ ./dist/gqlxp library add github-api examples/github.graphqls
-
-# List schemas in library
-$ ./dist/gqlxp library list
-
-# Interactive schema selector
-$ ./dist/gqlxp --library
-
-# Explore specific schema from library
-$ ./dist/gqlxp --library github-api
-
-# Remove schema from library
-$ ./dist/gqlxp library remove github-api
+$ gqlxp examples/github.graphqls
 ```
 
-**Library Features:**
-- **Schema Selector**: Run `gqlxp --library` to open interactive schema picker
-- **Favorites**: Press `f` to favorite/unfavorite types for quick identification (marked with ★)
-- **Persistent Storage**: Schemas stored in `~/.config/gqlxp/schemas/` on macOS/Linux or `%APPDATA%\gqlxp\schemas\` on Windows
+### Schema library
 
+Schemas are automatically saved to your library on first use:
+```sh
+# Load schema file (prompts for library details on first use)
+$ gqlxp examples/github.graphqls
+Enter schema ID (lowercase letters, numbers, hyphens) [github]: github-api
+Enter display name [github-api]: GitHub GraphQL API
+
+# Open library selector (when no arguments provided)
+$ gqlxp
+
+# Subsequent loads detect if file has changed
+$ gqlxp examples/github.graphqls
+Schema file has changed since last import.
+Update library (y/n): y
+```
+
+### Local development
 For local development commands:
 ```sh
 $ just build  # Build executable to dist/gqlxp

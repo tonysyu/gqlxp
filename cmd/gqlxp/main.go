@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/tonysyu/gqlxp/internal/prompt"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui"
 	"github.com/tonysyu/gqlxp/tui/adapters"
@@ -21,40 +23,30 @@ func main() {
 	}
 
 	if len(os.Args) < 2 {
-		showUsage()
-		os.Exit(1)
+		// No arguments - check library
+		lib := library.NewLibrary()
+		schemas, err := lib.List()
+		if err != nil {
+			abort(fmt.Sprintf("Error checking library: %v", err))
+		}
+
+		if len(schemas) == 0 {
+			abort("No schema file provided. Usage: gqlxp <schema-file>")
+		}
+
+		// Library has schemas - open selector
+		if _, err := tui.StartSchemaSelector(); err != nil {
+			abort(fmt.Sprintf("Error starting library selector: %v", err))
+		}
+		return
 	}
 
 	command := os.Args[1]
 
-	// Handle library subcommands
-	if command == "library" {
-		handleLibraryCommand()
-		return
-	}
-
-	// Handle direct file mode (existing behavior)
+	// Handle direct file mode
 	if !strings.HasPrefix(command, "--") {
 		schemaFile := command
 		loadAndStartFromFile(schemaFile)
-		return
-	}
-
-	// Handle flags
-	if command == "--library" {
-		if len(os.Args) == 2 {
-			// Library selection mode
-			if _, err := tui.StartSchemaSelector(); err != nil {
-				abort(fmt.Sprintf("Error starting library selector: %v", err))
-			}
-		} else if len(os.Args) == 3 {
-			// Direct library schema load
-			schemaID := os.Args[2]
-			loadAndStartFromLibrary(schemaID)
-		} else {
-			showUsage()
-			os.Exit(1)
-		}
 		return
 	}
 
@@ -64,112 +56,137 @@ func main() {
 
 func showUsage() {
 	usage := `Usage:
-  gqlxp <schema-file>              Load schema from file path
-  gqlxp --library                  Select schema from library
-  gqlxp --library <schema-id>      Load schema from library
-  gqlxp library add <id> <file>    Add schema to library
-  gqlxp library list               List schemas in library
-  gqlxp library remove <id>        Remove schema from library
+  gqlxp <schema-file>              Load and explore schema from file
+  gqlxp                            Select from library (if not empty)
+
+Schema files are automatically saved to your library on first use.
+When loading a previously imported file, you'll be prompted to update
+if changes are detected.
+
+Use the TUI interface to manage library schemas (remove, view, etc).
 
 Examples:
-  gqlxp schema.graphqls            # Explore schema from file
-  gqlxp --library github-api       # Explore schema from library
-  gqlxp library add github-api github-schema.graphqls  # Add to library
+  gqlxp schema.graphqls            # Load schema (prompts for library details on first use)
+  gqlxp                            # Open library selector
 `
 	fmt.Print(usage)
 }
 
 func loadAndStartFromFile(schemaFile string) {
-	schemaContent, err := os.ReadFile(schemaFile)
+	// Resolve schema source through library (automatic integration)
+	schemaID, content, err := resolveSchemaSource(schemaFile)
 	if err != nil {
-		abort(fmt.Sprintf("Error reading schema file '%s': %v\n", schemaFile, err))
+		abort(fmt.Sprintf("Error resolving schema: %v", err))
 	}
 
-	schema, err := adapters.ParseSchema(schemaContent)
-	if err != nil {
-		abort(fmt.Sprintf("Error parsing schema: %v", err))
-	}
-
-	if _, err := tui.Start(schema); err != nil {
-		abort(fmt.Sprintf("Error starting tui: %v", err))
-	}
-}
-
-func loadAndStartFromLibrary(schemaID string) {
-	lib := library.NewLibrary()
-
-	schema, err := lib.Get(schemaID)
-	if err != nil {
-		abort(fmt.Sprintf("Error loading schema from library: %v", err))
-	}
-
-	parsedSchema, err := adapters.ParseSchema(schema.Content)
+	// Parse schema
+	schema, err := adapters.ParseSchema(content)
 	if err != nil {
 		abort(fmt.Sprintf("Error parsing schema: %v", err))
 	}
 
-	if _, err := tui.StartWithLibraryData(parsedSchema, schemaID, schema.Metadata); err != nil {
+	// Get library metadata
+	lib := library.NewLibrary()
+	libSchema, err := lib.Get(schemaID)
+	if err != nil {
+		abort(fmt.Sprintf("Error loading schema metadata: %v", err))
+	}
+
+	// Start with library data
+	if _, err := tui.StartWithLibraryData(schema, schemaID, libSchema.Metadata); err != nil {
 		abort(fmt.Sprintf("Error starting tui: %v", err))
 	}
 }
 
-func handleLibraryCommand() {
-	if len(os.Args) < 3 {
-		showUsage()
-		os.Exit(1)
+func loadSchemaFromFile(path string) ([]byte, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read schema file: %w", err)
 	}
+	return content, nil
+}
 
-	subcommand := os.Args[2]
+func resolveSchemaSource(filePath string) (schemaID string, content []byte, err error) {
 	lib := library.NewLibrary()
 
-	switch subcommand {
-	case "add":
-		if len(os.Args) != 5 {
-			abort("Usage: gqlxp library add <id> <file-path>")
-		}
-		schemaID := os.Args[3]
-		filePath := os.Args[4]
-
-		// Use schema ID as display name by default
-		displayName := schemaID
-
-		if err := lib.Add(schemaID, displayName, filePath); err != nil {
-			abort(fmt.Sprintf("Error adding schema: %v", err))
-		}
-
-		fmt.Printf("Schema '%s' added to library\n", schemaID)
-
-	case "list":
-		schemas, err := lib.List()
-		if err != nil {
-			abort(fmt.Sprintf("Error listing schemas: %v", err))
-		}
-
-		if len(schemas) == 0 {
-			fmt.Println("No schemas in library")
-			return
-		}
-
-		fmt.Println("Schemas in library:")
-		for _, schema := range schemas {
-			fmt.Printf("  %s - %s\n", schema.ID, schema.DisplayName)
-		}
-
-	case "remove":
-		if len(os.Args) != 4 {
-			abort("Usage: gqlxp library remove <id>")
-		}
-		schemaID := os.Args[3]
-
-		if err := lib.Remove(schemaID); err != nil {
-			abort(fmt.Sprintf("Error removing schema: %v", err))
-		}
-
-		fmt.Printf("Schema '%s' removed from library\n", schemaID)
-
-	default:
-		abort(fmt.Sprintf("Unknown library subcommand: %s", subcommand))
+	// Normalize to absolute path
+	absPath, err := filepath.Abs(filePath)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to resolve absolute path: %w", err)
 	}
+
+	// Load file content
+	content, err = loadSchemaFromFile(absPath)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// Calculate file hash
+	fileHash := library.CalculateFileHash(content)
+
+	// Check library for path match
+	existingSchema, err := lib.FindByPath(absPath)
+	if err != nil {
+		// No match - register new schema
+		schemaID, err := registerSchema(absPath, content)
+		return schemaID, content, err
+	}
+
+	// Path match found - check hash
+	if existingSchema.Metadata.FileHash == fileHash {
+		// Full match - use existing schema
+		return existingSchema.ID, existingSchema.Content, nil
+	}
+
+	// Hash mismatch - prompt user
+	fmt.Printf("Schema file has changed since last import.\n")
+	update, err := prompt.PromptYesNo("Update library")
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to get user input: %w", err)
+	}
+
+	if update {
+		// Update library content
+		if err := lib.UpdateContent(existingSchema.ID, content); err != nil {
+			return "", nil, fmt.Errorf("failed to update library: %w", err)
+		}
+		fmt.Printf("Library schema '%s' updated\n", existingSchema.ID)
+		return existingSchema.ID, content, nil
+	}
+
+	// User chose not to update - use existing library content
+	fmt.Printf("Using existing library version\n")
+	return existingSchema.ID, existingSchema.Content, nil
+}
+
+func registerSchema(filePath string, content []byte) (string, error) {
+	lib := library.NewLibrary()
+
+	// Generate suggested ID from filename
+	basename := filepath.Base(filePath)
+	ext := filepath.Ext(basename)
+	suggested := strings.TrimSuffix(basename, ext)
+	suggested = library.SanitizeSchemaID(suggested)
+
+	// Prompt for schema ID
+	schemaID, err := prompt.PromptSchemaID(suggested)
+	if err != nil {
+		return "", fmt.Errorf("failed to get schema ID: %w", err)
+	}
+
+	// Prompt for display name
+	displayName, err := prompt.PromptString("Enter display name", schemaID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get display name: %w", err)
+	}
+
+	// Add to library
+	if err := lib.Add(schemaID, displayName, filePath); err != nil {
+		return "", fmt.Errorf("failed to add schema to library: %w", err)
+	}
+
+	fmt.Printf("Schema '%s' added to library\n", schemaID)
+	return schemaID, nil
 }
 
 func abort(msg string) {
