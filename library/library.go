@@ -111,10 +111,10 @@ func loadAllMetadata() (map[string]SchemaMetadata, error) {
 	}
 
 	data, err := os.ReadFile(metadataFile)
+	if os.IsNotExist(err) {
+		return make(map[string]SchemaMetadata), nil
+	}
 	if err != nil {
-		if os.IsNotExist(err) {
-			return make(map[string]SchemaMetadata), nil
-		}
 		return nil, fmt.Errorf("failed to read metadata file: %w", err)
 	}
 

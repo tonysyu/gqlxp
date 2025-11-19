@@ -123,40 +123,43 @@ func resolveSchemaSource(filePath string) (schemaID string, content []byte, err 
 
 	// Calculate file hash
 	fileHash := library.CalculateFileHash(content)
-
-	// Check library for path match
 	existingSchema, err := lib.FindByPath(absPath)
+
+	// No match - register new schema
 	if err != nil {
-		// No match - register new schema
 		schemaID, err := registerSchema(absPath, content)
 		return schemaID, content, err
 	}
 
-	// Path match found - check hash
+	// Hash matches - use existing schema
 	if existingSchema.Metadata.FileHash == fileHash {
-		// Full match - use existing schema
 		return existingSchema.ID, existingSchema.Content, nil
 	}
 
-	// Hash mismatch - prompt user
+	// Hash mismatch - handle update workflow
+	return handleSchemaUpdate(lib, existingSchema, content)
+}
+
+func handleSchemaUpdate(lib library.Library, existingSchema *library.Schema, newContent []byte) (string, []byte, error) {
 	fmt.Printf("Schema file has changed since last import.\n")
 	update, err := prompt.PromptYesNo("Update library")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to get user input: %w", err)
 	}
 
-	if update {
-		// Update library content
-		if err := lib.UpdateContent(existingSchema.ID, content); err != nil {
-			return "", nil, fmt.Errorf("failed to update library: %w", err)
-		}
-		fmt.Printf("Library schema '%s' updated\n", existingSchema.ID)
-		return existingSchema.ID, content, nil
+	// User chose not to update
+	if !update {
+		fmt.Printf("Using existing library version\n")
+		return existingSchema.ID, existingSchema.Content, nil
 	}
 
-	// User chose not to update - use existing library content
-	fmt.Printf("Using existing library version\n")
-	return existingSchema.ID, existingSchema.Content, nil
+	// Update library content
+	if err := lib.UpdateContent(existingSchema.ID, newContent); err != nil {
+		return "", nil, fmt.Errorf("failed to update library: %w", err)
+	}
+
+	fmt.Printf("Library schema '%s' updated\n", existingSchema.ID)
+	return existingSchema.ID, newContent, nil
 }
 
 func registerSchema(filePath string, content []byte) (string, error) {

@@ -18,3 +18,11 @@
 - Return errors for recoverable failures (avoid panics)
 - Use `fmt.Errorf` with context
 - Validate inputs early
+
+## Line of Sight
+
+**Keep the happy path left-aligned.** Handle errors and edge cases early with guard clauses.
+
+- Main logic should have minimal nesting
+- Return early for error cases and validation failures
+- Avoid deeply nested if statements
