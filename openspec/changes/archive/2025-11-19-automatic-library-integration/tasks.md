@@ -74,17 +74,17 @@
 - [x] Removed `library` subcommands (functionality moved to TUI)
 
 ### 10. Add integration tests
-- [ ] Test full flow: new file → prompts → library save → TUI start
-- [ ] Test hash match: existing file unchanged → direct load
-- [ ] Test hash mismatch: existing file changed → prompt → update/skip
-- [ ] Test no args with empty library → error message
-- [ ] Test no args with non-empty library → selector
+- [x] Test full flow: new file → prompts → library save → TUI start
+- [x] Test hash match: existing file unchanged → direct load
+- [x] Test hash mismatch: existing file changed → prompt → update/skip
+- [x] Test no args with empty library → error message
+- [x] Test no args with non-empty library → selector
 
 ### 11. Run validation and verification
 - [x] Run `just test` to ensure all unit tests pass
 - [x] Run `just verify` for linting and formatting
-- [ ] Manually test interactive flows (cannot be fully automated)
-- [ ] Test on sample schema files
+- [x] Manually test interactive flows (cannot be fully automated)
+- [x] Test on sample schema files
 
 ### 12. Update documentation
 - [x] Update README.md with new workflow description

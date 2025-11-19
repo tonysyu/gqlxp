@@ -118,9 +118,14 @@ The system SHALL support efficient lookup of schemas by source file path.
 - **WHEN** no library entry matches the provided file path
 - **THEN** the query returns no match indicating the schema is new
 
-## REMOVED Requirements
+## REMOVED Scenarios
 
-### Requirement: Backward Compatibility - Library mode flag
-**REMOVED**: The `--library` flag scenario is deprecated in favor of automatic library integration.
+#### Scenario: Direct file path mode
+**REMOVED** from **Requirement: Backward Compatibility**
 
-**Rationale**: All schema operations now use the library, making explicit library mode flags redundant. The no-arguments case automatically opens the selector when the library is non-empty.
+**Rationale**: All schema operations now use the library through automatic integration. File paths trigger library lookup and registration instead of bypassing the library.
+
+#### Scenario: Library mode flag
+**REMOVED** from **Requirement: Backward Compatibility**
+
+**Rationale**: The `--library` flag is deprecated. The no-arguments case automatically opens the selector when the library is non-empty.
