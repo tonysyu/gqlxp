@@ -2,21 +2,21 @@ package navigation
 
 import "github.com/tonysyu/gqlxp/tui/xplr/components"
 
-// PanelStack manages a stack of panels with navigation
-type PanelStack struct {
+// panelStack manages a stack of panels with navigation
+type panelStack struct {
 	panels   []*components.Panel
 	position int
 }
 
-func NewPanelStack(initialCapacity int) *PanelStack {
-	return &PanelStack{
+func newPanelStack(initialCapacity int) *panelStack {
+	return &panelStack{
 		panels:   make([]*components.Panel, 0, initialCapacity),
 		position: 0,
 	}
 }
 
 // Current returns the currently focused panel
-func (s *PanelStack) Current() *components.Panel {
+func (s *panelStack) Current() *components.Panel {
 	if s.position >= 0 && s.position < len(s.panels) {
 		return s.panels[s.position]
 	}
@@ -24,7 +24,7 @@ func (s *PanelStack) Current() *components.Panel {
 }
 
 // Next returns the panel after the current position (right panel)
-func (s *PanelStack) Next() *components.Panel {
+func (s *panelStack) Next() *components.Panel {
 	nextPos := s.position + 1
 	if nextPos < len(s.panels) {
 		return s.panels[nextPos]
@@ -33,7 +33,7 @@ func (s *PanelStack) Next() *components.Panel {
 }
 
 // MoveForward advances position if possible, returns success
-func (s *PanelStack) MoveForward() bool {
+func (s *panelStack) MoveForward() bool {
 	if s.position+1 < len(s.panels) {
 		s.position++
 		return true
@@ -42,7 +42,7 @@ func (s *PanelStack) MoveForward() bool {
 }
 
 // MoveBackward moves position back if possible, returns success
-func (s *PanelStack) MoveBackward() bool {
+func (s *panelStack) MoveBackward() bool {
 	if s.position > 0 {
 		s.position--
 		return true
@@ -51,7 +51,7 @@ func (s *PanelStack) MoveBackward() bool {
 }
 
 // Push adds a panel after current position, truncating rest
-func (s *PanelStack) Push(panel *components.Panel) {
+func (s *panelStack) Push(panel *components.Panel) {
 	// Only truncate if we're not at the end
 	if s.position+1 < len(s.panels) {
 		s.panels = s.panels[:s.position+1]
@@ -60,22 +60,22 @@ func (s *PanelStack) Push(panel *components.Panel) {
 }
 
 // Replace replaces all panels with new set
-func (s *PanelStack) Replace(panels []*components.Panel) {
+func (s *panelStack) Replace(panels []*components.Panel) {
 	s.panels = panels
 	s.position = 0
 }
 
 // Position returns current position
-func (s *PanelStack) Position() int {
+func (s *panelStack) Position() int {
 	return s.position
 }
 
 // Len returns number of panels
-func (s *PanelStack) Len() int {
+func (s *panelStack) Len() int {
 	return len(s.panels)
 }
 
 // All returns all panels (for iteration)
-func (s *PanelStack) All() []*components.Panel {
+func (s *panelStack) All() []*components.Panel {
 	return s.panels
 }

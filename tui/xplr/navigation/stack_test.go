@@ -7,16 +7,16 @@ import (
 	"github.com/tonysyu/gqlxp/tui/xplr/components"
 )
 
-func TestPanelStack_NewPanelStack(t *testing.T) {
+func TestPanelStack_newPanelStack(t *testing.T) {
 	is := is.New(t)
-	stack := NewPanelStack(2)
+	stack := newPanelStack(2)
 	is.Equal(stack.Len(), 0)
 	is.Equal(stack.Position(), 0)
 }
 
 func TestPanelStack_Push(t *testing.T) {
 	is := is.New(t)
-	stack := NewPanelStack(2)
+	stack := newPanelStack(2)
 	p1 := components.NewEmptyPanel("1")
 	p2 := components.NewEmptyPanel("2")
 
@@ -31,7 +31,7 @@ func TestPanelStack_Push(t *testing.T) {
 
 func TestPanelStack_Push_TruncatesAfterCurrent(t *testing.T) {
 	is := is.New(t)
-	stack := NewPanelStack(3)
+	stack := newPanelStack(3)
 	p1 := components.NewEmptyPanel("1")
 	p2 := components.NewEmptyPanel("2")
 	p3 := components.NewEmptyPanel("3")
@@ -53,7 +53,7 @@ func TestPanelStack_Push_TruncatesAfterCurrent(t *testing.T) {
 
 func TestPanelStack_MoveForward(t *testing.T) {
 	is := is.New(t)
-	stack := NewPanelStack(2)
+	stack := newPanelStack(2)
 	p1 := components.NewEmptyPanel("1")
 	p2 := components.NewEmptyPanel("2")
 
@@ -73,7 +73,7 @@ func TestPanelStack_MoveForward(t *testing.T) {
 
 func TestPanelStack_MoveBackward(t *testing.T) {
 	is := is.New(t)
-	stack := NewPanelStack(2)
+	stack := newPanelStack(2)
 	p1 := components.NewEmptyPanel("1")
 	p2 := components.NewEmptyPanel("2")
 
@@ -95,7 +95,7 @@ func TestPanelStack_MoveBackward(t *testing.T) {
 
 func TestPanelStack_Current(t *testing.T) {
 	is := is.New(t)
-	stack := NewPanelStack(2)
+	stack := newPanelStack(2)
 	is.Equal(stack.Current(), nil)
 
 	p1 := components.NewEmptyPanel("1")
@@ -105,7 +105,7 @@ func TestPanelStack_Current(t *testing.T) {
 
 func TestPanelStack_Next(t *testing.T) {
 	is := is.New(t)
-	stack := NewPanelStack(2)
+	stack := newPanelStack(2)
 	p1 := components.NewEmptyPanel("1")
 	p2 := components.NewEmptyPanel("2")
 
@@ -121,7 +121,7 @@ func TestPanelStack_Next(t *testing.T) {
 
 func TestPanelStack_Replace(t *testing.T) {
 	is := is.New(t)
-	stack := NewPanelStack(2)
+	stack := newPanelStack(2)
 	p1 := components.NewEmptyPanel("1")
 	p2 := components.NewEmptyPanel("2")
 	p3 := components.NewEmptyPanel("3")
@@ -141,7 +141,7 @@ func TestPanelStack_Replace(t *testing.T) {
 
 func TestPanelStack_All(t *testing.T) {
 	is := is.New(t)
-	stack := NewPanelStack(3)
+	stack := newPanelStack(3)
 	p1 := components.NewEmptyPanel("1")
 	p2 := components.NewEmptyPanel("2")
 

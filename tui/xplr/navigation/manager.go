@@ -4,17 +4,17 @@ import "github.com/tonysyu/gqlxp/tui/xplr/components"
 
 // NavigationManager coordinates panel stack, breadcrumbs, and type selection
 type NavigationManager struct {
-	stack         *PanelStack
+	stack         *panelStack
 	breadcrumbs   breadcrumbsModel
-	typeSelector  *TypeSelector
+	typeSelector  *typeSelector
 	visiblePanels int
 }
 
 func NewNavigationManager(visiblePanels int) *NavigationManager {
 	return &NavigationManager{
-		stack:         NewPanelStack(visiblePanels),
+		stack:         newPanelStack(visiblePanels),
 		breadcrumbs:   newBreadcrumbsModel(),
-		typeSelector:  NewTypeSelector(),
+		typeSelector:  newTypeSelector(),
 		visiblePanels: visiblePanels,
 	}
 }
@@ -74,7 +74,7 @@ func (nm *NavigationManager) CycleTypeBackward() GQLType {
 }
 
 // Stack returns the panel stack (for rendering)
-func (nm *NavigationManager) Stack() *PanelStack {
+func (nm *NavigationManager) Stack() *panelStack {
 	return nm.stack
 }
 

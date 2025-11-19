@@ -6,23 +6,23 @@ import (
 	"github.com/matryer/is"
 )
 
-func TestTypeSelector_NewTypeSelector(t *testing.T) {
+func TestTypeSelector_newTypeSelector(t *testing.T) {
 	is := is.New(t)
-	ts := NewTypeSelector()
+	ts := newTypeSelector()
 	is.Equal(ts.Current(), QueryType)
 	is.Equal(len(ts.All()), 9)
 }
 
 func TestTypeSelector_Set(t *testing.T) {
 	is := is.New(t)
-	ts := NewTypeSelector()
+	ts := newTypeSelector()
 	ts.Set(MutationType)
 	is.Equal(ts.Current(), MutationType)
 }
 
 func TestTypeSelector_Next(t *testing.T) {
 	is := is.New(t)
-	ts := NewTypeSelector()
+	ts := newTypeSelector()
 	is.Equal(ts.Current(), QueryType)
 
 	next := ts.Next()
@@ -42,7 +42,7 @@ func TestTypeSelector_Next(t *testing.T) {
 
 func TestTypeSelector_Previous(t *testing.T) {
 	is := is.New(t)
-	ts := NewTypeSelector()
+	ts := newTypeSelector()
 	is.Equal(ts.Current(), QueryType)
 
 	// Test wraparound at beginning
@@ -57,7 +57,7 @@ func TestTypeSelector_Previous(t *testing.T) {
 
 func TestTypeSelector_All(t *testing.T) {
 	is := is.New(t)
-	ts := NewTypeSelector()
+	ts := newTypeSelector()
 	all := ts.All()
 
 	expected := []GQLType{
@@ -74,7 +74,7 @@ func TestTypeSelector_All(t *testing.T) {
 
 func TestTypeSelector_CurrentIndex(t *testing.T) {
 	is := is.New(t)
-	ts := NewTypeSelector()
+	ts := newTypeSelector()
 
 	// Test first type
 	idx := ts.currentIndex()

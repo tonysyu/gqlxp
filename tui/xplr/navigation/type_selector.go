@@ -14,35 +14,35 @@ const (
 	DirectiveType GQLType = "Directive"
 )
 
-// TypeSelector manages selection among available GQL types
-type TypeSelector struct {
+// typeSelector manages selection among available GQL types
+type typeSelector struct {
 	types    []GQLType
 	selected GQLType
 }
 
-func NewTypeSelector() *TypeSelector {
+func newTypeSelector() *typeSelector {
 	types := []GQLType{
 		QueryType, MutationType, ObjectType, InputType,
 		EnumType, ScalarType, InterfaceType, UnionType, DirectiveType,
 	}
-	return &TypeSelector{
+	return &typeSelector{
 		types:    types,
 		selected: QueryType,
 	}
 }
 
 // Current returns currently selected type
-func (ts *TypeSelector) Current() GQLType {
+func (ts *typeSelector) Current() GQLType {
 	return ts.selected
 }
 
 // Set changes selected type
-func (ts *TypeSelector) Set(gqlType GQLType) {
+func (ts *typeSelector) Set(gqlType GQLType) {
 	ts.selected = gqlType
 }
 
 // Next cycles to next type (with wraparound)
-func (ts *TypeSelector) Next() GQLType {
+func (ts *typeSelector) Next() GQLType {
 	idx := ts.currentIndex()
 	nextIdx := (idx + 1) % len(ts.types)
 	ts.selected = ts.types[nextIdx]
@@ -50,7 +50,7 @@ func (ts *TypeSelector) Next() GQLType {
 }
 
 // Previous cycles to previous type (with wraparound)
-func (ts *TypeSelector) Previous() GQLType {
+func (ts *typeSelector) Previous() GQLType {
 	idx := ts.currentIndex()
 	prevIdx := (idx - 1 + len(ts.types)) % len(ts.types)
 	ts.selected = ts.types[prevIdx]
@@ -58,11 +58,11 @@ func (ts *TypeSelector) Previous() GQLType {
 }
 
 // All returns all available types
-func (ts *TypeSelector) All() []GQLType {
+func (ts *typeSelector) All() []GQLType {
 	return ts.types
 }
 
-func (ts *TypeSelector) currentIndex() int {
+func (ts *typeSelector) currentIndex() int {
 	for i, t := range ts.types {
 		if t == ts.selected {
 			return i
