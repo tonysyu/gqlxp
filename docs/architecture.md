@@ -24,8 +24,6 @@ For build and development commands, see [Development Commands](development.md).
       - `SimpleItem` - Basic ListItem implementation
     - **`tui/xplr/navigation`**: Navigation state management
       - `NavigationManager` - Coordinates panel stack, breadcrumbs, and type selection
-      - `PanelStack` - Manages stack of panels with position tracking
-      - `TypeSelector` - Handles GQL type selection and cycling
   - **`tui/overlay`**: Detail view overlay for displaying full item information
   - **`tui/adapters`**: Converts GraphQL AST types to UI components (shared)
   - **`tui/config`**: Configuration and styling (shared)
