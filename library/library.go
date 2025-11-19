@@ -96,7 +96,7 @@ func CalculateFileHash(content []byte) string {
 
 // schemaFilePath returns the path to a schema file.
 func schemaFilePath(id string) (string, error) {
-	schemasDir, err := SchemasDir()
+	schemasDir, err := schemasDir()
 	if err != nil {
 		return "", err
 	}
@@ -105,7 +105,7 @@ func schemaFilePath(id string) (string, error) {
 
 // loadAllMetadata loads all metadata from the metadata.json file.
 func loadAllMetadata() (map[string]SchemaMetadata, error) {
-	metadataFile, err := MetadataFile()
+	metadataFile, err := metadataFile()
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func loadAllMetadata() (map[string]SchemaMetadata, error) {
 
 // saveAllMetadata saves all metadata to the metadata.json file atomically.
 func saveAllMetadata(metadata map[string]SchemaMetadata) error {
-	metadataFile, err := MetadataFile()
+	metadataFile, err := metadataFile()
 	if err != nil {
 		return err
 	}
@@ -264,7 +264,7 @@ func (l *FileLibrary) Get(id string) (*Schema, error) {
 
 // List implements Library.List.
 func (l *FileLibrary) List() ([]SchemaInfo, error) {
-	schemasDir, err := SchemasDir()
+	schemasDir, err := schemasDir()
 	if err != nil {
 		return nil, err
 	}

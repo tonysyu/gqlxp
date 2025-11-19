@@ -7,12 +7,12 @@ import (
 	"runtime"
 )
 
-// ConfigDir returns the standard configuration directory for gqlxp.
+// configDir returns the standard configuration directory for gqlxp.
 // It follows platform conventions:
 // - macOS/Linux: $HOME/.config/gqlxp/
 // - Windows: %APPDATA%\gqlxp\
 // - Fallback: $HOME/.gqlxp/
-func ConfigDir() (string, error) {
+func configDir() (string, error) {
 	var baseDir string
 
 	// Try platform-specific config directory first
@@ -42,18 +42,18 @@ func ConfigDir() (string, error) {
 	return filepath.Join(home, ".gqlxp"), nil
 }
 
-// SchemasDir returns the schemas directory within the config directory.
-func SchemasDir() (string, error) {
-	configDir, err := ConfigDir()
+// schemasDir returns the schemas directory within the config directory.
+func schemasDir() (string, error) {
+	configDir, err := configDir()
 	if err != nil {
 		return "", err
 	}
 	return filepath.Join(configDir, "schemas"), nil
 }
 
-// MetadataFile returns the path to the metadata.json file.
-func MetadataFile() (string, error) {
-	schemasDir, err := SchemasDir()
+// metadataFile returns the path to the metadata.json file.
+func metadataFile() (string, error) {
+	schemasDir, err := schemasDir()
 	if err != nil {
 		return "", err
 	}
@@ -62,7 +62,7 @@ func MetadataFile() (string, error) {
 
 // InitConfigDir creates the configuration directory structure if it doesn't exist.
 func InitConfigDir() error {
-	schemasDir, err := SchemasDir()
+	schemasDir, err := schemasDir()
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func InitConfigDir() error {
 	}
 
 	// Create empty metadata.json if it doesn't exist
-	metadataFile, err := MetadataFile()
+	metadataFile, err := metadataFile()
 	if err != nil {
 		return err
 	}

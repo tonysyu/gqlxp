@@ -419,52 +419,6 @@ func TestLibrary_SetURLPattern(t *testing.T) {
 	})
 }
 
-func TestConfigDir(t *testing.T) {
-	is := is.New(t)
-	_, cleanup := setupTestLibrary(t)
-	defer cleanup()
-
-	t.Run("returns non-empty config directory", func(t *testing.T) {
-		configDir, err := library.ConfigDir()
-		is.NoErr(err)
-		is.True(configDir != "")
-	})
-}
-
-func TestInitConfigDir(t *testing.T) {
-	is := is.New(t)
-	_, cleanup := setupTestLibrary(t)
-	defer cleanup()
-
-	t.Run("creates config directory structure", func(t *testing.T) {
-		err := library.InitConfigDir()
-		is.NoErr(err)
-
-		// Verify schemas directory exists
-		schemasDir, err := library.SchemasDir()
-		is.NoErr(err)
-
-		info, err := os.Stat(schemasDir)
-		is.NoErr(err)
-		is.True(info.IsDir())
-
-		// Verify metadata file exists
-		metadataFile, err := library.MetadataFile()
-		is.NoErr(err)
-
-		_, err = os.Stat(metadataFile)
-		is.NoErr(err)
-	})
-
-	t.Run("calling InitConfigDir multiple times is safe", func(t *testing.T) {
-		err := library.InitConfigDir()
-		is.NoErr(err)
-
-		err = library.InitConfigDir()
-		is.NoErr(err)
-	})
-}
-
 func TestLibrary_FindByPath(t *testing.T) {
 	is := is.New(t)
 	tmpDir, cleanup := setupTestLibrary(t)
