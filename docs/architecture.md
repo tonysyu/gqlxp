@@ -27,6 +27,9 @@ For build and development commands, see [Development Commands](development.md).
   - **`tui/overlay`**: Detail view overlay for displaying full item information
   - **`tui/adapters`**: Converts GraphQL AST types to UI components (shared)
   - **`tui/config`**: Configuration and styling (shared)
+- **`tests/acceptance`**: Acceptance tests for end-to-end workflows
+  - Test harness with domain-specific helpers for TUI interaction
+  - Workflow tests verifying navigation, type switching, and overlay behavior
 - **`utils/testx`**: Testing utilities
   - **`utils/testx/assert`**: Test assertion helpers
 - **`utils/text`**: Text manipulation utilities

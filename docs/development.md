@@ -14,6 +14,7 @@ Use `just` to see all available commands defined in the justfile.
 - `just test` - Run all tests
 - `just "test -v"` - Run all tests with verbose output
 - `just test ./gql` - Run only GraphQL parsing tests
+- `just test ./tests/acceptance` - Run only acceptance tests
 - `just test "./gql -v"` - Run GraphQL tests with verbose output
 - `just test-coverage` - Generate HTML coverage report
 

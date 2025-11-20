@@ -9,9 +9,29 @@
 
 ## Testing
 
+### Unit Tests
+
 - Prefer `package foo_test` (black-box) for public API tests
 - Use `package foo` (white-box) only when testing private implementation
 - Use `"github.com/matryer/is"` instead of `t.Error`/`t.Errorf`
+
+### Acceptance Tests
+
+**Use acceptance tests for end-to-end user workflows.** Located in `tests/acceptance/`, these tests verify complete interactions through the TUI using the test harness.
+
+When to use acceptance tests:
+- Multi-step navigation workflows (panel navigation, breadcrumb verification)
+- Type switching and state transitions across the application
+- Overlay interactions and screen content verification
+- Complete user journeys that span multiple components
+
+When to use unit tests:
+- Single component behavior
+- Edge cases and error handling
+- Internal implementation details
+- Pure business logic
+
+See `tests/acceptance/workflows_test.go` for examples.
 
 ## Error Handling
 
