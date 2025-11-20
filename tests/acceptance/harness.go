@@ -6,14 +6,14 @@
 //
 // Example usage:
 //
-//	h := New(WithSchema(`
+//	h := New(t, `
 //		type Query { users: [User!]! }
 //		type User { id: ID!, name: String! }
-//	`))
+//	`)
 //
 //	h.SelectItem("users")
 //	h.NavigateToNextPanel()
-//	h.AssertPanelContains(1, "User")
+//	h.assert.PanelContains(1, "User")
 package acceptance
 
 import (
@@ -45,9 +45,15 @@ var (
 
 // Harness provides high-level test utilities for acceptance testing
 type Harness struct {
-	model xplr.Model
-	t     *testing.T
-	is    *is.I
+	model  xplr.Model
+	t      *testing.T
+	is     *is.I
+	assert *Assert
+}
+
+// Assert provides assertion helpers for test verification
+type Assert struct {
+	h *Harness
 }
 
 // Option is a functional option for configuring the test harness
@@ -78,9 +84,10 @@ func New(t *testing.T, schema string, opts ...Option) *Harness {
 
 	h := &Harness{
 		model: xplr.New(schemaView),
-		t:  t,
-		is: is.New(t),
+		t:     t,
+		is:    is.New(t),
 	}
+	h.assert = &Assert{h: h}
 
 	// Apply options
 	for _, opt := range opts {
@@ -212,97 +219,6 @@ func (h *Harness) OpenOverlayForItemAt(idx int) {
 }
 
 // ============================================================================
-// Screen Verification Helpers - Assertions
-// ============================================================================
-
-// AssertPanelContains checks if the panel at the given index contains the expected text
-// panelIdx is 0-based (0 = left panel, 1 = right panel)
-func (h *Harness) AssertPanelContains(panelIdx int, expected string) {
-	h.t.Helper()
-	content := h.getPanelContent(panelIdx)
-	if !strings.Contains(content, expected) {
-		h.t.Errorf("panel %d does not contain %q\nPanel content:\n%s", panelIdx, expected, content)
-	}
-}
-
-// AssertPanelEquals checks if the normalized panel content equals the expected text
-func (h *Harness) AssertPanelEquals(panelIdx int, expected string) {
-	h.t.Helper()
-	content := testx.NormalizeView(h.getPanelContent(panelIdx))
-	expectedNormalized := testx.NormalizeView(expected)
-	h.is.Equal(content, expectedNormalized)
-}
-
-// AssertBreadcrumbsShow checks if breadcrumbs contain the expected text
-func (h *Harness) AssertBreadcrumbsShow(expected string) {
-	h.t.Helper()
-	breadcrumbs := h.getBreadcrumbs()
-	if !strings.Contains(breadcrumbs, expected) {
-		h.t.Errorf("breadcrumbs do not contain %q\nBreadcrumbs: %q", expected, breadcrumbs)
-	}
-}
-
-// AssertBreadcrumbsEmpty checks if breadcrumbs are empty
-func (h *Harness) AssertBreadcrumbsEmpty() {
-	h.t.Helper()
-	breadcrumbs := h.getBreadcrumbs()
-	h.is.Equal(breadcrumbs, "")
-}
-
-// AssertOverlayVisible checks if the overlay is currently visible
-func (h *Harness) AssertOverlayVisible() {
-	h.t.Helper()
-	if !h.model.Overlay.IsActive() {
-		h.t.Error("overlay is not visible")
-	}
-}
-
-// AssertOverlayContains checks if the overlay contains the expected text
-func (h *Harness) AssertOverlayContains(expected string) {
-	h.t.Helper()
-	h.AssertOverlayVisible()
-	view := h.View()
-	if !strings.Contains(view, expected) {
-		h.t.Errorf("overlay does not contain %q\nOverlay content:\n%s", expected, view)
-	}
-}
-
-// AssertOverlayContainsNormalized checks if the normalized overlay view contains the expected text
-// Both the view and expected text are normalized (whitespace trimmed, excess spaces removed)
-// before comparison. This is useful for comparing content structure without exact formatting.
-func (h *Harness) AssertOverlayContainsNormalized(expected string) {
-	h.t.Helper()
-	h.AssertOverlayVisible()
-	normalizedView := testx.NormalizeView(h.View())
-	normalizedExpected := testx.NormalizeView(expected)
-	if !strings.Contains(normalizedView, normalizedExpected) {
-		h.t.Errorf("normalized overlay does not contain expected content\nExpected:\n%s\n\nActual overlay:\n%s",
-			normalizedExpected, normalizedView)
-	}
-}
-
-// AssertViewContains checks if the entire view contains the expected text
-func (h *Harness) AssertViewContains(expectedStrings ...string) {
-	h.t.Helper()
-	view := h.View()
-	for _, expected := range expectedStrings {
-		if !strings.Contains(view, expected) {
-			h.t.Errorf("view does not contain %q\nView:\n%s", expected, view)
-		}
-	}
-}
-
-// AssertCurrentType checks if the current GraphQL type matches the expected type
-func (h *Harness) AssertCurrentType(expected navigation.GQLType) {
-	h.t.Helper()
-	// Check if the type tab is visible in the view
-	view := h.View()
-	if !strings.Contains(view, string(expected)) {
-		h.t.Errorf("current type is not %q\nView:\n%s", expected, view)
-	}
-}
-
-// ============================================================================
 // Helper methods for accessing internal state
 // ============================================================================
 
@@ -376,4 +292,95 @@ func (h *Harness) getCurrentType() navigation.GQLType {
 		}
 	}
 	return navigation.QueryType // default
+}
+
+// ============================================================================
+// Screen Verification Helpers - Assertions
+// ============================================================================
+
+// PanelContains checks if the panel at the given index contains the expected text
+// panelIdx is 0-based (0 = left panel, 1 = right panel)
+func (a *Assert) PanelContains(panelIdx int, expected string) {
+	a.h.t.Helper()
+	content := a.h.getPanelContent(panelIdx)
+	if !strings.Contains(content, expected) {
+		a.h.t.Errorf("panel %d does not contain %q\nPanel content:\n%s", panelIdx, expected, content)
+	}
+}
+
+// PanelEquals checks if the normalized panel content equals the expected text
+func (a *Assert) PanelEquals(panelIdx int, expected string) {
+	a.h.t.Helper()
+	content := testx.NormalizeView(a.h.getPanelContent(panelIdx))
+	expectedNormalized := testx.NormalizeView(expected)
+	a.h.is.Equal(content, expectedNormalized)
+}
+
+// BreadcrumbsShow checks if breadcrumbs contain the expected text
+func (a *Assert) BreadcrumbsShow(expected string) {
+	a.h.t.Helper()
+	breadcrumbs := a.h.getBreadcrumbs()
+	if !strings.Contains(breadcrumbs, expected) {
+		a.h.t.Errorf("breadcrumbs do not contain %q\nBreadcrumbs: %q", expected, breadcrumbs)
+	}
+}
+
+// BreadcrumbsEmpty checks if breadcrumbs are empty
+func (a *Assert) BreadcrumbsEmpty() {
+	a.h.t.Helper()
+	breadcrumbs := a.h.getBreadcrumbs()
+	a.h.is.Equal(breadcrumbs, "")
+}
+
+// OverlayVisible checks if the overlay is currently visible
+func (a *Assert) OverlayVisible() {
+	a.h.t.Helper()
+	if !a.h.model.Overlay.IsActive() {
+		a.h.t.Error("overlay is not visible")
+	}
+}
+
+// OverlayContains checks if the overlay contains the expected text
+func (a *Assert) OverlayContains(expected string) {
+	a.h.t.Helper()
+	a.OverlayVisible()
+	view := a.h.View()
+	if !strings.Contains(view, expected) {
+		a.h.t.Errorf("overlay does not contain %q\nOverlay content:\n%s", expected, view)
+	}
+}
+
+// OverlayContainsNormalized checks if the normalized overlay view contains the expected text
+// Both the view and expected text are normalized (whitespace trimmed, excess spaces removed)
+// before comparison. This is useful for comparing content structure without exact formatting.
+func (a *Assert) OverlayContainsNormalized(expected string) {
+	a.h.t.Helper()
+	a.OverlayVisible()
+	normalizedView := testx.NormalizeView(a.h.View())
+	normalizedExpected := testx.NormalizeView(expected)
+	if !strings.Contains(normalizedView, normalizedExpected) {
+		a.h.t.Errorf("normalized overlay does not contain expected content\nExpected:\n%s\n\nActual overlay:\n%s",
+			normalizedExpected, normalizedView)
+	}
+}
+
+// ViewContains checks if the entire view contains the expected text
+func (a *Assert) ViewContains(expectedStrings ...string) {
+	a.h.t.Helper()
+	view := a.h.View()
+	for _, expected := range expectedStrings {
+		if !strings.Contains(view, expected) {
+			a.h.t.Errorf("view does not contain %q\nView:\n%s", expected, view)
+		}
+	}
+}
+
+// CurrentType checks if the current GraphQL type matches the expected type
+func (a *Assert) CurrentType(expected navigation.GQLType) {
+	a.h.t.Helper()
+	// Check if the type tab is visible in the view
+	view := a.h.View()
+	if !strings.Contains(view, string(expected)) {
+		a.h.t.Errorf("current type is not %q\nView:\n%s", expected, view)
+	}
 }

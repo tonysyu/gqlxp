@@ -21,7 +21,7 @@ func TestOverlayRendering(t *testing.T) {
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
 		h.OpenOverlayForType(navigation.QueryType)
 
-		h.AssertOverlayContainsNormalized(`
+		h.assert.OverlayContainsNormalized(`
 			# getUser
             getUser(id: ID!): User
             Get user by ID
@@ -40,7 +40,7 @@ func TestOverlayRendering(t *testing.T) {
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
 		h.OpenOverlayForType(navigation.MutationType)
 
-		h.AssertOverlayContainsNormalized(`
+		h.assert.OverlayContainsNormalized(`
 			# createPost
 			createPost(title: String!, content: String!, authorId: ID!): Post!
 			Create a new post
@@ -73,7 +73,7 @@ func TestOverlayRendering(t *testing.T) {
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
 		h.OpenOverlayForType(navigation.ObjectType)
 
-		h.AssertOverlayContainsNormalized(`
+		h.assert.OverlayContainsNormalized(`
 			# User
 
 			A user in the system
@@ -112,7 +112,7 @@ func TestOverlayRendering(t *testing.T) {
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
 		h.OpenOverlayForType(navigation.InputType)
 
-		h.AssertOverlayContainsNormalized(`
+		h.assert.OverlayContainsNormalized(`
 			# CreateUserInput
 			Input for creating a user
 
@@ -148,7 +148,7 @@ func TestOverlayRendering(t *testing.T) {
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
 		h.OpenOverlayForType(navigation.EnumType)
 
-		h.AssertOverlayContainsNormalized(`
+		h.assert.OverlayContainsNormalized(`
 			# Role
 			User role in the system
 
@@ -174,7 +174,7 @@ func TestOverlayRendering(t *testing.T) {
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
 		h.OpenOverlayForType(navigation.ScalarType)
 
-		h.AssertOverlayContainsNormalized(`
+		h.assert.OverlayContainsNormalized(`
 			# DateTime
 			DateTime scalar type
 			*Scalar type*
@@ -198,7 +198,7 @@ func TestOverlayRendering(t *testing.T) {
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
 		h.OpenOverlayForType(navigation.InterfaceType)
 
-		h.AssertOverlayContainsNormalized(`
+		h.assert.OverlayContainsNormalized(`
 			# Node
 			Node interface for entities with ID
 
@@ -222,7 +222,7 @@ func TestOverlayRendering(t *testing.T) {
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
 		h.OpenOverlayForType(navigation.UnionType)
 
-		h.AssertOverlayContainsNormalized(`
+		h.assert.OverlayContainsNormalized(`
 			# SearchResult
 			Search result can be User or Post
 
@@ -244,7 +244,7 @@ func TestOverlayRendering(t *testing.T) {
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
 		h.OpenOverlayForType(navigation.DirectiveType)
 
-		h.AssertOverlayContainsNormalized(`
+		h.assert.OverlayContainsNormalized(`
 			# @auth
 			@auth(requires: String!)
 			Require authentication to access

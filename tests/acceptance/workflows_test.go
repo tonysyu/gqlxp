@@ -60,8 +60,8 @@ func TestNavigateFromQueryFieldsToObjectType(t *testing.T) {
 	h := New(t, testSchema)
 
 	// Start on Query type - should show query fields
-	h.AssertViewContains("Query")
-	h.AssertBreadcrumbsEmpty()
+	h.assert.ViewContains("Query")
+	h.assert.BreadcrumbsEmpty()
 
 	// Navigate forward to the result type of first query field
 	h.NavigateToNextPanel()
@@ -111,7 +111,7 @@ func TestNavigateBackwardThroughPanelStack(t *testing.T) {
 
 	// Navigate backward again to initial state
 	h.NavigateToPreviousPanel()
-	h.AssertBreadcrumbsEmpty()
+	h.assert.BreadcrumbsEmpty()
 }
 
 func TestNavigationResetsOnTypeSwitch(t *testing.T) {
@@ -127,8 +127,8 @@ func TestNavigationResetsOnTypeSwitch(t *testing.T) {
 
 	// Switch to Mutation type - should reset breadcrumbs
 	h.SwitchToType(navigation.MutationType)
-	h.AssertBreadcrumbsEmpty()
-	h.AssertViewContains("Mutation")
+	h.assert.BreadcrumbsEmpty()
+	h.assert.ViewContains("Mutation")
 }
 
 // ============================================================================
@@ -139,38 +139,38 @@ func TestCycleForwardThroughGraphQLTypes(t *testing.T) {
 	h := New(t, testSchema)
 
 	// Start on Query
-	h.AssertCurrentType(navigation.QueryType)
-	h.AssertViewContains("query1", "query2")
+	h.assert.CurrentType(navigation.QueryType)
+	h.assert.ViewContains("query1", "query2")
 
 	// Cycle to Mutation
 	h.CycleTypeForward()
-	h.AssertCurrentType(navigation.MutationType)
-	h.AssertViewContains("mutation1", "mutation2")
+	h.assert.CurrentType(navigation.MutationType)
+	h.assert.ViewContains("mutation1", "mutation2")
 
 	// Cycle to Object
 	h.CycleTypeForward()
-	h.AssertCurrentType(navigation.ObjectType)
-	h.AssertViewContains("Object1", "Object2")
+	h.assert.CurrentType(navigation.ObjectType)
+	h.assert.ViewContains("Object1", "Object2")
 
 	// Cycle to Input
 	h.CycleTypeForward()
-	h.AssertCurrentType(navigation.InputType)
-	h.AssertViewContains("Mutation1Input", "Mutation2Input")
+	h.assert.CurrentType(navigation.InputType)
+	h.assert.ViewContains("Mutation1Input", "Mutation2Input")
 }
 
 func TestCycleBackwardThroughGraphQLTypes(t *testing.T) {
 	h := New(t, testSchema)
 
 	// Start on Query, cycle backward to wrap around
-	h.AssertCurrentType(navigation.QueryType)
+	h.assert.CurrentType(navigation.QueryType)
 
 	// Cycle backward should wrap to last type (Directive)
 	h.CycleTypeBackward()
-	h.AssertCurrentType(navigation.DirectiveType)
+	h.assert.CurrentType(navigation.DirectiveType)
 
 	// Cycle backward again - should move to Union
 	h.CycleTypeBackward()
-	h.AssertCurrentType(navigation.UnionType)
+	h.assert.CurrentType(navigation.UnionType)
 }
 
 func TestSwitchDirectlyToSpecificType(t *testing.T) {
@@ -178,19 +178,19 @@ func TestSwitchDirectlyToSpecificType(t *testing.T) {
 
 	// Switch directly to Enum type
 	h.SwitchToType(navigation.EnumType)
-	h.AssertCurrentType(navigation.EnumType)
+	h.assert.CurrentType(navigation.EnumType)
 	// Enum tab should be visible, check for Role type
-	h.AssertViewContains("Enum")
+	h.assert.ViewContains("Enum")
 
 	// Switch directly to Scalar type
 	h.SwitchToType(navigation.ScalarType)
-	h.AssertCurrentType(navigation.ScalarType)
-	h.AssertViewContains("Scalar")
+	h.assert.CurrentType(navigation.ScalarType)
+	h.assert.ViewContains("Scalar")
 
 	// Switch directly to Interface type
 	h.SwitchToType(navigation.InterfaceType)
-	h.AssertCurrentType(navigation.InterfaceType)
-	h.AssertViewContains("Interface")
+	h.assert.CurrentType(navigation.InterfaceType)
+	h.assert.ViewContains("Interface")
 }
 
 func TestTypeCyclingResetsBreadcrumbs(t *testing.T) {
@@ -205,7 +205,7 @@ func TestTypeCyclingResetsBreadcrumbs(t *testing.T) {
 
 	// Cycle type - should reset breadcrumbs
 	h.CycleTypeForward()
-	h.AssertBreadcrumbsEmpty()
+	h.assert.BreadcrumbsEmpty()
 
 	// Navigate into Mutation structure
 	h.NavigateToNextPanel()
@@ -216,7 +216,7 @@ func TestTypeCyclingResetsBreadcrumbs(t *testing.T) {
 
 	// Cycle backward - should also reset breadcrumbs
 	h.CycleTypeBackward()
-	h.AssertBreadcrumbsEmpty()
+	h.assert.BreadcrumbsEmpty()
 }
 
 // ============================================================================
@@ -231,7 +231,7 @@ func TestOpenOverlayAndVerifyContent(t *testing.T) {
 	h.OpenOverlay()
 
 	// Verify overlay is visible
-	h.AssertOverlayVisible()
+	h.assert.OverlayVisible()
 
 	// TODO: Close overlay functionality may need investigation
 	// For now, just verify opening works
@@ -246,7 +246,7 @@ func TestOverlayShowsCorrectDetailsForDifferentItems(t *testing.T) {
 	// Select first object and check overlay
 	h.SelectItemAtIndex(0)
 	h.OpenOverlay()
-	h.AssertOverlayVisible()
+	h.assert.OverlayVisible()
 
 	// Note: Closing and reopening overlays may require additional investigation
 	// For now, verify that overlay opening works
@@ -260,8 +260,8 @@ func TestFullExplorationWorkflow(t *testing.T) {
 	h := New(t, testSchema)
 
 	// Start on Query type
-	h.AssertCurrentType(navigation.QueryType)
-	h.AssertBreadcrumbsEmpty()
+	h.assert.CurrentType(navigation.QueryType)
+	h.assert.BreadcrumbsEmpty()
 
 	// Navigate to a query field
 	h.NavigateToNextPanel()
@@ -279,16 +279,16 @@ func TestFullExplorationWorkflow(t *testing.T) {
 
 	// Switch to Mutation type
 	h.SwitchToType(navigation.MutationType)
-	h.AssertBreadcrumbsEmpty()
-	h.AssertViewContains("mutation1")
+	h.assert.BreadcrumbsEmpty()
+	h.assert.ViewContains("mutation1")
 
 	// Cycle to Object type
 	h.CycleTypeForward()
-	h.AssertCurrentType(navigation.ObjectType)
+	h.assert.CurrentType(navigation.ObjectType)
 
 	// Open overlay for an object
 	h.OpenOverlay()
-	h.AssertOverlayVisible()
+	h.assert.OverlayVisible()
 }
 
 func TestMultiPanelNavigationWithTypeCycling(t *testing.T) {
@@ -306,7 +306,7 @@ func TestMultiPanelNavigationWithTypeCycling(t *testing.T) {
 
 	// Cycle to a different type
 	h.CycleTypeForward()
-	h.AssertBreadcrumbsEmpty()
+	h.assert.BreadcrumbsEmpty()
 
 	// Navigate in the new type
 	h.NavigateToNextPanel()
@@ -327,7 +327,7 @@ func TestEdgeCaseEmptyPanelNavigation(t *testing.T) {
 	h := New(t, emptySchema)
 
 	// Should handle empty/minimal schemas gracefully
-	h.AssertViewContains("Query")
+	h.assert.ViewContains("Query")
 
 	// Try navigating - should not crash
 	h.NavigateToNextPanel()
