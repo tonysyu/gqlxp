@@ -191,6 +191,18 @@ func (m Model) Height() int {
 	return m.height
 }
 
+// CurrentType returns the currently selected GraphQL type
+func (m Model) CurrentType() string {
+	return string(m.nav.CurrentType())
+}
+
+// SwitchToType switches to the specified GraphQL type
+// This is primarily used for testing
+func (m *Model) SwitchToType(typeName string) {
+	m.nav.SwitchType(navigation.GQLType(typeName))
+	m.resetAndLoadMainPanel()
+}
+
 func (m Model) Init() tea.Cmd {
 	return nil
 }

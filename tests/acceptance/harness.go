@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/xplr"
@@ -56,6 +57,14 @@ type Option func(*Harness)
 func WithWindowSize(width, height int) Option {
 	return func(h *Harness) {
 		h.model, _ = h.model.Update(tea.WindowSizeMsg{Width: width, Height: height})
+	}
+}
+
+// WithoutOverlayBorders removes overlay border styling to simplify test comparisons
+// This allows tests to focus on content verification without dealing with box-drawing characters
+func WithoutOverlayBorders() Option {
+	return func(h *Harness) {
+		h.model.Overlay.Styles.Overlay = lipgloss.NewStyle()
 	}
 }
 
@@ -126,20 +135,13 @@ func (h *Harness) CycleTypeBackward() {
 }
 
 // SwitchToType switches directly to a specific GraphQL type
-// Note: This uses cycle keys to reach the desired type
 func (h *Harness) SwitchToType(gqlType navigation.GQLType) {
-	// Get current type and cycle until we reach the target
-	// Max 10 iterations to prevent infinite loop (there are only 9 types)
-	for i := 0; i < 10; i++ {
-		// Check current type
-		currentType := h.getCurrentType()
-		if currentType == gqlType {
-			// Already on the right type
-			return
-		}
-		// Cycle forward
-		h.CycleTypeForward()
-	}
+	h.model.SwitchToType(string(gqlType))
+}
+
+// GetCurrentType returns the currently selected GraphQL type
+func (h *Harness) GetCurrentType() navigation.GQLType {
+	return navigation.GQLType(h.model.CurrentType())
 }
 
 // SelectItemAtIndex moves the cursor to the item at the given index (0-based)
@@ -192,6 +194,21 @@ func (h *Harness) OpenOverlay() {
 // CloseOverlay closes the currently open overlay (Escape key)
 func (h *Harness) CloseOverlay() {
 	h.Update(keyEscape)
+}
+
+// OpenOverlayForType switches to the specified type and opens the overlay for the first item
+// This is a convenience method for testing overlay content for different GraphQL types
+func (h *Harness) OpenOverlayForType(gqlType navigation.GQLType) {
+	h.SwitchToType(gqlType)
+	h.SelectItemAtIndex(0)
+	h.OpenOverlay()
+}
+
+// OpenOverlayForItemAt opens the overlay for the item at the specified index
+// This is a convenience method that combines selection and overlay opening
+func (h *Harness) OpenOverlayForItemAt(idx int) {
+	h.SelectItemAtIndex(idx)
+	h.OpenOverlay()
 }
 
 // ============================================================================
@@ -247,6 +264,20 @@ func (h *Harness) AssertOverlayContains(expected string) {
 	view := h.View()
 	if !strings.Contains(view, expected) {
 		h.t.Errorf("overlay does not contain %q\nOverlay content:\n%s", expected, view)
+	}
+}
+
+// AssertOverlayContainsNormalized checks if the normalized overlay view contains the expected text
+// Both the view and expected text are normalized (whitespace trimmed, excess spaces removed)
+// before comparison. This is useful for comparing content structure without exact formatting.
+func (h *Harness) AssertOverlayContainsNormalized(expected string) {
+	h.t.Helper()
+	h.AssertOverlayVisible()
+	normalizedView := testx.NormalizeView(h.View())
+	normalizedExpected := testx.NormalizeView(expected)
+	if !strings.Contains(normalizedView, normalizedExpected) {
+		h.t.Errorf("normalized overlay does not contain expected content\nExpected:\n%s\n\nActual overlay:\n%s",
+			normalizedExpected, normalizedView)
 	}
 }
 

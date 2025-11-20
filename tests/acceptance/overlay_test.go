@@ -1,65 +1,56 @@
-package xplr
+package acceptance
 
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/tonysyu/gqlxp/utils/testx"
-	"github.com/tonysyu/gqlxp/utils/testx/assert"
+	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 )
 
-func renderOverlayFromMainModel(gqlType gqlType, schemaString string) string {
-	tm := newTestModel(schemaString)
-	// Override style to remove border and padding to simplify test comparison
-	tm.Model.Overlay.Styles.Overlay = lipgloss.NewStyle()
-
-	tm.Update(tea.WindowSizeMsg{Width: 80, Height: 60})
-	tm.Update(SetGQLTypeMsg{GQLType: gqlType})
-	tm.Update(tea.KeyMsg{Type: tea.KeySpace})
-
-	return testx.NormalizeView(tm.View())
-}
-
-func TestOverlayIntegrationWithMainModel(t *testing.T) {
-	assert := assert.New(t)
-
+// TestOverlayRendering verifies that the overlay displays correct details
+// for different GraphQL types when opened from the explorer
+func TestOverlayRendering(t *testing.T) {
 	t.Run("Render query details", func(t *testing.T) {
-		view := renderOverlayFromMainModel(queryType, `
+		schema := `
 			type Query {
 				"""
 				Get user by ID
 				"""
 				getUser(id: ID!): User
 			}
-		`)
+		`
+		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
+		h.OpenOverlayForType(navigation.QueryType)
 
-		assert.StringContains(view, testx.NormalizeView(`
+		h.AssertOverlayContainsNormalized(`
 			# getUser
             getUser(id: ID!): User
             Get user by ID
-		`))
+		`)
 	})
 
 	t.Run("Render mutation details", func(t *testing.T) {
-		view := renderOverlayFromMainModel(mutationType, `
+		schema := `
 			type Mutation {
 			    """
 			    Create a new post
 			    """
 			    createPost(title: String!, content: String!, authorId: ID!): Post!
 			}
-		`)
+		`
+		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
+		h.OpenOverlayForType(navigation.MutationType)
 
-		assert.StringContains(view, testx.NormalizeView(`
+		h.AssertOverlayContainsNormalized(`
 			# createPost
 			createPost(title: String!, content: String!, authorId: ID!): Post!
 			Create a new post
-		`))
+		`)
 	})
 
 	t.Run("Render object type details", func(t *testing.T) {
-		view := renderOverlayFromMainModel(objectType, `
+		schema := `
+			type Query { placeholder: String }
+
 			interface Node {
 				id: ID!
 			}
@@ -78,9 +69,11 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 				name: String!
 				email: String!
 			}
-		`)
+		`
+		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
+		h.OpenOverlayForType(navigation.ObjectType)
 
-		assert.StringContains(view, testx.NormalizeView(`
+		h.AssertOverlayContainsNormalized(`
 			# User
 
 			A user in the system
@@ -94,11 +87,13 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			name: String!
 
 			email: String!
-		`))
+		`)
 	})
 
 	t.Run("Render input type details", func(t *testing.T) {
-		view := renderOverlayFromMainModel(inputType, `
+		schema := `
+			type Query { placeholder: String }
+
 			"""
 			Input for creating a user
 			"""
@@ -113,9 +108,11 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 				email: String!
 				age: Int
 			}
-		`)
+		`
+		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
+		h.OpenOverlayForType(navigation.InputType)
 
-		assert.StringContains(view, testx.NormalizeView(`
+		h.AssertOverlayContainsNormalized(`
 			# CreateUserInput
 			Input for creating a user
 
@@ -126,11 +123,13 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			email: String!
 
 			age: Int
-		`))
+		`)
 	})
 
 	t.Run("Render enum type details", func(t *testing.T) {
-		view := renderOverlayFromMainModel(enumType, `
+		schema := `
+			type Query { placeholder: String }
+
 			"""
 			User role in the system
 			"""
@@ -145,9 +144,11 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 				USER
 				GUEST
 			}
-		`)
+		`
+		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
+		h.OpenOverlayForType(navigation.EnumType)
 
-		assert.StringContains(view, testx.NormalizeView(`
+		h.AssertOverlayContainsNormalized(`
 			# Role
 			User role in the system
 
@@ -158,26 +159,32 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			USER
 
 			GUEST
-		`))
+		`)
 	})
 
 	t.Run("Render scalar type details", func(t *testing.T) {
-		view := renderOverlayFromMainModel(scalarType, `
+		schema := `
+			type Query { placeholder: String }
+
 			"""
 			DateTime scalar type
 			"""
 			scalar DateTime
-		`)
+		`
+		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
+		h.OpenOverlayForType(navigation.ScalarType)
 
-		assert.StringContains(view, testx.NormalizeView(`
+		h.AssertOverlayContainsNormalized(`
 			# DateTime
 			DateTime scalar type
 			*Scalar type*
-		`))
+		`)
 	})
 
 	t.Run("Render interface type details", func(t *testing.T) {
-		view := renderOverlayFromMainModel(interfaceType, `
+		schema := `
+			type Query { placeholder: String }
+
 			"""
 			Node interface for entities with ID
 			"""
@@ -187,44 +194,57 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 				"""
 				id: ID!
 			}
-		`)
+		`
+		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
+		h.OpenOverlayForType(navigation.InterfaceType)
 
-		assert.StringContains(view, testx.NormalizeView(`
+		h.AssertOverlayContainsNormalized(`
 			# Node
 			Node interface for entities with ID
 
 			"""Unique identifier for the entity"""
 			id: ID!
-		`))
+		`)
 	})
 
 	t.Run("Render union type details", func(t *testing.T) {
-		view := renderOverlayFromMainModel(unionType, `
+		schema := `
+			type Query { placeholder: String }
+
 			"""
 			Search result can be User or Post
 			"""
 			union SearchResult = User | Post
-		`)
 
-		assert.StringContains(view, testx.NormalizeView(`
+			type User { id: ID! }
+			type Post { id: ID! }
+		`
+		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
+		h.OpenOverlayForType(navigation.UnionType)
+
+		h.AssertOverlayContainsNormalized(`
 			# SearchResult
 			Search result can be User or Post
 
 			**Union of:** User | Post
-		`))
+		`)
 	})
 
 	t.Run("Render directive type details", func(t *testing.T) {
-		view := renderOverlayFromMainModel(directiveType, `
+		schema := `
+			type Query { placeholder: String }
+
 			"""
 			Require authentication to access
 			"""
 			directive @auth(
 				requires: String!
 			) on FIELD_DEFINITION | OBJECT
-		`)
+		`
+		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
+		h.OpenOverlayForType(navigation.DirectiveType)
 
-		assert.StringContains(view, testx.NormalizeView(`
+		h.AssertOverlayContainsNormalized(`
 			# @auth
 			@auth(requires: String!)
 			Require authentication to access
@@ -232,6 +252,6 @@ func TestOverlayIntegrationWithMainModel(t *testing.T) {
 			**Locations:**
 			• FIELD_DEFINITION
 			• OBJECT
-		`))
+		`)
 	})
 }
