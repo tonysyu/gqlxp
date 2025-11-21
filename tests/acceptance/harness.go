@@ -142,8 +142,8 @@ func (e *Explorer) View() string {
 	return e.model.View()
 }
 
-// GetCurrentType returns the currently selected GraphQL type
-func (e *Explorer) GetCurrentType() navigation.GQLType {
+// CurrentType returns the currently selected GraphQL type
+func (e *Explorer) CurrentType() navigation.GQLType {
 	return navigation.GQLType(e.model.CurrentType())
 }
 
@@ -165,7 +165,6 @@ func (o *Overlay) Close() {
 // This is a convenience method for testing overlay content for different GraphQL types
 func (o *Overlay) OpenForType(gqlType navigation.GQLType) {
 	o.nav.GoToGqlType(gqlType)
-	o.nav.SelectItemAtIndex(0)
 	o.Open()
 }
 
@@ -207,36 +206,6 @@ func (n *Navigator) SelectItemAtIndex(idx int) {
 	// Move down to the desired index
 	for i := 0; i < idx; i++ {
 		n.explorer.Update(keyDown)
-	}
-}
-
-// SelectItem moves the cursor to the item with the given name by checking the view
-// This is useful for selecting items by their display name
-func (n *Navigator) SelectItem(name string) {
-	// Since we can't directly access panel items, we'll try selecting by index
-	// based on what appears in the view. For now, we use a simpler approach:
-	// just move down until we find the item in the view.
-	// A more robust implementation would parse the view to find the exact index.
-
-	// Reset to top
-	for i := 0; i < 100; i++ {
-		n.explorer.Update(keyUp)
-	}
-
-	// Try moving down and checking if the item is selected
-	// This is a simplified heuristic - in practice, we'd need better view parsing
-	for i := 0; i < 20; i++ {
-		// For now, we'll just move to the first item by default
-		// A real implementation would parse the view to find the exact position
-		if i > 0 {
-			n.explorer.Update(keyDown)
-		}
-		// Check if view contains the selected item (this is approximate)
-		view := n.explorer.View()
-		if strings.Contains(view, name) {
-			// Assume we found it - this is a simplified implementation
-			break
-		}
 	}
 }
 
@@ -314,20 +283,10 @@ func (a *Assert) OverlayVisible() {
 	}
 }
 
-// OverlayContains checks if the overlay contains the expected text
-func (a *Assert) OverlayContains(expected string) {
-	a.t.Helper()
-	a.OverlayVisible()
-	view := a.explorer.View()
-	if !strings.Contains(view, expected) {
-		a.t.Errorf("overlay does not contain %q\nOverlay content:\n%s", expected, view)
-	}
-}
-
-// OverlayContainsNormalized checks if the normalized overlay view contains the expected text
+// OverlayContains checks if the normalized overlay view contains the expected text
 // Both the view and expected text are normalized (whitespace trimmed, excess spaces removed)
 // before comparison. This is useful for comparing content structure without exact formatting.
-func (a *Assert) OverlayContainsNormalized(expected string) {
+func (a *Assert) OverlayContains(expected string) {
 	a.t.Helper()
 	a.OverlayVisible()
 	normalizedView := testx.NormalizeView(a.explorer.View())
@@ -352,9 +311,7 @@ func (a *Assert) ViewContains(expectedStrings ...string) {
 // CurrentType checks if the current GraphQL type matches the expected type
 func (a *Assert) CurrentType(expected navigation.GQLType) {
 	a.t.Helper()
-	// Check if the type tab is visible in the view
-	view := a.explorer.View()
-	if !strings.Contains(view, string(expected)) {
-		a.t.Errorf("current type is not %q\nView:\n%s", expected, view)
+	if expected != a.explorer.CurrentType() {
+		a.t.Errorf("current type is not %q", expected)
 	}
 }
