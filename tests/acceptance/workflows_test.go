@@ -61,17 +61,17 @@ func TestNavigateFromQueryFieldsToObjectType(t *testing.T) {
 
 	// Start on Query type - should show query fields
 	h.assert.ViewContains("Query")
-	h.assert.BreadcrumbsEmpty()
+	h.assert.BreadcrumbsEquals("")
 
 	// Navigate forward to the result type of first query field
 	h.explorer.NavigateToNextPanel()
 	// Breadcrumbs should show the first query field
-	h.is.Equal(h.assert.getBreadcrumbs(), "query1")
+	h.assert.BreadcrumbsEquals("query1")
 
 	// Navigate forward again to see the Object type details
 	h.explorer.NavigateToNextPanel()
 	// Breadcrumbs should now include the first argument of query1
-	h.is.Equal(h.assert.getBreadcrumbs(), "query1 > arg1")
+	h.assert.BreadcrumbsEquals("query1 > arg1")
 }
 
 func TestNavigateThroughMultiplePanelsWithBreadcrumbs(t *testing.T) {
@@ -79,16 +79,10 @@ func TestNavigateThroughMultiplePanelsWithBreadcrumbs(t *testing.T) {
 
 	// Navigate through Query -> field -> Type
 	h.explorer.NavigateToNextPanel()
-	breadcrumbs := h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected breadcrumbs after first navigation")
-	}
+	h.assert.BreadcrumbsEquals("query1")
 
 	h.explorer.NavigateToNextPanel()
-	breadcrumbs = h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected breadcrumbs after second navigation")
-	}
+	h.assert.BreadcrumbsEquals("query1 > arg1")
 }
 
 func TestNavigateBackwardThroughPanelStack(t *testing.T) {
@@ -97,21 +91,15 @@ func TestNavigateBackwardThroughPanelStack(t *testing.T) {
 	// Navigate forward twice
 	h.explorer.NavigateToNextPanel()
 	h.explorer.NavigateToNextPanel()
-	breadcrumbs := h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected breadcrumbs after navigation")
-	}
+	h.assert.BreadcrumbsEquals("query1 > arg1")
 
 	// Navigate backward
 	h.explorer.NavigateToPreviousPanel()
-	breadcrumbs = h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected breadcrumbs to remain after one step back")
-	}
+	h.assert.BreadcrumbsEquals("query1")
 
 	// Navigate backward again to initial state
 	h.explorer.NavigateToPreviousPanel()
-	h.assert.BreadcrumbsEmpty()
+	h.assert.BreadcrumbsEquals("")
 }
 
 func TestNavigationResetsOnTypeSwitch(t *testing.T) {
@@ -119,15 +107,11 @@ func TestNavigationResetsOnTypeSwitch(t *testing.T) {
 
 	// Navigate into Query structure
 	h.explorer.NavigateToNextPanel()
-	// Breadcrumbs should contain some query field name
-	breadcrumbs := h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected breadcrumbs after navigation")
-	}
+	h.assert.BreadcrumbsEquals("query1")
 
 	// Switch to Mutation type - should reset breadcrumbs
 	h.explorer.SwitchToType(navigation.MutationType)
-	h.assert.BreadcrumbsEmpty()
+	h.assert.BreadcrumbsEquals("")
 	h.assert.ViewContains("Mutation")
 }
 
@@ -198,25 +182,19 @@ func TestTypeCyclingResetsBreadcrumbs(t *testing.T) {
 
 	// Navigate into structure
 	h.explorer.NavigateToNextPanel()
-	breadcrumbs := h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected breadcrumbs after navigation")
-	}
+	h.assert.BreadcrumbsEquals("query1")
 
 	// Cycle type - should reset breadcrumbs
 	h.explorer.CycleTypeForward()
-	h.assert.BreadcrumbsEmpty()
+	h.assert.BreadcrumbsEquals("")
 
 	// Navigate into Mutation structure
 	h.explorer.NavigateToNextPanel()
-	breadcrumbs = h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected breadcrumbs after navigation in Mutation")
-	}
+	h.assert.BreadcrumbsEquals("mutation1")
 
 	// Cycle backward - should also reset breadcrumbs
 	h.explorer.CycleTypeBackward()
-	h.assert.BreadcrumbsEmpty()
+	h.assert.BreadcrumbsEquals("")
 }
 
 // ============================================================================
@@ -261,25 +239,17 @@ func TestFullExplorationWorkflow(t *testing.T) {
 
 	// Start on Query type
 	h.assert.CurrentType(navigation.QueryType)
-	h.assert.BreadcrumbsEmpty()
+	h.assert.BreadcrumbsEquals("")
 
-	// Navigate to a query field
 	h.explorer.NavigateToNextPanel()
-	breadcrumbs := h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected breadcrumbs after navigation")
-	}
+	h.assert.BreadcrumbsEquals("query1")
 
-	// Navigate to the result type
 	h.explorer.NavigateToNextPanel()
-	breadcrumbs = h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected breadcrumbs after second navigation")
-	}
+	h.assert.BreadcrumbsEquals("query1 > arg1")
 
 	// Switch to Mutation type
 	h.explorer.SwitchToType(navigation.MutationType)
-	h.assert.BreadcrumbsEmpty()
+	h.assert.BreadcrumbsEquals("")
 	h.assert.ViewContains("mutation1")
 
 	// Cycle to Object type
@@ -299,23 +269,17 @@ func TestMultiPanelNavigationWithTypeCycling(t *testing.T) {
 	h.explorer.NavigateToNextPanel()
 
 	// Verify breadcrumbs show the path
-	breadcrumbs := h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected breadcrumbs to be populated")
-	}
+	h.assert.BreadcrumbsEquals("query1 > arg1")
 
 	// Cycle to a different type
 	h.explorer.CycleTypeForward()
-	h.assert.BreadcrumbsEmpty()
+	h.assert.BreadcrumbsEquals("")
 
 	// Navigate in the new type
 	h.explorer.NavigateToNextPanel()
 
 	// Breadcrumbs should be rebuilt for the new type
-	breadcrumbs = h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected new breadcrumbs after type switch")
-	}
+	h.assert.BreadcrumbsEquals("mutation1")
 }
 
 func TestEdgeCaseEmptyPanelNavigation(t *testing.T) {
@@ -348,8 +312,5 @@ func TestWindowResizing(t *testing.T) {
 
 	// Navigation should still work
 	h.explorer.NavigateToNextPanel()
-	breadcrumbs := h.assert.getBreadcrumbs()
-	if breadcrumbs == "" {
-		t.Error("expected breadcrumbs after navigation")
-	}
+	h.assert.BreadcrumbsEquals("query1")
 }

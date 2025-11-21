@@ -289,20 +289,11 @@ func (a *Assert) PanelEquals(panelIdx int, expected string) {
 	a.h.is.Equal(content, expectedNormalized)
 }
 
-// BreadcrumbsShow checks if breadcrumbs contain the expected text
-func (a *Assert) BreadcrumbsShow(expected string) {
+// BreadcrumbsEquals checks if breadcrumbs exactly match the expected text
+func (a *Assert) BreadcrumbsEquals(expected string) {
 	a.h.t.Helper()
 	breadcrumbs := a.getBreadcrumbs()
-	if !strings.Contains(breadcrumbs, expected) {
-		a.h.t.Errorf("breadcrumbs do not contain %q\nBreadcrumbs: %q", expected, breadcrumbs)
-	}
-}
-
-// BreadcrumbsEmpty checks if breadcrumbs are empty
-func (a *Assert) BreadcrumbsEmpty() {
-	a.h.t.Helper()
-	breadcrumbs := a.getBreadcrumbs()
-	a.h.is.Equal(breadcrumbs, "")
+	a.h.is.Equal(breadcrumbs, expected)
 }
 
 // OverlayVisible checks if the overlay is currently visible
