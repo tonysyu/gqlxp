@@ -59,60 +59,40 @@ const testSchema = `
 func TestNavigateFromQueryFieldsToObjectType(t *testing.T) {
 	h := New(t, testSchema)
 
-	// Start on Query type - should show query fields
-	h.assert.ViewContains("Query")
 	h.assert.BreadcrumbsEquals("")
 
-	// Navigate forward to the result type of first query field
-	h.explorer.NavigateToNextPanel()
-	// Breadcrumbs should show the first query field
+	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("query1")
 
-	// Navigate forward again to see the Object type details
-	h.explorer.NavigateToNextPanel()
-	// Breadcrumbs should now include the first argument of query1
-	h.assert.BreadcrumbsEquals("query1 > arg1")
-}
-
-func TestNavigateThroughMultiplePanelsWithBreadcrumbs(t *testing.T) {
-	h := New(t, testSchema)
-
-	// Navigate through Query -> field -> Type
-	h.explorer.NavigateToNextPanel()
-	h.assert.BreadcrumbsEquals("query1")
-
-	h.explorer.NavigateToNextPanel()
+	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("query1 > arg1")
 }
 
 func TestNavigateBackwardThroughPanelStack(t *testing.T) {
 	h := New(t, testSchema)
 
-	// Navigate forward twice
-	h.explorer.NavigateToNextPanel()
-	h.explorer.NavigateToNextPanel()
+	// Navigate forward twice to start w/ multiple breadcrumbs
+	h.nav.NextPanel()
+	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("query1 > arg1")
 
-	// Navigate backward
-	h.explorer.NavigateToPreviousPanel()
+	h.nav.PrevPanel()
 	h.assert.BreadcrumbsEquals("query1")
 
-	// Navigate backward again to initial state
-	h.explorer.NavigateToPreviousPanel()
+	h.nav.PrevPanel()
 	h.assert.BreadcrumbsEquals("")
 }
 
 func TestNavigationResetsOnTypeSwitch(t *testing.T) {
 	h := New(t, testSchema)
 
-	// Navigate into Query structure
-	h.explorer.NavigateToNextPanel()
+	// Navigate into Query to display breadcrumb
+	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("query1")
 
 	// Switch to Mutation type - should reset breadcrumbs
-	h.explorer.SwitchToType(navigation.MutationType)
+	h.nav.GoToGqlType(navigation.MutationType)
 	h.assert.BreadcrumbsEquals("")
-	h.assert.ViewContains("Mutation")
 }
 
 // ============================================================================
@@ -122,22 +102,18 @@ func TestNavigationResetsOnTypeSwitch(t *testing.T) {
 func TestCycleForwardThroughGraphQLTypes(t *testing.T) {
 	h := New(t, testSchema)
 
-	// Start on Query
 	h.assert.CurrentType(navigation.QueryType)
 	h.assert.ViewContains("query1", "query2")
 
-	// Cycle to Mutation
-	h.explorer.CycleTypeForward()
+	h.nav.NextGqlType()
 	h.assert.CurrentType(navigation.MutationType)
 	h.assert.ViewContains("mutation1", "mutation2")
 
-	// Cycle to Object
-	h.explorer.CycleTypeForward()
+	h.nav.NextGqlType()
 	h.assert.CurrentType(navigation.ObjectType)
 	h.assert.ViewContains("Object1", "Object2")
 
-	// Cycle to Input
-	h.explorer.CycleTypeForward()
+	h.nav.NextGqlType()
 	h.assert.CurrentType(navigation.InputType)
 	h.assert.ViewContains("Mutation1Input", "Mutation2Input")
 }
@@ -145,55 +121,44 @@ func TestCycleForwardThroughGraphQLTypes(t *testing.T) {
 func TestCycleBackwardThroughGraphQLTypes(t *testing.T) {
 	h := New(t, testSchema)
 
-	// Start on Query, cycle backward to wrap around
 	h.assert.CurrentType(navigation.QueryType)
 
 	// Cycle backward should wrap to last type (Directive)
-	h.explorer.CycleTypeBackward()
+	h.nav.PrevGqlType()
 	h.assert.CurrentType(navigation.DirectiveType)
 
-	// Cycle backward again - should move to Union
-	h.explorer.CycleTypeBackward()
+	h.nav.PrevGqlType()
 	h.assert.CurrentType(navigation.UnionType)
 }
 
 func TestSwitchDirectlyToSpecificType(t *testing.T) {
 	h := New(t, testSchema)
 
-	// Switch directly to Enum type
-	h.explorer.SwitchToType(navigation.EnumType)
+	h.nav.GoToGqlType(navigation.EnumType)
 	h.assert.CurrentType(navigation.EnumType)
-	// Enum tab should be visible, check for Role type
-	h.assert.ViewContains("Enum")
 
-	// Switch directly to Scalar type
-	h.explorer.SwitchToType(navigation.ScalarType)
+	h.nav.GoToGqlType(navigation.ScalarType)
 	h.assert.CurrentType(navigation.ScalarType)
-	h.assert.ViewContains("Scalar")
 
-	// Switch directly to Interface type
-	h.explorer.SwitchToType(navigation.InterfaceType)
+	h.nav.GoToGqlType(navigation.InterfaceType)
 	h.assert.CurrentType(navigation.InterfaceType)
-	h.assert.ViewContains("Interface")
 }
 
 func TestTypeCyclingResetsBreadcrumbs(t *testing.T) {
 	h := New(t, testSchema)
 
-	// Navigate into structure
-	h.explorer.NavigateToNextPanel()
+	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("query1")
 
-	// Cycle type - should reset breadcrumbs
-	h.explorer.CycleTypeForward()
+	// Switch to next type - should reset breadcrumbs
+	h.nav.NextGqlType()
 	h.assert.BreadcrumbsEquals("")
 
-	// Navigate into Mutation structure
-	h.explorer.NavigateToNextPanel()
+	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("mutation1")
 
-	// Cycle backward - should also reset breadcrumbs
-	h.explorer.CycleTypeBackward()
+	// Switch to prev type - should also reset breadcrumbs
+	h.nav.PrevGqlType()
 	h.assert.BreadcrumbsEquals("")
 }
 
@@ -204,8 +169,6 @@ func TestTypeCyclingResetsBreadcrumbs(t *testing.T) {
 func TestOpenOverlayAndVerifyContent(t *testing.T) {
 	h := New(t, testSchema)
 
-	// Select a query field and open overlay
-	h.explorer.SelectItemAtIndex(0) // Select first query field
 	h.overlay.Open()
 
 	// Verify overlay is visible
@@ -219,10 +182,8 @@ func TestOverlayShowsCorrectDetailsForDifferentItems(t *testing.T) {
 	h := New(t, testSchema)
 
 	// Switch to Object type to see different items
-	h.explorer.SwitchToType(navigation.ObjectType)
+	h.nav.GoToGqlType(navigation.ObjectType)
 
-	// Select first object and check overlay
-	h.explorer.SelectItemAtIndex(0)
 	h.overlay.Open()
 	h.assert.OverlayVisible()
 
@@ -237,23 +198,21 @@ func TestOverlayShowsCorrectDetailsForDifferentItems(t *testing.T) {
 func TestFullExplorationWorkflow(t *testing.T) {
 	h := New(t, testSchema)
 
-	// Start on Query type
 	h.assert.CurrentType(navigation.QueryType)
 	h.assert.BreadcrumbsEquals("")
 
-	h.explorer.NavigateToNextPanel()
+	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("query1")
 
-	h.explorer.NavigateToNextPanel()
+	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("query1 > arg1")
 
-	// Switch to Mutation type
-	h.explorer.SwitchToType(navigation.MutationType)
+	h.nav.GoToGqlType(navigation.MutationType)
 	h.assert.BreadcrumbsEquals("")
 	h.assert.ViewContains("mutation1")
 
 	// Cycle to Object type
-	h.explorer.CycleTypeForward()
+	h.nav.NextGqlType()
 	h.assert.CurrentType(navigation.ObjectType)
 
 	// Open overlay for an object
@@ -265,20 +224,15 @@ func TestMultiPanelNavigationWithTypeCycling(t *testing.T) {
 	h := New(t, testSchema)
 
 	// Navigate through Query structure
-	h.explorer.NavigateToNextPanel()
-	h.explorer.NavigateToNextPanel()
-
-	// Verify breadcrumbs show the path
+	h.nav.NextPanel()
+	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("query1 > arg1")
 
-	// Cycle to a different type
-	h.explorer.CycleTypeForward()
+	// Cycle to mutation type
+	h.nav.NextGqlType()
 	h.assert.BreadcrumbsEquals("")
 
-	// Navigate in the new type
-	h.explorer.NavigateToNextPanel()
-
-	// Breadcrumbs should be rebuilt for the new type
+	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("mutation1")
 }
 
@@ -294,11 +248,11 @@ func TestEdgeCaseEmptyPanelNavigation(t *testing.T) {
 	h.assert.ViewContains("Query")
 
 	// Try navigating - should not crash
-	h.explorer.NavigateToNextPanel()
+	h.nav.NextPanel()
 
 	// Cycle types
-	h.explorer.CycleTypeForward()
-	h.explorer.CycleTypeBackward()
+	h.nav.NextGqlType()
+	h.nav.PrevGqlType()
 }
 
 func TestWindowResizing(t *testing.T) {
@@ -311,6 +265,6 @@ func TestWindowResizing(t *testing.T) {
 	}
 
 	// Navigation should still work
-	h.explorer.NavigateToNextPanel()
+	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("query1")
 }

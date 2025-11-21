@@ -47,6 +47,7 @@ type Harness struct {
 	explorer *Explorer
 	assert   *Assert
 	overlay  *Overlay
+	nav      *Navigator
 }
 
 // Explorer provides methods for navigating and interacting with the TUI model
@@ -63,6 +64,12 @@ type Assert struct {
 
 // Overlay provides helpers for overlay interaction
 type Overlay struct {
+	explorer *Explorer
+	nav      *Navigator
+}
+
+// Navigator provides methods for navigating the TUI
+type Navigator struct {
 	explorer *Explorer
 }
 
@@ -95,10 +102,12 @@ func New(t *testing.T, schema string, opts ...Option) *Harness {
 	explorer := &Explorer{
 		model: xplr.New(schemaView),
 	}
+	navigator := &Navigator{explorer: explorer}
 	h := &Harness{
 		explorer: explorer,
 		assert:   &Assert{explorer: explorer, t: t, is: is.New(t)},
-		overlay:  &Overlay{explorer: explorer},
+		overlay:  &Overlay{explorer: explorer, nav: navigator},
+		nav:      navigator,
 	}
 
 	// Apply options
@@ -133,76 +142,9 @@ func (e *Explorer) View() string {
 	return e.model.View()
 }
 
-// NavigateToNextPanel navigates forward to the next panel (Tab key)
-func (e *Explorer) NavigateToNextPanel() {
-	e.Update(keyNextPanel)
-}
-
-// NavigateToPreviousPanel navigates backward to the previous panel (Shift+Tab key)
-func (e *Explorer) NavigateToPreviousPanel() {
-	e.Update(keyPrevPanel)
-}
-
-// CycleTypeForward cycles to the next GraphQL type (Ctrl+T key)
-func (e *Explorer) CycleTypeForward() {
-	e.Update(keyNextType)
-}
-
-// CycleTypeBackward cycles to the previous GraphQL type (Ctrl+R key)
-func (e *Explorer) CycleTypeBackward() {
-	e.Update(keyPrevType)
-}
-
-// SwitchToType switches directly to a specific GraphQL type
-func (e *Explorer) SwitchToType(gqlType navigation.GQLType) {
-	e.model.SwitchToType(string(gqlType))
-}
-
 // GetCurrentType returns the currently selected GraphQL type
 func (e *Explorer) GetCurrentType() navigation.GQLType {
 	return navigation.GQLType(e.model.CurrentType())
-}
-
-// SelectItemAtIndex moves the cursor to the item at the given index (0-based)
-func (e *Explorer) SelectItemAtIndex(idx int) {
-	// Move cursor to top first (safety measure)
-	for i := 0; i < 100; i++ {
-		e.Update(keyUp)
-	}
-	// Move down to the desired index
-	for i := 0; i < idx; i++ {
-		e.Update(keyDown)
-	}
-}
-
-// SelectItem moves the cursor to the item with the given name by checking the view
-// This is useful for selecting items by their display name
-func (e *Explorer) SelectItem(name string) {
-	// Since we can't directly access panel items, we'll try selecting by index
-	// based on what appears in the view. For now, we use a simpler approach:
-	// just move down until we find the item in the view.
-	// A more robust implementation would parse the view to find the exact index.
-
-	// Reset to top
-	for i := 0; i < 100; i++ {
-		e.Update(keyUp)
-	}
-
-	// Try moving down and checking if the item is selected
-	// This is a simplified heuristic - in practice, we'd need better view parsing
-	for i := 0; i < 20; i++ {
-		// For now, we'll just move to the first item by default
-		// A real implementation would parse the view to find the exact position
-		if i > 0 {
-			e.Update(keyDown)
-		}
-		// Check if view contains the selected item (this is approximate)
-		view := e.View()
-		if strings.Contains(view, name) {
-			// Assume we found it - this is a simplified implementation
-			break
-		}
-	}
 }
 
 // ============================================================================
@@ -222,9 +164,80 @@ func (o *Overlay) Close() {
 // OpenForType switches to the specified type and opens the overlay for the first item
 // This is a convenience method for testing overlay content for different GraphQL types
 func (o *Overlay) OpenForType(gqlType navigation.GQLType) {
-	o.explorer.SwitchToType(gqlType)
-	o.explorer.SelectItemAtIndex(0)
+	o.nav.GoToGqlType(gqlType)
+	o.nav.SelectItemAtIndex(0)
 	o.Open()
+}
+
+// ============================================================================
+// Component Helpers - Navigator
+// ============================================================================
+
+// NextPanel navigates forward to the next panel (Tab key)
+func (n *Navigator) NextPanel() {
+	n.explorer.Update(keyNextPanel)
+}
+
+// PrevPanel navigates backward to the previous panel (Shift+Tab key)
+func (n *Navigator) PrevPanel() {
+	n.explorer.Update(keyPrevPanel)
+}
+
+// NextGqlType cycles to the next GraphQL type (Ctrl+T key)
+func (n *Navigator) NextGqlType() {
+	n.explorer.Update(keyNextType)
+}
+
+// PrevGqlType cycles to the previous GraphQL type (Ctrl+R key)
+func (n *Navigator) PrevGqlType() {
+	n.explorer.Update(keyPrevType)
+}
+
+// GoToGqlType switches directly to a specific GraphQL type
+func (n *Navigator) GoToGqlType(gqlType navigation.GQLType) {
+	n.explorer.model.SwitchToType(string(gqlType))
+}
+
+// SelectItemAtIndex moves the cursor to the item at the given index (0-based)
+func (n *Navigator) SelectItemAtIndex(idx int) {
+	// Move cursor to top first (safety measure)
+	for i := 0; i < 100; i++ {
+		n.explorer.Update(keyUp)
+	}
+	// Move down to the desired index
+	for i := 0; i < idx; i++ {
+		n.explorer.Update(keyDown)
+	}
+}
+
+// SelectItem moves the cursor to the item with the given name by checking the view
+// This is useful for selecting items by their display name
+func (n *Navigator) SelectItem(name string) {
+	// Since we can't directly access panel items, we'll try selecting by index
+	// based on what appears in the view. For now, we use a simpler approach:
+	// just move down until we find the item in the view.
+	// A more robust implementation would parse the view to find the exact index.
+
+	// Reset to top
+	for i := 0; i < 100; i++ {
+		n.explorer.Update(keyUp)
+	}
+
+	// Try moving down and checking if the item is selected
+	// This is a simplified heuristic - in practice, we'd need better view parsing
+	for i := 0; i < 20; i++ {
+		// For now, we'll just move to the first item by default
+		// A real implementation would parse the view to find the exact position
+		if i > 0 {
+			n.explorer.Update(keyDown)
+		}
+		// Check if view contains the selected item (this is approximate)
+		view := n.explorer.View()
+		if strings.Contains(view, name) {
+			// Assume we found it - this is a simplified implementation
+			break
+		}
+	}
 }
 
 // ============================================================================
