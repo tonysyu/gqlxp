@@ -19,7 +19,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.OpenOverlayForType(navigation.QueryType)
+		h.overlay.OpenForType(navigation.QueryType)
 
 		h.assert.OverlayContainsNormalized(`
 			# getUser
@@ -38,7 +38,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.OpenOverlayForType(navigation.MutationType)
+		h.overlay.OpenForType(navigation.MutationType)
 
 		h.assert.OverlayContainsNormalized(`
 			# createPost
@@ -71,7 +71,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.OpenOverlayForType(navigation.ObjectType)
+		h.overlay.OpenForType(navigation.ObjectType)
 
 		h.assert.OverlayContainsNormalized(`
 			# User
@@ -110,7 +110,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.OpenOverlayForType(navigation.InputType)
+		h.overlay.OpenForType(navigation.InputType)
 
 		h.assert.OverlayContainsNormalized(`
 			# CreateUserInput
@@ -146,7 +146,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.OpenOverlayForType(navigation.EnumType)
+		h.overlay.OpenForType(navigation.EnumType)
 
 		h.assert.OverlayContainsNormalized(`
 			# Role
@@ -172,7 +172,7 @@ func TestOverlayRendering(t *testing.T) {
 			scalar DateTime
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.OpenOverlayForType(navigation.ScalarType)
+		h.overlay.OpenForType(navigation.ScalarType)
 
 		h.assert.OverlayContainsNormalized(`
 			# DateTime
@@ -196,7 +196,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.OpenOverlayForType(navigation.InterfaceType)
+		h.overlay.OpenForType(navigation.InterfaceType)
 
 		h.assert.OverlayContainsNormalized(`
 			# Node
@@ -220,7 +220,7 @@ func TestOverlayRendering(t *testing.T) {
 			type Post { id: ID! }
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.OpenOverlayForType(navigation.UnionType)
+		h.overlay.OpenForType(navigation.UnionType)
 
 		h.assert.OverlayContainsNormalized(`
 			# SearchResult
@@ -242,7 +242,7 @@ func TestOverlayRendering(t *testing.T) {
 			) on FIELD_DEFINITION | OBJECT
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.OpenOverlayForType(navigation.DirectiveType)
+		h.overlay.OpenForType(navigation.DirectiveType)
 
 		h.assert.OverlayContainsNormalized(`
 			# @auth

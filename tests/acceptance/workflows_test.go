@@ -228,7 +228,7 @@ func TestOpenOverlayAndVerifyContent(t *testing.T) {
 
 	// Select a query field and open overlay
 	h.SelectItemAtIndex(0) // Select first query field
-	h.OpenOverlay()
+	h.overlay.Open()
 
 	// Verify overlay is visible
 	h.assert.OverlayVisible()
@@ -245,7 +245,7 @@ func TestOverlayShowsCorrectDetailsForDifferentItems(t *testing.T) {
 
 	// Select first object and check overlay
 	h.SelectItemAtIndex(0)
-	h.OpenOverlay()
+	h.overlay.Open()
 	h.assert.OverlayVisible()
 
 	// Note: Closing and reopening overlays may require additional investigation
@@ -287,7 +287,7 @@ func TestFullExplorationWorkflow(t *testing.T) {
 	h.assert.CurrentType(navigation.ObjectType)
 
 	// Open overlay for an object
-	h.OpenOverlay()
+	h.overlay.Open()
 	h.assert.OverlayVisible()
 }
 

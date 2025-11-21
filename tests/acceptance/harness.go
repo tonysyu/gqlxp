@@ -25,7 +25,6 @@ import (
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/xplr"
-	"github.com/tonysyu/gqlxp/tui/xplr/components"
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 	"github.com/tonysyu/gqlxp/utils/testx"
 	"github.com/tonysyu/gqlxp/utils/text"
@@ -45,14 +44,20 @@ var (
 
 // Harness provides high-level test utilities for acceptance testing
 type Harness struct {
-	model  xplr.Model
-	t      *testing.T
-	is     *is.I
-	assert *Assert
+	model   xplr.Model
+	t       *testing.T
+	is      *is.I
+	assert  *Assert
+	overlay *Overlay
 }
 
 // Assert provides assertion helpers for test verification
 type Assert struct {
+	h *Harness
+}
+
+// Overlay provides helpers for overlay interaction
+type Overlay struct {
 	h *Harness
 }
 
@@ -88,6 +93,7 @@ func New(t *testing.T, schema string, opts ...Option) *Harness {
 		is:    is.New(t),
 	}
 	h.assert = &Assert{h: h}
+	h.overlay = &Overlay{h: h}
 
 	// Apply options
 	for _, opt := range opts {
@@ -193,43 +199,9 @@ func (h *Harness) SelectItem(name string) {
 	}
 }
 
-// OpenOverlay opens the overlay for the currently selected item (Space key)
-func (h *Harness) OpenOverlay() {
-	h.Update(keySpace)
-}
-
-// CloseOverlay closes the currently open overlay (Escape key)
-func (h *Harness) CloseOverlay() {
-	h.Update(keyEscape)
-}
-
-// OpenOverlayForType switches to the specified type and opens the overlay for the first item
-// This is a convenience method for testing overlay content for different GraphQL types
-func (h *Harness) OpenOverlayForType(gqlType navigation.GQLType) {
-	h.SwitchToType(gqlType)
-	h.SelectItemAtIndex(0)
-	h.OpenOverlay()
-}
-
-// OpenOverlayForItemAt opens the overlay for the item at the specified index
-// This is a convenience method that combines selection and overlay opening
-func (h *Harness) OpenOverlayForItemAt(idx int) {
-	h.SelectItemAtIndex(idx)
-	h.OpenOverlay()
-}
-
 // ============================================================================
 // Helper methods for accessing internal state
 // ============================================================================
-
-// getCurrentPanel returns the currently focused panel
-// Note: This uses reflection on the internal model structure for testing purposes
-func (h *Harness) getCurrentPanel() *components.Panel {
-	// We cannot directly access the panel from the exported API, so we use
-	// the indirect approach of examining the view to understand state.
-	// For actual panel access, tests should rely on view assertions.
-	return nil
-}
 
 // getPanelContent returns the rendered content of the panel at the given index
 func (h *Harness) getPanelContent(panelIdx int) string {
@@ -268,30 +240,26 @@ func (h *Harness) getBreadcrumbs() string {
 	return ""
 }
 
-// getCurrentType returns the currently selected GraphQL type by parsing the view
-func (h *Harness) getCurrentType() navigation.GQLType {
-	view := h.View()
-	// Check which type tab appears to be active in the view
-	// The active tab will have different styling
-	// This is a simplified heuristic based on view content
-	for _, gqlType := range []navigation.GQLType{
-		navigation.QueryType,
-		navigation.MutationType,
-		navigation.ObjectType,
-		navigation.InputType,
-		navigation.EnumType,
-		navigation.ScalarType,
-		navigation.InterfaceType,
-		navigation.UnionType,
-		navigation.DirectiveType,
-	} {
-		if strings.Contains(view, string(gqlType)) {
-			// For a more accurate check, we'd parse the first line of the view
-			// For now, assume the first matching type in a simple schema
-			return gqlType
-		}
-	}
-	return navigation.QueryType // default
+// ============================================================================
+// Component Helpers - Overlay
+// ============================================================================
+// Open opens the overlay for the currently selected item (Space key)
+
+func (o *Overlay) Open() {
+	o.h.Update(keySpace)
+}
+
+// Close closes the currently open overlay (Escape key)
+func (o *Overlay) Close() {
+	o.h.Update(keyEscape)
+}
+
+// OpenForType switches to the specified type and opens the overlay for the first item
+// This is a convenience method for testing overlay content for different GraphQL types
+func (o *Overlay) OpenForType(gqlType navigation.GQLType) {
+	o.h.SwitchToType(gqlType)
+	o.h.SelectItemAtIndex(0)
+	o.Open()
 }
 
 // ============================================================================
