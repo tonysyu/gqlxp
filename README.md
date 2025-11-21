@@ -2,6 +2,8 @@
 
 `gqlxp` is an interactive GraphQL query explorer TUI (Terminal User Interface) for exploring GraphQL schema files. Built with Bubble Tea, it provides a multi-panel interface for navigating through all GraphQL type definitions including Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, and Directive types.
 
+![Demo of gqlxp use](demo.gif "gqlxp-demo")
+
 ## Features
 
 ### GraphQL Type Exploration

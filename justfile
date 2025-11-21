@@ -58,3 +58,8 @@ build:
 [group('deploy')]
 install:
     go install ./cmd/gqlxp
+
+# Record demo
+[group('deploy')]
+create-demo: install
+    vhs demo.tape
