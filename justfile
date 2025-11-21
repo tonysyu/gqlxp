@@ -3,14 +3,16 @@ default:
     @echo 'Usage: just [OPTIONS] [ARGUMENTS]...'
     @just -l
 
+empty := ""
+
 # Run the gqlxp tui
 [group('app')]
-run schemaPath:
+run schemaPath=empty:
     go run ./cmd/gqlxp {{schemaPath}}
 
 # Run the gqlxp tui with logging to debug.log file
 [group('app')]
-run-with-log schemaPath:
+run-with-log schemaPath=empty:
     GQLXP_LOGFILE=debug.log go run ./cmd/gqlxp {{schemaPath}}
 
 # Document public signatures for package
