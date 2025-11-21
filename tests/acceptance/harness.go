@@ -45,8 +45,6 @@ var (
 // Harness provides high-level test utilities for acceptance testing
 type Harness struct {
 	explorer *Explorer
-	t        *testing.T
-	is       *is.I
 	assert   *Assert
 	overlay  *Overlay
 }
@@ -54,17 +52,18 @@ type Harness struct {
 // Explorer provides methods for navigating and interacting with the TUI model
 type Explorer struct {
 	model xplr.Model
-	h     *Harness
 }
 
 // Assert provides assertion helpers for test verification
 type Assert struct {
-	h *Harness
+	explorer *Explorer
+	t        *testing.T
+	is       *is.I
 }
 
 // Overlay provides helpers for overlay interaction
 type Overlay struct {
-	h *Harness
+	explorer *Explorer
 }
 
 // Option is a functional option for configuring the test harness
@@ -93,16 +92,14 @@ func New(t *testing.T, schema string, opts ...Option) *Harness {
 		t.Fatalf("failed to parse schema: %v", err)
 	}
 
-	h := &Harness{
-		t:  t,
-		is: is.New(t),
-	}
-	h.explorer = &Explorer{
+	explorer := &Explorer{
 		model: xplr.New(schemaView),
-		h:     h,
 	}
-	h.assert = &Assert{h: h}
-	h.overlay = &Overlay{h: h}
+	h := &Harness{
+		explorer: explorer,
+		assert:   &Assert{explorer: explorer, t: t, is: is.New(t)},
+		overlay:  &Overlay{explorer: explorer},
+	}
 
 	// Apply options
 	for _, opt := range opts {
@@ -214,19 +211,19 @@ func (e *Explorer) SelectItem(name string) {
 // Open opens the overlay for the currently selected item (Space key)
 
 func (o *Overlay) Open() {
-	o.h.explorer.Update(keySpace)
+	o.explorer.Update(keySpace)
 }
 
 // Close closes the currently open overlay (Escape key)
 func (o *Overlay) Close() {
-	o.h.explorer.Update(keyEscape)
+	o.explorer.Update(keyEscape)
 }
 
 // OpenForType switches to the specified type and opens the overlay for the first item
 // This is a convenience method for testing overlay content for different GraphQL types
 func (o *Overlay) OpenForType(gqlType navigation.GQLType) {
-	o.h.explorer.SwitchToType(gqlType)
-	o.h.explorer.SelectItemAtIndex(0)
+	o.explorer.SwitchToType(gqlType)
+	o.explorer.SelectItemAtIndex(0)
 	o.Open()
 }
 
@@ -239,7 +236,7 @@ func (a *Assert) getPanelContent(panelIdx int) string {
 	// For now, we extract panel content from the full view
 	// This is a simplified approach - in a real implementation, we might need
 	// more sophisticated view parsing
-	view := a.h.explorer.View()
+	view := a.explorer.View()
 	lines := text.SplitLines(view)
 
 	// Skip navbar (line 0), breadcrumbs (line 1-2), get panel content
@@ -252,7 +249,7 @@ func (a *Assert) getPanelContent(panelIdx int) string {
 
 // getBreadcrumbs returns the breadcrumb text from the rendered view
 func (a *Assert) getBreadcrumbs() string {
-	view := a.h.explorer.View()
+	view := a.explorer.View()
 	lines := text.SplitLines(view)
 	// Breadcrumbs are on line index 2 (after navbar and empty line)
 	// But we need to look for the line that contains breadcrumb separators " > "
@@ -274,43 +271,43 @@ func (a *Assert) getBreadcrumbs() string {
 // PanelContains checks if the panel at the given index contains the expected text
 // panelIdx is 0-based (0 = left panel, 1 = right panel)
 func (a *Assert) PanelContains(panelIdx int, expected string) {
-	a.h.t.Helper()
+	a.t.Helper()
 	content := a.getPanelContent(panelIdx)
 	if !strings.Contains(content, expected) {
-		a.h.t.Errorf("panel %d does not contain %q\nPanel content:\n%s", panelIdx, expected, content)
+		a.t.Errorf("panel %d does not contain %q\nPanel content:\n%s", panelIdx, expected, content)
 	}
 }
 
 // PanelEquals checks if the normalized panel content equals the expected text
 func (a *Assert) PanelEquals(panelIdx int, expected string) {
-	a.h.t.Helper()
+	a.t.Helper()
 	content := testx.NormalizeView(a.getPanelContent(panelIdx))
 	expectedNormalized := testx.NormalizeView(expected)
-	a.h.is.Equal(content, expectedNormalized)
+	a.is.Equal(content, expectedNormalized)
 }
 
 // BreadcrumbsEquals checks if breadcrumbs exactly match the expected text
 func (a *Assert) BreadcrumbsEquals(expected string) {
-	a.h.t.Helper()
+	a.t.Helper()
 	breadcrumbs := a.getBreadcrumbs()
-	a.h.is.Equal(breadcrumbs, expected)
+	a.is.Equal(breadcrumbs, expected)
 }
 
 // OverlayVisible checks if the overlay is currently visible
 func (a *Assert) OverlayVisible() {
-	a.h.t.Helper()
-	if !a.h.explorer.model.Overlay.IsActive() {
-		a.h.t.Error("overlay is not visible")
+	a.t.Helper()
+	if !a.explorer.model.Overlay.IsActive() {
+		a.t.Error("overlay is not visible")
 	}
 }
 
 // OverlayContains checks if the overlay contains the expected text
 func (a *Assert) OverlayContains(expected string) {
-	a.h.t.Helper()
+	a.t.Helper()
 	a.OverlayVisible()
-	view := a.h.explorer.View()
+	view := a.explorer.View()
 	if !strings.Contains(view, expected) {
-		a.h.t.Errorf("overlay does not contain %q\nOverlay content:\n%s", expected, view)
+		a.t.Errorf("overlay does not contain %q\nOverlay content:\n%s", expected, view)
 	}
 }
 
@@ -318,33 +315,33 @@ func (a *Assert) OverlayContains(expected string) {
 // Both the view and expected text are normalized (whitespace trimmed, excess spaces removed)
 // before comparison. This is useful for comparing content structure without exact formatting.
 func (a *Assert) OverlayContainsNormalized(expected string) {
-	a.h.t.Helper()
+	a.t.Helper()
 	a.OverlayVisible()
-	normalizedView := testx.NormalizeView(a.h.explorer.View())
+	normalizedView := testx.NormalizeView(a.explorer.View())
 	normalizedExpected := testx.NormalizeView(expected)
 	if !strings.Contains(normalizedView, normalizedExpected) {
-		a.h.t.Errorf("normalized overlay does not contain expected content\nExpected:\n%s\n\nActual overlay:\n%s",
+		a.t.Errorf("normalized overlay does not contain expected content\nExpected:\n%s\n\nActual overlay:\n%s",
 			normalizedExpected, normalizedView)
 	}
 }
 
 // ViewContains checks if the entire view contains the expected text
 func (a *Assert) ViewContains(expectedStrings ...string) {
-	a.h.t.Helper()
-	view := a.h.explorer.View()
+	a.t.Helper()
+	view := a.explorer.View()
 	for _, expected := range expectedStrings {
 		if !strings.Contains(view, expected) {
-			a.h.t.Errorf("view does not contain %q\nView:\n%s", expected, view)
+			a.t.Errorf("view does not contain %q\nView:\n%s", expected, view)
 		}
 	}
 }
 
 // CurrentType checks if the current GraphQL type matches the expected type
 func (a *Assert) CurrentType(expected navigation.GQLType) {
-	a.h.t.Helper()
+	a.t.Helper()
 	// Check if the type tab is visible in the view
-	view := a.h.explorer.View()
+	view := a.explorer.View()
 	if !strings.Contains(view, string(expected)) {
-		a.h.t.Errorf("current type is not %q\nView:\n%s", expected, view)
+		a.t.Errorf("current type is not %q\nView:\n%s", expected, view)
 	}
 }
