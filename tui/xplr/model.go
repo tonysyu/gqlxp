@@ -50,13 +50,6 @@ type SchemaLoadedMsg struct {
 	HasLibraryData bool
 }
 
-var (
-	quitKeyBinding = key.NewBinding(
-		key.WithKeys("ctrl+c", "ctrl+d"),
-		key.WithHelp("ctrl+c", "quit"),
-	)
-)
-
 type keymap = struct {
 	NextPanel, PrevPanel, Quit, ToggleGQLType, ReverseToggleGQLType, ToggleOverlay, ToggleFavorite key.Binding
 }
@@ -94,21 +87,24 @@ func NewEmpty() Model {
 		nav:     navigation.NewNavigationManager(config.VisiblePanelCount),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
-				key.WithKeys("tab", "]"),
-				key.WithHelp("tab", "next"),
+				key.WithKeys("]", "tab"),
+				key.WithHelp("]/tab", "next"),
 			),
 			PrevPanel: key.NewBinding(
 				key.WithKeys("shift+tab", "["),
-				key.WithHelp("shift+tab", "prev"),
+				key.WithHelp("[/⇧+tab", "prev"),
 			),
-			Quit: quitKeyBinding,
+			Quit: key.NewBinding(
+				key.WithKeys("ctrl+c", "ctrl+d"),
+				key.WithHelp("⌃+c", "quit"),
+			),
 			ToggleGQLType: key.NewBinding(
 				key.WithKeys("ctrl+t", "}"),
-				key.WithHelp("ctrl+t", "toggle type"),
+				key.WithHelp("}/⌃+T", "next type"),
 			),
 			ReverseToggleGQLType: key.NewBinding(
 				key.WithKeys("ctrl+r", "{"),
-				key.WithHelp("ctrl+r", "reverse toggle type"),
+				key.WithHelp("{/⌃+r", "prev type"),
 			),
 			ToggleOverlay: key.NewBinding(
 				key.WithKeys(" "),
