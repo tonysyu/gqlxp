@@ -2,17 +2,6 @@
 
 ## Priority Simplifications
 
-### 2. Remove Unused Code
-**Dead code found**:
-- `availableGQLTypes` variable in `tui/xplr/model.go:35` (not referenced anywhere)
-- `SetGQLTypeMsg` type in `tui/xplr/model.go:37-39` (defined but never sent/constructed)
-
-**Fix**: Delete unused variables and types
-
-**Estimated Impact**: Remove ~5 lines of code
-
----
-
 ### 3. Simplify Keymap Construction
 **Issue**: Uses reflection to build `globalKeyBinds` from keymap struct (`tui/xplr/model.go:120-125`)
 

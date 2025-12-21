@@ -17,10 +17,6 @@ import (
 	"slices"
 )
 
-type SetGQLTypeMsg struct {
-	GQLType navigation.GQLType
-}
-
 type FavoriteToggledMsg struct {
 	Favorites []string
 }
@@ -243,9 +239,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	case components.OpenPanelMsg:
 		m.handleOpenPanel(msg.Panel)
-	case SetGQLTypeMsg:
-		m.nav.SwitchType(msg.GQLType)
-		m.resetAndLoadMainPanel()
 	case FavoriteToggledMsg:
 		m.favorites = msg.Favorites
 		// Refresh panels in place instead of resetting to preserve navigation state
