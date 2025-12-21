@@ -37,7 +37,7 @@ func TestNewModel(t *testing.T) {
 	// Test initial state
 	is.Equal(len(model.nav.Stack().All()), config.VisiblePanelCount)
 	is.Equal(model.nav.Stack().Position(), 0)
-	is.Equal(navTypeToGQLType(model.nav.CurrentType()), queryType)
+	is.Equal(model.nav.CurrentType(), navigation.QueryType)
 	is.Equal(len(model.schema.GetQueryItems()), 2)    // getAllPosts, getPostById
 	is.Equal(len(model.schema.GetMutationItems()), 1) // createPost
 

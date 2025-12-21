@@ -17,25 +17,8 @@ import (
 	"slices"
 )
 
-type gqlType string
-
-const (
-	queryType     gqlType = "Query"
-	mutationType  gqlType = "Mutation"
-	objectType    gqlType = "Object"
-	inputType     gqlType = "Input"
-	enumType      gqlType = "Enum"
-	scalarType    gqlType = "Scalar"
-	interfaceType gqlType = "Interface"
-	unionType     gqlType = "Union"
-	directiveType gqlType = "Directive"
-)
-
-// availableGQLTypes defines the ordered list of GQL types for navigation
-var availableGQLTypes = []gqlType{queryType, mutationType, objectType, inputType, enumType, scalarType, interfaceType, unionType, directiveType}
-
 type SetGQLTypeMsg struct {
-	GQLType gqlType
+	GQLType navigation.GQLType
 }
 
 type FavoriteToggledMsg struct {
@@ -261,7 +244,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case components.OpenPanelMsg:
 		m.handleOpenPanel(msg.Panel)
 	case SetGQLTypeMsg:
-		m.nav.SwitchType(gqlTypeToNavType(msg.GQLType))
+		m.nav.SwitchType(msg.GQLType)
 		m.resetAndLoadMainPanel()
 	case FavoriteToggledMsg:
 		m.favorites = msg.Favorites
@@ -519,16 +502,6 @@ func (m *Model) toggleFavorite(typeName string) tea.Cmd {
 			Favorites: schema.Metadata.Favorites,
 		}
 	}
-}
-
-// gqlTypeToNavType converts old gqlType to navigation.GQLType
-func gqlTypeToNavType(t gqlType) navigation.GQLType {
-	return navigation.GQLType(t)
-}
-
-// navTypeToGQLType converts navigation.GQLType to old gqlType
-func navTypeToGQLType(t navigation.GQLType) gqlType {
-	return gqlType(t)
 }
 
 // renderGQLTypeNavbar creates the navbar showing GQL types
