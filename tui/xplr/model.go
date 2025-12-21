@@ -1,8 +1,6 @@
 package xplr
 
 import (
-	"reflect"
-
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -96,11 +94,15 @@ func NewEmpty() Model {
 		},
 	}
 
-	// Build globalKeyBinds from all keymap fields using reflection
-	v := reflect.ValueOf(m.keymap)
-	m.globalKeyBinds = make([]key.Binding, v.NumField())
-	for i := range v.NumField() {
-		m.globalKeyBinds[i] = v.Field(i).Interface().(key.Binding)
+	// Build globalKeyBinds from all keymap fields
+	m.globalKeyBinds = []key.Binding{
+		m.keymap.NextPanel,
+		m.keymap.PrevPanel,
+		m.keymap.Quit,
+		m.keymap.ToggleGQLType,
+		m.keymap.ReverseToggleGQLType,
+		m.keymap.ToggleOverlay,
+		m.keymap.ToggleFavorite,
 	}
 
 	// Don't load panels until schema is provided

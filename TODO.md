@@ -2,40 +2,6 @@
 
 ## Priority Simplifications
 
-### 3. Simplify Keymap Construction
-**Issue**: Uses reflection to build `globalKeyBinds` from keymap struct (`tui/xplr/model.go:120-125`)
-
-```go
-// Current approach (lines 120-125)
-v := reflect.ValueOf(m.keymap)
-m.globalKeyBinds = make([]key.Binding, v.NumField())
-for i := range v.NumField() {
-    m.globalKeyBinds[i] = v.Field(i).Interface().(key.Binding)
-}
-```
-
-**Fix**: Replace with explicit slice construction:
-```go
-m.globalKeyBinds = []key.Binding{
-    m.keymap.NextPanel,
-    m.keymap.PrevPanel,
-    m.keymap.Quit,
-    m.keymap.ToggleGQLType,
-    m.keymap.ReverseToggleGQLType,
-    m.keymap.ToggleOverlay,
-    m.keymap.ToggleFavorite,
-}
-```
-
-**Benefits**:
-- Clearer and more maintainable
-- No reflection overhead
-- Compile-time safety
-
-**Estimated Impact**: More readable, same line count
-
----
-
 ### 4. Split Large model.go File
 **Issue**: `tui/xplr/model.go` is 614 lines and handles multiple responsibilities:
 - State management
