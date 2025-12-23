@@ -40,9 +40,9 @@ type Model struct {
 	Overlay overlay.Model
 
 	// Library integration (optional)
-	schemaID       string   // Schema ID if loaded from library
-	favorites      []string // List of favorited type names
-	hasLibraryData bool     // Whether this schema has library metadata
+	SchemaID       string   // Schema ID if loaded from library
+	Favorites      []string // List of favorited type names
+	HasLibraryData bool     // Whether this schema has library metadata
 
 	width          int
 	height         int
@@ -120,41 +120,11 @@ func New(schema adapters.SchemaView) Model {
 func NewFromSchemaLibrary(schema adapters.SchemaView, schemaID string, metadata library.SchemaMetadata) Model {
 	m := NewEmpty()
 	m.schema = schema
-	m.schemaID = schemaID
-	m.favorites = metadata.Favorites
-	m.hasLibraryData = true
+	m.SchemaID = schemaID
+	m.Favorites = metadata.Favorites
+	m.HasLibraryData = true
 	m.resetAndLoadMainPanel()
 	return m
-}
-
-// SetSchemaID sets the schema ID for library integration
-func (m *Model) SetSchemaID(id string) {
-	m.schemaID = id
-}
-
-// GetSchemaID returns the schema ID
-func (m Model) GetSchemaID() string {
-	return m.schemaID
-}
-
-// SetFavorites sets the favorites list
-func (m *Model) SetFavorites(favorites []string) {
-	m.favorites = favorites
-}
-
-// GetFavorites returns the favorites list
-func (m Model) GetFavorites() []string {
-	return m.favorites
-}
-
-// SetHasLibraryData sets whether this schema has library metadata
-func (m *Model) SetHasLibraryData(has bool) {
-	m.hasLibraryData = has
-}
-
-// HasLibraryData returns whether this schema has library metadata
-func (m Model) HasLibraryData() bool {
-	return m.hasLibraryData
 }
 
 // Width returns the current width
@@ -199,9 +169,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case SchemaLoadedMsg:
 		// Update schema and related properties
 		m.schema = msg.Schema
-		m.schemaID = msg.SchemaID
-		m.favorites = msg.Favorites
-		m.hasLibraryData = msg.HasLibraryData
+		m.SchemaID = msg.SchemaID
+		m.Favorites = msg.Favorites
+		m.HasLibraryData = msg.HasLibraryData
 		m.resetAndLoadMainPanel()
 		return m, nil
 	case tea.KeyMsg:
@@ -211,7 +181,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.ToggleOverlay):
 			m.openOverlayForSelectedItem()
 		case key.Matches(msg, m.keymap.ToggleFavorite):
-			if m.hasLibraryData {
+			if m.HasLibraryData {
 				return m, m.toggleFavoriteForSelectedItem()
 			}
 		case key.Matches(msg, m.keymap.NextPanel):
@@ -241,7 +211,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case components.OpenPanelMsg:
 		m.handleOpenPanel(msg.Panel)
 	case FavoriteToggledMsg:
-		m.favorites = msg.Favorites
+		m.Favorites = msg.Favorites
 		// Refresh panels in place instead of resetting to preserve navigation state
 		m.refreshPanelsWithFavorites()
 	case tea.WindowSizeMsg:
@@ -390,9 +360,9 @@ func (m *Model) loadMainPanel() {
 	}
 
 	// Wrap items with favorites indicator if library data is available
-	if m.hasLibraryData {
+	if m.HasLibraryData {
 		// For top-level panels, we check RefName (field names); otherwise TypeName
-		items = wrapItemsWithFavorites(items, m.favorites, true)
+		items = wrapItemsWithFavorites(items, m.Favorites, true)
 	}
 
 	m.nav.SetCurrentPanel(components.NewPanel(items, title))
@@ -457,7 +427,7 @@ func (m *Model) refreshPanelsWithFavorites() {
 		var refreshedItems []components.ListItem
 		isTopLevel := panelIndex == 0
 		if isTopLevel {
-			refreshedItems = wrapItemsWithFavorites(unwrappedItems, m.favorites, true)
+			refreshedItems = wrapItemsWithFavorites(unwrappedItems, m.Favorites, true)
 		} else {
 			refreshedItems = unwrappedItems
 		}
@@ -477,18 +447,18 @@ func (m *Model) toggleFavorite(typeName string) tea.Cmd {
 	return func() tea.Msg {
 		lib := library.NewLibrary()
 
-		if slices.Contains(m.favorites, typeName) {
-			_ = lib.RemoveFavorite(m.schemaID, typeName)
+		if slices.Contains(m.Favorites, typeName) {
+			_ = lib.RemoveFavorite(m.SchemaID, typeName)
 		} else {
-			_ = lib.AddFavorite(m.schemaID, typeName)
+			_ = lib.AddFavorite(m.SchemaID, typeName)
 		}
 
 		// Reload favorites from library to get fresh state
-		schema, err := lib.Get(m.schemaID)
+		schema, err := lib.Get(m.SchemaID)
 		if err != nil {
 			// On error, return current favorites unchanged
 			return FavoriteToggledMsg{
-				Favorites: m.favorites,
+				Favorites: m.Favorites,
 			}
 		}
 

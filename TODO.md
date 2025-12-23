@@ -2,46 +2,6 @@
 
 ## Priority Simplifications
 
-### 4. Split Large model.go File
-**Issue**: `tui/xplr/model.go` is 614 lines and handles multiple responsibilities:
-- State management
-- Update logic (Update method)
-- Panel management
-- Favorites logic
-- Rendering (View, renderGQLTypeNavbar, renderBreadcrumbs)
-
-**Fix**: Extract rendering functions to separate file `tui/xplr/view.go`:
-- Move `View()` method
-- Move `renderGQLTypeNavbar()` method
-- Move `renderBreadcrumbs()` method
-
-**Benefits**:
-- Better separation of concerns
-- Easier to navigate and maintain
-- Follows single responsibility principle
-
-**Estimated Impact**: Split 614-line file into ~450 + ~150 lines
-
----
-
-### 5. Reduce Getter/Setter Boilerplate (DISCUSS)
-**Issue**: Many simple getter/setter methods in `tui/xplr/model.go:150-178`:
-- `SetSchemaID()` / `GetSchemaID()`
-- `SetFavorites()` / `GetFavorites()`
-- `SetHasLibraryData()` / `HasLibraryData()`
-- `Width()` / `Height()`
-
-**Note**: Project coding guidelines say "Use accessor methods instead of exposing struct fields"
-
-**Options**:
-1. Keep as-is (follows current guidelines)
-2. Make select fields public where they don't need validation
-3. Keep getters, remove setters and set fields internally only
-
-**Question**: What's your preference?
-
----
-
 ### 6. Address Existing TODOs/FIXMEs
 
 #### High Priority

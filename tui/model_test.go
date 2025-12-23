@@ -99,9 +99,9 @@ func TestModel_TransitionFromLibselectToXplr(t *testing.T) {
 	is.Equal(m.state, xplrView)
 
 	// Verify xplr model was initialized with correct data
-	is.Equal(m.xplr.GetSchemaID(), "test-schema")
-	is.Equal(len(m.xplr.GetFavorites()), 2)
-	is.True(m.xplr.HasLibraryData())
+	is.Equal(m.xplr.SchemaID, "test-schema")
+	is.Equal(len(m.xplr.Favorites), 2)
+	is.True(m.xplr.HasLibraryData)
 }
 
 func TestModel_XplrModeHandlesMessagesCorrectly(t *testing.T) {

@@ -4,7 +4,10 @@
 
 **Default to private.** Use lowercase names for types, functions, and variables. Only capitalize when external packages require access.
 
-- Use accessor methods instead of exposing struct fields
+- **Field access patterns:**
+  - Fields with only getters: Keep private, provide getter methods
+  - Fields with setters: Make public (avoid getter/setter boilerplate)
+  - Fields requiring validation: Keep private, provide methods that validate
 - Periodically review public APIs for privatization opportunities
 
 ## Testing
