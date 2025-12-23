@@ -9,6 +9,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/matryer/is v1.4.1
 	github.com/muesli/reflow v0.3.0
+	github.com/urfave/cli/v3 v3.6.1
 	github.com/vektah/gqlparser/v2 v2.5.30
 )
 
