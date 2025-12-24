@@ -55,6 +55,7 @@ Use the TUI interface to manage library schemas (remove, view, etc).`,
 				},
 			},
 			printCommand(),
+			configCommand(),
 		},
 	}
 }

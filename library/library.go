@@ -43,6 +43,12 @@ type Library interface {
 
 	// UpdateContent updates the schema content and hash, preserving other metadata.
 	UpdateContent(id string, content []byte) error
+
+	// GetDefaultSchema returns the default schema ID, or empty string if not set.
+	GetDefaultSchema() (string, error)
+
+	// SetDefaultSchema sets the default schema ID.
+	SetDefaultSchema(id string) error
 }
 
 // FileLibrary implements Library using file-based storage.
@@ -461,4 +467,86 @@ func (l *FileLibrary) UpdateContent(id string, content []byte) error {
 	schema.Metadata.UpdatedAt = time.Now()
 
 	return l.UpdateMetadata(id, schema.Metadata)
+}
+
+// loadUserConfig loads the user configuration from config.json.
+func loadUserConfig() (*UserConfig, error) {
+	configFile, err := userConfigFile()
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadFile(configFile)
+	if os.IsNotExist(err) {
+		// Return empty config if file doesn't exist
+		return &UserConfig{}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	var config UserConfig
+	if err := json.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("failed to parse config file: %w", err)
+	}
+
+	return &config, nil
+}
+
+// saveUserConfig saves the user configuration to config.json.
+func saveUserConfig(config *UserConfig) error {
+	// Ensure config directory exists
+	if err := InitConfigDir(); err != nil {
+		return fmt.Errorf("failed to initialize config directory: %w", err)
+	}
+
+	configFile, err := userConfigFile()
+	if err != nil {
+		return err
+	}
+
+	data, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %w", err)
+	}
+
+	// Atomic write: write to temp file, then rename
+	tempFile := configFile + ".tmp"
+	if err := os.WriteFile(tempFile, data, 0644); err != nil {
+		return fmt.Errorf("failed to write temp config file: %w", err)
+	}
+
+	if err := os.Rename(tempFile, configFile); err != nil {
+		os.Remove(tempFile) // Clean up temp file on error
+		return fmt.Errorf("failed to rename temp config file: %w", err)
+	}
+
+	return nil
+}
+
+// GetDefaultSchema implements Library.GetDefaultSchema.
+func (l *FileLibrary) GetDefaultSchema() (string, error) {
+	config, err := loadUserConfig()
+	if err != nil {
+		return "", err
+	}
+	return config.DefaultSchema, nil
+}
+
+// SetDefaultSchema implements Library.SetDefaultSchema.
+func (l *FileLibrary) SetDefaultSchema(id string) error {
+	// Validate that the schema exists if not empty
+	if id != "" {
+		if _, err := l.Get(id); err != nil {
+			return fmt.Errorf("schema '%s' not found: %w", id, err)
+		}
+	}
+
+	config, err := loadUserConfig()
+	if err != nil {
+		return err
+	}
+
+	config.DefaultSchema = id
+	return saveUserConfig(config)
 }

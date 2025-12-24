@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/glamour"
 	"github.com/tonysyu/gqlxp/gql"
+	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/utils/text"
 	"github.com/urfave/cli/v3"
 )
@@ -16,8 +17,11 @@ func printCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "print",
 		Usage:     "Print a GraphQL type definition to the terminal",
-		ArgsUsage: "<schema-file> <type-name>",
+		ArgsUsage: "[schema-file] <type-name>",
 		Description: `Prints the details of a GraphQL type directly to the terminal.
+
+The schema-file argument is optional if a default schema has been set.
+Use 'gqlxp config default-schema' to set the default schema.
 
 The type-name can be:
 - A Query field name (prefix with "Query.")
@@ -26,10 +30,11 @@ The type-name can be:
 - A directive name (prefix with "@")
 
 Examples:
-  gqlxp print schema.graphqls User
-  gqlxp print schema.graphqls Query.getUser
-  gqlxp print schema.graphqls Mutation.createUser
-  gqlxp print schema.graphqls @auth`,
+  gqlxp print examples/github.graphqls User
+  gqlxp print User  # Uses default schema
+  gqlxp print Query.getUser
+  gqlxp print Mutation.createUser
+  gqlxp print @auth`,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "no-pager",
@@ -37,25 +42,59 @@ Examples:
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			if cmd.Args().Len() != 2 {
-				return fmt.Errorf("requires exactly 2 arguments: <schema-file> <type-name>")
+			if cmd.Args().Len() < 1 || cmd.Args().Len() > 2 {
+				return fmt.Errorf("requires 1 or 2 arguments: [schema-file] <type-name>")
 			}
 
-			schemaFile := cmd.Args().Get(0)
-			typeName := cmd.Args().Get(1)
+			var schemaArg, typeName string
 			noPager := cmd.Bool("no-pager")
 
-			return printType(schemaFile, typeName, noPager)
+			// Parse arguments
+			if cmd.Args().Len() == 2 {
+				// Two arguments: schema and type
+				schemaArg = cmd.Args().Get(0)
+				typeName = cmd.Args().Get(1)
+			} else {
+				// One argument: type only (use default schema)
+				typeName = cmd.Args().Get(0)
+			}
+
+			return printType(schemaArg, typeName, noPager)
 		},
 	}
 }
 
-func printType(schemaFile, typeName string, noPager bool) error {
-	// Load schema from file
-	content, err := loadSchemaFromFile(schemaFile)
-	if err != nil {
-		return err
+func printType(schemaArg, typeName string, noPager bool) error {
+	lib := library.NewLibrary()
+	var content []byte
+
+	// Determine which schema to use
+	var schemaID string
+	if schemaArg == "" {
+		// No schema specified - use default schema
+		defaultSchemaID, err := lib.GetDefaultSchema()
+		if err != nil {
+			return fmt.Errorf("error getting default schema: %w", err)
+		}
+		if defaultSchemaID == "" {
+			return fmt.Errorf("no schema specified and no default schema set. Use 'gqlxp config default-schema' to set one")
+		}
+		schemaID = defaultSchemaID
+	} else {
+		// Schema specified - resolve as either ID or file path
+		resolvedID, err := resolveSchemaArgument(schemaArg)
+		if err != nil {
+			return err
+		}
+		schemaID = resolvedID
 	}
+
+	// Load schema content from library
+	libSchema, err := lib.Get(schemaID)
+	if err != nil {
+		return fmt.Errorf("error loading schema: %w", err)
+	}
+	content = libSchema.Content
 
 	// Parse schema
 	schema, err := gql.ParseSchema(content)

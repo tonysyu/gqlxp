@@ -5,15 +5,15 @@ default:
 
 empty := ""
 
-# Run the gqlxp tui
+# Run gqlxp
 [group('app')]
-run schemaPath=empty:
-    go run ./cmd/gqlxp {{schemaPath}}
+run +ARGS=empty:
+    go run ./cmd/gqlxp {{ARGS}}
 
 # Run the gqlxp tui with logging to debug.log file
 [group('app')]
-run-with-log schemaPath=empty:
-    GQLXP_LOGFILE=debug.log go run ./cmd/gqlxp {{schemaPath}}
+run-with-log +ARGS=empty:
+    GQLXP_LOGFILE=debug.log go run ./cmd/gqlxp {{ARGS}}
 
 # Document public signatures for package
 [group('code')]

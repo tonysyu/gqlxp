@@ -60,6 +60,15 @@ func metadataFile() (string, error) {
 	return filepath.Join(schemasDir, "metadata.json"), nil
 }
 
+// userConfigFile returns the path to the user config.json file.
+func userConfigFile() (string, error) {
+	configDir, err := configDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(configDir, "config.json"), nil
+}
+
 // InitConfigDir creates the configuration directory structure if it doesn't exist.
 func InitConfigDir() error {
 	schemasDir, err := schemasDir()

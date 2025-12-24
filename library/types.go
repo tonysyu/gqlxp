@@ -25,3 +25,8 @@ type SchemaInfo struct {
 	ID          string
 	DisplayName string
 }
+
+// UserConfig contains user preferences and settings.
+type UserConfig struct {
+	DefaultSchema string `json:"defaultSchema,omitempty"`
+}
