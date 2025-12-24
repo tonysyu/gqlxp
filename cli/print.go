@@ -30,6 +30,12 @@ Examples:
   gqlxp print schema.graphqls Query.getUser
   gqlxp print schema.graphqls Mutation.createUser
   gqlxp print schema.graphqls @auth`,
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "no-pager",
+				Usage: "disable pager and print directly to stdout",
+			},
+		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if cmd.Args().Len() != 2 {
 				return fmt.Errorf("requires exactly 2 arguments: <schema-file> <type-name>")
@@ -37,13 +43,14 @@ Examples:
 
 			schemaFile := cmd.Args().Get(0)
 			typeName := cmd.Args().Get(1)
+			noPager := cmd.Bool("no-pager")
 
-			return printType(schemaFile, typeName)
+			return printType(schemaFile, typeName, noPager)
 		},
 	}
 }
 
-func printType(schemaFile, typeName string) error {
+func printType(schemaFile, typeName string, noPager bool) error {
 	// Load schema from file
 	content, err := loadSchemaFromFile(schemaFile)
 	if err != nil {
@@ -77,6 +84,11 @@ func printType(schemaFile, typeName string) error {
 		// Fallback to plain text if rendering fails
 		fmt.Println(markdown)
 		return nil
+	}
+
+	// Use pager if content is long enough and not disabled
+	if shouldUsePager(rendered, noPager) {
+		return showInPager(rendered)
 	}
 
 	fmt.Print(rendered)
