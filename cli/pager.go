@@ -1,11 +1,13 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"golang.org/x/term"
 )
@@ -78,14 +80,29 @@ func showInPager(content string) error {
 
 	// Check for errors in order of occurrence
 	if writeErr != nil {
-		return fmt.Errorf("error writing to pager: %w", writeErr)
+		// Ignore broken pipe errors - they occur when user quits pager early (e.g., pressing 'q')
+		if !isBrokenPipe(writeErr) {
+			return fmt.Errorf("error writing to pager: %w", writeErr)
+		}
 	}
 	if closeErr != nil {
-		return fmt.Errorf("error closing pager stdin: %w", closeErr)
+		// Also ignore broken pipe on close
+		if !isBrokenPipe(closeErr) {
+			return fmt.Errorf("error closing pager stdin: %w", closeErr)
+		}
 	}
 	if waitErr != nil {
 		return fmt.Errorf("error waiting for pager: %w", waitErr)
 	}
 
 	return nil
+}
+
+// isBrokenPipe checks if an error is a broken pipe error (EPIPE)
+func isBrokenPipe(err error) bool {
+	var pathErr *os.PathError
+	if errors.As(err, &pathErr) {
+		return errors.Is(pathErr.Err, syscall.EPIPE)
+	}
+	return errors.Is(err, syscall.EPIPE)
 }
