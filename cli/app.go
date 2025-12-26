@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui"
 	"github.com/tonysyu/gqlxp/tui/adapters"
@@ -61,14 +60,9 @@ Use the TUI interface to manage library schemas (remove, view, etc).`,
 }
 
 func setupLogging(logFile string) {
-	if logFile != "" {
-		f, err := tea.LogToFile(logFile, "debug")
-		if err != nil {
-			abort(fmt.Sprintf("Error opening log file: %v", err))
-		}
-		// Note: We can't defer here as this isn't main, but the log file
-		// will be closed when the program exits
-		_ = f
+	err := tui.SetupLogging(logFile)
+	if err != nil {
+		abort(fmt.Sprintf("Error opening log file: %v", err))
 	}
 }
 

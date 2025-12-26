@@ -28,3 +28,16 @@ func StartSchemaSelector() (tea.Model, error) {
 	p := tea.NewProgram(m)
 	return p.Run()
 }
+
+func SetupLogging(logFile string) error {
+	if logFile != "" {
+		f, err := tea.LogToFile(logFile, "debug")
+		if err != nil {
+			return err
+		}
+		// Note: We can't defer here as this isn't main, but the log file
+		// will be closed when the program exits
+		_ = f
+	}
+	return nil
+}
