@@ -11,6 +11,7 @@ require (
 	github.com/muesli/reflow v0.3.0
 	github.com/urfave/cli/v3 v3.6.1
 	github.com/vektah/gqlparser/v2 v2.5.30
+	golang.org/x/term v0.31.0
 )
 
 require (
@@ -42,6 +43,5 @@ require (
 	github.com/yuin/goldmark-emoji v1.0.5 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/term v0.31.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )
