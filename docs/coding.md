@@ -36,6 +36,14 @@ When to use unit tests:
 
 See `tests/acceptance/workflows_test.go` for examples.
 
+### Fitness Tests
+
+**Use fitness tests to enforce architectural constraints.** Located in `tests/fitness/`, these tests validate the structural integrity of the codebase.
+
+Current fitness tests:
+- **Package hierarchy** (`hierarchy_test.go`): Enforces that packages only import from lower levels. See [Package Structure](architecture.md#package-structure) for hierarchy details.
+- **Dependency restrictions** (`dependency_test.go`): Restricts which packages can import external dependencies. See [Dependencies](architecture.md#dependencies) for restriction rules.
+
 ## Error Handling
 
 - Return errors for recoverable failures (avoid panics)
