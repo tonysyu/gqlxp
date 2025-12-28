@@ -19,7 +19,7 @@ The system SHALL create a configuration directory structure on first use in the 
 - **THEN** an error message is displayed and the application exits gracefully
 
 ### Requirement: Schema Storage
-The system SHALL store GraphQL schema files in the config directory with a unique identifier.
+The system SHALL store GraphQL schema files in the config directory with a unique identifier and trigger background indexing for search.
 
 #### Scenario: Store new schema
 - **WHEN** a user adds a schema with a unique ID
@@ -32,6 +32,10 @@ The system SHALL store GraphQL schema files in the config directory with a uniqu
 #### Scenario: Retrieve schema by ID
 - **WHEN** a user requests a schema by its ID
 - **THEN** the schema content is loaded from the stored file
+
+#### Scenario: Trigger indexing on add
+- **WHEN** a schema is successfully added to the library
+- **THEN** background indexing is triggered to create a search index for the schema
 
 ### Requirement: Schema Metadata Persistence
 The system SHALL store schema metadata in a single JSON file (`schemas/metadata.json`) with schema-id as top-level keys, supporting display names, favorites, URL patterns, **file paths, and file hashes**.
@@ -102,7 +106,7 @@ The system SHALL provide the ability to list all schemas in the library with the
 - **THEN** an empty list is returned
 
 ### Requirement: Schema Removal
-The system SHALL support removing schemas and their associated metadata from the library.
+The system SHALL support removing schemas, their associated metadata, and their search indexes from the library.
 
 #### Scenario: Remove existing schema
 - **WHEN** a user removes a schema by ID
@@ -111,6 +115,14 @@ The system SHALL support removing schemas and their associated metadata from the
 #### Scenario: Remove non-existent schema
 - **WHEN** a user attempts to remove a schema that doesn't exist
 - **THEN** an error is returned indicating the schema was not found
+
+#### Scenario: Remove search index
+- **WHEN** a schema is removed from the library
+- **THEN** the associated search index directory is also deleted if it exists
+
+#### Scenario: Index deletion failure
+- **WHEN** the search index cannot be deleted due to permissions or file locks
+- **THEN** a warning is logged but schema removal completes successfully
 
 ### Requirement: Backward Compatibility
 The system SHALL **require all schema exploration to use the library**, while maintaining intuitive file-based workflows through automatic library integration.
@@ -185,7 +197,7 @@ The system SHALL prompt users for required information when adding schemas to th
 - **THEN** the schema ID is used as the display name
 
 ### Requirement: Schema Update Detection
-The system SHALL detect when schema files have changed and prompt for user action.
+The system SHALL detect when schema files have changed, prompt for user action, and trigger re-indexing when content is updated.
 
 #### Scenario: Prompt on hash mismatch
 - **WHEN** a schema file path matches a library entry but the hash differs
@@ -202,6 +214,10 @@ The system SHALL detect when schema files have changed and prompt for user actio
 #### Scenario: Preserve metadata on update
 - **WHEN** a schema is updated due to file changes
 - **THEN** existing metadata (favorites, URL patterns, display name) is preserved
+
+#### Scenario: Trigger re-indexing on update
+- **WHEN** a schema's content is updated in the library
+- **THEN** background re-indexing is triggered to update the search index with new content
 
 ### Requirement: Library Path Lookup
 The system SHALL support efficient lookup of schemas by source file path.
