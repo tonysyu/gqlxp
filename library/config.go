@@ -51,6 +51,11 @@ func schemasDir() (string, error) {
 	return filepath.Join(configDir, "schemas"), nil
 }
 
+// GetSchemasDir returns the schemas directory (exported for CLI use)
+func GetSchemasDir() (string, error) {
+	return schemasDir()
+}
+
 // metadataFile returns the path to the metadata.json file.
 func metadataFile() (string, error) {
 	schemasDir, err := schemasDir()

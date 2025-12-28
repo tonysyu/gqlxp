@@ -6,6 +6,7 @@ For build and development commands, see [Development Commands](development.md).
 - **`cmd/gqlxp`**: Application entry point
 - **`cli`**: CLI setup, user prompts, and output formatting
 - **`library`**: Schema storage in `~/.config/gqlxp/schemas/`
+- **`search`**: Full-text search indexing and querying using Bleve
 - **`gql`**: GraphQL schema parsing and type resolution
 - **`tui`**: Bubble Tea-based terminal interface
   - **`tui/libselect`**: Library selection mode
@@ -25,5 +26,6 @@ For build and development commands, see [Development Commands](development.md).
 - **Glamour**: Markdown rendering
 - **vektah/gqlparser/v2**: GraphQL parsing
 - **urfave/cli/v3**: CLI framework
+- **blevesearch/bleve/v2**: Full-text search indexing (restricted to `search` package)
 
 Dependency usage is restricted by package. See `tests/fitness/dependency_test.go`.

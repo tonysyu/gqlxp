@@ -15,6 +15,7 @@ import (
 
 // ALLOWED_IMPORTERS maps external dependencies to the packages allowed to import them.
 var ALLOWED_IMPORTERS = map[string][]string{
+	"github.com/blevesearch/bleve":       {"search"},
 	"github.com/charmbracelet/bubbles":   {"tui"},
 	"github.com/charmbracelet/bubbletea": {"tui"},
 	// Glamour used by both cli and tui to pretty-print markdown

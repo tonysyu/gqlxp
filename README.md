@@ -59,6 +59,25 @@ Schema file has changed since last import.
 Update library (y/n): y
 ```
 
+### Search
+
+Search for types and fields across your schema:
+```sh
+# Search in a specific schema file
+$ gqlxp search examples/github.graphqls user
+
+# Search using default schema
+$ gqlxp search mutation
+
+# Rebuild index before searching
+$ gqlxp search --reindex user
+
+# Limit number of results
+$ gqlxp search --limit 5 repository
+```
+
+The search command indexes your schema for fast full-text search across type names, field names, and descriptions. Indexes are automatically created when schemas are added to your library and rebuilt when schemas are updated.
+
 ### Local development
 For local development commands:
 ```sh
@@ -75,3 +94,4 @@ $ just verify  # Run tests, lint, and fix
     - [Architecture](docs/architecture.md)
     - [Coding Best Practices](docs/coding.md)
     - [Schema Library](docs/schema-library.md)
+    - [Schema Search](docs/search.md)

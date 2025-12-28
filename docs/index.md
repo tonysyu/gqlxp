@@ -9,6 +9,7 @@ This directory contains technical documentation for the `gqlxp` GraphQL query ex
 - **[Architecture](architecture.md)**: Package structure, interfaces, navigation flow, and feature documentation
 - **[Coding Best Practices](coding.md)**: Code organization, visibility guidelines, and testing practices
 - **[Schema Library](schema-library.md)**: Persistent schema storage, metadata format, and library usage
+- **[Schema Search](search.md)**: Full-text search across schema types and fields
 
 ## Additional Resources
 

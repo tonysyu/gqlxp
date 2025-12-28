@@ -10,6 +10,9 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/tonysyu/gqlxp/gql"
+	"github.com/tonysyu/gqlxp/search"
 )
 
 // Library manages schema storage and metadata.
@@ -224,6 +227,9 @@ func (l *FileLibrary) Add(id string, displayName string, sourcePath string) erro
 		return err
 	}
 
+	// Index the schema in the background (non-blocking)
+	go indexSchema(id, content)
+
 	return nil
 }
 
@@ -342,6 +348,9 @@ func (l *FileLibrary) Remove(id string) error {
 	if err := saveAllMetadata(allMetadata); err != nil {
 		return err
 	}
+
+	// Remove the search index
+	removeIndex(id)
 
 	return nil
 }
@@ -466,7 +475,14 @@ func (l *FileLibrary) UpdateContent(id string, content []byte) error {
 	schema.Metadata.FileHash = newHash
 	schema.Metadata.UpdatedAt = time.Now()
 
-	return l.UpdateMetadata(id, schema.Metadata)
+	if err := l.UpdateMetadata(id, schema.Metadata); err != nil {
+		return err
+	}
+
+	// Re-index the schema in the background (non-blocking)
+	go indexSchema(id, content)
+
+	return nil
 }
 
 // loadUserConfig loads the user configuration from config.json.
@@ -549,4 +565,39 @@ func (l *FileLibrary) SetDefaultSchema(id string) error {
 
 	config.DefaultSchema = id
 	return saveUserConfig(config)
+}
+
+// indexSchema indexes a schema for search (runs in background goroutine)
+func indexSchema(id string, content []byte) {
+	// Parse the schema
+	schema, err := gql.ParseSchema(content)
+	if err != nil {
+		// Silently fail - indexing is optional
+		return
+	}
+
+	// Get schemas directory for index storage
+	schemasDir, err := schemasDir()
+	if err != nil {
+		return
+	}
+
+	// Create indexer and index the schema
+	indexer := search.NewIndexer(schemasDir)
+	defer indexer.Close()
+
+	_ = indexer.Index(id, &schema) // Ignore errors - indexing is best effort
+}
+
+// removeIndex removes the search index for a schema
+func removeIndex(id string) {
+	schemasDir, err := schemasDir()
+	if err != nil {
+		return
+	}
+
+	indexer := search.NewIndexer(schemasDir)
+	defer indexer.Close()
+
+	_ = indexer.Remove(id) // Ignore errors
 }
