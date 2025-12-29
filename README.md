@@ -39,6 +39,8 @@ $ just install
 Then open a schema file to explore:
 ```sh
 $ gqlxp examples/github.graphqls
+# Or explicitly use the app command:
+$ gqlxp app examples/github.graphqls
 ```
 
 ### Schema library
@@ -52,6 +54,8 @@ Enter display name [github-api]: GitHub GraphQL API
 
 # Open library selector (when no arguments provided)
 $ gqlxp
+# Or explicitly:
+$ gqlxp app
 
 # Subsequent loads detect if file has changed
 $ gqlxp examples/github.graphqls
