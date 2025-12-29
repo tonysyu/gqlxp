@@ -29,17 +29,13 @@ func searchCommand() *cli.Command {
 		Description: `Searches for types and fields matching the given query.
 
 The schema-file argument is optional if a default schema has been set.
-Use 'gqlxp config default-schema' to set the default schema.
+Use 'gqlxp library default' to set the default schema.
 
 Examples:
   gqlxp search examples/github.graphqls user
   gqlxp search user  # Uses default schema
   gqlxp search "mutation"`,
 		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "reindex",
-				Usage: "rebuild the search index before searching",
-			},
 			&cli.IntFlag{
 				Name:  "limit",
 				Usage: "maximum number of results to return",
@@ -52,7 +48,6 @@ Examples:
 			}
 
 			var schemaArg, query string
-			reindex := cmd.Bool("reindex")
 			limit := cmd.Int("limit")
 
 			// Parse arguments (similar pattern to show command)
@@ -89,8 +84,8 @@ Examples:
 			indexer := search.NewIndexer(schemasDir)
 			defer indexer.Close()
 
-			// Reindex if requested or index doesn't exist
-			if reindex || !indexer.Exists(schemaID) {
+			// Create index if it doesn't exist
+			if !indexer.Exists(schemaID) {
 				schema, err := gql.ParseSchema(content)
 				if err != nil {
 					return fmt.Errorf("failed to parse schema: %w", err)
@@ -108,7 +103,7 @@ Examples:
 
 			results, err := searcher.Search(schemaID, query, limit)
 			if err != nil {
-				return fmt.Errorf("search failed: %w (try using --reindex)", err)
+				return fmt.Errorf("search failed: %w (try using 'gqlxp library reindex %s')", err, schemaID)
 			}
 
 			// Display results
@@ -196,7 +191,7 @@ func resolveDefaultSchema(lib library.Library) (string, []byte, error) {
 	}
 
 	if defaultID == "" {
-		return "", nil, fmt.Errorf("no schema-file specified and no default schema set. Use 'gqlxp config default-schema <id>' to set a default")
+		return "", nil, fmt.Errorf("no schema-file specified and no default schema set. Use 'gqlxp library default <id>' to set a default")
 	}
 
 	schema, err := lib.Get(defaultID)

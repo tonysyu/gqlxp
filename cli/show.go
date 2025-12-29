@@ -21,7 +21,7 @@ func showCommand() *cli.Command {
 		Description: `Shows the details of a GraphQL type directly to the terminal.
 
 The schema-file argument is optional if a default schema has been set.
-Use 'gqlxp config default-schema' to set the default schema.
+Use 'gqlxp library default' to set the default schema.
 
 The type-name can be:
 - A Query field name (prefix with "Query.")
@@ -77,7 +77,7 @@ func printType(schemaArg, typeName string, noPager bool) error {
 			return fmt.Errorf("error getting default schema: %w", err)
 		}
 		if defaultSchemaID == "" {
-			return fmt.Errorf("no schema specified and no default schema set. Use 'gqlxp config default-schema' to set one")
+			return fmt.Errorf("no schema specified and no default schema set. Use 'gqlxp library default' to set one")
 		}
 		schemaID = defaultSchemaID
 	} else {
