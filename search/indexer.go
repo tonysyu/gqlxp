@@ -120,7 +120,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Query fields
 	for name, field := range schema.Query {
 		docs = append(docs, document{
-			Type:        "Field",
+			Type:        "Query",
 			Name:        name,
 			Description: field.Description(),
 			Path:        "Query." + name,
@@ -131,7 +131,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Mutation fields
 	for name, field := range schema.Mutation {
 		docs = append(docs, document{
-			Type:        "Field",
+			Type:        "Mutation",
 			Name:        name,
 			Description: field.Description(),
 			Path:        "Mutation." + name,
@@ -227,7 +227,7 @@ func extractObjectFieldDocuments(schemaID string, typeName string, obj *gql.Obje
 	docs := []document{}
 	for _, field := range obj.Fields() {
 		docs = append(docs, document{
-			Type:        "Field",
+			Type:        "ObjectField",
 			Name:        field.Name(),
 			Description: field.Description(),
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
@@ -242,7 +242,7 @@ func extractInputFieldDocuments(schemaID string, typeName string, input *gql.Inp
 	docs := []document{}
 	for _, field := range input.Fields() {
 		docs = append(docs, document{
-			Type:        "Field",
+			Type:        "InputField",
 			Name:        field.Name(),
 			Description: field.Description(),
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
@@ -257,7 +257,7 @@ func extractInterfaceFieldDocuments(schemaID string, typeName string, iface *gql
 	docs := []document{}
 	for _, field := range iface.Fields() {
 		docs = append(docs, document{
-			Type:        "Field",
+			Type:        "InterfaceField",
 			Name:        field.Name(),
 			Description: field.Description(),
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
