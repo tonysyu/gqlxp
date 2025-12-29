@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/matryer/is"
-	"slices"
 )
 
 // ALLOWED_IMPORTERS maps external dependencies to the packages allowed to import them.
@@ -18,15 +17,12 @@ var ALLOWED_IMPORTERS = map[string][]string{
 	"github.com/blevesearch/bleve":       {"search"},
 	"github.com/charmbracelet/bubbles":   {"tui"},
 	"github.com/charmbracelet/bubbletea": {"tui"},
-	// Glamour centralized in utils/terminal for markdown rendering
-	"github.com/charmbracelet/glamour": {"utils"},
-	// Lipgloss used by cli for colored output and tui for styling
-	"github.com/charmbracelet/lipgloss": {"cli", "tui", "utils"},
-	"github.com/muesli/reflow":          {"utils"},
-	"github.com/urfave/cli/v3":          {"cli"},
-	"github.com/vektah/gqlparser/v2":    {"gql"},
-	// Terminal utilities centralized in utils/terminal
-	"golang.org/x/term": {"utils"},
+	"github.com/charmbracelet/glamour":   {"utils/terminal"},
+	"github.com/charmbracelet/lipgloss":  {"cli", "tui", "utils/terminal"},
+	"github.com/muesli/reflow":           {"utils/text"},
+	"github.com/urfave/cli/v3":           {"cli"},
+	"github.com/vektah/gqlparser/v2":     {"gql"},
+	"golang.org/x/term":                  {"utils/terminal"},
 }
 
 // TestDependencyRestrictions enforces that certain external dependencies
@@ -75,6 +71,9 @@ func checkDependencyImports(filePath, pkg string, projectRoot string) []string {
 		return violations
 	}
 
+	// Determine the actual package path (including subpackages)
+	actualPkg := extractPackagePath(filePath, projectRoot)
+
 	for _, imp := range node.Imports {
 		importPath := strings.Trim(imp.Path.Value, `"`)
 
@@ -82,11 +81,11 @@ func checkDependencyImports(filePath, pkg string, projectRoot string) []string {
 		for restrictedDep, allowedPkgs := range ALLOWED_IMPORTERS {
 			if strings.HasPrefix(importPath, restrictedDep) {
 				// Check if current package is allowed to import this dependency
-				if !slices.Contains(allowedPkgs, pkg) {
+				if !isPackageAllowed(actualPkg, allowedPkgs) {
 					relPath, _ := filepath.Rel(projectRoot, filePath)
 					violations = append(violations, fmt.Sprintf(
 						"Package '%s' imports restricted dependency '%s' in %s (only %v can import it)",
-						pkg, restrictedDep, relPath, allowedPkgs,
+						actualPkg, restrictedDep, relPath, allowedPkgs,
 					))
 				}
 			}
@@ -94,6 +93,34 @@ func checkDependencyImports(filePath, pkg string, projectRoot string) []string {
 	}
 
 	return violations
+}
+
+// extractPackagePath determines the package path from a file path relative to project root
+func extractPackagePath(filePath, projectRoot string) string {
+	relPath, err := filepath.Rel(projectRoot, filePath)
+	if err != nil {
+		return ""
+	}
+	// Get the directory containing the file
+	dir := filepath.Dir(relPath)
+	// Normalize path separators to forward slashes
+	return filepath.ToSlash(dir)
+}
+
+// isPackageAllowed checks if a package (or its parent) is in the allowed list
+// For example, if "tui" is allowed, then "tui/config" is also allowed
+func isPackageAllowed(pkg string, allowedPkgs []string) bool {
+	for _, allowed := range allowedPkgs {
+		// Exact match
+		if pkg == allowed {
+			return true
+		}
+		// Check if pkg is a subpackage of allowed
+		if strings.HasPrefix(pkg, allowed+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 func reportDependencyViolations(t *testing.T, violations []string) {
