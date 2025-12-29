@@ -1,18 +1,8 @@
 package config
 
-import "github.com/charmbracelet/lipgloss"
-
-// Colors
-// See https://hexdocs.pm/color_palette/ansi_color_codes.html for color codes
-const (
-	ColorLightGray    lipgloss.Color = "244" // gray
-	ColorMidGray      lipgloss.Color = "240" // davys_grey
-	ColorDarkGray     lipgloss.Color = "238" // dark_charcoal (dark gray)
-	ColorDimWhite     lipgloss.Color = "253" // alto (off-white)
-	ColorCream        lipgloss.Color = "230" // cream, very_pale_yellow
-	ColorDimIndigo    lipgloss.Color = "62"  // indigo, slate_blue
-	ColorBrightIndigo lipgloss.Color = "57"  // electric_indigo
-	ColorDimMagenta   lipgloss.Color = "170" // orchid (pink/purple)
+import (
+	"github.com/charmbracelet/lipgloss"
+	"github.com/tonysyu/gqlxp/utils/terminal"
 )
 
 // Layout dimensions
@@ -55,18 +45,18 @@ type Styles struct {
 func DefaultStyles() Styles {
 	return Styles{
 		FocusedPanel: lipgloss.NewStyle().
-			Foreground(ColorLightGray).
+			Foreground(terminal.ColorLightGray).
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(ColorDarkGray),
+			BorderForeground(terminal.ColorDarkGray),
 
 		BlurredPanel: lipgloss.NewStyle().
-			Foreground(ColorLightGray).
+			Foreground(terminal.ColorLightGray).
 			Border(lipgloss.HiddenBorder()),
 
 		// Panel title styling copied from bubbles/list
 		PanelTitle: lipgloss.NewStyle().
-			Background(ColorDimIndigo).
-			Foreground(ColorCream).
+			Background(terminal.ColorDimIndigo).
+			Foreground(terminal.ColorCream).
 			Padding(0, PanelTitleHPadding),
 
 		Navbar: lipgloss.NewStyle().
@@ -74,30 +64,30 @@ func DefaultStyles() Styles {
 			Margin(0, 0, 1, 0),
 
 		ActiveTab: lipgloss.NewStyle().
-			Foreground(ColorCream).
-			Background(ColorBrightIndigo).
+			Foreground(terminal.ColorCream).
+			Background(terminal.ColorBrightIndigo).
 			Padding(0, 2).
 			Bold(true),
 
 		InactiveTab: lipgloss.NewStyle().
-			Foreground(ColorLightGray).
+			Foreground(terminal.ColorLightGray).
 			Padding(0, 2),
 
 		Breadcrumbs: lipgloss.NewStyle().
-			Foreground(ColorLightGray).
+			Foreground(terminal.ColorLightGray).
 			Padding(0, 1),
 
 		CurrentBreadcrumb: lipgloss.NewStyle().
-			Foreground(ColorDimIndigo),
+			Foreground(terminal.ColorDimIndigo),
 
 		Overlay: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(ColorDarkGray).
+			BorderForeground(terminal.ColorDarkGray).
 			Padding(OverlayPadding).
 			Margin(OverlayMargin),
 
 		SectionLabel: lipgloss.NewStyle().
-			Foreground(ColorMidGray).
+			Foreground(terminal.ColorMidGray).
 			Bold(true).
 			Padding(0, 1),
 
@@ -105,15 +95,15 @@ func DefaultStyles() Styles {
 			// Use left-border to indicated selected/focused item.
 			// (Adapted from bubbles/list/defaultitem)
 			Border(lipgloss.NormalBorder(), false, false, false, true).
-			BorderForeground(ColorDimMagenta).
-			Foreground(ColorDimMagenta).
+			BorderForeground(terminal.ColorDimMagenta).
+			Foreground(terminal.ColorDimMagenta).
 			Padding(0, 0, 0, ItemLeftPadding-1), // Subtract 1 due to left-border
 
 		UnfocusedItem: lipgloss.NewStyle().
-			Foreground(ColorDimWhite).
+			Foreground(terminal.ColorDimWhite).
 			Padding(0, 0, 0, ItemLeftPadding),
 
 		Divider: lipgloss.NewStyle().
-			Foreground(ColorDarkGray),
+			Foreground(terminal.ColorDarkGray),
 	}
 }

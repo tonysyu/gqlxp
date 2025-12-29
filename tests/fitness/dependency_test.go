@@ -21,7 +21,7 @@ var ALLOWED_IMPORTERS = map[string][]string{
 	// Glamour used by both cli and tui to pretty-print markdown
 	"github.com/charmbracelet/glamour": {"cli", "tui"},
 	// Lipgloss used by cli for colored output and tui for styling
-	"github.com/charmbracelet/lipgloss": {"cli", "tui"},
+	"github.com/charmbracelet/lipgloss": {"cli", "tui", "utils"},
 	"github.com/muesli/reflow":          {"utils"},
 	"github.com/urfave/cli/v3":          {"cli"},
 	"github.com/vektah/gqlparser/v2":    {"gql"},

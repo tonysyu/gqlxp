@@ -11,15 +11,13 @@ import (
 	"github.com/tonysyu/gqlxp/search"
 	"github.com/tonysyu/gqlxp/tui"
 	"github.com/tonysyu/gqlxp/tui/adapters"
+	"github.com/tonysyu/gqlxp/utils/terminal"
 	"github.com/urfave/cli/v3"
 )
 
 var (
-	// Pink style for highlighting the type (Object, Field, etc.)
-	headerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205")) // Hot pink
-
-	// Purple style for highlighting the print command
-	codeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("141")) // Medium purple
+	headerStyle = lipgloss.NewStyle().Foreground(terminal.ColorDimMagenta)
+	codeStyle   = lipgloss.NewStyle().Foreground(terminal.ColorDimIndigo)
 )
 
 // searchCommand creates the search subcommand
