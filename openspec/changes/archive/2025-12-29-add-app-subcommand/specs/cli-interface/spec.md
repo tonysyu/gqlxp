@@ -40,14 +40,3 @@ The system SHALL implement the app subcommand and root default action using shar
 #### Scenario: Flag consistency
 - **WHEN** flags are added to the root command
 - **THEN** those flags SHALL be available to the app subcommand
-
-## REMOVED Requirements
-
-### Requirement: Library Subcommand
-**Reason**: The `library` subcommand duplicated the root command's default behavior, creating confusion and redundancy. The new `app` subcommand provides a clearer, more explicit alternative.
-
-**Migration**: Users should replace `gqlxp library` with either `gqlxp app` (explicit) or just `gqlxp` (implicit default). Both provide identical functionality.
-
-#### Scenario: Library command no longer available
-- **WHEN** user runs `gqlxp library`
-- **THEN** the command SHALL not be recognized (removed from CLI)
