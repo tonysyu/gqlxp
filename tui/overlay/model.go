@@ -5,9 +5,9 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/tui/config"
+	"github.com/tonysyu/gqlxp/utils/terminal"
 	"github.com/tonysyu/gqlxp/utils/text"
 )
 
@@ -25,7 +25,7 @@ var overlayPanelMargin = 2 * (config.OverlayMargin + config.OverlayPadding + 1)
 type Model struct {
 	active   bool
 	viewport viewport.Model
-	renderer *glamour.TermRenderer
+	renderer terminal.Renderer
 	content  string // original markdown content
 	rendered string // cache rendered content
 	Styles   config.Styles
@@ -50,11 +50,9 @@ func (k overlayKeymap) ShortHelp() []key.Binding {
 func New(styles config.Styles) Model {
 	vp := viewport.New(0, 0)
 
-	// Initialize glamour renderer once for the lifetime of the session
-	renderer, err := glamour.NewTermRenderer(
-		glamour.WithAutoStyle(),
-	)
-	// If glamour fails, renderer will be nil and we'll use plain content
+	// Initialize markdown renderer once for the lifetime of the session
+	renderer, err := terminal.NewMarkdownRenderer()
+	// If renderer fails, renderer will be nil and we'll use plain content
 	model := Model{
 		active:   false,
 		viewport: vp,

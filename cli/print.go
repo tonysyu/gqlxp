@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/glamour"
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/library"
+	"github.com/tonysyu/gqlxp/utils/terminal"
 	"github.com/tonysyu/gqlxp/utils/text"
 	"github.com/urfave/cli/v3"
 )
@@ -108,12 +108,10 @@ func printType(schemaArg, typeName string, noPager bool) error {
 		return err
 	}
 
-	// Render markdown using glamour
-	renderer, err := glamour.NewTermRenderer(
-		glamour.WithAutoStyle(),
-	)
+	// Render markdown using terminal renderer
+	renderer, err := terminal.NewMarkdownRenderer()
 	if err != nil {
-		// Fallback to plain text if glamour fails
+		// Fallback to plain text if renderer fails
 		fmt.Println(markdown)
 		return nil
 	}
@@ -126,8 +124,8 @@ func printType(schemaArg, typeName string, noPager bool) error {
 	}
 
 	// Use pager if content is long enough and not disabled
-	if shouldUsePager(rendered, noPager) {
-		return showInPager(rendered)
+	if terminal.ShouldUsePager(rendered, noPager) {
+		return terminal.ShowInPager(rendered)
 	}
 
 	fmt.Print(rendered)

@@ -1,4 +1,4 @@
-package cli
+package terminal
 
 import (
 	"errors"
@@ -12,8 +12,8 @@ import (
 	"golang.org/x/term"
 )
 
-// shouldUsePager determines if content should be paginated based on terminal size and content length
-func shouldUsePager(content string, noPager bool) bool {
+// ShouldUsePager determines if content should be paginated based on terminal size and content length
+func ShouldUsePager(content string, noPager bool) bool {
 	if noPager {
 		return false
 	}
@@ -37,9 +37,9 @@ func shouldUsePager(content string, noPager bool) bool {
 	return lines > height-3
 }
 
-// showInPager displays content using an external pager (less, more, etc.)
+// ShowInPager displays content using an external pager (less, more, etc.)
 // Based on https://stackoverflow.com/a/54198703
-func showInPager(content string) error {
+func ShowInPager(content string) error {
 	pagerCmd := os.Getenv("PAGER")
 	var cmd *exec.Cmd
 

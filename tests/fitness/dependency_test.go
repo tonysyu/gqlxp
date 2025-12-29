@@ -18,14 +18,15 @@ var ALLOWED_IMPORTERS = map[string][]string{
 	"github.com/blevesearch/bleve":       {"search"},
 	"github.com/charmbracelet/bubbles":   {"tui"},
 	"github.com/charmbracelet/bubbletea": {"tui"},
-	// Glamour used by both cli and tui to pretty-print markdown
-	"github.com/charmbracelet/glamour": {"cli", "tui"},
+	// Glamour centralized in utils/terminal for markdown rendering
+	"github.com/charmbracelet/glamour": {"utils"},
 	// Lipgloss used by cli for colored output and tui for styling
 	"github.com/charmbracelet/lipgloss": {"cli", "tui", "utils"},
 	"github.com/muesli/reflow":          {"utils"},
 	"github.com/urfave/cli/v3":          {"cli"},
 	"github.com/vektah/gqlparser/v2":    {"gql"},
-	"golang.org/x/term":                 {"cli"},
+	// Terminal utilities centralized in utils/terminal
+	"golang.org/x/term": {"utils"},
 }
 
 // TestDependencyRestrictions enforces that certain external dependencies
