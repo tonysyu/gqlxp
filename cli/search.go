@@ -3,13 +3,23 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/search"
 	"github.com/tonysyu/gqlxp/tui"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/urfave/cli/v3"
+)
+
+var (
+	// Pink style for highlighting the type (Object, Field, etc.)
+	pinkStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205")) // Hot pink
+
+	// Purple style for highlighting the print command
+	purpleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("141")) // Medium purple
 )
 
 // searchCommand creates the search subcommand
@@ -62,7 +72,7 @@ Examples:
 			var content []byte
 			var err error
 
-			// Resolve schema source
+			// Resolve schema source from cli input, if provided, or default config:
 			if schemaArg != "" {
 				schemaID, content, err = resolveSchemaSource(schemaArg)
 			} else {
@@ -117,16 +127,46 @@ Examples:
 			// Multiple results - show list and let user choose
 			fmt.Printf("Found %d results for %q:\n\n", len(results), query)
 			for i, result := range results {
-				fmt.Printf("%d. %s (%s)\n", i+1, result.Path, result.Type)
+				// Highlight the type in pink
+				fmt.Printf("%d. %s %s\n", i+1, pinkStyle.Render(result.Path), "("+result.Type+")")
 				if result.Description != "" {
 					fmt.Printf("   %s\n", result.Description)
 				}
+				printCmd := formatPrintCommand(schemaID, result)
+				// Highlight the print command in purple
+				fmt.Printf("   More info: %s\n", purpleStyle.Render(printCmd))
 			}
 
 			// For now, just list results. In the future, add interactive selection
 			return nil
 		},
 	}
+}
+
+// formatPrintCommand generates a print command for a search result
+// Query and Mutation fields use the operation.field format (e.g., "Query.user")
+// Other types use the parent type/directive name
+func formatPrintCommand(schemaID string, result search.SearchResult) string {
+	path := result.Path
+	printPath := ""
+
+	// Determine what to print based on the path
+	if strings.HasPrefix(path, "Query.") || strings.HasPrefix(path, "Mutation.") {
+		// Only include operation and field (e.g., "Query.user", not "Query.user.name")
+		parts := strings.Split(path, ".")
+		if len(parts) >= 2 {
+			printPath = parts[0] + "." + parts[1]
+		} else {
+			printPath = path
+		}
+	} else {
+		// For other types, use the first part (type name or directive)
+		parts := strings.Split(path, ".")
+		printPath = parts[0]
+	}
+
+	// Always include the schema ID in the command
+	return fmt.Sprintf("gqlxp print %s %s", schemaID, printPath)
 }
 
 // openSchemaAtPath opens the TUI at a specific path in the schema
