@@ -55,7 +55,7 @@ Examples:
 			reindex := cmd.Bool("reindex")
 			limit := cmd.Int("limit")
 
-			// Parse arguments (similar pattern to print command)
+			// Parse arguments (similar pattern to show command)
 			if cmd.Args().Len() == 1 {
 				query = cmd.Args().First()
 			} else {
@@ -134,9 +134,9 @@ Examples:
 				if result.Description != "" {
 					fmt.Printf("   %s\n", result.Description)
 				}
-				printCmd := formatPrintCommand(schemaID, result)
-				// Highlight the print command in purple
-				fmt.Printf("   More info: %s\n", codeStyle.Render(printCmd))
+				showCmd := formatShowCommand(schemaID, result)
+				// Highlight the show command in purple
+				fmt.Printf("   More info: %s\n", codeStyle.Render(showCmd))
 			}
 
 			// For now, just list results. In the future, add interactive selection
@@ -145,30 +145,30 @@ Examples:
 	}
 }
 
-// formatPrintCommand generates a print command for a search result
+// formatShowCommand generates a show command for a search result
 // Query and Mutation fields use the operation.field format (e.g., "Query.user")
 // Other types use the parent type/directive name
-func formatPrintCommand(schemaID string, result search.SearchResult) string {
+func formatShowCommand(schemaID string, result search.SearchResult) string {
 	path := result.Path
-	printPath := ""
+	showPath := ""
 
-	// Determine what to print based on the path
+	// Determine what to show based on the path
 	if strings.HasPrefix(path, "Query.") || strings.HasPrefix(path, "Mutation.") {
 		// Only include operation and field (e.g., "Query.user", not "Query.user.name")
 		parts := strings.Split(path, ".")
 		if len(parts) >= 2 {
-			printPath = parts[0] + "." + parts[1]
+			showPath = parts[0] + "." + parts[1]
 		} else {
-			printPath = path
+			showPath = path
 		}
 	} else {
 		// For other types, use the first part (type name or directive)
 		parts := strings.Split(path, ".")
-		printPath = parts[0]
+		showPath = parts[0]
 	}
 
 	// Always include the schema ID in the command
-	return fmt.Sprintf("gqlxp print %s %s", schemaID, printPath)
+	return fmt.Sprintf("gqlxp show %s %s", schemaID, showPath)
 }
 
 // openSchemaAtPath opens the TUI at a specific path in the schema

@@ -12,13 +12,13 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-// printCommand creates the print subcommand
-func printCommand() *cli.Command {
+// showCommand creates the show subcommand
+func showCommand() *cli.Command {
 	return &cli.Command{
-		Name:      "print",
-		Usage:     "Print a GraphQL type definition to the terminal",
+		Name:      "show",
+		Usage:     "Show a GraphQL type definition in the terminal",
 		ArgsUsage: "[schema-file] <type-name>",
-		Description: `Prints the details of a GraphQL type directly to the terminal.
+		Description: `Shows the details of a GraphQL type directly to the terminal.
 
 The schema-file argument is optional if a default schema has been set.
 Use 'gqlxp config default-schema' to set the default schema.
@@ -30,15 +30,15 @@ The type-name can be:
 - A directive name (prefix with "@")
 
 Examples:
-  gqlxp print examples/github.graphqls User
-  gqlxp print User  # Uses default schema
-  gqlxp print Query.getUser
-  gqlxp print Mutation.createUser
-  gqlxp print @auth`,
+  gqlxp show examples/github.graphqls User
+  gqlxp show User  # Uses default schema
+  gqlxp show Query.getUser
+  gqlxp show Mutation.createUser
+  gqlxp show @auth`,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
 				Name:  "no-pager",
-				Usage: "disable pager and print directly to stdout",
+				Usage: "disable pager and show directly to stdout",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
