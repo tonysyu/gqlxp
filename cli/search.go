@@ -16,10 +16,10 @@ import (
 
 var (
 	// Pink style for highlighting the type (Object, Field, etc.)
-	pinkStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205")) // Hot pink
+	headerStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205")) // Hot pink
 
 	// Purple style for highlighting the print command
-	purpleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("141")) // Medium purple
+	codeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("141")) // Medium purple
 )
 
 // searchCommand creates the search subcommand
@@ -124,17 +124,21 @@ Examples:
 				return openSchemaAtPath(schemaID, content, results[0].Path)
 			}
 
+			var maxLimitInfo string
+			if len(results) == limit {
+				maxLimitInfo = fmt.Sprintf(" (increase search %s for more)", codeStyle.Render("--limit N"))
+			}
 			// Multiple results - show list and let user choose
-			fmt.Printf("Found %d results for %q:\n\n", len(results), query)
+			fmt.Printf("Found %d results for %q%s:\n\n", len(results), query, maxLimitInfo)
 			for i, result := range results {
 				// Highlight the type in pink
-				fmt.Printf("%d. %s %s\n", i+1, pinkStyle.Render(result.Path), "("+result.Type+")")
+				fmt.Printf("%d. %s %s\n", i+1, headerStyle.Render(result.Path), "("+result.Type+")")
 				if result.Description != "" {
 					fmt.Printf("   %s\n", result.Description)
 				}
 				printCmd := formatPrintCommand(schemaID, result)
 				// Highlight the print command in purple
-				fmt.Printf("   More info: %s\n", purpleStyle.Render(printCmd))
+				fmt.Printf("   More info: %s\n", codeStyle.Render(printCmd))
 			}
 
 			// For now, just list results. In the future, add interactive selection
