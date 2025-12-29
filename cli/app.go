@@ -24,6 +24,14 @@ With a schema file argument, opens the TUI with that schema loaded.
 Examples:
   gqlxp app                          # Open library selector
   gqlxp app examples/github.graphqls # Open specific schema`,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "log-file",
+				Aliases: []string{"l"},
+				Usage:   "Enable debug logging to `FILE`",
+				Sources: cli.EnvVars("GQLXP_LOGFILE"),
+			},
+		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			return executeTUICommand(ctx, cmd)
 		},

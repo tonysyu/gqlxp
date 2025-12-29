@@ -19,14 +19,6 @@ When loading a previously imported file, you'll be prompted to update
 if changes are detected.
 
 Use the TUI interface to manage library schemas (remove, view, etc).`,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "log-file",
-				Aliases: []string{"l"},
-				Usage:   "Enable debug logging to `FILE`",
-				Sources: cli.EnvVars("GQLXP_LOGFILE"),
-			},
-		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			return executeTUICommand(ctx, cmd)
 		},
