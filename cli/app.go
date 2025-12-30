@@ -79,23 +79,16 @@ func openLibrarySelector() error {
 }
 
 func loadAndStartFromFile(schemaFile, selectTarget string) error {
-	// Resolve schema source through library (automatic integration)
-	schemaID, content, err := resolveSchemaSource(schemaFile)
+	// Resolve schema argument (path, ID, or default)
+	libSchema, err := resolveSchemaFromArgument(schemaFile)
 	if err != nil {
 		return fmt.Errorf("error resolving schema: %w", err)
 	}
 
 	// Parse schema
-	schema, err := adapters.ParseSchema(content)
+	schema, err := adapters.ParseSchema(libSchema.Content)
 	if err != nil {
 		return fmt.Errorf("error parsing schema: %w", err)
-	}
-
-	// Get library metadata
-	lib := library.NewLibrary()
-	libSchema, err := lib.Get(schemaID)
-	if err != nil {
-		return fmt.Errorf("error loading schema metadata: %w", err)
 	}
 
 	// Start with library data
@@ -106,12 +99,12 @@ func loadAndStartFromFile(schemaFile, selectTarget string) error {
 			TypeName:  typeName,
 			FieldName: fieldName,
 		}
-		if _, err := tui.StartWithSelection(schema, schemaID, libSchema.Metadata, target); err != nil {
+		if _, err := tui.StartWithSelection(schema, libSchema.ID, libSchema.Metadata, target); err != nil {
 			return fmt.Errorf("error starting tui: %w", err)
 		}
 	} else {
 		// Start normally without selection
-		if _, err := tui.StartWithLibraryData(schema, schemaID, libSchema.Metadata); err != nil {
+		if _, err := tui.StartWithLibraryData(schema, libSchema.ID, libSchema.Metadata); err != nil {
 			return fmt.Errorf("error starting tui: %w", err)
 		}
 	}

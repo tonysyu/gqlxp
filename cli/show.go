@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/tonysyu/gqlxp/gql"
-	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/utils/terminal"
 	"github.com/tonysyu/gqlxp/utils/text"
 	"github.com/urfave/cli/v3"
@@ -65,45 +64,20 @@ Examples:
 }
 
 func printType(schemaArg, typeName string, noPager bool) error {
-	lib := library.NewLibrary()
-	var content []byte
-
-	// Determine which schema to use
-	var schemaID string
-	if schemaArg == "" {
-		// No schema specified - use default schema
-		defaultSchemaID, err := lib.GetDefaultSchema()
-		if err != nil {
-			return fmt.Errorf("error getting default schema: %w", err)
-		}
-		if defaultSchemaID == "" {
-			return fmt.Errorf("no schema specified and no default schema set. Use 'gqlxp library default' to set one")
-		}
-		schemaID = defaultSchemaID
-	} else {
-		// Schema specified - resolve as either ID or file path
-		resolvedID, err := resolveSchemaArgument(schemaArg)
-		if err != nil {
-			return err
-		}
-		schemaID = resolvedID
-	}
-
-	// Load schema content from library
-	libSchema, err := lib.Get(schemaID)
+	// Resolve schema argument (path, ID, or default)
+	schema, err := resolveSchemaFromArgument(schemaArg)
 	if err != nil {
-		return fmt.Errorf("error loading schema: %w", err)
+		return err
 	}
-	content = libSchema.Content
 
 	// Parse schema
-	schema, err := gql.ParseSchema(content)
+	parsedSchema, err := gql.ParseSchema(schema.Content)
 	if err != nil {
 		return fmt.Errorf("error parsing schema: %w", err)
 	}
 
 	// Generate markdown content based on type name
-	markdown, err := generateMarkdown(schema, typeName)
+	markdown, err := generateMarkdown(parsedSchema, typeName)
 	if err != nil {
 		return err
 	}

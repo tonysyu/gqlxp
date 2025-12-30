@@ -63,22 +63,14 @@ Examples:
 				query = cmd.Args().Get(1)
 			}
 
-			// Get library and schema
-			lib := library.NewLibrary()
-
-			var schemaID string
-			var content []byte
-			var err error
-
-			// Resolve schema source from cli input, if provided, or default config:
-			if schemaArg != "" {
-				schemaID, content, err = resolveSchemaSource(schemaArg)
-			} else {
-				schemaID, content, err = resolveDefaultSchema(lib)
-			}
+			// Resolve schema argument (path, ID, or default)
+			schema, err := resolveSchemaFromArgument(schemaArg)
 			if err != nil {
 				return err
 			}
+
+			schemaID := schema.ID
+			content := schema.Content
 
 			// Get schemas directory for indexing
 			schemasDir, err := library.GetSchemasDir()
@@ -193,23 +185,4 @@ func openSchemaAtPath(schemaID string, content []byte, path string) error {
 
 	_, err = tui.StartWithLibraryData(schema, schemaID, libSchema.Metadata)
 	return err
-}
-
-// resolveDefaultSchema gets the default schema from library config
-func resolveDefaultSchema(lib library.Library) (string, []byte, error) {
-	defaultID, err := lib.GetDefaultSchema()
-	if err != nil {
-		return "", nil, fmt.Errorf("failed to get default schema: %w", err)
-	}
-
-	if defaultID == "" {
-		return "", nil, fmt.Errorf("no schema-file specified and no default schema set. Use 'gqlxp library default <id>' to set a default")
-	}
-
-	schema, err := lib.Get(defaultID)
-	if err != nil {
-		return "", nil, fmt.Errorf("failed to load default schema '%s': %w", defaultID, err)
-	}
-
-	return defaultID, schema.Content, nil
 }

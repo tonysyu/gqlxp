@@ -21,25 +21,47 @@ func loadSchemaFromFile(path string) ([]byte, error) {
 	return content, nil
 }
 
-// resolveSchemaArgument resolves a schema argument to a schema ID.
-// The argument can be either:
-// 1. A schema ID that exists in the library
-// 2. A file path (will be added to library if needed)
-func resolveSchemaArgument(arg string) (string, error) {
+// resolveSchemaFromArgument resolves a schema argument to a Schema.
+// The argument can be:
+// 1. Empty string - use default schema from config
+// 2. A schema ID that exists in the library
+// 3. A file path (will be added to library if needed)
+func resolveSchemaFromArgument(arg string) (*library.Schema, error) {
 	lib := library.NewLibrary()
 
-	// First check if it's an existing schema ID
-	if _, err := lib.Get(arg); err == nil {
-		return arg, nil
+	var schemaID string
+
+	// Empty argument - use default schema
+	if arg == "" {
+		defaultSchemaID, err := lib.GetDefaultSchema()
+		if err != nil {
+			return nil, fmt.Errorf("error getting default schema: %w", err)
+		}
+		if defaultSchemaID == "" {
+			return nil, fmt.Errorf("no schema specified and no default schema set. Use 'gqlxp library default' to set one")
+		}
+		schemaID = defaultSchemaID
+	} else {
+		// First check if it's an existing schema ID
+		if _, err := lib.Get(arg); err == nil {
+			schemaID = arg
+		} else {
+			// Not a schema ID - try as file path
+			resolvedID, _, err := resolveSchemaSource(arg)
+			if err != nil {
+				return nil, fmt.Errorf("invalid schema argument '%s': %w", arg, err)
+			}
+			schemaID = resolvedID
+		}
 	}
 
-	// Not a schema ID - try as file path
-	schemaID, _, err := resolveSchemaSource(arg)
+	// Load schema from library
+	schema, err := lib.Get(schemaID)
 	if err != nil {
-		return "", fmt.Errorf("invalid schema argument '%s': %w", arg, err)
+		return nil, fmt.Errorf("failed to load schema '%s': %w", schemaID, err)
 	}
 
-	return schemaID, nil
+	return schema, nil
 }
 
 func resolveSchemaSource(filePath string) (schemaID string, content []byte, err error) {
