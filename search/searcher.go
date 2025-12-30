@@ -7,6 +7,15 @@ import (
 	"github.com/blevesearch/bleve/v2"
 )
 
+const (
+	// Query scoring boosts for each document field that matches to prioritize some fields.
+	// A value of 1 provides no boost.
+	BOOST_NAME_FIELD = 2.0
+	BOOST_TYPE_FIELD = 1.5
+	BOOST_PATH_FIELD = 1.5
+	BOOST_DESC_FIELD = 1.0
+)
+
 // BleveSearcher implements Searcher using Bleve
 type BleveSearcher struct {
 	baseDir string // Base directory for storing indexes
@@ -28,11 +37,10 @@ func (b *BleveSearcher) Search(schemaID string, query string, limit int) ([]Sear
 	}
 	defer index.Close()
 
-	// Create a query that searches across name and description fields
-	q := bleve.NewQueryStringQuery(query)
-	searchRequest := bleve.NewSearchRequest(q)
+	// Create separate match queries for each field with different boost values
+	// Priority order: name (highest), type, description, path (lowest)
+	searchRequest := newSearchRequest(query)
 	searchRequest.Size = limit
-	searchRequest.Fields = []string{"type", "name", "description", "path"}
 
 	// Execute search
 	searchResults, err := index.Search(searchRequest)
@@ -65,6 +73,37 @@ func (b *BleveSearcher) Search(schemaID string, query string, limit int) ([]Sear
 	}
 
 	return results, nil
+}
+
+func newSearchRequest(query string) *bleve.SearchRequest {
+	nameQuery := bleve.NewMatchQuery(query)
+	nameQuery.SetField("name")
+	nameQuery.SetBoost(BOOST_NAME_FIELD)
+
+	typeQuery := bleve.NewMatchQuery(query)
+	typeQuery.SetField("type")
+	typeQuery.SetBoost(BOOST_TYPE_FIELD)
+
+	descQuery := bleve.NewMatchQuery(query)
+	descQuery.SetField("description")
+	descQuery.SetBoost(BOOST_DESC_FIELD)
+
+	pathQuery := bleve.NewMatchQuery(query)
+	pathQuery.SetField("path")
+	pathQuery.SetBoost(BOOST_PATH_FIELD)
+
+	// Combine queries using a BooleanQuery with should clauses
+	// Documents matching any of these fields will be returned, with higher scores for higher-priority fields
+	boolQuery := bleve.NewBooleanQuery()
+	boolQuery.AddShould(nameQuery)
+	boolQuery.AddShould(typeQuery)
+	boolQuery.AddShould(descQuery)
+	boolQuery.AddShould(pathQuery)
+	boolQuery.SetMinShould(1)
+
+	searchRequest := bleve.NewSearchRequest(boolQuery)
+	searchRequest.Fields = []string{"type", "name", "description", "path"}
+	return searchRequest
 }
 
 // Close closes the searcher (no-op for BleveSearcher)
