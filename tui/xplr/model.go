@@ -378,21 +378,7 @@ func (m *Model) ApplySelection(target SelectionTarget) {
 	// For Query and Mutation types, the fields are shown directly in the first panel
 	// So if target.TypeName is "Query" or "Mutation", we skip selecting it and go straight to the field
 	if gqlType == navigation.QueryType || gqlType == navigation.MutationType {
-		if target.FieldName != "" {
-			// Select the field directly in the current panel
-			if !currentPanel.SelectItemByName(target.FieldName) {
-				return
-			}
-			// Navigate forward to show the field's details
-			if openCmd := currentPanel.OpenSelectedItem(); openCmd != nil {
-				if msg, ok := openCmd().(components.OpenPanelMsg); ok {
-					m.handleOpenPanel(msg.Panel)
-					if m.nav.NavigateForward() {
-						m.updatePanelFocusStates()
-					}
-				}
-			}
-		}
+		m.selectQueryOrMutationField(currentPanel, target.FieldName)
 		return
 	}
 
@@ -403,21 +389,65 @@ func (m *Model) ApplySelection(target SelectionTarget) {
 
 	// If a field name is specified, navigate forward and select the field
 	if target.FieldName != "" {
-		// Open child panel for the selected item
-		if openCmd := currentPanel.OpenSelectedItem(); openCmd != nil {
-			// Execute the command to populate the next panel
-			if msg, ok := openCmd().(components.OpenPanelMsg); ok {
-				// Add the new panel to the stack first
-				m.handleOpenPanel(msg.Panel)
-				// Then navigate forward (this adds breadcrumb from current panel's selected item)
-				if m.nav.NavigateForward() {
-					m.updatePanelFocusStates()
-					// Select the field in the newly opened panel (now at current position)
-					if currentPanel := m.nav.CurrentPanel(); currentPanel != nil {
-						currentPanel.SelectItemByName(target.FieldName)
-					}
-				}
-			}
-		}
+		m.selectTypeField(currentPanel, target.FieldName)
+	}
+}
+
+// selectQueryOrMutationField selects a field in Query or Mutation type panels
+func (m *Model) selectQueryOrMutationField(panel *components.Panel, fieldName string) {
+	if fieldName == "" {
+		return
+	}
+
+	// Select the field directly in the current panel
+	if !panel.SelectItemByName(fieldName) {
+		return
+	}
+
+	// Navigate forward to show the field's details
+	openCmd := panel.OpenSelectedItem()
+	if openCmd == nil {
+		return
+	}
+
+	msg, ok := openCmd().(components.OpenPanelMsg)
+	if !ok {
+		return
+	}
+
+	m.handleOpenPanel(msg.Panel)
+	if m.nav.NavigateForward() {
+		m.updatePanelFocusStates()
+	}
+}
+
+// selectTypeField opens a type's panel and selects a specific field within it
+func (m *Model) selectTypeField(panel *components.Panel, fieldName string) {
+	// Open child panel for the selected item
+	openCmd := panel.OpenSelectedItem()
+	if openCmd == nil {
+		return
+	}
+
+	// Execute the command to populate the next panel
+	msg, ok := openCmd().(components.OpenPanelMsg)
+	if !ok {
+		return
+	}
+
+	// Add the new panel to the stack first
+	m.handleOpenPanel(msg.Panel)
+
+	// Then navigate forward (this adds breadcrumb from current panel's selected item)
+	if !m.nav.NavigateForward() {
+		return
+	}
+
+	m.updatePanelFocusStates()
+
+	// Select the field in the newly opened panel (now at current position)
+	currentPanel := m.nav.CurrentPanel()
+	if currentPanel != nil {
+		currentPanel.SelectItemByName(fieldName)
 	}
 }
