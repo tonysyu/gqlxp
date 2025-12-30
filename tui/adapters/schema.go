@@ -69,35 +69,8 @@ func (p *SchemaView) GetDirectiveItems() []components.ListItem {
 // FindTypeCategory returns the GQL type category for the given type name
 // Returns (category, true) if found, ("", false) if not found
 func (p *SchemaView) FindTypeCategory(typeName string) (navigation.GQLType, bool) {
-	// Check if it's the special Query type
-	if typeName == "Query" {
-		return navigation.QueryType, true
-	}
-	// Check if it's the special Mutation type
-	if typeName == "Mutation" {
-		return navigation.MutationType, true
-	}
-	// Check each type collection
-	if _, ok := p.schema.Object[typeName]; ok {
-		return navigation.ObjectType, true
-	}
-	if _, ok := p.schema.Input[typeName]; ok {
-		return navigation.InputType, true
-	}
-	if _, ok := p.schema.Enum[typeName]; ok {
-		return navigation.EnumType, true
-	}
-	if _, ok := p.schema.Scalar[typeName]; ok {
-		return navigation.ScalarType, true
-	}
-	if _, ok := p.schema.Interface[typeName]; ok {
-		return navigation.InterfaceType, true
-	}
-	if _, ok := p.schema.Union[typeName]; ok {
-		return navigation.UnionType, true
-	}
-	if _, ok := p.schema.Directive[typeName]; ok {
-		return navigation.DirectiveType, true
+	if category, ok := p.schema.NameToType[typeName]; ok {
+		return navigation.GQLType(category), true
 	}
 	return "", false
 }

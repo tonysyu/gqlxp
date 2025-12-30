@@ -72,7 +72,7 @@ func TestPanel_SelectItemByName(t *testing.T) {
 
 	// Test selecting non-existent item
 	found = panel.SelectItemByName("NonExistent")
-	is.True(!found) // Should return false
+	is.True(!found)                      // Should return false
 	is.Equal(panel.ListModel.Index(), 0) // Should remain at previous selection
 }
 
