@@ -2,6 +2,11 @@
 
 For build and development commands, see [Development Commands](development.md).
 
+## Overview
+
+- Known schemas stored in a **library** (`~/.config/gqlxp/schemas/`)
+- Schemas indexed by bleve for efficient **search**
+
 ## Package Structure
 - **`cmd/gqlxp`**: Application entry point
 - **`cli`**: CLI setup, user prompts, and output formatting
@@ -16,6 +21,8 @@ For build and development commands, see [Development Commands](development.md).
 - **`tests/acceptance`**: End-to-end workflow tests
 - **`tests/fitness`**: Architectural constraint tests (package hierarchy and dependency restrictions)
 - **`utils`**: Shared utilities (testing, text manipulation)
+
+Internal imports are restricted by package. See `tests/fitness/hierarchy_test.go`.
 
 ## Key Interfaces
 - **`ListItem`**: Interactive list items with `Open() Panel` method
