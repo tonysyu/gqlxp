@@ -39,7 +39,11 @@ Examples:
 			&cli.IntFlag{
 				Name:  "limit",
 				Usage: "maximum number of results to return",
-				Value: 10,
+				Value: 30,
+			},
+			&cli.BoolFlag{
+				Name:  "no-pager",
+				Usage: "disable pager and show directly to stdout",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -49,6 +53,7 @@ Examples:
 
 			var schemaArg, query string
 			limit := cmd.Int("limit")
+			noPager := cmd.Bool("no-pager")
 
 			// Parse arguments (similar pattern to show command)
 			if cmd.Args().Len() == 1 {
@@ -122,19 +127,26 @@ Examples:
 				maxLimitInfo = fmt.Sprintf(" (increase search %s for more)", codeStyle.Render("--limit N"))
 			}
 			// Multiple results - show list and let user choose
-			fmt.Printf("Found %d results for %q%s:\n\n", len(results), query, maxLimitInfo)
+			var output strings.Builder
+			fmt.Fprintf(&output, "Found %d results for %q%s:\n\n", len(results), query, maxLimitInfo)
 			for i, result := range results {
 				// Highlight the type in pink
-				fmt.Printf("%d. %s %s\n", i+1, headerStyle.Render(result.Path), "("+result.Type+")")
+				fmt.Fprintf(&output, "%d. %s %s\n", i+1, headerStyle.Render(result.Path), "("+result.Type+")")
 				if result.Description != "" {
-					fmt.Printf("   %s\n", result.Description)
+					fmt.Fprintf(&output, "   %s\n", result.Description)
 				}
 				showCmd := formatShowCommand(schemaID, result)
 				// Highlight the show command in purple
-				fmt.Printf("   More info: %s\n", codeStyle.Render(showCmd))
+				fmt.Fprintf(&output, "   More info: %s\n", codeStyle.Render(showCmd))
 			}
 
-			// For now, just list results. In the future, add interactive selection
+			// Use pager if content is long enough and not disabled
+			rendered := output.String()
+			if terminal.ShouldUsePager(rendered, noPager) {
+				return terminal.ShowInPager(rendered)
+			}
+
+			fmt.Print(rendered)
 			return nil
 		},
 	}
