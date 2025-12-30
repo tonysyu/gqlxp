@@ -16,7 +16,7 @@ func Start(schema adapters.SchemaView) (tea.Model, error) {
 	return p.Run()
 }
 
-// StartWithLibraryData starts the TUI with library metadata for favorites
+// StartWithLibraryData starts the TUI with library metadata
 func StartWithLibraryData(schema adapters.SchemaView, schemaID string, metadata library.SchemaMetadata) (tea.Model, error) {
 	m := newModelWithXplrAndLibrary(schema, schemaID, metadata)
 	p := tea.NewProgram(m)

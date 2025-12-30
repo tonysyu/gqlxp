@@ -282,98 +282,6 @@ func TestLibrary_UpdateMetadata(t *testing.T) {
 	})
 }
 
-func TestLibrary_AddFavorite(t *testing.T) {
-	is := is.New(t)
-	tmpDir, cleanup := setupTestLibrary(t)
-	defer cleanup()
-
-	lib := library.NewLibrary()
-	schemaContent := `type Query { hello: String }`
-	schemaFile := createTestSchema(t, tmpDir, schemaContent)
-
-	err := lib.Add("test-schema", "Test Schema", schemaFile)
-	is.NoErr(err)
-
-	t.Run("add favorite type", func(t *testing.T) {
-		err := lib.AddFavorite("test-schema", "Query")
-		is.NoErr(err)
-
-		schema, err := lib.Get("test-schema")
-		is.NoErr(err)
-		is.Equal(len(schema.Metadata.Favorites), 1)
-		is.Equal(schema.Metadata.Favorites[0], "Query")
-	})
-
-	t.Run("add multiple favorites", func(t *testing.T) {
-		err := lib.AddFavorite("test-schema", "User")
-		is.NoErr(err)
-
-		err = lib.AddFavorite("test-schema", "Post")
-		is.NoErr(err)
-
-		schema, err := lib.Get("test-schema")
-		is.NoErr(err)
-		is.Equal(len(schema.Metadata.Favorites), 3)
-	})
-
-	t.Run("add duplicate favorite is idempotent", func(t *testing.T) {
-		err := lib.AddFavorite("test-schema", "Query")
-		is.NoErr(err)
-
-		schema, err := lib.Get("test-schema")
-		is.NoErr(err)
-		is.Equal(len(schema.Metadata.Favorites), 3) // Still 3, not 4
-	})
-
-	t.Run("add favorite to non-existent schema fails", func(t *testing.T) {
-		err := lib.AddFavorite("nonexistent-schema", "Query")
-		is.True(err != nil)
-	})
-}
-
-func TestLibrary_RemoveFavorite(t *testing.T) {
-	is := is.New(t)
-	tmpDir, cleanup := setupTestLibrary(t)
-	defer cleanup()
-
-	lib := library.NewLibrary()
-	schemaContent := `type Query { hello: String }`
-	schemaFile := createTestSchema(t, tmpDir, schemaContent)
-
-	err := lib.Add("test-schema", "Test Schema", schemaFile)
-	is.NoErr(err)
-
-	// Add favorites first
-	err = lib.AddFavorite("test-schema", "Query")
-	is.NoErr(err)
-	err = lib.AddFavorite("test-schema", "User")
-	is.NoErr(err)
-
-	t.Run("remove existing favorite", func(t *testing.T) {
-		err := lib.RemoveFavorite("test-schema", "Query")
-		is.NoErr(err)
-
-		schema, err := lib.Get("test-schema")
-		is.NoErr(err)
-		is.Equal(len(schema.Metadata.Favorites), 1)
-		is.Equal(schema.Metadata.Favorites[0], "User")
-	})
-
-	t.Run("remove non-existent favorite is safe", func(t *testing.T) {
-		err := lib.RemoveFavorite("test-schema", "NonExistent")
-		is.NoErr(err)
-
-		schema, err := lib.Get("test-schema")
-		is.NoErr(err)
-		is.Equal(len(schema.Metadata.Favorites), 1)
-	})
-
-	t.Run("remove favorite from non-existent schema fails", func(t *testing.T) {
-		err := lib.RemoveFavorite("nonexistent-schema", "Query")
-		is.True(err != nil)
-	})
-}
-
 func TestLibrary_SetURLPattern(t *testing.T) {
 	is := is.New(t)
 	tmpDir, cleanup := setupTestLibrary(t)
@@ -467,10 +375,6 @@ func TestLibrary_UpdateContent(t *testing.T) {
 	err := lib.Add("test-schema", "Test Schema", schemaFile)
 	is.NoErr(err)
 
-	// Add a favorite to verify it's preserved
-	err = lib.AddFavorite("test-schema", "Query")
-	is.NoErr(err)
-
 	// Set a URL pattern to verify it's preserved
 	err = lib.SetURLPattern("test-schema", "Query", "https://example.com/${field}")
 	is.NoErr(err)
@@ -501,8 +405,6 @@ func TestLibrary_UpdateContent(t *testing.T) {
 		// Verify other metadata was preserved
 		is.Equal(schema.Metadata.DisplayName, "Test Schema")
 		is.Equal(schema.Metadata.CreatedAt, originalCreatedAt)
-		is.Equal(len(schema.Metadata.Favorites), 1)
-		is.Equal(schema.Metadata.Favorites[0], "Query")
 		is.Equal(schema.Metadata.URLPatterns["Query"], "https://example.com/${field}")
 	})
 

@@ -85,9 +85,7 @@ func TestModel_TransitionFromLibselectToXplr(t *testing.T) {
 	msg := libselect.SchemaSelectedMsg{
 		SchemaID: "test-schema",
 		Schema:   parsedSchema,
-		Metadata: library.SchemaMetadata{
-			Favorites: []string{"Query", "Post"},
-		},
+		Metadata: library.SchemaMetadata{},
 	}
 
 	// Update with the selection message
@@ -100,7 +98,6 @@ func TestModel_TransitionFromLibselectToXplr(t *testing.T) {
 
 	// Verify xplr model was initialized with correct data
 	is.Equal(m.xplr.SchemaID, "test-schema")
-	is.Equal(len(m.xplr.Favorites), 2)
 	is.True(m.xplr.HasLibraryData)
 }
 

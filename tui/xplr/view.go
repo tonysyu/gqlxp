@@ -13,12 +13,8 @@ func (m Model) View() string {
 		m.keymap.PrevPanel,
 		m.keymap.ToggleGQLType,
 		m.keymap.ToggleOverlay,
+		m.keymap.Quit,
 	}
-	// Add library-specific keybindings if available
-	if m.HasLibraryData {
-		helpBindings = append(helpBindings, m.keymap.ToggleFavorite)
-	}
-	helpBindings = append(helpBindings, m.keymap.Quit)
 
 	help := m.help.ShortHelpView(helpBindings)
 

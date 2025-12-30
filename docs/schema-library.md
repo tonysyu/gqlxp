@@ -2,7 +2,7 @@
 
 ## Overview
 
-Schema library provides persistent storage for GraphQL schemas with automatic integration, file hash tracking, and metadata like favorites and URL patterns. Schemas are automatically saved to the library when loaded from files.
+Schema library provides persistent storage for GraphQL schemas with automatic integration, file hash tracking, and metadata like URL patterns. Schemas are automatically saved to the library when loaded from files.
 
 ## Storage Structure
 
@@ -28,7 +28,6 @@ All schema metadata is stored in `schemas/metadata.json` with schema-id as top-l
     "displayName": "GitHub GraphQL API",
     "sourceFile": "/path/to/original/github.graphqls",
     "fileHash": "a3f2c8b1...",
-    "favorites": ["Query", "Repository", "User"],
     "urlPatterns": {
       "Query": "https://docs.github.com/graphql/reference/queries#${field}",
       "Mutation": "https://docs.github.com/graphql/reference/mutations#${field}",
@@ -44,7 +43,6 @@ All schema metadata is stored in `schemas/metadata.json` with schema-id as top-l
 - `displayName`: Human-readable schema name
 - `sourceFile`: Absolute path to original file
 - `fileHash`: SHA-256 hash of schema content (for change detection)
-- `favorites`: List of favorited type names
 - `urlPatterns`: URL templates for documentation links
   - Type-specific patterns (e.g., "Query", "Mutation")
   - Wildcard pattern (`*`) as fallback
@@ -92,8 +90,6 @@ type Library interface {
     List() ([]SchemaInfo, error)
     Remove(id string) error
     UpdateMetadata(id string, metadata SchemaMetadata) error
-    AddFavorite(id, typeName string) error
-    RemoveFavorite(id, typeName string) error
     SetURLPattern(id, typePattern, urlPattern string) error
     FindByPath(absolutePath string) (*Schema, error)
     UpdateContent(id string, content []byte) error
@@ -130,12 +126,6 @@ All schemas are now library-backed with access to:
 - Filter/search by schema ID or display name
 - Enter to select and open schema
 - Delete key to remove schemas from library
-
-**Favorites** (Press `f`)
-- Mark types as favorites for quick identification
-- Favorited types show ★ indicator in type lists
-- Favorites persist across sessions in `metadata.json`
-- Toggle on/off by pressing `f` on selected type
 
 ## Automatic Library Integration
 

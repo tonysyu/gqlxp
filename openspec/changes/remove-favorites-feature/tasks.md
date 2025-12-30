@@ -50,8 +50,8 @@
 
 ## Validation
 
-- [ ] Code compiles without errors
-- [ ] All tests pass (`just test`)
-- [ ] TUI starts and functions normally
-- [ ] Library loads existing schemas without errors
-- [ ] No references to favorites remain in codebase (verify with grep)
+- [x] Code compiles without errors
+- [x] All tests pass (`just test`)
+- [x] TUI starts and functions normally
+- [x] Library loads existing schemas without errors
+- [x] No references to favorites remain in codebase (verify with grep)

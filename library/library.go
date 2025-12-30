@@ -32,12 +32,6 @@ type Library interface {
 	// UpdateMetadata updates the metadata for a schema.
 	UpdateMetadata(id string, metadata SchemaMetadata) error
 
-	// AddFavorite adds a type to the favorites list.
-	AddFavorite(id string, typeName string) error
-
-	// RemoveFavorite removes a type from the favorites list.
-	RemoveFavorite(id string, typeName string) error
-
 	// SetURLPattern sets a URL pattern for a type.
 	SetURLPattern(id string, typePattern string, urlPattern string) error
 
@@ -214,7 +208,6 @@ func (l *FileLibrary) Add(id string, displayName string, sourcePath string) erro
 		DisplayName: displayName,
 		SourceFile:  absPath,
 		FileHash:    fileHash,
-		Favorites:   []string{},
 		URLPatterns: make(map[string]string),
 		CreatedAt:   now,
 		UpdatedAt:   now,
@@ -260,7 +253,6 @@ func (l *FileLibrary) Get(id string) (*Schema, error) {
 		metadata = SchemaMetadata{
 			DisplayName: id,
 			SourceFile:  "",
-			Favorites:   []string{},
 			URLPatterns: make(map[string]string),
 			CreatedAt:   time.Time{},
 			UpdatedAt:   time.Time{},
@@ -379,42 +371,6 @@ func (l *FileLibrary) UpdateMetadata(id string, metadata SchemaMetadata) error {
 	allMetadata[id] = metadata
 
 	return saveAllMetadata(allMetadata)
-}
-
-// AddFavorite implements Library.AddFavorite.
-func (l *FileLibrary) AddFavorite(id string, typeName string) error {
-	schema, err := l.Get(id)
-	if err != nil {
-		return err
-	}
-
-	// Check if already a favorite
-	for _, fav := range schema.Metadata.Favorites {
-		if fav == typeName {
-			return nil // Already a favorite
-		}
-	}
-
-	schema.Metadata.Favorites = append(schema.Metadata.Favorites, typeName)
-	return l.UpdateMetadata(id, schema.Metadata)
-}
-
-// RemoveFavorite implements Library.RemoveFavorite.
-func (l *FileLibrary) RemoveFavorite(id string, typeName string) error {
-	schema, err := l.Get(id)
-	if err != nil {
-		return err
-	}
-
-	var newFavorites []string
-	for _, fav := range schema.Metadata.Favorites {
-		if fav != typeName {
-			newFavorites = append(newFavorites, fav)
-		}
-	}
-
-	schema.Metadata.Favorites = newFavorites
-	return l.UpdateMetadata(id, schema.Metadata)
 }
 
 // SetURLPattern implements Library.SetURLPattern.

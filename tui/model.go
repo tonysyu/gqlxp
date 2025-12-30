@@ -94,7 +94,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		schemaLoadedMsg := xplr.SchemaLoadedMsg{
 			Schema:         msg.Schema,
 			SchemaID:       msg.SchemaID,
-			Favorites:      msg.Metadata.Favorites,
 			HasLibraryData: true,
 		}
 		m.xplr, cmd = m.xplr.Update(schemaLoadedMsg)

@@ -3,7 +3,6 @@ package xplr
 import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/adapters"
@@ -11,18 +10,12 @@ import (
 	"github.com/tonysyu/gqlxp/tui/overlay"
 	"github.com/tonysyu/gqlxp/tui/xplr/components"
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
-	"slices"
 )
-
-type FavoriteToggledMsg struct {
-	Favorites []string
-}
 
 // SchemaLoadedMsg is sent when a schema is loaded or updated
 type SchemaLoadedMsg struct {
 	Schema         adapters.SchemaView
 	SchemaID       string
-	Favorites      []string
 	HasLibraryData bool
 }
 
@@ -33,7 +26,7 @@ type SelectionTarget struct {
 }
 
 type keymap = struct {
-	NextPanel, PrevPanel, Quit, ToggleGQLType, ReverseToggleGQLType, ToggleOverlay, ToggleFavorite key.Binding
+	NextPanel, PrevPanel, Quit, ToggleGQLType, ReverseToggleGQLType, ToggleOverlay key.Binding
 }
 
 // Model is the main schema explorer model
@@ -46,9 +39,8 @@ type Model struct {
 	Overlay overlay.Model
 
 	// Library integration (optional)
-	SchemaID       string   // Schema ID if loaded from library
-	Favorites      []string // List of favorited type names
-	HasLibraryData bool     // Whether this schema has library metadata
+	SchemaID       string // Schema ID if loaded from library
+	HasLibraryData bool   // Whether this schema has library metadata
 
 	width          int
 	height         int
@@ -92,10 +84,6 @@ func NewEmpty() Model {
 				key.WithKeys(" "),
 				key.WithHelp("space", "overlay"),
 			),
-			ToggleFavorite: key.NewBinding(
-				key.WithKeys("f"),
-				key.WithHelp("f", "favorite"),
-			),
 		},
 	}
 
@@ -107,7 +95,6 @@ func NewEmpty() Model {
 		m.keymap.ToggleGQLType,
 		m.keymap.ReverseToggleGQLType,
 		m.keymap.ToggleOverlay,
-		m.keymap.ToggleFavorite,
 	}
 
 	// Don't load panels until schema is provided
@@ -127,7 +114,6 @@ func NewFromSchemaLibrary(schema adapters.SchemaView, schemaID string, metadata 
 	m := NewEmpty()
 	m.schema = schema
 	m.SchemaID = schemaID
-	m.Favorites = metadata.Favorites
 	m.HasLibraryData = true
 	m.resetAndLoadMainPanel()
 	return m
@@ -176,7 +162,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		// Update schema and related properties
 		m.schema = msg.Schema
 		m.SchemaID = msg.SchemaID
-		m.Favorites = msg.Favorites
 		m.HasLibraryData = msg.HasLibraryData
 		m.resetAndLoadMainPanel()
 		return m, nil
@@ -186,10 +171,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, m.keymap.ToggleOverlay):
 			m.openOverlayForSelectedItem()
-		case key.Matches(msg, m.keymap.ToggleFavorite):
-			if m.HasLibraryData {
-				return m, m.toggleFavoriteForSelectedItem()
-			}
 		case key.Matches(msg, m.keymap.NextPanel):
 			// Move forward in stack if there's at least one more panel ahead
 			if m.nav.NavigateForward() {
@@ -216,10 +197,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	case components.OpenPanelMsg:
 		m.handleOpenPanel(msg.Panel)
-	case FavoriteToggledMsg:
-		m.Favorites = msg.Favorites
-		// Refresh panels in place instead of resetting to preserve navigation state
-		m.refreshPanelsWithFavorites()
 	case tea.WindowSizeMsg:
 		m.height = msg.Height
 		m.width = msg.Width
@@ -365,12 +342,6 @@ func (m *Model) loadMainPanel() {
 		title = "Directive Types"
 	}
 
-	// Wrap items with favorites indicator if library data is available
-	if m.HasLibraryData {
-		// For top-level panels, we check RefName (field names); otherwise TypeName
-		items = wrapItemsWithFavorites(items, m.Favorites, true)
-	}
-
 	m.nav.SetCurrentPanel(components.NewPanel(items, title))
 	m.updatePanelFocusStates()
 
@@ -378,96 +349,6 @@ func (m *Model) loadMainPanel() {
 	if len(items) > 0 {
 		if newPanel, ok := items[0].OpenPanel(); ok {
 			m.handleOpenPanel(newPanel)
-		}
-	}
-}
-
-// toggleFavoriteForSelectedItem toggles favorite status for selected item
-// Only top-level panels can favorite items
-func (m *Model) toggleFavoriteForSelectedItem() tea.Cmd {
-	if m.nav.CurrentPanel() == nil {
-		return nil
-	}
-
-	// Only allow favoriting at the top level
-	if !m.nav.IsAtTopLevelPanel() {
-		return nil
-	}
-
-	panel := m.nav.CurrentPanel()
-	if selectedItem := panel.SelectedItem(); selectedItem != nil {
-		if listItem, ok := selectedItem.(components.ListItem); ok {
-			// For top-level panels, use RefName() to store field names
-			favoriteName := listItem.RefName()
-			return m.toggleFavorite(favoriteName)
-		}
-	}
-	return nil
-}
-
-// refreshPanelsWithFavorites updates all panels in the stack to reflect current favorites
-// without resetting navigation state. This preserves panel stack, selections, and scroll positions.
-// Only the top-level panel (position 0) can have favorites.
-func (m *Model) refreshPanelsWithFavorites() {
-	for panelIndex, panel := range m.nav.Stack().All() {
-		if panel == nil {
-			continue
-		}
-
-		items := panel.Items()
-		if len(items) == 0 {
-			continue
-		}
-
-		// Unwrap items to get original items
-		unwrappedItems := make([]components.ListItem, len(items))
-		for i, item := range items {
-			if listItem, ok := item.(components.ListItem); ok {
-				unwrappedItems[i] = unwrapFavoritableItem(listItem)
-			}
-		}
-
-		// Only wrap top-level panel (position 0) with favorites
-		var refreshedItems []components.ListItem
-		isTopLevel := panelIndex == 0
-		if isTopLevel {
-			refreshedItems = wrapItemsWithFavorites(unwrappedItems, m.Favorites, true)
-		} else {
-			refreshedItems = unwrappedItems
-		}
-
-		// Convert to []list.Item for SetItems
-		listItems := make([]list.Item, len(refreshedItems))
-		for i, item := range refreshedItems {
-			listItems[i] = item
-		}
-
-		panel.SetItems(listItems)
-	}
-}
-
-// toggleFavorite toggles favorite status and saves to library
-func (m *Model) toggleFavorite(typeName string) tea.Cmd {
-	return func() tea.Msg {
-		lib := library.NewLibrary()
-
-		if slices.Contains(m.Favorites, typeName) {
-			_ = lib.RemoveFavorite(m.SchemaID, typeName)
-		} else {
-			_ = lib.AddFavorite(m.SchemaID, typeName)
-		}
-
-		// Reload favorites from library to get fresh state
-		schema, err := lib.Get(m.SchemaID)
-		if err != nil {
-			// On error, return current favorites unchanged
-			return FavoriteToggledMsg{
-				Favorites: m.Favorites,
-			}
-		}
-
-		return FavoriteToggledMsg{
-			Favorites: schema.Metadata.Favorites,
 		}
 	}
 }

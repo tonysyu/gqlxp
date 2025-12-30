@@ -7,7 +7,6 @@ type SchemaMetadata struct {
 	DisplayName string            `json:"displayName"`
 	SourceFile  string            `json:"sourceFile"`
 	FileHash    string            `json:"fileHash"`
-	Favorites   []string          `json:"favorites"`
 	URLPatterns map[string]string `json:"urlPatterns"`
 	CreatedAt   time.Time         `json:"createdAt"`
 	UpdatedAt   time.Time         `json:"updatedAt"`
