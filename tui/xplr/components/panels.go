@@ -213,6 +213,21 @@ func (p *Panel) SetItems(items []list.Item) {
 	}
 }
 
+// SelectItemByName selects an item by its RefName
+// Returns true if found and selected, false otherwise
+func (p *Panel) SelectItemByName(name string) bool {
+	for i, item := range p.ListModel.Items() {
+		if listItem, ok := item.(ListItem); ok {
+			if listItem.RefName() == name {
+				p.ListModel.Select(i)
+				p.lastSelectedIndex = i
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // View renders the panel
 func (p *Panel) View() string {
 	const (

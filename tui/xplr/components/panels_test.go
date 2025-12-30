@@ -46,6 +46,36 @@ func TestPanelBasic(t *testing.T) {
 	// SetSize should be called without error
 }
 
+func TestPanel_SelectItemByName(t *testing.T) {
+	is := is.New(t)
+
+	// Create test items with different RefNames
+	items := []ListItem{
+		NewSimpleItem("User", WithTypeName("User")),
+		NewSimpleItem("Post", WithTypeName("Post")),
+		NewSimpleItem("Comment", WithTypeName("Comment")),
+	}
+
+	panel := NewPanel(items, "Test Panel")
+
+	// Test selecting existing item
+	found := panel.SelectItemByName("Post")
+	is.True(found)
+	is.Equal(panel.ListModel.Index(), 1)
+	is.Equal(panel.lastSelectedIndex, 1)
+
+	// Test selecting another item
+	found = panel.SelectItemByName("User")
+	is.True(found)
+	is.Equal(panel.ListModel.Index(), 0)
+	is.Equal(panel.lastSelectedIndex, 0)
+
+	// Test selecting non-existent item
+	found = panel.SelectItemByName("NonExistent")
+	is.True(!found) // Should return false
+	is.Equal(panel.ListModel.Index(), 0) // Should remain at previous selection
+}
+
 func TestPanelWithEmptyItems(t *testing.T) {
 	is := is.New(t)
 

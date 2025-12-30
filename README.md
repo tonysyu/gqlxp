@@ -41,6 +41,12 @@ Then open a schema file to explore:
 $ gqlxp examples/github.graphqls
 # Or explicitly use the app command:
 $ gqlxp app examples/github.graphqls
+
+# Jump directly to a specific type:
+$ gqlxp app examples/github.graphqls --select User
+
+# Jump directly to a specific field within a type:
+$ gqlxp app examples/github.graphqls --select Query.user
 ```
 
 ### Schema library

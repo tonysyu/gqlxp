@@ -84,9 +84,9 @@
 **Validation**: Review README.md changes
 
 ## Validation
-- [ ] All unit tests pass (`just test`)
-- [ ] Acceptance tests cover --select scenarios
-- [ ] `gqlxp app --help` shows --select flag
-- [ ] Manual test: `gqlxp app examples/github.graphqls --select User` selects User
-- [ ] Manual test: `gqlxp app examples/github.graphqls --select Query.user` selects field
-- [ ] Invalid selections gracefully fallback without errors
+- [x] All unit tests pass (`just test`)
+- [x] Acceptance tests cover --select scenarios
+- [x] `gqlxp app --help` shows --select flag
+- [x] Manual test: `gqlxp app examples/github.graphqls --select User` selects User
+- [x] Manual test: `gqlxp app examples/github.graphqls --select Query.user` selects field
+- [x] Invalid selections gracefully fallback without errors

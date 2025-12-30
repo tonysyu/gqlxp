@@ -91,6 +91,17 @@ func WithoutOverlayBorders() Option {
 	}
 }
 
+// WithSelection applies a selection target to the model
+func WithSelection(typeName, fieldName string) Option {
+	return func(h *Harness) {
+		target := xplr.SelectionTarget{
+			TypeName:  typeName,
+			FieldName: fieldName,
+		}
+		h.explorer.model.ApplySelection(target)
+	}
+}
+
 // New creates a new test harness with the given options
 // If no schema is provided, a default test schema is used
 func New(t *testing.T, schema string, opts ...Option) *Harness {

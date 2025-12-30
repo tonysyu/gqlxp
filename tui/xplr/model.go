@@ -26,6 +26,12 @@ type SchemaLoadedMsg struct {
 	HasLibraryData bool
 }
 
+// SelectionTarget specifies a type and optional field to pre-select in the TUI
+type SelectionTarget struct {
+	TypeName  string
+	FieldName string
+}
+
 type keymap = struct {
 	NextPanel, PrevPanel, Quit, ToggleGQLType, ReverseToggleGQLType, ToggleOverlay, ToggleFavorite key.Binding
 }
@@ -462,6 +468,75 @@ func (m *Model) toggleFavorite(typeName string) tea.Cmd {
 
 		return FavoriteToggledMsg{
 			Favorites: schema.Metadata.Favorites,
+		}
+	}
+}
+
+// ApplySelection applies a selection target to the model
+// This navigates to the specified type category and selects the item
+func (m *Model) ApplySelection(target SelectionTarget) {
+	if target.TypeName == "" {
+		return
+	}
+
+	// Find which GQL type category contains the target type
+	gqlType, found := m.schema.FindTypeCategory(target.TypeName)
+	if !found {
+		return
+	}
+
+	// Switch to that type category
+	m.nav.SwitchType(gqlType)
+	m.resetAndLoadMainPanel()
+
+	currentPanel := m.nav.CurrentPanel()
+	if currentPanel == nil {
+		return
+	}
+
+	// For Query and Mutation types, the fields are shown directly in the first panel
+	// So if target.TypeName is "Query" or "Mutation", we skip selecting it and go straight to the field
+	if gqlType == navigation.QueryType || gqlType == navigation.MutationType {
+		if target.FieldName != "" {
+			// Select the field directly in the current panel
+			if !currentPanel.SelectItemByName(target.FieldName) {
+				return
+			}
+			// Navigate forward to show the field's details
+			if openCmd := currentPanel.OpenSelectedItem(); openCmd != nil {
+				if msg, ok := openCmd().(components.OpenPanelMsg); ok {
+					m.handleOpenPanel(msg.Panel)
+					if m.nav.NavigateForward() {
+						m.updatePanelFocusStates()
+					}
+				}
+			}
+		}
+		return
+	}
+
+	// For other types (Object, Input, Enum, etc.), select the type in the current panel
+	if !currentPanel.SelectItemByName(target.TypeName) {
+		return
+	}
+
+	// If a field name is specified, navigate forward and select the field
+	if target.FieldName != "" {
+		// Open child panel for the selected item
+		if openCmd := currentPanel.OpenSelectedItem(); openCmd != nil {
+			// Execute the command to populate the next panel
+			if msg, ok := openCmd().(components.OpenPanelMsg); ok {
+				// Add the new panel to the stack first
+				m.handleOpenPanel(msg.Panel)
+				// Then navigate forward (this adds breadcrumb from current panel's selected item)
+				if m.nav.NavigateForward() {
+					m.updatePanelFocusStates()
+					// Select the field in the newly opened panel (now at current position)
+					if currentPanel := m.nav.CurrentPanel(); currentPanel != nil {
+						currentPanel.SelectItemByName(target.FieldName)
+					}
+				}
+			}
 		}
 	}
 }

@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui"
@@ -31,6 +32,11 @@ Examples:
 				Usage:   "Enable debug logging to `FILE`",
 				Sources: cli.EnvVars("GQLXP_LOGFILE"),
 			},
+			&cli.StringFlag{
+				Name:    "select",
+				Aliases: []string{"s"},
+				Usage:   "Pre-select TYPE or TYPE.FIELD in TUI",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			return executeTUICommand(ctx, cmd)
@@ -50,7 +56,8 @@ func executeTUICommand(ctx context.Context, cmd *cli.Command) error {
 
 	// Load schema from file
 	schemaFile := cmd.Args().First()
-	return loadAndStartFromFile(schemaFile)
+	selectTarget := cmd.String("select")
+	return loadAndStartFromFile(schemaFile, selectTarget)
 }
 
 func openLibrarySelector() error {
@@ -71,7 +78,7 @@ func openLibrarySelector() error {
 	return nil
 }
 
-func loadAndStartFromFile(schemaFile string) error {
+func loadAndStartFromFile(schemaFile, selectTarget string) error {
 	// Resolve schema source through library (automatic integration)
 	schemaID, content, err := resolveSchemaSource(schemaFile)
 	if err != nil {
@@ -92,8 +99,36 @@ func loadAndStartFromFile(schemaFile string) error {
 	}
 
 	// Start with library data
-	if _, err := tui.StartWithLibraryData(schema, schemaID, libSchema.Metadata); err != nil {
-		return fmt.Errorf("error starting tui: %w", err)
+	if selectTarget != "" {
+		// Parse selection target and start with selection
+		typeName, fieldName := parseSelectionTarget(selectTarget)
+		target := tui.SelectionTarget{
+			TypeName:  typeName,
+			FieldName: fieldName,
+		}
+		if _, err := tui.StartWithSelection(schema, schemaID, libSchema.Metadata, target); err != nil {
+			return fmt.Errorf("error starting tui: %w", err)
+		}
+	} else {
+		// Start normally without selection
+		if _, err := tui.StartWithLibraryData(schema, schemaID, libSchema.Metadata); err != nil {
+			return fmt.Errorf("error starting tui: %w", err)
+		}
 	}
 	return nil
+}
+
+// parseSelectionTarget parses a selection target string into type and field names.
+// Format: "TypeName" or "TypeName.fieldName"
+// Returns typeName and fieldName (empty string if no field specified).
+func parseSelectionTarget(target string) (typeName, fieldName string) {
+	if target == "" {
+		return "", ""
+	}
+	parts := strings.SplitN(target, ".", 2)
+	typeName = parts[0]
+	if len(parts) > 1 {
+		fieldName = parts[1]
+	}
+	return typeName, fieldName
 }
