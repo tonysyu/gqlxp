@@ -38,42 +38,11 @@ The system SHALL store GraphQL schema files in the config directory with a uniqu
 - **THEN** background indexing is triggered to create a search index for the schema
 
 ### Requirement: Schema Metadata Persistence
-The system SHALL store schema metadata in a single JSON file (`schemas/metadata.json`) with schema-id as top-level keys, supporting display names, favorites, URL patterns, **file paths, and file hashes**.
-
-#### Scenario: Create metadata for new schema
-- **WHEN** a schema is added to the library
-- **THEN** an entry is added to `schemas/metadata.json` with the schema-id as key, **absolute source file path, SHA-256 hash of content**, and default metadata values
+The system SHALL store schema metadata in a single JSON file (`schemas/metadata.json`) with schema-id as top-level keys, supporting display names, ~~favorites,~~ URL patterns, **file paths, and file hashes**.
 
 #### Scenario: Update metadata
-- **WHEN** metadata is modified (display name, favorites, URL patterns)
+- **WHEN** metadata is modified (display name, ~~favorites,~~ URL patterns)
 - **THEN** the `schemas/metadata.json` file is atomically updated with the new values **and UpdatedAt timestamp is set to current time**
-
-#### Scenario: Load metadata
-- **WHEN** a schema is retrieved from the library
-- **THEN** the associated metadata is loaded from `schemas/metadata.json` using the schema-id as key **including file path and hash**
-
-#### Scenario: Query by file path
-- **WHEN** searching for an existing schema by source file path
-- **THEN** the library returns matching schema ID and metadata if an absolute path match exists
-
-#### Scenario: Query by file hash
-- **WHEN** searching for an existing schema by content hash
-- **THEN** the library returns matching schema ID and metadata if a hash match exists
-
-### Requirement: Favorite Types Management
-The system SHALL support marking type names as favorites for quick access within each schema.
-
-#### Scenario: Add favorite type
-- **WHEN** a user marks a type as favorite
-- **THEN** the type name is added to the schema's favorites list in metadata
-
-#### Scenario: Remove favorite type
-- **WHEN** a user unmarks a favorite type
-- **THEN** the type name is removed from the schema's favorites list
-
-#### Scenario: List favorites
-- **WHEN** a user requests the favorites for a schema
-- **THEN** all favorited type names are returned
 
 ### Requirement: URL Pattern Configuration
 The system SHALL support configurable URL patterns for opening web documentation of types and fields.
@@ -199,25 +168,9 @@ The system SHALL prompt users for required information when adding schemas to th
 ### Requirement: Schema Update Detection
 The system SHALL detect when schema files have changed, prompt for user action, and trigger re-indexing when content is updated.
 
-#### Scenario: Prompt on hash mismatch
-- **WHEN** a schema file path matches a library entry but the hash differs
-- **THEN** the user is prompted to either update the library or load the existing library version
-
-#### Scenario: Update library on user confirmation
-- **WHEN** a user chooses to update the library for a changed file
-- **THEN** the schema content and hash are updated in the library and the TUI is started with the updated schema
-
-#### Scenario: Load existing on user decline
-- **WHEN** a user chooses to load the existing library version for a changed file
-- **THEN** the schema is loaded from the library without updating and the TUI is started
-
 #### Scenario: Preserve metadata on update
 - **WHEN** a schema is updated due to file changes
-- **THEN** existing metadata (favorites, URL patterns, display name) is preserved
-
-#### Scenario: Trigger re-indexing on update
-- **WHEN** a schema's content is updated in the library
-- **THEN** background re-indexing is triggered to update the search index with new content
+- **THEN** existing metadata (~~favorites,~~ URL patterns, display name) is preserved
 
 ### Requirement: Library Path Lookup
 The system SHALL support efficient lookup of schemas by source file path.
