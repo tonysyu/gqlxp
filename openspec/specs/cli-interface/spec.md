@@ -30,7 +30,7 @@ The system SHALL maintain backward compatibility by continuing to launch the TUI
 - **THEN** the TUI is opened with the specified schema (unchanged from current behavior)
 
 #### Scenario: Preserve existing subcommands
-- **WHEN** user runs `gqlxp search`, `gqlxp show`, or `gqlxp config`
+- **WHEN** user runs `gqlxp search` or `gqlxp show`
 - **THEN** the respective subcommand is executed (unchanged from current behavior)
 
 ### Requirement: Shared Implementation
@@ -43,4 +43,11 @@ The system SHALL implement the app subcommand and root default action using shar
 #### Scenario: Flag consistency
 - **WHEN** flags are added to the root command
 - **THEN** those flags SHALL be available to the app subcommand
+
+### Requirement: Library Command
+The system SHALL provide a `library` command that consolidates schema library management functionality.
+
+#### Scenario: Library command help
+- **WHEN** user runs `gqlxp library --help`
+- **THEN** help text is displayed showing available subcommands
 

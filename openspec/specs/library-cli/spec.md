@@ -1,10 +1,8 @@
-# library-cli Capability
+# library-cli Specification
 
 ## Purpose
-Define the CLI interface for managing the schema library, providing commands for listing, adding, removing, configuring defaults, and reindexing schemas.
-
-## ADDED Requirements
-
+TBD - created by archiving change add-library-command. Update Purpose after archive.
+## Requirements
 ### Requirement: Library Command Structure
 The system SHALL provide a `library` command with subcommands for all library management operations.
 
@@ -111,28 +109,3 @@ The system SHALL provide a `library reindex` command that rebuilds search indexe
 - **WHEN** user runs `gqlxp library reindex nonexistent`
 - **THEN** an error "Schema 'nonexistent' not found in library" is displayed
 
-## MODIFIED Requirements
-
-### Requirement: Search Command Reindex Flag
-The `--reindex` flag SHALL be removed from the `search` command.
-
-#### Scenario: Search without reindex flag
-- **WHEN** user runs `gqlxp search github user`
-- **THEN** the search executes using the existing index, or creates one if it doesn't exist
-
-#### Scenario: Reindex before search
-- **WHEN** user needs to rebuild index before searching
-- **THEN** user runs `gqlxp library reindex github` followed by `gqlxp search github user`
-
-## REMOVED Requirements
-
-### Requirement: Config Command
-The `config` command and its `default-schema` subcommand SHALL be removed.
-
-#### Scenario: Config command removed
-- **WHEN** user runs `gqlxp config`
-- **THEN** an error message suggests using `gqlxp library` instead
-
-#### Scenario: Migration message
-- **WHEN** user runs `gqlxp config default-schema`
-- **THEN** an error message "The 'config' command has been replaced. Use 'gqlxp library default' instead." is displayed
