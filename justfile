@@ -43,6 +43,7 @@ lint-fix:
     go fmt ./...
     go mod tidy
     go vet ./...
+    go tool golangci-lint run
 
 # Run tests tests, lint, and fix
 [group('code')]

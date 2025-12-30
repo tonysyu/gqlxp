@@ -214,12 +214,12 @@ func TestPanelFilterExitRefresh(t *testing.T) {
 	is.Equal(panel.lastSelectedIndex, 1)
 
 	// Start filtering by pressing "/"
-	_, cmd = panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
+	_, _ = panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
 	// wasFiltering should now be true (we're in filter mode)
 	is.True(panel.wasFiltering)
 
 	// Type a filter - the cursor might move during filtering
-	_, cmd = panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'b'}})
+	_, _ = panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'b'}})
 	is.True(panel.wasFiltering) // Still filtering
 
 	// Accept the filter by pressing Enter

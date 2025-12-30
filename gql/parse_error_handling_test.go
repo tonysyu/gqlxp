@@ -42,7 +42,7 @@ func TestMainWithUnreadableSchemaFile(t *testing.T) {
 	is.True(err == nil)
 
 	// Restore permissions after test for cleanup
-	defer os.Chmod(unreadableFile, 0644)
+	defer func() { _ = os.Chmod(unreadableFile, 0644) }()
 
 	// Try to read the unreadable file
 	_, err = os.ReadFile(unreadableFile)

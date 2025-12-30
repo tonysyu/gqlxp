@@ -410,7 +410,7 @@ func TestParseLargeSchema(t *testing.T) {
 	for i := range 20 {
 		schemaBuilder = append(schemaBuilder, fmt.Sprintf("type Object%d {", i))
 		schemaBuilder = append(schemaBuilder, "  id: ID!")
-		schemaBuilder = append(schemaBuilder, fmt.Sprintf("  name: String"))
+		schemaBuilder = append(schemaBuilder, "  name: String")
 		schemaBuilder = append(schemaBuilder, "}")
 	}
 

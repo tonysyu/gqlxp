@@ -21,6 +21,27 @@ func loadSchemaFromFile(path string) ([]byte, error) {
 	return content, nil
 }
 
+// resolveSchemaArgument resolves a schema argument to a schema ID.
+// The argument can be either:
+// 1. A schema ID that exists in the library
+// 2. A file path (will be added to library if needed)
+func resolveSchemaArgument(arg string) (string, error) {
+	lib := library.NewLibrary()
+
+	// First check if it's an existing schema ID
+	if _, err := lib.Get(arg); err == nil {
+		return arg, nil
+	}
+
+	// Not a schema ID - try as file path
+	schemaID, _, err := resolveSchemaSource(arg)
+	if err != nil {
+		return "", fmt.Errorf("invalid schema argument '%s': %w", arg, err)
+	}
+
+	return schemaID, nil
+}
+
 func resolveSchemaSource(filePath string) (schemaID string, content []byte, err error) {
 	lib := library.NewLibrary()
 
@@ -457,10 +478,8 @@ func reindexSchema(lib library.Library, indexer search.Indexer, schemaID string)
 		return fmt.Errorf("failed to parse schema: %w", err)
 	}
 
-	// Remove old index
-	if err := indexer.Remove(schemaID); err != nil {
-		// Ignore errors - index might not exist
-	}
+	// Remove old index (ignore errors - index might not exist)
+	_ = indexer.Remove(schemaID)
 
 	// Create new index
 	if err := indexer.Index(schemaID, &parsedSchema); err != nil {

@@ -119,7 +119,7 @@ func TestBreadcrumbs(t *testing.T) {
 		model.Update(keyNextPanel)
 		// Previous test puts us on the Mutation tab, and the first mutation is createPost
 		is.Equal(model.ViewBreadcrumbs(), "mutation1")
-		model.Update(keyNextType)
+		model.Update(keyPrevType)
 		is.Equal(model.ViewBreadcrumbs(), "")
 	})
 }
