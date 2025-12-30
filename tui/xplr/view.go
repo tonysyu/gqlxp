@@ -19,8 +19,8 @@ func (m Model) View() string {
 	help := m.help.ShortHelpView(helpBindings)
 
 	// Show overlay if active, and return immediately
-	if m.Overlay.IsActive() {
-		return m.Overlay.View()
+	if m.Overlay().IsActive() {
+		return m.Overlay().View()
 	}
 
 	var views []string

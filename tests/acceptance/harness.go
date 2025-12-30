@@ -87,7 +87,7 @@ func WithWindowSize(width, height int) Option {
 // This allows tests to focus on content verification without dealing with box-drawing characters
 func WithoutOverlayBorders() Option {
 	return func(h *Harness) {
-		h.explorer.model.Overlay.Styles.Overlay = lipgloss.NewStyle()
+		h.explorer.model.SetOverlayStyle(lipgloss.NewStyle())
 	}
 }
 
@@ -289,7 +289,7 @@ func (a *Assert) BreadcrumbsEquals(expected string) {
 // OverlayVisible checks if the overlay is currently visible
 func (a *Assert) OverlayVisible() {
 	a.t.Helper()
-	if !a.explorer.model.Overlay.IsActive() {
+	if !a.explorer.model.Overlay().IsActive() {
 		a.t.Error("overlay is not visible")
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/config"
@@ -36,7 +37,7 @@ type Model struct {
 	// Navigation manager coordinates panel stack, breadcrumbs, and type selection
 	nav *navigation.NavigationManager
 	// Overlay for displaying ListItem.Details()
-	Overlay overlay.Model
+	overlay overlay.Model
 
 	// Library integration (optional)
 	SchemaID       string // Schema ID if loaded from library
@@ -57,7 +58,7 @@ func NewEmpty() Model {
 	m := Model{
 		help:    help.New(),
 		Styles:  styles,
-		Overlay: overlay.New(styles),
+		overlay: overlay.New(styles),
 		nav:     navigation.NewNavigationManager(config.VisiblePanelCount),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
@@ -141,6 +142,16 @@ func (m *Model) SwitchToType(typeName string) {
 	m.resetAndLoadMainPanel()
 }
 
+// Overlay returns the overlay model
+func (m Model) Overlay() overlay.Model {
+	return m.overlay
+}
+
+// SetOverlayStyle sets the overlay style (primarily for testing)
+func (m *Model) SetOverlayStyle(style lipgloss.Style) {
+	m.overlay.Styles.Overlay = style
+}
+
 func (m Model) Init() tea.Cmd {
 	return nil
 }
@@ -149,7 +160,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	// Try overlay first - it intercepts messages when active
 	var overlayCmd tea.Cmd
 	var intercepted bool
-	m.Overlay, overlayCmd, intercepted = m.Overlay.Update(msg)
+	m.overlay, overlayCmd, intercepted = m.overlay.Update(msg)
 	if intercepted {
 		return m, overlayCmd
 	}
@@ -232,7 +243,7 @@ func (m *Model) openOverlayForSelectedItem() {
 		if listItem, ok := selectedItem.(components.ListItem); ok {
 			// Some items don't have details, so these should now open the overlay
 			if content := listItem.Details(); content != "" {
-				m.Overlay.Show(content, m.width, m.height)
+				m.overlay.Show(content, m.width, m.height)
 			}
 		}
 	}
