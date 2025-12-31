@@ -18,6 +18,16 @@
 - Use `package foo` (white-box) only when testing private implementation
 - Use `"github.com/matryer/is"` instead of `t.Error`/`t.Errorf`
 
+### Test Readability
+
+**Write tests that clearly communicate intent and prioritize readability.**
+
+- **Use test tables**: Group similar test cases with clear labels
+- **Keep setup minimal**: Extract complex setup to focused helper functions
+- **Write clear assertions**: Use `is` library with descriptive failure messages
+- **Follow arrange-act-assert**: Separate setup, execution, and verification with blank lines
+tests, while also making critical setup and verification explicit
+
 ### Acceptance Tests
 
 **Use acceptance tests for end-to-end user workflows.** Located in `tests/acceptance/`, these tests verify complete interactions through the TUI using the test harness.
