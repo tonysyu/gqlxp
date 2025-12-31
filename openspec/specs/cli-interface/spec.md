@@ -1,48 +1,58 @@
 # cli-interface Specification
 
 ## Purpose
-TBD - created by archiving change add-app-subcommand. Update Purpose after archive.
+Defines the command-line interface for gqlxp, using explicit flags for schema selection instead of positional arguments.
+
 ## Requirements
 ### Requirement: App Subcommand
-The system SHALL provide an explicit `app` subcommand that launches the TUI with identical behavior to the root command default action.
+The system SHALL provide an explicit `app` subcommand that launches the TUI using schema selection via flags.
 
-#### Scenario: Launch app without arguments
-- **WHEN** user runs `gqlxp app` with no arguments
-- **THEN** the library selector TUI is opened (same as `gqlxp` with no arguments)
+#### Scenario: Launch app with schema flag
+- **WHEN** user runs `gqlxp app --schema <schema-id>` or `gqlxp app -s <schema-id>`
+- **THEN** the TUI is opened with the specified schema
 
-#### Scenario: Launch app with schema file
-- **WHEN** user runs `gqlxp app <schema-file>`
-- **THEN** the TUI is opened with the specified schema (same as `gqlxp <schema-file>`)
+#### Scenario: Launch app without schema flag
+- **WHEN** user runs `gqlxp app` with no schema flag
+- **THEN** the library selector TUI is opened
 
 #### Scenario: App subcommand accepts log-file flag
 - **WHEN** user runs `gqlxp app --log-file debug.log`
 - **THEN** debug logging is enabled to the specified file
 
-### Requirement: Root Command Default Behavior
-The system SHALL maintain backward compatibility by continuing to launch the TUI when no subcommand is specified.
+### Requirement: Search Command Schema Selection
+The system SHALL use `--schema` flag for explicit schema selection, defaulting to config default when omitted.
 
-#### Scenario: Root command without arguments
-- **WHEN** user runs `gqlxp` with no arguments
-- **THEN** the library selector TUI is opened (unchanged from current behavior)
+#### Scenario: Search with schema flag
+- **WHEN** user runs `gqlxp search --schema <schema-id> <query>` or `gqlxp search -s <schema-id> <query>`
+- **THEN** the search executes against the specified schema
 
-#### Scenario: Root command with schema file
-- **WHEN** user runs `gqlxp <schema-file>`
-- **THEN** the TUI is opened with the specified schema (unchanged from current behavior)
+#### Scenario: Search without schema flag
+- **WHEN** user runs `gqlxp search <query>` without schema flag
+- **THEN** the search executes against the default schema from config
+- **AND** if no default is set, an error is returned
 
-#### Scenario: Preserve existing subcommands
-- **WHEN** user runs `gqlxp search` or `gqlxp show`
-- **THEN** the respective subcommand is executed (unchanged from current behavior)
+### Requirement: Show Command Schema Selection
+The system SHALL use `--schema` flag for explicit schema selection, defaulting to config default when omitted.
 
-### Requirement: Shared Implementation
-The system SHALL implement the app subcommand and root default action using shared logic to ensure consistent behavior.
+#### Scenario: Show with schema flag
+- **WHEN** user runs `gqlxp show --schema <schema-id> <type-name>` or `gqlxp show -s <schema-id> <type-name>`
+- **THEN** the type definition is displayed from the specified schema
 
-#### Scenario: Code reuse
-- **WHEN** the app subcommand or root default action needs to launch the TUI
-- **THEN** both SHALL use the same underlying function to ensure identical behavior
+#### Scenario: Show without schema flag
+- **WHEN** user runs `gqlxp show <type-name>` without schema flag
+- **THEN** the type definition is displayed from the default schema from config
+- **AND** if no default is set, an error is returned
 
-#### Scenario: Flag consistency
-- **WHEN** flags are added to the root command
-- **THEN** those flags SHALL be available to the app subcommand
+### Requirement: Schema Flag Accepts Paths and IDs
+The system SHALL accept both file paths and schema IDs for the `--schema` flag.
+
+#### Scenario: Schema flag with library ID
+- **WHEN** user runs `gqlxp search --schema github-api <query>`
+- **THEN** the command uses the schema with ID "github-api" from the library
+
+#### Scenario: Schema flag with file path
+- **WHEN** user runs `gqlxp search --schema examples/github.graphqls <query>`
+- **THEN** the command loads the schema from the file path (and prompts to add to library if not present)
 
 ### Requirement: Library Command
 The system SHALL provide a `library` command that consolidates schema library management functionality.
