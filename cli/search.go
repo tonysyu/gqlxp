@@ -9,8 +9,6 @@ import (
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/search"
-	"github.com/tonysyu/gqlxp/tui"
-	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/utils/terminal"
 	"github.com/urfave/cli/v3"
 )
@@ -109,11 +107,6 @@ Examples:
 				return nil
 			}
 
-			// If single result, open TUI directly at that location
-			if len(results) == 1 {
-				return openSchemaAtPath(schemaID, content, results[0].Path)
-			}
-
 			var maxLimitInfo string
 			if len(results) == limit {
 				maxLimitInfo = fmt.Sprintf(" (increase search %s for more)", codeStyle.Render("--limit N"))
@@ -121,6 +114,7 @@ Examples:
 			// Multiple results - show list and let user choose
 			var output strings.Builder
 			fmt.Fprintf(&output, "Found %d results for %q%s:\n\n", len(results), query, maxLimitInfo)
+
 			for i, result := range results {
 				// Highlight the type in pink
 				fmt.Fprintf(&output, "%d. %s %s\n", i+1, headerStyle.Render(result.Path), "("+result.Type+")")
@@ -168,21 +162,4 @@ func formatShowCommand(schemaID string, result search.SearchResult) string {
 
 	// Always include the schema ID in the command
 	return fmt.Sprintf("gqlxp show %s %s", schemaID, showPath)
-}
-
-// openSchemaAtPath opens the TUI at a specific path in the schema
-func openSchemaAtPath(schemaID string, content []byte, path string) error {
-	schema, err := adapters.ParseSchema(content)
-	if err != nil {
-		return fmt.Errorf("failed to parse schema: %w", err)
-	}
-
-	lib := library.NewLibrary()
-	libSchema, err := lib.Get(schemaID)
-	if err != nil {
-		return fmt.Errorf("failed to get schema metadata: %w", err)
-	}
-
-	_, err = tui.StartWithLibraryData(schema, schemaID, libSchema.Metadata)
-	return err
 }

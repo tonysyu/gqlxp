@@ -154,7 +154,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Input Objects
 	for name, input := range schema.Input {
 		docs = append(docs, document{
-			Type:        "InputObject",
+			Type:        "Input",
 			Name:        name,
 			Description: input.Description(),
 			Path:        name,
