@@ -14,18 +14,23 @@ import (
 // appCommand creates the app subcommand for launching the TUI.
 func appCommand() *cli.Command {
 	return &cli.Command{
-		Name:      "app",
-		Usage:     "Launch the GraphQL schema explorer TUI",
-		ArgsUsage: "[schema-file]",
+		Name:  "app",
+		Usage: "Launch the GraphQL schema explorer TUI",
 		Description: `Opens the interactive TUI for exploring GraphQL schemas.
 
-With no arguments, opens the library selector to choose from saved schemas.
-With a schema file argument, opens the TUI with that schema loaded.
+With no schema flag, opens the library selector to choose from saved schemas.
+Use --schema/-s to open a specific schema file or library ID.
 
 Examples:
-  gqlxp app                          # Open library selector
-  gqlxp app examples/github.graphqls # Open specific schema`,
+  gqlxp app                             # Open library selector
+  gqlxp app -s examples/github.graphqls # Open specific schema file
+  gqlxp app -s github-api               # Open schema from library`,
 		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "schema",
+				Aliases: []string{"s"},
+				Usage:   "Schema file path or library ID to open",
+			},
 			&cli.StringFlag{
 				Name:    "log-file",
 				Aliases: []string{"l"},
@@ -33,9 +38,8 @@ Examples:
 				Sources: cli.EnvVars("GQLXP_LOGFILE"),
 			},
 			&cli.StringFlag{
-				Name:    "select",
-				Aliases: []string{"s"},
-				Usage:   "Pre-select TYPE or TYPE.FIELD in TUI",
+				Name:  "select",
+				Usage: "Pre-select TYPE or TYPE.FIELD in TUI",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -49,15 +53,16 @@ Examples:
 func executeTUICommand(ctx context.Context, cmd *cli.Command) error {
 	setupLogging(cmd.String("log-file"))
 
-	// No arguments - open library selector
-	if cmd.Args().Len() == 0 {
+	schemaArg := cmd.String("schema")
+	selectTarget := cmd.String("select")
+
+	// No schema specified - open library selector
+	if schemaArg == "" {
 		return openLibrarySelector()
 	}
 
-	// Load schema from file
-	schemaFile := cmd.Args().First()
-	selectTarget := cmd.String("select")
-	return loadAndStartFromFile(schemaFile, selectTarget)
+	// Load schema from file or library
+	return loadAndStartFromFile(schemaArg, selectTarget)
 }
 
 func openLibrarySelector() error {

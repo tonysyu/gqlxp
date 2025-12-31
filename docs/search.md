@@ -6,13 +6,16 @@ Fast full-text search across GraphQL schema types and fields.
 
 ```sh
 # Search in a schema file
-gqlxp search examples/github.graphqls user
+gqlxp search -s examples/github.graphqls user
 
-# Search using default schema
+# Search using schema from library
+gqlxp search -s github-api user
+
+# Search using default schema (omit --schema flag)
 gqlxp search mutation
 
 # Options
-gqlxp search --limit 5 user    # Limit results (default: 10)
+gqlxp search --limit 5 user    # Limit results (default: 30)
 ```
 
 Results show type, name, path, and description ranked by relevance.

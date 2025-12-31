@@ -5,9 +5,11 @@ Current CLI commands (`search`, `show`, `app`) use positional arguments for sche
 
 ## What Changes
 - Replace positional `[schema-file]` argument with explicit `--schema/-s` flag
-- Add `--default/-d` flag to explicitly use the default schema
+- When `--schema` is omitted:
+  - `app` command: Opens library selector
+  - `search` and `show` commands: Use default schema from config
 - Remove implicit schema resolution from positional arguments
-- **BREAKING**: Commands require explicit schema selection via flags
+- **BREAKING**: Commands use flag-based schema selection instead of positional arguments
 
 ## Impact
 - Affected specs: `cli-interface`

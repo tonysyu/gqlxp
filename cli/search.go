@@ -23,17 +23,23 @@ func searchCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "search",
 		Usage:     "Search for types and fields in a GraphQL schema",
-		ArgsUsage: "[schema-file] <query>",
+		ArgsUsage: "<query>",
 		Description: `Searches for types and fields matching the given query.
 
-The schema-file argument is optional if a default schema has been set.
+Uses default schema when --schema is not specified.
 Use 'gqlxp library default' to set the default schema.
 
 Examples:
-  gqlxp search examples/github.graphqls user
-  gqlxp search user  # Uses default schema
-  gqlxp search "mutation"`,
+  gqlxp search user                      # Uses default schema
+  gqlxp search -s examples/github.graphqls user # Uses specific file
+  gqlxp search -s github-api user        # Uses library ID
+  gqlxp search -s github-api "mutation"`,
 		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "schema",
+				Aliases: []string{"s"},
+				Usage:   "Schema file path or library ID to search",
+			},
 			&cli.IntFlag{
 				Name:  "limit",
 				Usage: "maximum number of results to return",
@@ -45,21 +51,16 @@ Examples:
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			if cmd.Args().Len() < 1 || cmd.Args().Len() > 2 {
-				return fmt.Errorf("requires 1 or 2 arguments: [schema-file] <query>")
+			if cmd.Args().Len() != 1 {
+				return fmt.Errorf("requires exactly 1 argument: <query>")
 			}
 
-			var schemaArg, query string
+			query := cmd.Args().First()
 			limit := cmd.Int("limit")
 			noPager := cmd.Bool("no-pager")
 
-			// Parse arguments (similar pattern to show command)
-			if cmd.Args().Len() == 1 {
-				query = cmd.Args().First()
-			} else {
-				schemaArg = cmd.Args().First()
-				query = cmd.Args().Get(1)
-			}
+			// Get schema (empty string for default when no flag specified)
+			schemaArg := cmd.String("schema")
 
 			// Resolve schema argument (path, ID, or default)
 			schema, err := resolveSchemaFromArgument(schemaArg)
@@ -160,6 +161,6 @@ func formatShowCommand(schemaID string, result search.SearchResult) string {
 		showPath = parts[0]
 	}
 
-	// Always include the schema ID in the command
-	return fmt.Sprintf("gqlxp show %s %s", schemaID, showPath)
+	// Use new flag-based syntax
+	return fmt.Sprintf("gqlxp show --schema %s %s", schemaID, showPath)
 }

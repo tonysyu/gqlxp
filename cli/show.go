@@ -16,10 +16,10 @@ func showCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "show",
 		Usage:     "Show a GraphQL type definition in the terminal",
-		ArgsUsage: "[schema-file] <type-name>",
+		ArgsUsage: "<type-name>",
 		Description: `Shows the details of a GraphQL type directly to the terminal.
 
-The schema-file argument is optional if a default schema has been set.
+Uses default schema when --schema is not specified.
 Use 'gqlxp library default' to set the default schema.
 
 The type-name can be:
@@ -29,34 +29,33 @@ The type-name can be:
 - A directive name (prefix with "@")
 
 Examples:
-  gqlxp show examples/github.graphqls User
-  gqlxp show User  # Uses default schema
-  gqlxp show Query.getUser
+  gqlxp show User                        # Uses default schema
+  gqlxp show -s examples/github.graphqls User # Uses specific file
+  gqlxp show -s github-api User          # Uses library ID
+  gqlxp show -s github-api Query.getUser
   gqlxp show Mutation.createUser
   gqlxp show @auth`,
 		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "schema",
+				Aliases: []string{"s"},
+				Usage:   "Schema file path or library ID to use",
+			},
 			&cli.BoolFlag{
 				Name:  "no-pager",
 				Usage: "disable pager and show directly to stdout",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			if cmd.Args().Len() < 1 || cmd.Args().Len() > 2 {
-				return fmt.Errorf("requires 1 or 2 arguments: [schema-file] <type-name>")
+			if cmd.Args().Len() != 1 {
+				return fmt.Errorf("requires exactly 1 argument: <type-name>")
 			}
 
-			var schemaArg, typeName string
+			typeName := cmd.Args().First()
 			noPager := cmd.Bool("no-pager")
 
-			// Parse arguments
-			if cmd.Args().Len() == 2 {
-				// Two arguments: schema and type
-				schemaArg = cmd.Args().Get(0)
-				typeName = cmd.Args().Get(1)
-			} else {
-				// One argument: type only (use default schema)
-				typeName = cmd.Args().Get(0)
-			}
+			// Get schema (empty string for default when no flag specified)
+			schemaArg := cmd.String("schema")
 
 			return printType(schemaArg, typeName, noPager)
 		},

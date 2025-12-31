@@ -107,12 +107,15 @@ type Library interface {
 
 ```sh
 # Load schema file (automatically saved to library on first use)
-gqlxp examples/github.graphqls
+gqlxp app -s examples/github.graphqls
 # Prompts for schema ID and display name on first use
 # Detects changes and prompts for update on subsequent uses
 
-# Open library selector (when no arguments provided)
-gqlxp
+# Load schema from library by ID
+gqlxp app -s github-api
+
+# Open library selector
+gqlxp app
 
 # Note: Schemas can be removed via the TUI selector interface
 ```
@@ -130,7 +133,7 @@ All schemas are now library-backed with access to:
 ## Automatic Library Integration
 
 **Workflow:**
-1. Load schema file with `gqlxp <file-path>`
+1. Load schema file with `gqlxp app -s <file-path>`
 2. System checks library for existing entry by file path
 3. If new: prompts for schema ID and display name, saves to library
 4. If exists: compares file hash

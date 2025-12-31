@@ -38,15 +38,20 @@ $ just install
 
 Then open a schema file to explore:
 ```sh
-$ gqlxp examples/github.graphqls
-# Or explicitly use the app command:
-$ gqlxp app examples/github.graphqls
+# Open library selector
+$ gqlxp app
+
+# Open a specific schema file (-s is an alias for --schema)
+$ gqlxp app -s examples/github.graphqls
+
+# Open a schema from library
+$ gqlxp app -s github-api
 
 # Jump directly to a specific type:
-$ gqlxp app examples/github.graphqls --select User
+$ gqlxp app -s github-api --select User
 
 # Jump directly to a specific field within a type:
-$ gqlxp app examples/github.graphqls --select Query.user
+$ gqlxp app -s github-api --select Query.user
 ```
 
 ### Schema library
@@ -54,29 +59,31 @@ $ gqlxp app examples/github.graphqls --select Query.user
 Schemas are automatically saved to your library on first use:
 ```sh
 # Load schema file (prompts for library details on first use)
-$ gqlxp examples/github.graphqls
+$ gqlxp app -s examples/github.graphqls
 Enter schema ID (lowercase letters, numbers, hyphens) [github]: github-api
 Enter display name [github-api]: GitHub GraphQL API
 
-# Open library selector (when no arguments provided)
-$ gqlxp
-# Or explicitly:
+# Set default schema for commands that omit --schema
+$ gqlxp library default github-api
+
+# Open app (shows library selector)
 $ gqlxp app
 
-# Subsequent loads detect if file has changed
-$ gqlxp examples/github.graphqls
-Schema file has changed since last import.
-Update library (y/n): y
+# Load a schema from library by ID
+$ gqlxp app -s github-api
 ```
 
 ### Search
 
 Search for types and fields across your schema:
 ```sh
-# Search in a specific schema file
-$ gqlxp search examples/github.graphqls user
+# Search using schema defined by file path (-s is an alias for --schema)
+$ gqlxp search -s examples/github.graphqls user
 
-# Search using default schema
+# Search using schema in library named "github-api"
+$ gqlxp search -s github-api user
+
+# Search using default schema (omit --schema flag)
 $ gqlxp search mutation
 
 # Limit number of results
@@ -89,24 +96,25 @@ The search command indexes your schema for fast full-text search across type nam
 
 Search is implemeted using [bleve](https://github.com/blevesearch/bleve) and supports `bleve`'s [query syntax](https://blevesearch.com/docs/Query-String-Query/).
 
+The following examples assume a default schema has been set using `gqlxp library default`:
 ```sh
 # Search for Query related to "user"
-$ gqlxp search examples/github.graphqls "type:Query user"
+$ gqlxp search "type:Query user"
 
 # Search for Query with name "user" (results match _either_ type or name)
-$ gqlxp search examples/github.graphqls "type:Query name:user"
+$ gqlxp search "type:Query name:user"
 
 # Search for Query with name "user" (results match _both_ type and name)
-$ gqlxp search examples/github.graphqls "+type:Query +name:user"
+$ gqlxp search "+type:Query +name:user"
 
 # Search for Mutation with name _containing_ "user"
-$ gqlxp search examples/github.graphqls "+type:Mutation +name:*user*"
+$ gqlxp search "+type:Mutation +name:*user*"
 
 # Search for Object or Interface with name starting with "repo" (slashes denote regex)
-$ gqlxp search examples/github.graphqls "+type:/(Object|Interface)/ +name:repo*"
+$ gqlxp search "+type:/(Object|Interface)/ +name:repo*"
 
 # Search for "user" in all GraphQL types and exclude all fields
-$ gqlxp search examples/github.graphqls "user -type:*Field"
+$ gqlxp search "user -type:*Field"
 ```
 
 #### Search fields
