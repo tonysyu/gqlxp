@@ -115,17 +115,14 @@ func (o *Model) Show(content string, width, height int) {
 	o.viewport.Height = viewportHeight
 
 	// Render markdown content using the shared glamour renderer
-	if o.renderer != nil && viewportWidth > 0 {
-		// Render content with current renderer
-		rendered, err := o.renderer.Render(content)
-		if err == nil {
-			o.rendered = rendered
-			o.viewport.SetContent(rendered)
-			return
-		}
+	if viewportWidth > 0 {
+		rendered := terminal.RenderMarkdownOrPlain(o.renderer, content)
+		o.rendered = rendered
+		o.viewport.SetContent(rendered)
+		return
 	}
 
-	// Fallback to plain content if glamour fails or is unavailable
+	// Fallback to plain content if viewport not properly sized
 	o.viewport.SetContent(content)
 }
 

@@ -82,19 +82,8 @@ func printType(schemaArg, typeName string, noPager bool) error {
 	}
 
 	// Render markdown using terminal renderer
-	renderer, err := terminal.NewMarkdownRenderer()
-	if err != nil {
-		// Fallback to plain text if renderer fails
-		fmt.Println(markdown)
-		return nil
-	}
-
-	rendered, err := renderer.Render(markdown)
-	if err != nil {
-		// Fallback to plain text if rendering fails
-		fmt.Println(markdown)
-		return nil
-	}
+	renderer, _ := terminal.NewMarkdownRenderer()
+	rendered := terminal.RenderMarkdownOrPlain(renderer, markdown)
 
 	// Use pager if content is long enough and not disabled
 	if terminal.ShouldUsePager(rendered, noPager) {
