@@ -119,9 +119,9 @@ Examples:
 			// Show command suggestions in header
 			pathArg := headerStyle.Render("<object>.<field>")
 			fmt.Fprintf(&output, "To display more info about a result, run: \n\t%s %s\n",
-				codeStyle.Render("gqlxp show --schema " + schemaID), pathArg)
+				codeStyle.Render("gqlxp show --schema "+schemaID), pathArg)
 			fmt.Fprintf(&output, "To open result in TUI app, run: \n\t%s %s\n\n",
-				codeStyle.Render("gqlxp app --schema " + schemaID), pathArg)
+				codeStyle.Render("gqlxp app --schema "+schemaID), pathArg)
 
 			for i, result := range results {
 				// Highlight the type in pink

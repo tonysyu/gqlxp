@@ -1,9 +1,8 @@
 package adapters
 
 import (
-	"strings"
-
 	"github.com/tonysyu/gqlxp/gql"
+	"github.com/tonysyu/gqlxp/gqlfmt"
 	"github.com/tonysyu/gqlxp/tui/xplr/components"
 	"github.com/tonysyu/gqlxp/utils/text"
 )
@@ -13,38 +12,6 @@ var _ components.ListItem = (*fieldItem)(nil)
 var _ components.ListItem = (*argumentItem)(nil)
 var _ components.ListItem = (*typeDefItem)(nil)
 var _ components.ListItem = (*directiveItem)(nil)
-
-func formatFieldDefinitionsWithDescriptions(fieldNodes []*gql.Field) string {
-	if len(fieldNodes) == 0 {
-		return ""
-	}
-	var parts []string
-	for _, field := range fieldNodes {
-		fieldParts := []string{}
-		if desc := field.Description(); desc != "" {
-			fieldParts = append(fieldParts, text.GqlDocString(desc))
-		}
-		fieldParts = append(fieldParts, field.Signature())
-		parts = append(parts, text.JoinLines(fieldParts...))
-	}
-	return text.GqlCode(text.JoinParagraphs(parts...))
-}
-
-func formatEnumValuesWithDescriptions(enumValues []*gql.EnumValue) string {
-	if len(enumValues) == 0 {
-		return ""
-	}
-	var parts []string
-	for _, val := range enumValues {
-		valParts := []string{}
-		if desc := val.Description(); desc != "" {
-			valParts = append(valParts, text.GqlDocString(desc))
-		}
-		valParts = append(valParts, val.Name())
-		parts = append(parts, text.JoinLines(valParts...))
-	}
-	return text.GqlCode(text.JoinParagraphs(parts...))
-}
 
 // Adapter/delegate for gql.FieldDefinition to support ListItem interface
 type fieldItem struct {
@@ -71,11 +38,7 @@ func (i fieldItem) Description() string {
 }
 
 func (i fieldItem) Details() string {
-	return text.JoinParagraphs(
-		text.H1(i.RefName()),
-		text.GqlCode(i.gqlField.FormatSignature(80)),
-		i.Description(),
-	)
+	return gqlfmt.GenerateFieldMarkdown(i.gqlField, i.resolver)
 }
 
 // OpenPanel displays arguments of field (if any) and the field's ObjectType
@@ -159,47 +122,7 @@ func (i typeDefItem) RefName() string     { return i.typeDef.Name() }
 func (i typeDefItem) Description() string { return i.typeDef.Description() }
 
 func (i typeDefItem) Details() string {
-	parts := []string{text.H1(i.TypeName())}
-
-	// Add description if available
-	if desc := i.Description(); desc != "" {
-		parts = append(parts, desc)
-	}
-
-	// Add type-specific details
-	switch typeDef := (i.typeDef).(type) {
-	case *gql.Object:
-		if len(typeDef.Interfaces()) > 0 {
-			parts = append(parts, "**Implements:** "+strings.Join(typeDef.Interfaces(), ", "))
-		}
-		fieldsWithDesc := formatFieldDefinitionsWithDescriptions(typeDef.Fields())
-		if len(fieldsWithDesc) > 0 {
-			parts = append(parts, fieldsWithDesc)
-		}
-	case *gql.Scalar:
-		parts = append(parts, "_Scalar type_")
-	case *gql.Interface:
-		fieldsWithDesc := formatFieldDefinitionsWithDescriptions(typeDef.Fields())
-		if len(fieldsWithDesc) > 0 {
-			parts = append(parts, fieldsWithDesc)
-		}
-	case *gql.Union:
-		if len(typeDef.Types()) > 0 {
-			parts = append(parts, "**Union of:** "+strings.Join(typeDef.Types(), " | "))
-		}
-	case *gql.Enum:
-		valuesWithDesc := formatEnumValuesWithDescriptions(typeDef.Values())
-		if len(valuesWithDesc) > 0 {
-			parts = append(parts, valuesWithDesc)
-		}
-	case *gql.InputObject:
-		fieldsWithDesc := formatFieldDefinitionsWithDescriptions(typeDef.Fields())
-		if len(fieldsWithDesc) > 0 {
-			parts = append(parts, fieldsWithDesc)
-		}
-	}
-
-	return text.JoinParagraphs(parts...)
+	return gqlfmt.GenerateTypeDefMarkdown(i.typeDef, i.resolver)
 }
 
 // OpenPanel displays list of fields on type (if any)
@@ -304,19 +227,7 @@ func (i directiveItem) Description() string {
 }
 
 func (i directiveItem) Details() string {
-	parts := []string{
-		text.H1(i.TypeName()),
-		text.GqlCode(i.gqlDirective.FormatSignature(80)),
-		i.Description(),
-	}
-	if len(i.gqlDirective.Locations()) > 0 {
-		locationList := []string{}
-		for _, loc := range i.gqlDirective.Locations() {
-			locationList = append(locationList, "- "+loc)
-		}
-		parts = append(parts, "**Locations:**\n"+text.JoinLines(locationList...))
-	}
-	return text.JoinParagraphs(parts...)
+	return gqlfmt.GenerateDirectiveMarkdown(i.gqlDirective, i.resolver)
 }
 
 // OpenPanel displays arguments of directive (if any)

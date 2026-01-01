@@ -23,6 +23,7 @@ var PACKAGE_HIERARCHY = []string{
 	"tui",
 	"library",
 	"search",
+	"gqlfmt",
 	"gql",
 	"utils", // lowest level: Cannot import from any other internal package
 }

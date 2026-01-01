@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/tonysyu/gqlxp/gql"
+	"github.com/tonysyu/gqlxp/gqlfmt"
 )
 
 func TestGenerateMarkdown(t *testing.T) {
@@ -199,7 +200,7 @@ func TestGenerateMarkdown(t *testing.T) {
 				t.Fatalf("Failed to parse schema: %v", err)
 			}
 
-			got, err := generateMarkdown(schema, tt.typeName)
+			got, err := gqlfmt.GenerateMarkdown(schema, tt.typeName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("generateMarkdown() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -237,7 +238,7 @@ func TestGenerateFieldMarkdown(t *testing.T) {
 		t.Fatal("Expected getUser field to exist")
 	}
 
-	markdown := generateFieldMarkdown(field, nil)
+	markdown := gqlfmt.GenerateFieldMarkdown(field, nil)
 
 	expectedSubstrings := []string{
 		"# getUser",
@@ -273,7 +274,7 @@ func TestGenerateTypeDefMarkdown(t *testing.T) {
 		t.Fatal("Expected User type to exist")
 	}
 
-	markdown := generateTypeDefMarkdown(typeDef, nil)
+	markdown := gqlfmt.GenerateTypeDefMarkdown(typeDef, nil)
 
 	expectedSubstrings := []string{
 		"# User",
