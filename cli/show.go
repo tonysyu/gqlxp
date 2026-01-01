@@ -141,6 +141,14 @@ func generateMarkdown(schema gql.GraphQLSchema, typeName string) (string, error)
 	// Handle regular types (Object, Input, Enum, Scalar, Interface, Union)
 	typeDef, err := schema.NamedToTypeDef(typeName)
 	if err != nil {
+		// If type not found and typeName contains a dot, try trimming the field part
+		if strings.Contains(typeName, ".") {
+			baseTypeName := typeName[:strings.LastIndex(typeName, ".")]
+			typeDef, retryErr := schema.NamedToTypeDef(baseTypeName)
+			if retryErr == nil {
+				return generateTypeDefMarkdown(typeDef, resolver), nil
+			}
+		}
 		return "", fmt.Errorf("type %q not found in schema: %w", typeName, err)
 	}
 

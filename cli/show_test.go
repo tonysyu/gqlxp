@@ -170,6 +170,26 @@ func TestGenerateMarkdown(t *testing.T) {
 			typeName: "@nonExistent",
 			wantErr:  true,
 		},
+		{
+			name: "Object.Field fallback to Object",
+			schema: `
+				type Query { placeholder: String }
+				"""A user in the system"""
+				type User {
+					"""Unique identifier"""
+					id: ID!
+					name: String!
+				}
+			`,
+			typeName: "User.name",
+			want:     []string{"# User", "A user in the system", "id: ID!", "name: String!", "Unique identifier"},
+		},
+		{
+			name:     "Non-existent Object.Field",
+			schema:   `type Query { placeholder: String }`,
+			typeName: "NonExistent.field",
+			wantErr:  true,
+		},
 	}
 
 	for _, tt := range tests {

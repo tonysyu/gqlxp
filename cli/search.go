@@ -116,15 +116,19 @@ Examples:
 			var output strings.Builder
 			fmt.Fprintf(&output, "Found %d results for %q%s:\n\n", len(results), query, maxLimitInfo)
 
+			// Show command suggestions in header
+			pathArg := headerStyle.Render("<object>.<field>")
+			fmt.Fprintf(&output, "To display more info about a result, run: \n\t%s %s\n",
+				codeStyle.Render("gqlxp show --schema " + schemaID), pathArg)
+			fmt.Fprintf(&output, "To open result in TUI app, run: \n\t%s %s\n\n",
+				codeStyle.Render("gqlxp app --schema " + schemaID), pathArg)
+
 			for i, result := range results {
 				// Highlight the type in pink
 				fmt.Fprintf(&output, "%d. %s %s\n", i+1, headerStyle.Render(result.Path), "("+result.Type+")")
 				if result.Description != "" {
 					fmt.Fprintf(&output, "   %s\n", result.Description)
 				}
-				showCmd := formatShowCommand(schemaID, result)
-				// Highlight the show command in purple
-				fmt.Fprintf(&output, "   More info: %s\n", codeStyle.Render(showCmd))
 			}
 
 			// Use pager if content is long enough and not disabled
@@ -137,30 +141,4 @@ Examples:
 			return nil
 		},
 	}
-}
-
-// formatShowCommand generates a show command for a search result
-// Query and Mutation fields use the operation.field format (e.g., "Query.user")
-// Other types use the parent type/directive name
-func formatShowCommand(schemaID string, result search.SearchResult) string {
-	path := result.Path
-	showPath := ""
-
-	// Determine what to show based on the path
-	if strings.HasPrefix(path, "Query.") || strings.HasPrefix(path, "Mutation.") {
-		// Only include operation and field (e.g., "Query.user", not "Query.user.name")
-		parts := strings.Split(path, ".")
-		if len(parts) >= 2 {
-			showPath = parts[0] + "." + parts[1]
-		} else {
-			showPath = path
-		}
-	} else {
-		// For other types, use the first part (type name or directive)
-		parts := strings.Split(path, ".")
-		showPath = parts[0]
-	}
-
-	// Use new flag-based syntax
-	return fmt.Sprintf("gqlxp show --schema %s %s", schemaID, showPath)
 }
