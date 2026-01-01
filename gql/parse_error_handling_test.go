@@ -54,15 +54,35 @@ func TestMainWithUnreadableSchemaFile(t *testing.T) {
 }
 
 func TestParseSchemaWithMalformedGraphQL(t *testing.T) {
-	// Skip this test because ParseSchema calls log.Fatalf on parse errors
-	// which terminates the test process. In a production system, we'd want
-	// ParseSchema to return errors instead of calling log.Fatalf
-	t.Skip("Skipping malformed GraphQL test - ParseSchema calls log.Fatalf which exits the process")
+	is := is.New(t)
+
+	malformedSchema := `
+		type Query {
+			field: String
+			invalid syntax here
+		}
+	`
+
+	_, err := ParseSchema([]byte(malformedSchema))
+	is.True(err != nil) // Should return an error for malformed GraphQL
 }
 
 func TestParseSchemaWithCorruptedContent(t *testing.T) {
-	// Skip this test because ParseSchema calls log.Fatalf on parse errors
-	t.Skip("Skipping corrupted content test - ParseSchema calls log.Fatalf which exits the process")
+	is := is.New(t)
+
+	// Test various types of corrupted content
+	corruptedSchemas := []string{
+		"}{",                      // Invalid braces
+		"type {}",                 // Missing type name
+		"type Query { : String }", // Missing field name
+		"type Query { field }",    // Missing field type
+		"@#$%^&*()",               // Random characters
+	}
+
+	for _, corrupted := range corruptedSchemas {
+		_, err := ParseSchema([]byte(corrupted))
+		is.True(err != nil) // Should return an error for corrupted content
+	}
 }
 
 func TestParseSchemaWithExtremelyLargeContent(t *testing.T) {

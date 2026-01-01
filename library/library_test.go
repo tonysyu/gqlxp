@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/library"
@@ -21,6 +22,16 @@ func setupTestLibrary(t *testing.T) (string, func()) {
 	os.Setenv("HOME", tmpDir)
 
 	cleanup := func() {
+		// Wait briefly for any background indexing operations to complete
+		time.Sleep(100 * time.Millisecond)
+
+		// Clean up all schemas to ensure search indexes are closed
+		lib := library.NewLibrary()
+		schemas, _ := lib.List()
+		for _, schema := range schemas {
+			_ = lib.Remove(schema.ID)
+		}
+
 		os.Setenv("HOME", oldHome)
 	}
 
