@@ -1,6 +1,7 @@
 package components
 
 import (
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -23,6 +24,10 @@ type Tab struct {
 	Content []ListItem
 }
 
+type keymap = struct {
+	nextTab, prevTab key.Binding
+}
+
 // Panel wraps a list.Model to provide panel functionality in the TUI
 type Panel struct {
 	ListModel         list.Model
@@ -36,6 +41,7 @@ type Panel struct {
 	focusedDelegate   list.ItemDelegate // Item delegate for rendering when panel is focused
 	blurredDelegate   list.ItemDelegate // Item delegate for rendering when panel is blurred
 	wrapperStyle      lipgloss.Style    // Current style of wrapper (focused or blurred)
+	keymap            keymap
 	styles            config.Styles
 	width             int
 	height            int
@@ -68,15 +74,28 @@ func NewPanel[T list.Item](choices []T, title string) *Panel {
 	m.SetShowHelp(false)
 	m.SetShowStatusBar(false)
 	styles := config.DefaultStyles()
-	return &Panel{
+	panel := &Panel{
 		ListModel:         m,
 		lastSelectedIndex: -1, // Initialize to -1 to trigger opening on first selection
 		title:             title,
 		blurredDelegate:   blurredItemDelegate,
 		focusedDelegate:   list.NewDefaultDelegate(),
 		wrapperStyle:      styles.BlurredPanel,
-		styles:            styles,
+		// Only include single keymaps for short help (overridden for full help)
+		keymap: keymap{
+			nextTab: key.NewBinding(
+				key.WithKeys("L", "shift+right"),
+				key.WithHelp("L", "next tab"),
+			),
+			prevTab: key.NewBinding(
+				key.WithKeys("H", "shift+left"),
+				key.WithHelp("H", "prev tab"),
+			),
+		},
+		styles: styles,
 	}
+	panel.configureTabHelp()
+	return panel
 }
 
 func newBlurredItemDelegate() list.ItemDelegate {
@@ -87,6 +106,34 @@ func newBlurredItemDelegate() list.ItemDelegate {
 	return delegate
 }
 
+// configureTabHelp sets up the help display for tab navigation
+func (p *Panel) configureTabHelp() {
+	p.ListModel.AdditionalShortHelpKeys = func() []key.Binding {
+		// Only show tab navigation help when there are multiple tabs
+		if len(p.tabs) <= 1 {
+			return nil
+		}
+		return []key.Binding{p.keymap.nextTab, p.keymap.prevTab}
+	}
+	p.ListModel.AdditionalFullHelpKeys = func() []key.Binding {
+		// Only show tab navigation help when there are multiple tabs
+		if len(p.tabs) <= 1 {
+			return nil
+		}
+		// Include additional keymaps when displaying full help
+		return []key.Binding{
+			key.NewBinding(
+				key.WithKeys(p.keymap.nextTab.Keys()...),
+				key.WithHelp("L/⇧+→", p.keymap.nextTab.Help().Desc),
+			),
+			key.NewBinding(
+				key.WithKeys(p.keymap.prevTab.Keys()...),
+				key.WithHelp("H/⇧+←", p.keymap.prevTab.Help().Desc),
+			),
+		}
+	}
+}
+
 func (p *Panel) Init() tea.Cmd {
 	return nil
 }
@@ -95,15 +142,15 @@ func (p *Panel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Handle tab navigation with Shift-H (previous) and Shift-L (next)
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		if len(p.tabs) > 1 {
-			switch keyMsg.String() {
-			case "H": // Shift-H (previous tab)
+			switch {
+			case key.Matches(keyMsg, p.keymap.prevTab):
 				if p.activeTab > 0 {
 					p.activeTab--
 					p.switchToActiveTab()
 					return p, p.OpenSelectedItem()
 				}
 				return p, nil
-			case "L": // Shift-L (next tab)
+			case key.Matches(keyMsg, p.keymap.nextTab):
 				if p.activeTab < len(p.tabs)-1 {
 					p.activeTab++
 					p.switchToActiveTab()
