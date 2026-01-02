@@ -31,6 +31,11 @@ func renderMinimalPanel(panel *components.Panel) string {
 	return content
 }
 
+func nextPanelTab(panel *components.Panel) *components.Panel {
+	updatedModel, _ := panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'L'}})
+	return updatedModel.(*components.Panel)
+}
+
 type minimalItemDelegate struct{}
 
 func (d minimalItemDelegate) Height() int                             { return 1 }
@@ -103,12 +108,18 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		// Set a reasonable size for testing
 		panel.SetSize(80, 40)
 
+		// Verify Result Type tab (default active tab)
 		content := renderMinimalPanel(panel)
-		// With tab-based navigation, both tabs are shown in the tab bar
-		// and the active tab (Result Type by default) shows its content
 		assert.StringContains(content, testx.NormalizeView(`
 			Result Type      Input Arguments
 			Post
+		`))
+
+		panel = nextPanelTab(panel) // Switch to Input Arguments tab
+		content = renderMinimalPanel(panel)
+		assert.StringContains(content, testx.NormalizeView(`
+			Result Type      Input Arguments
+			id: ID!
 		`))
 	})
 
@@ -120,14 +131,26 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		// Set a reasonable size for testing
 		panel.SetSize(80, 40)
 
+		// Verify Result Type tab (default active tab)
 		content := renderMinimalPanel(panel)
-		// Title, description, tab bar, and active tab content should be shown
 		assert.StringContains(content, testx.NormalizeView(`
 			createPost
 			Create a new post
 
 			Result Type      Input Arguments
 			Post!
+		`))
+
+		panel = nextPanelTab(panel) // Switch to Input Arguments tab
+		content = renderMinimalPanel(panel)
+		assert.StringContains(content, testx.NormalizeView(`
+			createPost
+			Create a new post
+
+			Result Type      Input Arguments
+			title: String!
+			content: String!
+			authorId: ID!
 		`))
 	})
 }
@@ -380,13 +403,21 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 	is.True(ok)
 	panel.SetSize(80, 40)
 
+	// Verify Result Type tab (default active tab)
 	content := renderMinimalPanel(panel)
-
-	// With tab-based navigation, both tabs are shown in the tab bar
-	// and the active tab (Result Type by default) shows its content
 	assert.StringContains(content, testx.NormalizeView(`
 		Result Type      Input Arguments
 		[String!]!
+	`))
+
+	panel = nextPanelTab(panel) // Switch to Input Arguments tab
+	content = renderMinimalPanel(panel)
+	assert.StringContains(content, testx.NormalizeView(`
+		Result Type      Input Arguments
+		id: ID!
+		filters: FilterInput
+		tags: [String!]!
+		metadata: [String]
 	`))
 }
 
