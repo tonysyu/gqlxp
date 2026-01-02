@@ -14,6 +14,7 @@ Supports exploring all GraphQL schema types:
 
 ### Interactive Navigation
 - **Panel Focus**: Tab/Shift+Tab (or `]`/`[`) to navigate between panels
+- **Sub-Tabs**: Shift-H/Shift-L to navigate between tabs within a panel (e.g., Type/Inputs)
 - **Auto-Open**: Selecting items automatically opens details in adjacent panel
 - **Detail Overlay**: Space bar shows full item details in centered overlay
 - **Multi-Panel**: Supports up to 6 panels horizontally

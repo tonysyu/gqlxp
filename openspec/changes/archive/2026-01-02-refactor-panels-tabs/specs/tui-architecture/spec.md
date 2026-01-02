@@ -49,19 +49,3 @@ Panels SHALL maintain state for the currently active tab and handle focus transi
 - **THEN** the panel's list view SHALL update to show items for the new tab
 - **AND** the selection SHALL reset to the first item in the new tab
 
-## REMOVED Requirements
-
-### Requirement: Result Type Special-Case Navigation
-**Reason**: Replaced by tab-based navigation which provides a more extensible pattern.
-
-**Migration**: The special-case fields `focusOnResultType`, `resultType`, and related cursor up/down navigation logic will be removed. Instead, result type becomes the content of the first tab ("Type") and arguments become the content of the second tab ("Inputs"). The `SetObjectType()` method will be replaced with a method to set tab data (labels and their corresponding items).
-
-**Previous behavior**:
-- Panel had `resultType` field and `focusOnResultType` bool
-- Cursor up from first list item moved focus to result type
-- Cursor down from result type moved focus to first list item
-
-**New behavior**:
-- Panel has tabs with labels and content
-- Shift-H/Shift-L navigate between tabs
-- Regular cursor up/down navigate within the active tab's content

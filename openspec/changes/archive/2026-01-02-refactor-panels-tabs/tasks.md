@@ -33,10 +33,10 @@
 - [x] 5.2 Add tests for tab-based navigation scenarios
 - [x] 5.3 Update acceptance tests if they rely on old result type behavior
 - [x] 5.4 Run `just test` to verify all tests pass
-- [ ] 5.5 Manual testing of tab navigation in TUI
+- [x] 5.5 Manual testing of tab navigation in TUI
 
 ## 6. Cleanup
 - [x] 6.1 Remove deprecated `SetObjectType()` method
 - [x] 6.2 Remove result type section rendering code from Panel.View()
-- [ ] 6.3 Update documentation if needed (per CLAUDE.md, put in docs/* not CLAUDE.md)
+- [x] 6.3 Update documentation if needed (per CLAUDE.md, put in docs/* not CLAUDE.md)
 - [x] 6.4 Final verification with `just verify`
