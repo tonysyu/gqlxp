@@ -104,12 +104,11 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		panel.SetSize(80, 40)
 
 		content := renderMinimalPanel(panel)
+		// With tab-based navigation, both tabs are shown in the tab bar
+		// and the active tab (Result Type by default) shows its content
 		assert.StringContains(content, testx.NormalizeView(`
-			Result Type
+			Result Type      Input Arguments
 			Post
-
-			Input Arguments
-			id: ID!
 		`))
 	})
 
@@ -122,19 +121,14 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		panel.SetSize(80, 40)
 
 		content := renderMinimalPanel(panel)
+		// Title, description, tab bar, and active tab content should be shown
 		assert.StringContains(content, testx.NormalizeView(`
 			createPost
 			Create a new post
 
-			Result Type
+			Result Type      Input Arguments
 			Post!
-
-			Input Arguments
-			title: String!
-			content: String!
-			authorId: ID!
 		`))
-
 	})
 }
 
@@ -388,15 +382,11 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 
 	content := renderMinimalPanel(panel)
 
+	// With tab-based navigation, both tabs are shown in the tab bar
+	// and the active tab (Result Type by default) shows its content
 	assert.StringContains(content, testx.NormalizeView(`
-		Result Type
+		Result Type      Input Arguments
 		[String!]!
-
-		Input Arguments
-		id: ID!
-		filters: FilterInput
-		tags: [String!]!
-		metadata: [String]
 	`))
 }
 

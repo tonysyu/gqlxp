@@ -44,11 +44,24 @@ func (i fieldItem) Details() string {
 // OpenPanel displays arguments of field (if any) and the field's ObjectType
 func (i fieldItem) OpenPanel() (*components.Panel, bool) {
 	argumentItems := AdaptArguments(i.gqlField.Arguments(), i.resolver)
+	resultTypeItem := newTypeDefItemFromField(i.gqlField, i.resolver)
 
-	panel := components.NewPanel(argumentItems, i.fieldName)
+	panel := components.NewPanel([]components.ListItem{}, i.fieldName)
 	panel.SetDescription(i.Description())
-	// Set result type as virtual item at top
-	panel.SetObjectType(newTypeDefItemFromField(i.gqlField, i.resolver))
+
+	// Create tabs for Result Type and Input Arguments
+	var tabs []components.Tab
+	tabs = append(tabs, components.Tab{
+		Label:   "Result Type",
+		Content: []components.ListItem{resultTypeItem},
+	})
+	if len(argumentItems) > 0 {
+		tabs = append(tabs, components.Tab{
+			Label:   "Input Arguments",
+			Content: argumentItems,
+		})
+	}
+	panel.SetTabs(tabs)
 
 	return panel, true
 }
@@ -87,12 +100,18 @@ func (i argumentItem) Details() string {
 
 // OpenPanel displays the argument's type definition
 func (i argumentItem) OpenPanel() (*components.Panel, bool) {
-	// Create an empty panel for the argument (similar to how fieldItem creates a panel for arguments)
+	resultTypeItem := newTypeDefItemFromArgument(i.gqlArgument, i.resolver)
+
 	panel := components.NewPanel([]components.ListItem{}, i.argName)
 	panel.SetDescription(i.Description())
 
-	// Set the argument's type as the object type at the top
-	panel.SetObjectType(newTypeDefItemFromArgument(i.gqlArgument, i.resolver))
+	// Create a single tab for Result Type
+	panel.SetTabs([]components.Tab{
+		{
+			Label:   "Result Type",
+			Content: []components.ListItem{resultTypeItem},
+		},
+	})
 
 	return panel, true
 }

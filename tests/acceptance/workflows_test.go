@@ -64,8 +64,10 @@ func TestNavigateFromQueryFieldsToObjectType(t *testing.T) {
 	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("query1")
 
+	// With tab-based navigation, the Result Type tab is active by default
+	// so navigating next opens the result type (Object1) instead of arg1
 	h.nav.NextPanel()
-	h.assert.BreadcrumbsEquals("query1 > arg1")
+	h.assert.BreadcrumbsEquals("query1 > Object1")
 }
 
 func TestNavigateBackwardThroughPanelStack(t *testing.T) {
@@ -74,7 +76,8 @@ func TestNavigateBackwardThroughPanelStack(t *testing.T) {
 	// Navigate forward twice to start w/ multiple breadcrumbs
 	h.nav.NextPanel()
 	h.nav.NextPanel()
-	h.assert.BreadcrumbsEquals("query1 > arg1")
+	// With tab-based navigation, result type (Object1) is opened instead of arg1
+	h.assert.BreadcrumbsEquals("query1 > Object1")
 
 	h.nav.PrevPanel()
 	h.assert.BreadcrumbsEquals("query1")
@@ -204,8 +207,9 @@ func TestFullExplorationWorkflow(t *testing.T) {
 	h.nav.NextPanel()
 	h.assert.BreadcrumbsEquals("query1")
 
+	// With tab-based navigation, result type (Object1) is opened instead of arg1
 	h.nav.NextPanel()
-	h.assert.BreadcrumbsEquals("query1 > arg1")
+	h.assert.BreadcrumbsEquals("query1 > Object1")
 
 	h.nav.GoToGqlType(navigation.MutationType)
 	h.assert.BreadcrumbsEquals("")
@@ -226,7 +230,8 @@ func TestMultiPanelNavigationWithTypeCycling(t *testing.T) {
 	// Navigate through Query structure
 	h.nav.NextPanel()
 	h.nav.NextPanel()
-	h.assert.BreadcrumbsEquals("query1 > arg1")
+	// With tab-based navigation, result type (Object1) is opened instead of arg1
+	h.assert.BreadcrumbsEquals("query1 > Object1")
 
 	// Cycle to mutation type
 	h.nav.NextGqlType()

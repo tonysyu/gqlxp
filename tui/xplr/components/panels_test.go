@@ -287,7 +287,9 @@ func TestPanelResultTypeTruncation(t *testing.T) {
 	assert := assert.New(t)
 
 	panel := NewPanel([]ListItem{}, "Test Panel")
-	panel.SetObjectType(NewSimpleItem("VeryLongResultTypeNameThatShouldBeTruncated"))
+	panel.SetTabs([]Tab{
+		{Label: "Result Type", Content: []ListItem{NewSimpleItem("VeryLongResultTypeNameThatShouldBeTruncated")}},
+	})
 	// Set a narrow width that should trigger truncation
 	panel.SetSize(20, 10)
 

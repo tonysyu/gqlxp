@@ -1,7 +1,6 @@
 package components
 
 import (
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -18,6 +17,12 @@ type OpenPanelMsg struct {
 	Panel *Panel
 }
 
+// Tab represents a labeled tab with associated content
+type Tab struct {
+	Label   string
+	Content []ListItem
+}
+
 // Panel wraps a list.Model to provide panel functionality in the TUI
 type Panel struct {
 	ListModel         list.Model
@@ -25,8 +30,8 @@ type Panel struct {
 	description       string
 	lastSelectedIndex int               // Track the last selected index to detect changes
 	wasFiltering      bool              // Track whether we were in filtering mode to detect exits
-	resultType        ListItem          // Virtual item displayed at top
-	focusOnResultType bool              // Track whether focus is on result type or list
+	tabs              []Tab             // Tabs with labels and content
+	activeTab         int               // Currently selected tab index
 	isFocused         bool              // Track whether this panel is in focus
 	focusedDelegate   list.ItemDelegate // Item delegate for rendering when panel is focused
 	blurredDelegate   list.ItemDelegate // Item delegate for rendering when panel is blurred
@@ -61,6 +66,7 @@ func NewPanel[T list.Item](choices []T, title string) *Panel {
 	m.DisableQuitKeybindings()
 	m.SetShowTitle(false)
 	m.SetShowHelp(false)
+	m.SetShowStatusBar(false)
 	styles := config.DefaultStyles()
 	return &Panel{
 		ListModel:         m,
@@ -86,61 +92,63 @@ func (p *Panel) Init() tea.Cmd {
 }
 
 func (p *Panel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// Handle navigation when result type is present
-	if p.resultType != nil {
-		if keyMsg, ok := msg.(tea.KeyMsg); ok {
-			switch {
-			case key.Matches(keyMsg, p.ListModel.KeyMap.CursorDown):
-				if p.focusOnResultType {
-					// Move from result type to first list item
-					p.focusOnResultType = false
-					if len(p.ListModel.Items()) > 0 {
-						p.ListModel.Select(0)
-						p.lastSelectedIndex = 0
-						return p, p.OpenSelectedItem()
-					}
-					return p, nil
-				}
-				// Otherwise, let list handle it below
-
-			case key.Matches(keyMsg, p.ListModel.KeyMap.CursorUp):
-				if !p.focusOnResultType && p.ListModel.Index() == 0 {
-					// Move from first list item back to result type
-					p.ListModel.Select(-1)
-					p.lastSelectedIndex = -1
-					p.focusOnResultType = true
+	// Handle tab navigation with Shift-H (previous) and Shift-L (next)
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		if len(p.tabs) > 1 {
+			switch keyMsg.String() {
+			case "H": // Shift-H (previous tab)
+				if p.activeTab > 0 {
+					p.activeTab--
+					p.switchToActiveTab()
 					return p, p.OpenSelectedItem()
 				}
-				// Otherwise, let list handle it below
+				return p, nil
+			case "L": // Shift-L (next tab)
+				if p.activeTab < len(p.tabs)-1 {
+					p.activeTab++
+					p.switchToActiveTab()
+					return p, p.OpenSelectedItem()
+				}
+				return p, nil
 			}
 		}
 	}
 
-	// Only update list if focus is on list (or no result type)
-	if !p.focusOnResultType {
-		var cmd tea.Cmd
-		p.ListModel, cmd = p.ListModel.Update(msg)
+	var cmd tea.Cmd
+	p.ListModel, cmd = p.ListModel.Update(msg)
 
-		// Check if we just exited filtering mode
-		// Filtering mode is when the user is actively typing the filter
-		isFiltering := p.ListModel.FilterState() == list.Filtering
-		exitedFiltering := p.wasFiltering && !isFiltering
-		p.wasFiltering = isFiltering
+	// Check if we just exited filtering mode
+	// Filtering mode is when the user is actively typing the filter
+	isFiltering := p.ListModel.FilterState() == list.Filtering
+	exitedFiltering := p.wasFiltering && !isFiltering
+	p.wasFiltering = isFiltering
 
-		// Check if selection has changed and auto-open detail panel
-		currentIndex := p.ListModel.Index()
-		// Refresh if index changed OR if we just exited filtering (since filtering could change
-		// the selected item)
-		if (currentIndex != p.lastSelectedIndex || exitedFiltering) && currentIndex >= 0 {
-			p.lastSelectedIndex = currentIndex
-			if openCmd := p.OpenSelectedItem(); openCmd != nil {
-				return p, tea.Batch(cmd, openCmd)
-			}
+	// Check if selection has changed and auto-open detail panel
+	currentIndex := p.ListModel.Index()
+	// Refresh if index changed OR if we just exited filtering (since filtering could change
+	// the selected item)
+	if (currentIndex != p.lastSelectedIndex || exitedFiltering) && currentIndex >= 0 {
+		p.lastSelectedIndex = currentIndex
+		if openCmd := p.OpenSelectedItem(); openCmd != nil {
+			return p, tea.Batch(cmd, openCmd)
 		}
-		return p, cmd
 	}
+	return p, cmd
+}
 
-	return p, nil
+// switchToActiveTab updates the list content to show the active tab's items
+func (p *Panel) switchToActiveTab() {
+	if p.activeTab >= 0 && p.activeTab < len(p.tabs) {
+		// Convert []ListItem to []list.Item
+		content := p.tabs[p.activeTab].Content
+		items := make([]list.Item, len(content))
+		for i, item := range content {
+			items[i] = item
+		}
+		p.ListModel.SetItems(items)
+		p.ListModel.Select(0)
+		p.lastSelectedIndex = 0
+	}
 }
 
 func (p *Panel) SetSize(width, height int) {
@@ -164,10 +172,13 @@ func (p *Panel) Description() string {
 	return p.description
 }
 
-func (p *Panel) SetObjectType(item ListItem) {
-	p.resultType = item
-	// If there are no items in the list, focus on result type; otherwise focus on first list item
-	p.focusOnResultType = len(p.ListModel.Items()) == 0
+// SetTabs configures the panel with multiple tabs
+func (p *Panel) SetTabs(tabs []Tab) {
+	p.tabs = tabs
+	p.activeTab = 0
+	if len(tabs) > 0 {
+		p.switchToActiveTab()
+	}
 }
 
 // Update items to display with focused style (opposite of SetBlurred)
@@ -188,9 +199,6 @@ func (p *Panel) SetBlurred() {
 
 // SelectedItem returns the currently selected item in the list
 func (p *Panel) SelectedItem() list.Item {
-	if p.focusOnResultType {
-		return p.resultType
-	}
 	return p.ListModel.SelectedItem()
 }
 
@@ -230,51 +238,31 @@ func (p *Panel) SelectItemByName(name string) bool {
 
 // View renders the panel
 func (p *Panel) View() string {
-	const (
-		sectionLabelHeight = 1 // Fixed height for section labels
-		emptyLineHeight    = 1 // Fixed height for empty lines between sections
-	)
-
 	availableHeight := p.height
 	parts := []string{}
 
+	// Render title
 	truncatedTitle := text.Truncate(p.Title(), p.width-2*config.PanelTitleHPadding)
 	title := p.styles.PanelTitle.Render(truncatedTitle)
 	parts = append(parts, title)
 	availableHeight -= lipgloss.Height(title)
 
+	// Render description if present
 	if p.Description() != "" {
 		desc := text.WrapAndTruncate(p.Description(), p.width, maxDescriptionHeight)
-
 		parts = append(parts, desc)
 		availableHeight -= lipgloss.Height(desc)
 	}
 
-	// Render result type section if present (fixed heights)
-	if p.resultType != nil {
-		sectionLabel := p.styles.SectionLabel.Render("Result Type")
-		parts = append(parts, "", sectionLabel, "") // Appending empty string adds new lines
-		availableHeight -= emptyLineHeight + sectionLabelHeight + emptyLineHeight
-
-		// Render result type with focus indicator
-		truncatedResultType := text.Truncate(p.resultType.Title(), p.width-config.ItemLeftPadding)
-		if p.focusOnResultType && p.isFocused {
-			truncatedResultType = p.styles.FocusedItem.Render(truncatedResultType)
-		} else {
-			truncatedResultType = p.styles.UnfocusedItem.Render(truncatedResultType)
-		}
-		parts = append(parts, truncatedResultType)
-		availableHeight -= lipgloss.Height(truncatedResultType)
+	// Render tabs if configured (even if only one tab for consistency)
+	if len(p.tabs) > 0 {
+		tabBar := p.renderTabBar()
+		parts = append(parts, "", tabBar)
+		availableHeight -= 1 + lipgloss.Height(tabBar) // 1 for empty line
 	}
 
-	// Input Arguments section label if list has items (fixed heights)
+	// Render list content
 	if len(p.ListModel.Items()) > 0 {
-		if p.resultType != nil {
-			// Only render sectionLabel if it needs to be differentiated from "Result Type"
-			sectionLabel := p.styles.SectionLabel.Render("Input Arguments")
-			parts = append(parts, "", sectionLabel) // Appending empty string adds new lines
-			availableHeight -= emptyLineHeight + sectionLabelHeight
-		}
 		p.ListModel.SetWidth(p.width)
 		p.ListModel.SetHeight(availableHeight)
 		parts = append(parts, p.ListModel.View())
@@ -286,4 +274,23 @@ func (p *Panel) View() string {
 	style := lipgloss.NewStyle().Width(p.width).Height(p.height)
 	innerPanel := style.Render(content)
 	return p.wrapperStyle.Render(innerPanel)
+}
+
+// renderTabBar creates a tab bar display with active/inactive styling
+func (p *Panel) renderTabBar() string {
+	if len(p.tabs) == 0 {
+		return ""
+	}
+
+	var tabParts []string
+	for i, tab := range p.tabs {
+		tabLabel := " " + tab.Label + " "
+		if i == p.activeTab {
+			tabParts = append(tabParts, p.styles.ActiveTab.Render(tabLabel))
+		} else {
+			tabParts = append(tabParts, p.styles.InactiveTab.Render(tabLabel))
+		}
+	}
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, tabParts...)
 }
