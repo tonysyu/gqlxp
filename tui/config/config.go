@@ -27,6 +27,7 @@ type Styles struct {
 	// Navigation styles for navbar dislplaying GQL Type selection
 	Navbar            lipgloss.Style
 	ActiveTab         lipgloss.Style
+	ActiveSubTab      lipgloss.Style
 	InactiveTab       lipgloss.Style
 	Breadcrumbs       lipgloss.Style
 	CurrentBreadcrumb lipgloss.Style
@@ -66,6 +67,12 @@ func DefaultStyles() Styles {
 		ActiveTab: lipgloss.NewStyle().
 			Foreground(terminal.ColorCream).
 			Background(terminal.ColorBrightIndigo).
+			Padding(0, 2).
+			Bold(true),
+
+		ActiveSubTab: lipgloss.NewStyle().
+			Foreground(terminal.ColorDarkGray).
+			Background(terminal.ColorLightBlue).
 			Padding(0, 2).
 			Bold(true),
 

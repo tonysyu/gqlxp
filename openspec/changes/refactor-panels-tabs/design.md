@@ -96,15 +96,15 @@ panel.SetObjectType(resultTypeItem)
 With:
 ```go
 panel.SetTabs([]Tab{
-    {Label: "Result Type", Content: []list.Item{resultTypeItem}},
-    {Label: "Input Arguments", Content: argumentItems},
+    {Label: "Type", Content: []list.Item{resultTypeItem}},
+    {Label: "Inputs", Content: argumentItems},
 })
 ```
 
 For types with no result type (e.g., directives), use single tab or no tabs:
 ```go
 panel.SetTabs([]Tab{
-    {Label: "Input Arguments", Content: argumentItems},
+    {Label: "Inputs", Content: argumentItems},
 })
 // Or just use existing SetItems() with no tabs
 ```

@@ -52,12 +52,12 @@ func (i fieldItem) OpenPanel() (*components.Panel, bool) {
 	// Create tabs for Result Type and Input Arguments
 	var tabs []components.Tab
 	tabs = append(tabs, components.Tab{
-		Label:   "Result Type",
+		Label:   "Type",
 		Content: []components.ListItem{resultTypeItem},
 	})
 	if len(argumentItems) > 0 {
 		tabs = append(tabs, components.Tab{
-			Label:   "Input Arguments",
+			Label:   "Inputs",
 			Content: argumentItems,
 		})
 	}
@@ -108,7 +108,7 @@ func (i argumentItem) OpenPanel() (*components.Panel, bool) {
 	// Create a single tab for Result Type
 	panel.SetTabs([]components.Tab{
 		{
-			Label:   "Result Type",
+			Label:   "Type",
 			Content: []components.ListItem{resultTypeItem},
 		},
 	})

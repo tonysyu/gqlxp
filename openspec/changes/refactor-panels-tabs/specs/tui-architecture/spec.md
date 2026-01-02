@@ -7,7 +7,7 @@ Panels SHALL use a tab-based interface to display different relationships for Gr
 
 #### Scenario: Field panel with result type and arguments
 - **WHEN** a field with arguments is opened in a panel
-- **THEN** the panel SHALL display tabs for "Result Type" and "Input Arguments"
+- **THEN** the panel SHALL display tabs for "Type" and "Inputs"
 - **AND** the active tab SHALL be visually indicated
 - **AND** the content area SHALL show items for the active tab
 
@@ -54,7 +54,7 @@ Panels SHALL maintain state for the currently active tab and handle focus transi
 ### Requirement: Result Type Special-Case Navigation
 **Reason**: Replaced by tab-based navigation which provides a more extensible pattern.
 
-**Migration**: The special-case fields `focusOnResultType`, `resultType`, and related cursor up/down navigation logic will be removed. Instead, result type becomes the content of the first tab ("Result Type") and arguments become the content of the second tab ("Input Arguments"). The `SetObjectType()` method will be replaced with a method to set tab data (labels and their corresponding items).
+**Migration**: The special-case fields `focusOnResultType`, `resultType`, and related cursor up/down navigation logic will be removed. Instead, result type becomes the content of the first tab ("Type") and arguments become the content of the second tab ("Inputs"). The `SetObjectType()` method will be replaced with a method to set tab data (labels and their corresponding items).
 
 **Previous behavior**:
 - Panel had `resultType` field and `focusOnResultType` bool

@@ -17,8 +17,8 @@
 - [x] 2.5 Write tests for tab navigation and wrapping behavior
 
 ## 3. Adapter Updates
-- [x] 3.1 Update `fieldItem.OpenPanel()` to create Tab objects for "Result Type" and "Input Arguments"
-- [x] 3.2 Update `argumentItem.OpenPanel()` to create Tab object for "Result Type"
+- [x] 3.1 Update `fieldItem.OpenPanel()` to create Tab objects for "Type" and "Inputs"
+- [x] 3.2 Update `argumentItem.OpenPanel()` to create Tab object for "Type"
 - [x] 3.3 Update `typeDefItem.OpenPanel()` to use `SetTabs()` or keep single content display
 - [x] 3.4 Write tests for adapter tab configuration
 

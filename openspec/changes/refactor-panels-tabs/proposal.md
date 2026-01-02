@@ -5,7 +5,7 @@ The current panel implementation special-cases `resultType` with dedicated navig
 
 ## What Changes
 - Replace the special-case `resultType` handling with a tab-based interface similar to the Bubble Tea tabs example
-- Support navigating between tabs (e.g., "Result Type", "Input Arguments") using Shift-H (left) and Shift-L (right)
+- Support navigating between tabs (e.g., "Type", "Inputs") using Shift-H (left) and Shift-L (right)
 - Make the architecture extensible to support future relationships (Implementations, Interfaces implemented, back-references)
 - Remove `focusOnResultType`, `resultType` field, and related cursor navigation logic from Panel struct
 - Add tab state management (active tab index, tab labels, tab content)

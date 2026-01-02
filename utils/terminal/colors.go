@@ -10,8 +10,10 @@ const (
 	ColorLightGray    lipgloss.Color = "244" // gray
 	ColorMidGray      lipgloss.Color = "240" // davys_grey
 	ColorDarkGray     lipgloss.Color = "238" // dark_charcoal (dark gray)
+	ColorBlack        lipgloss.Color = "0"
 	ColorDimWhite     lipgloss.Color = "253" // alto (off-white)
 	ColorCream        lipgloss.Color = "230" // cream, very_pale_yellow
+	ColorLightBlue    lipgloss.Color = "111" // french sky blue
 	ColorDimIndigo    lipgloss.Color = "62"  // indigo, slate_blue
 	ColorBrightIndigo lipgloss.Color = "57"  // electric_indigo
 	ColorDimMagenta   lipgloss.Color = "170" // orchid (pink/purple)

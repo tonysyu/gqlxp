@@ -92,12 +92,12 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		expected := testx.NormalizeView(`
 			  getAllPosts
 			  Return all posts
-			  Result Type
+			  Type
 			  [Post!]!
 		`)
 
 		assert.StringContains(content, expected)
-		is.True(!strings.Contains(content, "Input Arguments")) // Should not have arguments section
+		is.True(!strings.Contains(content, "Inputs")) // Should not have arguments section
 	})
 
 	t.Run("Query field with arguments shows all sections", func(t *testing.T) {
@@ -111,14 +111,14 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		// Verify Result Type tab (default active tab)
 		content := renderMinimalPanel(panel)
 		assert.StringContains(content, testx.NormalizeView(`
-			Result Type      Input Arguments
+			Type    Inputs
 			Post
 		`))
 
 		panel = nextPanelTab(panel) // Switch to Input Arguments tab
 		content = renderMinimalPanel(panel)
 		assert.StringContains(content, testx.NormalizeView(`
-			Result Type      Input Arguments
+			Type    Inputs
 			id: ID!
 		`))
 	})
@@ -137,7 +137,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 			createPost
 			Create a new post
 
-			Result Type      Input Arguments
+			Type    Inputs
 			Post!
 		`))
 
@@ -147,7 +147,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 			createPost
 			Create a new post
 
-			Result Type      Input Arguments
+			Type    Inputs
 			title: String!
 			content: String!
 			authorId: ID!
@@ -365,12 +365,12 @@ func TestFieldDefinitionWithoutDescription(t *testing.T) {
 	content := testx.NormalizeView(panel.View())
 
 	expected := testx.NormalizeView(`
-		Result Type
+		Type
 		String
 	`)
 
 	assert.StringContains(content, expected)
-	is.True(!strings.Contains(content, "Input Arguments"))
+	is.True(!strings.Contains(content, "Inputs"))
 }
 
 func TestFieldDefinitionWithComplexArguments(t *testing.T) {
@@ -406,14 +406,14 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 	// Verify Result Type tab (default active tab)
 	content := renderMinimalPanel(panel)
 	assert.StringContains(content, testx.NormalizeView(`
-		Result Type      Input Arguments
+		Type    Inputs
 		[String!]!
 	`))
 
 	panel = nextPanelTab(panel) // Switch to Input Arguments tab
 	content = renderMinimalPanel(panel)
 	assert.StringContains(content, testx.NormalizeView(`
-		Result Type      Input Arguments
+		Type    Inputs
 		id: ID!
 		filters: FilterInput
 		tags: [String!]!

@@ -284,11 +284,10 @@ func (p *Panel) renderTabBar() string {
 
 	var tabParts []string
 	for i, tab := range p.tabs {
-		tabLabel := " " + tab.Label + " "
 		if i == p.activeTab {
-			tabParts = append(tabParts, p.styles.ActiveTab.Render(tabLabel))
+			tabParts = append(tabParts, p.styles.ActiveSubTab.Render(tab.Label))
 		} else {
-			tabParts = append(tabParts, p.styles.InactiveTab.Render(tabLabel))
+			tabParts = append(tabParts, p.styles.InactiveTab.Render(tab.Label))
 		}
 	}
 
