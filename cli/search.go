@@ -114,15 +114,15 @@ Examples:
 			}
 			// Multiple results - show list and let user choose
 			var output strings.Builder
-			fmt.Fprintf(&output, "Found %d results for %q%s:\n\n", len(results), query, maxLimitInfo)
 
 			// Show command suggestions in header
 			pathArg := headerStyle.Render("<object>.<field>")
 			fmt.Fprintf(&output, "To display more info about a result, run: \n\t%s %s\n",
 				codeStyle.Render("gqlxp show --schema "+schemaID), pathArg)
-			fmt.Fprintf(&output, "To open result in TUI app, run: \n\t%s %s\n\n",
+			fmt.Fprintf(&output, "To open result in TUI app, run: \n\t%s --select %s\n\n",
 				codeStyle.Render("gqlxp app --schema "+schemaID), pathArg)
 
+			fmt.Fprintf(&output, "Found %d results for %q%s:\n\n", len(results), query, maxLimitInfo)
 			for i, result := range results {
 				// Highlight the type in pink
 				fmt.Fprintf(&output, "%d. %s %s\n", i+1, headerStyle.Render(result.Path), "("+result.Type+")")
