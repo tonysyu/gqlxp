@@ -3,28 +3,28 @@
 ## Implementation Tasks
 
 1. **Add helper to adapt interface names to list items**
-   - Add `AdaptInterfaces(interfaceNames []string, resolver TypeResolver) []ListItem` function in `tui/adapters/items.go`
-   - Convert interface name strings to typeDefItems using newNamedItem
-   - Return list items sorted alphabetically by interface name
-   - Add unit tests for AdaptInterfaces
+   - [x] Add `AdaptInterfaces(interfaceNames []string, resolver TypeResolver) []ListItem` function in `tui/adapters/items.go`
+   - [x] Convert interface name strings to typeDefItems using newNamedItem
+   - [x] Return list items sorted alphabetically by interface name
+   - [x] Add unit tests for AdaptInterfaces
 
 2. **Modify Object type panel to include Interfaces tab**
-   - Update `typeDefItem.OpenPanel()` in `tui/adapters/items.go` for Object case
-   - Add "Interfaces" tab when `typeDef.Interfaces()` returns non-empty slice
-   - Use AdaptInterfaces to create interface list items
-   - Tab order: "Fields", "Interfaces"
-   - Add unit test verifying Object with interfaces creates both tabs
+   - [x] Update `typeDefItem.OpenPanel()` in `tui/adapters/items.go` for Object case
+   - [x] Add "Interfaces" tab when `typeDef.Interfaces()` returns non-empty slice
+   - [x] Use AdaptInterfaces to create interface list items
+   - [x] Tab order: "Fields", "Interfaces"
+   - [x] Add unit test verifying Object with interfaces creates both tabs
 
 3. **Add integration test for navigation flow**
-   - Create test schema with Object implementing Interface
-   - Verify Object panel has Interfaces tab with correct content
-   - Verify selecting an interface navigates to the Interface panel
-   - Verify Interface panel displays its fields
+   - [x] Create test schema with Object implementing Interface
+   - [x] Verify Object panel has Interfaces tab with correct content
+   - [x] Verify selecting an interface navigates to the Interface panel
+   - [x] Verify Interface panel displays its fields
 
 4. **Run validation and tests**
-   - Run `just test` to ensure all tests pass
-   - Run `openspec validate add-interfaces-subtab --strict` to verify spec compliance
-   - Manually test TUI with real schema containing interface implementations
+   - [x] Run `just test` to ensure all tests pass
+   - [x] Run `openspec validate add-interfaces-subtab --strict` to verify spec compliance
+   - [x] Manually test TUI with real schema containing interface implementations
 
 ## Testing Strategy
 

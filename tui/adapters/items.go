@@ -148,10 +148,22 @@ func (i typeDefItem) Details() string {
 func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 	// Create list items for the detail view
 	var detailItems []components.ListItem
+	var tabs []components.Tab
 
 	switch typeDef := (i.typeDef).(type) {
 	case *gql.Object:
 		detailItems = append(detailItems, AdaptFields(typeDef.Fields(), i.resolver)...)
+		tabs = append(tabs, components.Tab{
+			Label:   "Fields",
+			Content: detailItems,
+		})
+		// Add Interfaces tab if the object implements any interfaces
+		if interfaces := typeDef.Interfaces(); len(interfaces) > 0 {
+			tabs = append(tabs, components.Tab{
+				Label:   "Interfaces",
+				Content: AdaptInterfaces(interfaces, i.resolver),
+			})
+		}
 	case *gql.Scalar:
 		// No details needed
 	case *gql.Interface:
@@ -168,6 +180,10 @@ func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
 		panel.SetDescription(desc)
+	}
+	// Set tabs if any were created
+	if len(tabs) > 0 {
+		panel.SetTabs(tabs)
 	}
 	return panel, true
 }

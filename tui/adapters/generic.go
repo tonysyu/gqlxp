@@ -48,6 +48,11 @@ func AdaptUnionTypes(typeNames []string, resolver gql.TypeResolver) []components
 	return adaptSlice(typeNames, resolver, newNamedItem)
 }
 
+// AdaptInterfaces converts interface name slices to ListItems
+func AdaptInterfaces(interfaceNames []string, resolver gql.TypeResolver) []components.ListItem {
+	return adaptSlice(interfaceNames, resolver, newNamedItem)
+}
+
 // AdaptEnumValues converts EnumValue slices to ListItems (no resolver needed)
 func AdaptEnumValues(values []*gql.EnumValue) []components.ListItem {
 	return adaptSlice(values, nil, func(v *gql.EnumValue, _ gql.TypeResolver) components.ListItem {

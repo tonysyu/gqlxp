@@ -182,11 +182,109 @@ func TestObjectDefinitionItemOpenPanel(t *testing.T) {
 
 	assert.StringContains(content, testx.NormalizeView(`
 		User
-
+		Fields
 		id: ID!
 		name: String!
 		email: String
 		posts: [Post!]!
+	`))
+}
+
+func TestObjectWithInterfacesOpenPanel(t *testing.T) {
+	is := is.New(t)
+	assert := assert.New(t)
+
+	schemaString := `
+		interface Node {
+		  id: ID!
+		}
+
+		interface Named {
+		  name: String!
+		}
+
+		type User implements Node & Named {
+		  id: ID!
+		  name: String!
+		}
+	`
+
+	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
+
+	userObj := schema.Object["User"]
+	item := newTypeDefItem(userObj, resolver)
+	panel, ok := item.OpenPanel()
+
+	is.True(ok)
+	panel.SetSize(80, 40)
+
+	// First tab (Fields) should be displayed by default
+	content := renderMinimalPanel(panel)
+	assert.StringContains(content, testx.NormalizeView(`
+		User
+		Fields    Interfaces
+		id: ID!
+		name: String!
+	`))
+
+	// Navigate to Interfaces tab
+	panel = nextPanelTab(panel)
+	content = renderMinimalPanel(panel)
+	assert.StringContains(content, testx.NormalizeView(`
+		User
+		Fields    Interfaces
+		Node
+		Named
+	`))
+}
+
+func TestNavigateFromObjectToInterface(t *testing.T) {
+	is := is.New(t)
+	assert := assert.New(t)
+
+	schemaString := `
+		interface Node {
+		  id: ID!
+		}
+
+		type User implements Node {
+		  id: ID!
+		  name: String!
+		}
+	`
+
+	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
+
+	userObj := schema.Object["User"]
+	item := newTypeDefItem(userObj, resolver)
+	panel, ok := item.OpenPanel()
+
+	is.True(ok)
+	panel.SetSize(80, 40)
+
+	// Navigate to Interfaces tab
+	panel = nextPanelTab(panel)
+
+	// Get the first interface item from the Interfaces tab
+	items := panel.ListModel.Items()
+	is.True(len(items) > 0)
+
+	interfaceItem, ok := items[0].(components.ListItem)
+	is.True(ok)
+
+	// Open panel for the interface
+	interfacePanel, ok := interfaceItem.OpenPanel()
+	is.True(ok)
+
+	interfacePanel.SetSize(80, 40)
+	content := renderMinimalPanel(interfacePanel)
+
+	// Verify the interface panel shows its fields
+	assert.StringContains(content, testx.NormalizeView(`
+		Node
+		id: ID!
 	`))
 }
 
