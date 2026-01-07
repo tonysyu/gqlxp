@@ -29,6 +29,7 @@ type SelectionTarget struct {
 
 type keymap = struct {
 	NextPanel, PrevPanel, Quit, ToggleGQLType, ReverseToggleGQLType, ToggleOverlay key.Binding
+	SearchFocus, SearchSubmit, SearchClear key.Binding
 }
 
 // Model is the main schema explorer model
@@ -93,6 +94,18 @@ func NewEmpty() Model {
 			ToggleOverlay: key.NewBinding(
 				key.WithKeys(" "),
 				key.WithHelp("space", "overlay"),
+			),
+			SearchFocus: key.NewBinding(
+				key.WithKeys("/"),
+				key.WithHelp("/", "search"),
+			),
+			SearchSubmit: key.NewBinding(
+				key.WithKeys("enter"),
+				key.WithHelp("enter", "submit"),
+			),
+			SearchClear: key.NewBinding(
+				key.WithKeys("esc"),
+				key.WithHelp("esc", "clear"),
 			),
 		},
 	}
@@ -289,8 +302,8 @@ func (m *Model) handleSearchFocused(msg tea.Msg) (Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter":
+		switch {
+		case key.Matches(msg, m.keymap.SearchSubmit):
 			// Execute search and transfer focus to results
 			query := m.searchInput.Value()
 			if query != "" {
@@ -300,7 +313,7 @@ func (m *Model) handleSearchFocused(msg tea.Msg) (Model, tea.Cmd) {
 				cmds = append(cmds, m.executeSearch(query))
 			}
 			return *m, tea.Batch(cmds...)
-		case "esc":
+		case key.Matches(msg, m.keymap.SearchClear):
 			// Clear input and keep focus
 			m.searchInput.SetValue("")
 			return *m, nil
@@ -322,7 +335,7 @@ func (m *Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
 		// Handle Search tab specific keys
 		if m.nav.CurrentType() == navigation.SearchType {
 			// If "/" is pressed, focus the search input
-			if msg.String() == "/" && !m.searchFocused {
+			if key.Matches(msg, m.keymap.SearchFocus) && !m.searchFocused {
 				m.searchFocused = true
 				m.updateKeybindings()
 				cmds = append(cmds, m.searchInput.Focus())
