@@ -208,12 +208,14 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if m.searchFocused {
 				m.searchFocused = false
 				m.searchInput.Blur()
+				m.updateKeybindings()
 			}
 			m.nav.CycleTypeForward()
 			m.resetAndLoadMainPanel()
 			// Focus search input when switching to Search tab
 			if m.nav.CurrentType() == navigation.SearchType {
 				m.searchFocused = true
+				m.updateKeybindings()
 				cmds = append(cmds, m.searchInput.Focus())
 			}
 		case key.Matches(msg, m.keymap.ReverseToggleGQLType):
@@ -221,71 +223,22 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if m.searchFocused {
 				m.searchFocused = false
 				m.searchInput.Blur()
+				m.updateKeybindings()
 			}
 			m.nav.CycleTypeBackward()
 			m.resetAndLoadMainPanel()
 			// Focus search input when switching to Search tab
 			if m.nav.CurrentType() == navigation.SearchType {
 				m.searchFocused = true
+				m.updateKeybindings()
 				cmds = append(cmds, m.searchInput.Focus())
 			}
 		default:
-			// Handle search tab focus management for other keys
-			if m.nav.CurrentType() == navigation.SearchType {
-				// If "/" is pressed, focus the search input
-				if msg.String() == "/" && !m.searchFocused {
-					m.searchFocused = true
-					cmds = append(cmds, m.searchInput.Focus())
-					return m, tea.Batch(cmds...)
-				}
-
-				// If search input is focused, handle search-specific keys
-				if m.searchFocused {
-					switch msg.String() {
-					case "enter":
-						// Execute search and transfer focus to results
-						query := m.searchInput.Value()
-						if query != "" {
-							m.searchFocused = false
-							m.searchInput.Blur()
-							cmds = append(cmds, m.executeSearch(query))
-						}
-						return m, tea.Batch(cmds...)
-					case "esc":
-						// Clear input and keep focus
-						m.searchInput.SetValue("")
-						return m, nil
-					default:
-						// Pass message to search input
-						var cmd tea.Cmd
-						m.searchInput, cmd = m.searchInput.Update(msg)
-						return m, cmd
-					}
-				}
+			// Delegate to appropriate handler based on search focus state
+			if m.nav.CurrentType() == navigation.SearchType && m.searchFocused {
+				return m.handleSearchFocused(msg)
 			}
-		}
-
-		// Handle remaining global keys
-		switch {
-		case key.Matches(msg, m.keymap.ToggleOverlay):
-			m.openOverlayForSelectedItem()
-		case key.Matches(msg, m.keymap.NextPanel):
-			// Move forward in stack if there's at least one more panel ahead
-			if m.nav.NavigateForward() {
-				m.updatePanelFocusStates()
-				// Open up child panel for ResultType if it exists
-				focusedPanel := m.nav.CurrentPanel()
-				if focusedPanel != nil {
-					if openCmd := focusedPanel.OpenSelectedItem(); openCmd != nil {
-						cmds = append(cmds, openCmd)
-					}
-				}
-			}
-		case key.Matches(msg, m.keymap.PrevPanel):
-			// Move backward in stack if not at the beginning
-			if m.nav.NavigateBackward() {
-				m.updatePanelFocusStates()
-			}
+			return m.handleNormal(msg, cmds)
 		}
 	case components.OpenPanelMsg:
 		m.handleOpenPanel(msg.Panel)
@@ -330,14 +283,95 @@ func (m *Model) openOverlayForSelectedItem() {
 	}
 }
 
+// handleSearchFocused handles messages when the search input is focused
+func (m *Model) handleSearchFocused(msg tea.Msg) (Model, tea.Cmd) {
+	var cmds []tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter":
+			// Execute search and transfer focus to results
+			query := m.searchInput.Value()
+			if query != "" {
+				m.searchFocused = false
+				m.searchInput.Blur()
+				m.updateKeybindings()
+				cmds = append(cmds, m.executeSearch(query))
+			}
+			return *m, tea.Batch(cmds...)
+		case "esc":
+			// Clear input and keep focus
+			m.searchInput.SetValue("")
+			return *m, nil
+		default:
+			// Pass message to search input
+			var cmd tea.Cmd
+			m.searchInput, cmd = m.searchInput.Update(msg)
+			return *m, cmd
+		}
+	}
+
+	return *m, nil
+}
+
+// handleNormal handles messages in normal mode (when search is not focused)
+func (m *Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		// Handle Search tab specific keys
+		if m.nav.CurrentType() == navigation.SearchType {
+			// If "/" is pressed, focus the search input
+			if msg.String() == "/" && !m.searchFocused {
+				m.searchFocused = true
+				m.updateKeybindings()
+				cmds = append(cmds, m.searchInput.Focus())
+				return *m, tea.Batch(cmds...)
+			}
+		}
+
+		// Handle remaining global keys
+		switch {
+		case key.Matches(msg, m.keymap.ToggleOverlay):
+			m.openOverlayForSelectedItem()
+		case key.Matches(msg, m.keymap.NextPanel):
+			// Move forward in stack if there's at least one more panel ahead
+			if m.nav.NavigateForward() {
+				m.updatePanelFocusStates()
+				// Open up child panel for ResultType if it exists
+				focusedPanel := m.nav.CurrentPanel()
+				if focusedPanel != nil {
+					if openCmd := focusedPanel.OpenSelectedItem(); openCmd != nil {
+						cmds = append(cmds, openCmd)
+					}
+				}
+			}
+		case key.Matches(msg, m.keymap.PrevPanel):
+			// Move backward in stack if not at the beginning
+			if m.nav.NavigateBackward() {
+				m.updatePanelFocusStates()
+			}
+		}
+	}
+
+	// Update visible panels in the stack
+	shouldReceiveMsg := m.shouldFocusedPanelReceiveMessage(msg)
+	if shouldReceiveMsg && m.nav.CurrentPanel() != nil {
+		currentPanel := m.nav.CurrentPanel()
+		newModel, cmd := currentPanel.Update(msg)
+		if panel, ok := newModel.(*components.Panel); ok {
+			m.nav.SetCurrentPanel(panel)
+		}
+		cmds = append(cmds, cmd)
+	}
+
+	return *m, tea.Batch(cmds...)
+}
+
 // shouldFocusedPanelReceiveMessage determines if the focused panel should receive a message
 func (m *Model) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		// If search input is focused, panel should not receive messages
-		if m.searchFocused {
-			return false
-		}
 		// Global navigation keys handled by main model should not go to panels
 		for _, binding := range m.globalKeyBinds {
 			if key.Matches(msg, binding) {
@@ -377,6 +411,28 @@ func (m *Model) sizePanels() {
 			panelWidth-m.Styles.BlurredPanel.GetHorizontalFrameSize(),
 			panelHeight-m.Styles.BlurredPanel.GetHorizontalFrameSize(),
 		)
+	}
+}
+
+// updateKeybindings enables or disables key bindings based on search focus state
+func (m *Model) updateKeybindings() {
+	if m.searchFocused {
+		// When search is focused, disable panel navigation keys
+		m.keymap.NextPanel.SetEnabled(false)
+		m.keymap.PrevPanel.SetEnabled(false)
+		m.keymap.ToggleOverlay.SetEnabled(false)
+		// Keep global keys enabled (Quit, ToggleGQLType, etc.)
+		m.keymap.Quit.SetEnabled(true)
+		m.keymap.ToggleGQLType.SetEnabled(true)
+		m.keymap.ReverseToggleGQLType.SetEnabled(true)
+	} else {
+		// Normal mode: enable all keys
+		m.keymap.NextPanel.SetEnabled(true)
+		m.keymap.PrevPanel.SetEnabled(true)
+		m.keymap.ToggleOverlay.SetEnabled(true)
+		m.keymap.Quit.SetEnabled(true)
+		m.keymap.ToggleGQLType.SetEnabled(true)
+		m.keymap.ReverseToggleGQLType.SetEnabled(true)
 	}
 }
 
