@@ -438,25 +438,7 @@ type searchResultsMsg struct {
 
 // convertSearchResultsToListItems converts search results to list items
 func (m *Model) convertSearchResultsToListItems(results []search.SearchResult) []components.ListItem {
-	items := make([]components.ListItem, 0, len(results))
-	for _, result := range results {
-		title := result.Path
-		if title == "" {
-			title = result.Name
-		}
-		description := result.Type
-		if result.Description != "" {
-			description = result.Type + ": " + result.Description
-		}
-
-		item := components.NewSimpleItem(
-			title,
-			components.WithDescription(description),
-			components.WithTypeName(result.Name),
-		)
-		items = append(items, item)
-	}
-	return items
+	return adapters.AdaptSearchResults(results, &m.schema)
 }
 
 // resetAndLoadMainPanel defines initial panels and loads currently selected GQL type.
