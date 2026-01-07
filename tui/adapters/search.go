@@ -38,8 +38,18 @@ func (i searchResultItem) FilterValue() string {
 	// Use wrapped item's filter value for better searching
 	return i.wrappedItem.FilterValue()
 }
-func (i searchResultItem) TypeName() string    { return i.result.Type }
-func (i searchResultItem) RefName() string     { return i.wrappedItem.RefName() }
+func (i searchResultItem) TypeName() string { return i.result.Type }
+func (i searchResultItem) RefName() string {
+	// For field types, use the full path (Type.field) for breadcrumbs
+	switch i.result.Type {
+	case "Query", "Mutation", "ObjectField", "InputField", "InterfaceField":
+		if i.result.Path != "" {
+			return i.result.Path
+		}
+	}
+	// For non-field types, delegate to wrapped item
+	return i.wrappedItem.RefName()
+}
 func (i searchResultItem) Description() string { return i.wrappedItem.Description() }
 func (i searchResultItem) Details() string     { return i.wrappedItem.Details() }
 
