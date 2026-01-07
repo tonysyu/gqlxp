@@ -329,12 +329,23 @@ func (p *Panel) renderTabBar() string {
 		return ""
 	}
 
+	// Calculate max width per tab to fit all tabs in available width
+	// Account for padding in tab styles by using a small buffer
+	const styleOverhead = 4 // Approximate horizontal padding per tab
+	availableWidth := p.width - (len(p.tabs) * styleOverhead)
+	if availableWidth < len(p.tabs) {
+		availableWidth = len(p.tabs) // Ensure at least 1 char per tab
+	}
+	maxTabWidth := availableWidth / len(p.tabs)
+
 	var tabParts []string
 	for i, tab := range p.tabs {
+		// Truncate label to fit within calculated max width
+		label := text.Truncate(tab.Label, maxTabWidth)
 		if i == p.activeTab {
-			tabParts = append(tabParts, p.styles.ActiveSubTab.Render(tab.Label))
+			tabParts = append(tabParts, p.styles.ActiveSubTab.Render(label))
 		} else {
-			tabParts = append(tabParts, p.styles.InactiveTab.Render(tab.Label))
+			tabParts = append(tabParts, p.styles.InactiveTab.Render(label))
 		}
 	}
 

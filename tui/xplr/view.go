@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
+	"github.com/tonysyu/gqlxp/utils/text"
 )
 
 // View renders the main TUI view
@@ -49,16 +50,31 @@ func (m Model) View() string {
 
 // renderGQLTypeNavbar creates the navbar showing GQL types
 func (m *Model) renderGQLTypeNavbar() string {
-	var tabs []string
+	allTypes := m.nav.AllTypes()
+	if len(allTypes) == 0 {
+		return ""
+	}
 
-	for _, fieldType := range m.nav.AllTypes() {
+	// Calculate max width per tab to fit all tabs in available width
+	// Account for padding in tab styles by using a small buffer
+	const styleOverhead = 4 // Approximate horizontal padding per tab
+	availableWidth := m.width - (len(allTypes) * styleOverhead)
+	if availableWidth < len(allTypes) {
+		availableWidth = len(allTypes) // Ensure at least 1 char per tab
+	}
+	maxTabWidth := availableWidth / len(allTypes)
+
+	var tabs []string
+	for _, fieldType := range allTypes {
 		var style lipgloss.Style
 		if m.nav.CurrentType() == fieldType {
 			style = m.Styles.ActiveTab
 		} else {
 			style = m.Styles.InactiveTab
 		}
-		tabs = append(tabs, style.Render(string(fieldType)))
+		// Truncate label to fit within calculated max width
+		label := text.Truncate(string(fieldType), maxTabWidth)
+		tabs = append(tabs, style.Render(label))
 	}
 
 	navbar := lipgloss.JoinHorizontal(lipgloss.Top, tabs...)
