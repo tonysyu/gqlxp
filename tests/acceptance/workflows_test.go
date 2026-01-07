@@ -126,7 +126,10 @@ func TestCycleBackwardThroughGraphQLTypes(t *testing.T) {
 
 	h.assert.CurrentType(navigation.QueryType)
 
-	// Cycle backward should wrap to last type (Directive)
+	// Cycle backward should wrap to last type (Search)
+	h.nav.PrevGqlType()
+	h.assert.CurrentType(navigation.SearchType)
+
 	h.nav.PrevGqlType()
 	h.assert.CurrentType(navigation.DirectiveType)
 

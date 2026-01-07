@@ -101,8 +101,8 @@ func TestNavigationManager_CycleTypeBackward(t *testing.T) {
 	is.Equal(nm.CurrentType(), QueryType)
 
 	newType := nm.CycleTypeBackward()
-	is.Equal(newType, DirectiveType)
-	is.Equal(nm.CurrentType(), DirectiveType)
+	is.Equal(newType, SearchType) // Updated: SearchType is now last
+	is.Equal(nm.CurrentType(), SearchType)
 }
 
 func TestNavigationManager_AllTypes(t *testing.T) {
@@ -110,6 +110,6 @@ func TestNavigationManager_AllTypes(t *testing.T) {
 	nm := NewNavigationManager(2)
 
 	allTypes := nm.AllTypes()
-	is.Equal(len(allTypes), 9)
+	is.Equal(len(allTypes), 10) // Updated to include SearchType
 	is.Equal(allTypes[0], QueryType)
 }

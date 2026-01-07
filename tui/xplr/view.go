@@ -3,6 +3,7 @@ package xplr
 import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 )
 
 // View renders the main TUI view
@@ -35,7 +36,14 @@ func (m Model) View() string {
 	breadcrumbs := m.renderBreadcrumbs()
 	panels := lipgloss.JoinHorizontal(lipgloss.Top, views...)
 
-	mainView := lipgloss.JoinVertical(0, navbar, breadcrumbs, panels, help)
+	// Add search input if on Search tab
+	var mainView string
+	if m.nav.CurrentType() == navigation.SearchType {
+		searchInput := m.searchInput.View()
+		mainView = lipgloss.JoinVertical(0, navbar, breadcrumbs, panels, searchInput, help)
+	} else {
+		mainView = lipgloss.JoinVertical(0, navbar, breadcrumbs, panels, help)
+	}
 	return mainView
 }
 

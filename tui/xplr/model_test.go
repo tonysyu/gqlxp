@@ -154,7 +154,7 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 	expectedTypes := []navigation.GQLType{
 		navigation.MutationType, navigation.ObjectType, navigation.InputType,
 		navigation.EnumType, navigation.ScalarType, navigation.InterfaceType,
-		navigation.UnionType, navigation.DirectiveType, navigation.QueryType,
+		navigation.UnionType, navigation.DirectiveType, navigation.SearchType, navigation.QueryType,
 	}
 
 	for _, expectedType := range expectedTypes {
@@ -165,7 +165,7 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 
 	// Test reverse cycling
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
-	is.Equal(model.nav.CurrentType(), navigation.DirectiveType)
+	is.Equal(model.nav.CurrentType(), navigation.SearchType)
 }
 
 func TestModelWindowResize(t *testing.T) {

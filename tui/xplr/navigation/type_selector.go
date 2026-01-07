@@ -12,6 +12,7 @@ const (
 	InterfaceType GQLType = "Interface"
 	UnionType     GQLType = "Union"
 	DirectiveType GQLType = "Directive"
+	SearchType    GQLType = "Search"
 )
 
 // typeSelector manages selection among available GQL types
@@ -23,7 +24,7 @@ type typeSelector struct {
 func newTypeSelector() *typeSelector {
 	types := []GQLType{
 		QueryType, MutationType, ObjectType, InputType,
-		EnumType, ScalarType, InterfaceType, UnionType, DirectiveType,
+		EnumType, ScalarType, InterfaceType, UnionType, DirectiveType, SearchType,
 	}
 	return &typeSelector{
 		types:    types,

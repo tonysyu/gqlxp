@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/library"
+	"github.com/tonysyu/gqlxp/search"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/config"
 	"github.com/tonysyu/gqlxp/tui/overlay"
@@ -43,6 +44,13 @@ type Model struct {
 	SchemaID       string // Schema ID if loaded from library
 	HasLibraryData bool   // Whether this schema has library metadata
 
+	// Search state
+	searchInput    components.SearchInput
+	searchFocused  bool
+	searchResults  []components.ListItem
+	searchBaseDir  string // Base directory for search indexes
+	searchIndexing bool   // Whether search index is being built
+
 	width          int
 	height         int
 	Styles         config.Styles
@@ -56,10 +64,11 @@ type Model struct {
 func NewEmpty() Model {
 	styles := config.DefaultStyles()
 	m := Model{
-		help:    help.New(),
-		Styles:  styles,
-		overlay: overlay.New(styles),
-		nav:     navigation.NewNavigationManager(config.VisiblePanelCount),
+		help:        help.New(),
+		Styles:      styles,
+		overlay:     overlay.New(styles),
+		nav:         navigation.NewNavigationManager(config.VisiblePanelCount),
+		searchInput: components.NewSearchInput(),
 		keymap: keymap{
 			NextPanel: key.NewBinding(
 				key.WithKeys("]", "tab"),
@@ -176,10 +185,88 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.HasLibraryData = msg.HasLibraryData
 		m.resetAndLoadMainPanel()
 		return m, nil
+	case searchResultsMsg:
+		// Update search results
+		if msg.err != nil {
+			// Handle search error - show empty results
+			m.searchResults = nil
+		} else {
+			m.searchResults = m.convertSearchResultsToListItems(msg.results)
+		}
+		// Reload panel if we're on the search tab
+		if m.nav.CurrentType() == navigation.SearchType {
+			m.loadMainPanel()
+		}
+		return m, nil
 	case tea.KeyMsg:
+		// Handle global keys that should work even when search is focused
 		switch {
 		case key.Matches(msg, m.keymap.Quit):
 			return m, tea.Quit
+		case key.Matches(msg, m.keymap.ToggleGQLType):
+			// Blur search input when switching away from Search tab
+			if m.searchFocused {
+				m.searchFocused = false
+				m.searchInput.Blur()
+			}
+			m.nav.CycleTypeForward()
+			m.resetAndLoadMainPanel()
+			// Focus search input when switching to Search tab
+			if m.nav.CurrentType() == navigation.SearchType {
+				m.searchFocused = true
+				cmds = append(cmds, m.searchInput.Focus())
+			}
+		case key.Matches(msg, m.keymap.ReverseToggleGQLType):
+			// Blur search input when switching away from Search tab
+			if m.searchFocused {
+				m.searchFocused = false
+				m.searchInput.Blur()
+			}
+			m.nav.CycleTypeBackward()
+			m.resetAndLoadMainPanel()
+			// Focus search input when switching to Search tab
+			if m.nav.CurrentType() == navigation.SearchType {
+				m.searchFocused = true
+				cmds = append(cmds, m.searchInput.Focus())
+			}
+		default:
+			// Handle search tab focus management for other keys
+			if m.nav.CurrentType() == navigation.SearchType {
+				// If "/" is pressed, focus the search input
+				if msg.String() == "/" && !m.searchFocused {
+					m.searchFocused = true
+					cmds = append(cmds, m.searchInput.Focus())
+					return m, tea.Batch(cmds...)
+				}
+
+				// If search input is focused, handle search-specific keys
+				if m.searchFocused {
+					switch msg.String() {
+					case "enter":
+						// Execute search and transfer focus to results
+						query := m.searchInput.Value()
+						if query != "" {
+							m.searchFocused = false
+							m.searchInput.Blur()
+							cmds = append(cmds, m.executeSearch(query))
+						}
+						return m, tea.Batch(cmds...)
+					case "esc":
+						// Clear input and keep focus
+						m.searchInput.SetValue("")
+						return m, nil
+					default:
+						// Pass message to search input
+						var cmd tea.Cmd
+						m.searchInput, cmd = m.searchInput.Update(msg)
+						return m, cmd
+					}
+				}
+			}
+		}
+
+		// Handle remaining global keys
+		switch {
 		case key.Matches(msg, m.keymap.ToggleOverlay):
 			m.openOverlayForSelectedItem()
 		case key.Matches(msg, m.keymap.NextPanel):
@@ -199,12 +286,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if m.nav.NavigateBackward() {
 				m.updatePanelFocusStates()
 			}
-		case key.Matches(msg, m.keymap.ToggleGQLType):
-			m.nav.CycleTypeForward()
-			m.resetAndLoadMainPanel()
-		case key.Matches(msg, m.keymap.ReverseToggleGQLType):
-			m.nav.CycleTypeBackward()
-			m.resetAndLoadMainPanel()
 		}
 	case components.OpenPanelMsg:
 		m.handleOpenPanel(msg.Panel)
@@ -253,6 +334,10 @@ func (m *Model) openOverlayForSelectedItem() {
 func (m *Model) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		// If search input is focused, panel should not receive messages
+		if m.searchFocused {
+			return false
+		}
 		// Global navigation keys handled by main model should not go to panels
 		for _, binding := range m.globalKeyBinds {
 			if key.Matches(msg, binding) {
@@ -272,6 +357,13 @@ func (m *Model) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
 func (m *Model) sizePanels() {
 	panelWidth := m.width / config.VisiblePanelCount
 	panelHeight := m.height - config.HelpHeight - config.NavbarHeight - config.BreadcrumbsHeight
+
+	// Reserve space for search input if on Search tab
+	const searchInputHeight = 3 // Height for search input field
+	if m.nav.CurrentType() == navigation.SearchType {
+		panelHeight -= searchInputHeight
+	}
+
 	// Size only the visible panels (config.VisiblePanelCount = 2)
 	if m.nav.CurrentPanel() != nil {
 		m.nav.CurrentPanel().SetSize(
@@ -308,6 +400,63 @@ func (m *Model) updatePanelFocusStates() {
 func (m *Model) handleOpenPanel(newPanel *components.Panel) {
 	m.nav.OpenPanel(newPanel)
 	m.sizePanels()
+}
+
+// SetSearchBaseDir sets the base directory for search indexes
+func (m *Model) SetSearchBaseDir(baseDir string) {
+	m.searchBaseDir = baseDir
+}
+
+// executeSearch performs a search query and updates the search results
+func (m *Model) executeSearch(query string) tea.Cmd {
+	if query == "" || m.SchemaID == "" || m.searchBaseDir == "" {
+		return nil
+	}
+
+	return func() tea.Msg {
+		// Create searcher
+		searcher := search.NewSearcher(m.searchBaseDir)
+		defer searcher.Close()
+
+		// Perform search
+		results, err := searcher.Search(m.SchemaID, query, 50)
+		if err != nil {
+			// If index doesn't exist, need to create it
+			// For now, return empty results - indexing should be handled separately
+			return searchResultsMsg{results: nil, err: err}
+		}
+
+		return searchResultsMsg{results: results, err: nil}
+	}
+}
+
+// searchResultsMsg is sent when search results are ready
+type searchResultsMsg struct {
+	results []search.SearchResult
+	err     error
+}
+
+// convertSearchResultsToListItems converts search results to list items
+func (m *Model) convertSearchResultsToListItems(results []search.SearchResult) []components.ListItem {
+	items := make([]components.ListItem, 0, len(results))
+	for _, result := range results {
+		title := result.Path
+		if title == "" {
+			title = result.Name
+		}
+		description := result.Type
+		if result.Description != "" {
+			description = result.Type + ": " + result.Description
+		}
+
+		item := components.NewSimpleItem(
+			title,
+			components.WithDescription(description),
+			components.WithTypeName(result.Name),
+		)
+		items = append(items, item)
+	}
+	return items
 }
 
 // resetAndLoadMainPanel defines initial panels and loads currently selected GQL type.
@@ -351,13 +500,21 @@ func (m *Model) loadMainPanel() {
 	case navigation.DirectiveType:
 		items = m.schema.GetDirectiveItems()
 		title = "Directive Types"
+	case navigation.SearchType:
+		// Use cached search results or show empty state
+		if m.searchResults != nil {
+			items = m.searchResults
+		} else {
+			items = []components.ListItem{}
+		}
+		title = "Search Results"
 	}
 
 	m.nav.SetCurrentPanel(components.NewPanel(items, title))
 	m.updatePanelFocusStates()
 
-	// Auto-open detail panel for the first item if available
-	if len(items) > 0 {
+	// Auto-open detail panel for the first item if available (but not for Search tab)
+	if len(items) > 0 && m.nav.CurrentType() != navigation.SearchType {
 		if newPanel, ok := items[0].OpenPanel(); ok {
 			m.handleOpenPanel(newPanel)
 		}

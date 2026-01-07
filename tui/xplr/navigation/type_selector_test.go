@@ -10,7 +10,7 @@ func TestTypeSelector_newTypeSelector(t *testing.T) {
 	is := is.New(t)
 	ts := newTypeSelector()
 	is.Equal(ts.Current(), QueryType)
-	is.Equal(len(ts.All()), 9)
+	is.Equal(len(ts.All()), 10) // Updated to include SearchType
 }
 
 func TestTypeSelector_Set(t *testing.T) {
@@ -35,6 +35,10 @@ func TestTypeSelector_Next(t *testing.T) {
 	}
 	is.Equal(ts.Current(), DirectiveType)
 
+	// Next should be SearchType
+	next = ts.Next()
+	is.Equal(next, SearchType)
+
 	// Test wraparound
 	next = ts.Next()
 	is.Equal(next, QueryType)
@@ -45,10 +49,14 @@ func TestTypeSelector_Previous(t *testing.T) {
 	ts := newTypeSelector()
 	is.Equal(ts.Current(), QueryType)
 
-	// Test wraparound at beginning
+	// Test wraparound at beginning - should go to SearchType (last in list)
 	prev := ts.Previous()
+	is.Equal(prev, SearchType)
+	is.Equal(ts.Current(), SearchType)
+
+	// Previous from SearchType should be DirectiveType
+	prev = ts.Previous()
 	is.Equal(prev, DirectiveType)
-	is.Equal(ts.Current(), DirectiveType)
 
 	// Move back one more
 	prev = ts.Previous()
@@ -62,7 +70,7 @@ func TestTypeSelector_All(t *testing.T) {
 
 	expected := []GQLType{
 		QueryType, MutationType, ObjectType, InputType,
-		EnumType, ScalarType, InterfaceType, UnionType, DirectiveType,
+		EnumType, ScalarType, InterfaceType, UnionType, DirectiveType, SearchType,
 	}
 
 	is.Equal(len(all), len(expected))
@@ -85,8 +93,13 @@ func TestTypeSelector_CurrentIndex(t *testing.T) {
 	idx = ts.currentIndex()
 	is.Equal(idx, 4)
 
-	// Test last type
+	// Test DirectiveType
 	ts.Set(DirectiveType)
 	idx = ts.currentIndex()
 	is.Equal(idx, 8)
+
+	// Test last type (SearchType)
+	ts.Set(SearchType)
+	idx = ts.currentIndex()
+	is.Equal(idx, 9)
 }

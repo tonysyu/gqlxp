@@ -33,26 +33,42 @@ func newModelWithLibselect() (Model, error) {
 		return Model{}, err
 	}
 
+	xplrModel := xplr.NewEmpty()
+	// Set search base directory for search functionality
+	if schemasDir, err := library.GetSchemasDir(); err == nil {
+		xplrModel.SetSearchBaseDir(schemasDir)
+	}
+
 	return Model{
 		state:     libselectView,
 		libselect: libselectModel,
-		xplr:      xplr.NewEmpty(),
+		xplr:      xplrModel,
 	}, nil
 }
 
 // newModelWithXplr creates a model starting in explorer mode
 func newModelWithXplr(schema adapters.SchemaView) Model {
+	xplrModel := xplr.New(schema)
+	// Set search base directory for search functionality
+	if schemasDir, err := library.GetSchemasDir(); err == nil {
+		xplrModel.SetSearchBaseDir(schemasDir)
+	}
 	return Model{
 		state: xplrView,
-		xplr:  xplr.New(schema),
+		xplr:  xplrModel,
 	}
 }
 
 // newModelWithXplrAndLibrary creates a model starting in explorer mode with library data
 func newModelWithXplrAndLibrary(schema adapters.SchemaView, schemaID string, metadata library.SchemaMetadata) Model {
+	xplrModel := xplr.NewFromSchemaLibrary(schema, schemaID, metadata)
+	// Set search base directory for search functionality
+	if schemasDir, err := library.GetSchemasDir(); err == nil {
+		xplrModel.SetSearchBaseDir(schemasDir)
+	}
 	return Model{
 		state: xplrView,
-		xplr:  xplr.NewFromSchemaLibrary(schema, schemaID, metadata),
+		xplr:  xplrModel,
 	}
 }
 
