@@ -50,6 +50,11 @@ lint-fix:
 verify: && test lint-fix
     @echo "Testing, linting, and fixing"
 
+# Display directory tree
+[group('code')]
+tree:
+    tree -I openspec -d
+
 # Build executable
 [group('deploy')]
 build:
