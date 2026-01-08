@@ -13,7 +13,7 @@ run +ARGS=empty:
 # Run the gqlxp tui with logging to debug.log file
 [group('app')]
 run-with-log +ARGS=empty:
-    GQLXP_LOGFILE=debug.log go run ./cmd/gqlxp {{ARGS}}
+    go run ./cmd/gqlxp app --log-file debug.log {{ARGS}}
 
 # Document public signatures for package
 [group('code')]

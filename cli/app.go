@@ -35,7 +35,6 @@ Examples:
 				Name:    "log-file",
 				Aliases: []string{"l"},
 				Usage:   "Enable debug logging to `FILE`",
-				Sources: cli.EnvVars("GQLXP_LOGFILE"),
 			},
 			&cli.StringFlag{
 				Name:  "select",
