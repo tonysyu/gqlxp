@@ -50,7 +50,7 @@ func TestNewModel(t *testing.T) {
 	is.True(model.keymap.NextPanel.Enabled())
 	is.True(model.keymap.PrevPanel.Enabled())
 	is.True(model.keymap.Quit.Enabled())
-	is.True(model.keymap.ToggleGQLType.Enabled())
+	is.True(model.keymap.NextGQLType.Enabled())
 }
 
 func TestModelPanelNavigation(t *testing.T) {

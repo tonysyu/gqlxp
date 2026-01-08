@@ -28,7 +28,7 @@ type SelectionTarget struct {
 }
 
 type keymap = struct {
-	NextPanel, PrevPanel, Quit, ToggleGQLType, ReverseToggleGQLType, ToggleOverlay key.Binding
+	NextPanel, PrevPanel, Quit, NextGQLType, PrevGQLType, ToggleOverlay key.Binding
 	SearchFocus, SearchSubmit, SearchClear key.Binding
 }
 
@@ -83,17 +83,17 @@ func NewEmpty() Model {
 				key.WithKeys("ctrl+c", "ctrl+d"),
 				key.WithHelp("⌃+c", "quit"),
 			),
-			ToggleGQLType: key.NewBinding(
-				key.WithKeys("ctrl+t", "}"),
-				key.WithHelp("}/⌃+T", "next type"),
+			NextGQLType: key.NewBinding(
+				key.WithKeys("}"),
+				key.WithHelp("}", "next type"),
 			),
-			ReverseToggleGQLType: key.NewBinding(
-				key.WithKeys("ctrl+r", "{"),
-				key.WithHelp("{/⌃+r", "prev type"),
+			PrevGQLType: key.NewBinding(
+				key.WithKeys("{"),
+				key.WithHelp("{", "prev type"),
 			),
 			ToggleOverlay: key.NewBinding(
 				key.WithKeys(" "),
-				key.WithHelp("space", "overlay"),
+				key.WithHelp("space", "details"),
 			),
 			SearchFocus: key.NewBinding(
 				key.WithKeys("/"),
@@ -101,11 +101,11 @@ func NewEmpty() Model {
 			),
 			SearchSubmit: key.NewBinding(
 				key.WithKeys("enter"),
-				key.WithHelp("enter", "submit"),
+				key.WithHelp("enter", "submit search "),
 			),
 			SearchClear: key.NewBinding(
 				key.WithKeys("esc"),
-				key.WithHelp("esc", "clear"),
+				key.WithHelp("esc", "clear search"),
 			),
 		},
 	}
@@ -115,8 +115,8 @@ func NewEmpty() Model {
 		m.keymap.NextPanel,
 		m.keymap.PrevPanel,
 		m.keymap.Quit,
-		m.keymap.ToggleGQLType,
-		m.keymap.ReverseToggleGQLType,
+		m.keymap.NextGQLType,
+		m.keymap.PrevGQLType,
 		m.keymap.ToggleOverlay,
 	}
 
@@ -216,7 +216,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keymap.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, m.keymap.ToggleGQLType):
+		case key.Matches(msg, m.keymap.NextGQLType):
 			// Blur search input when switching away from Search tab
 			if m.searchFocused {
 				m.searchFocused = false
@@ -231,7 +231,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.updateKeybindings()
 				cmds = append(cmds, m.searchInput.Focus())
 			}
-		case key.Matches(msg, m.keymap.ReverseToggleGQLType):
+		case key.Matches(msg, m.keymap.PrevGQLType):
 			// Blur search input when switching away from Search tab
 			if m.searchFocused {
 				m.searchFocused = false
@@ -436,16 +436,16 @@ func (m *Model) updateKeybindings() {
 		m.keymap.ToggleOverlay.SetEnabled(false)
 		// Keep global keys enabled (Quit, ToggleGQLType, etc.)
 		m.keymap.Quit.SetEnabled(true)
-		m.keymap.ToggleGQLType.SetEnabled(true)
-		m.keymap.ReverseToggleGQLType.SetEnabled(true)
+		m.keymap.NextGQLType.SetEnabled(true)
+		m.keymap.PrevGQLType.SetEnabled(true)
 	} else {
 		// Normal mode: enable all keys
 		m.keymap.NextPanel.SetEnabled(true)
 		m.keymap.PrevPanel.SetEnabled(true)
 		m.keymap.ToggleOverlay.SetEnabled(true)
 		m.keymap.Quit.SetEnabled(true)
-		m.keymap.ToggleGQLType.SetEnabled(true)
-		m.keymap.ReverseToggleGQLType.SetEnabled(true)
+		m.keymap.NextGQLType.SetEnabled(true)
+		m.keymap.PrevGQLType.SetEnabled(true)
 	}
 }
 

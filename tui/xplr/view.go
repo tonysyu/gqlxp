@@ -9,16 +9,7 @@ import (
 
 // View renders the main TUI view
 func (m Model) View() string {
-	// Build help key bindings
-	helpBindings := []key.Binding{
-		m.keymap.NextPanel,
-		m.keymap.PrevPanel,
-		m.keymap.ToggleGQLType,
-		m.keymap.ToggleOverlay,
-		m.keymap.Quit,
-	}
-
-	help := m.help.ShortHelpView(helpBindings)
+	help := m.help.ShortHelpView(m.helpBindings())
 
 	// Show overlay if active, and return immediately
 	if m.Overlay().IsActive() {
@@ -46,6 +37,33 @@ func (m Model) View() string {
 		mainView = lipgloss.JoinVertical(0, navbar, breadcrumbs, panels, help)
 	}
 	return mainView
+}
+
+func (m Model) helpBindings() []key.Binding {
+	if m.searchFocused {
+		return []key.Binding{
+			m.keymap.SearchSubmit,
+			m.keymap.SearchClear,
+			m.keymap.NextGQLType,
+			m.keymap.PrevGQLType,
+			m.keymap.Quit,
+		}
+	}
+
+	helpBindings := []key.Binding{}
+	if m.nav.CurrentType() == navigation.SearchType {
+		// Only display SearchFocus key when viewing SearchType, but not in searchFocused state
+		helpBindings = append(helpBindings, m.keymap.SearchFocus)
+	}
+	return append(
+		helpBindings,
+		m.keymap.NextPanel,
+		m.keymap.PrevPanel,
+		m.keymap.ToggleOverlay,
+		m.keymap.NextGQLType,
+		m.keymap.PrevGQLType,
+		m.keymap.Quit,
+	)
 }
 
 // renderGQLTypeNavbar creates the navbar showing GQL types
