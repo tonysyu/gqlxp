@@ -1,7 +1,6 @@
 package components
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -77,14 +76,14 @@ func TestPanel_SelectItemByName(t *testing.T) {
 }
 
 func TestPanelWithEmptyItems(t *testing.T) {
-	is := is.New(t)
+	assert := assert.New(t)
 
 	panel := NewPanel([]ListItem{}, "Empty Panel")
 	panel.SetSize(80, 20)
 
 	// Should handle empty list gracefully
 	view := panel.View()
-	is.True(strings.Contains(view, "Empty Panel"))
+	assert.StringContains(view, "Empty Panel")
 }
 
 func TestPanelSelectionChange(t *testing.T) {

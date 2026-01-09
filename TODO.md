@@ -19,13 +19,13 @@ This file tracks opportunities to improve code quality based on [docs/coding.md]
 
 ### Migrate from `t.Error/t.Errorf` to `is` library
 
-- [ ] `tests/fitness/dependency_test.go:127, 129, 131, 133` - Use `is` library
-- [ ] `tests/fitness/hierarchy_test.go:146, 148, 150` - Use `is` library
-- [ ] `cli/show_test.go:205, 215, 251, 289` - Use `is` library
-- [ ] `cli/app_test.go:42, 45` - Use `is` library
-- [ ] `tui/adapters/schema_test.go:121, 124` - Use `is` library
-- [ ] `tui/xplr/selection_test.go:66` - Use `is` library
-- [ ] `tests/acceptance/workflows_test.go:272` - Use `is` library
+- [x] `tests/fitness/dependency_test.go:127, 129, 131, 133` - Use `is` library
+- [x] `tests/fitness/hierarchy_test.go:146, 148, 150` - Use `is` library
+- [x] `cli/show_test.go:205, 215, 251, 289` - Use `is` library
+- [x] `cli/app_test.go:42, 45` - Use `is` library
+- [x] `tui/adapters/schema_test.go:121, 124` - Use `is` library
+- [x] `tui/xplr/selection_test.go:66` - Use `is` library
+- [x] `tests/acceptance/workflows_test.go:272` - Use `is` library
 
 ### Review black-box vs white-box testing
 

@@ -1,6 +1,10 @@
 package cli
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/matryer/is"
+)
 
 func TestParseSelectionTarget(t *testing.T) {
 	tests := []struct {
@@ -37,13 +41,11 @@ func TestParseSelectionTarget(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+
 			gotTypeName, gotFieldName := parseSelectionTarget(tt.target)
-			if gotTypeName != tt.wantTypeName {
-				t.Errorf("parseSelectionTarget() typeName = %v, want %v", gotTypeName, tt.wantTypeName)
-			}
-			if gotFieldName != tt.wantFieldName {
-				t.Errorf("parseSelectionTarget() fieldName = %v, want %v", gotFieldName, tt.wantFieldName)
-			}
+			is.Equal(gotTypeName, tt.wantTypeName) // parseSelectionTarget() typeName
+			is.Equal(gotFieldName, tt.wantFieldName) // parseSelectionTarget() fieldName
 		})
 	}
 }

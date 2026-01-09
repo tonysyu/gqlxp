@@ -1,11 +1,12 @@
 package cli
 
 import (
-	"strings"
 	"testing"
 
+	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/gqlfmt"
+	"github.com/tonysyu/gqlxp/utils/testx/assert"
 )
 
 func TestGenerateMarkdown(t *testing.T) {
@@ -195,31 +196,31 @@ func TestGenerateMarkdown(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			assert := assert.New(t)
+
 			schema, err := gql.ParseSchema([]byte(tt.schema))
 			if err != nil {
 				t.Fatalf("Failed to parse schema: %v", err)
 			}
 
 			got, err := gqlfmt.GenerateMarkdown(schema, tt.typeName)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("generateMarkdown() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			is.Equal((err != nil), tt.wantErr) // generateMarkdown() error status
 
 			if tt.wantErr {
 				return
 			}
 
 			for _, want := range tt.want {
-				if !strings.Contains(got, want) {
-					t.Errorf("generateMarkdown() missing expected substring:\nwant: %q\ngot:\n%s", want, got)
-				}
+				assert.StringContains(got, want) // generateMarkdown() contains expected substring
 			}
 		})
 	}
 }
 
 func TestGenerateFieldMarkdown(t *testing.T) {
+	assert := assert.New(t)
+
 	schema := `
 		type Query {
 			"""Get user by ID"""
@@ -247,13 +248,13 @@ func TestGenerateFieldMarkdown(t *testing.T) {
 	}
 
 	for _, expected := range expectedSubstrings {
-		if !strings.Contains(markdown, expected) {
-			t.Errorf("Expected markdown to contain %q, got:\n%s", expected, markdown)
-		}
+		assert.StringContains(markdown, expected) // markdown contains expected substring
 	}
 }
 
 func TestGenerateTypeDefMarkdown(t *testing.T) {
+	assert := assert.New(t)
+
 	schema := `
 		type Query { placeholder: String }
 		"""A user in the system"""
@@ -285,8 +286,6 @@ func TestGenerateTypeDefMarkdown(t *testing.T) {
 	}
 
 	for _, expected := range expectedSubstrings {
-		if !strings.Contains(markdown, expected) {
-			t.Errorf("Expected markdown to contain %q, got:\n%s", expected, markdown)
-		}
+		assert.StringContains(markdown, expected) // markdown contains expected substring
 	}
 }

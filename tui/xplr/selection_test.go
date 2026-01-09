@@ -62,7 +62,5 @@ func TestApplySelection_FieldSelection(t *testing.T) {
 	// Check breadcrumbs
 	breadcrumbs := m.nav.Breadcrumbs()
 	t.Logf("Breadcrumbs: %v", breadcrumbs)
-	if len(breadcrumbs) == 0 {
-		t.Error("Expected breadcrumbs to be set, got empty")
-	}
+	is.True(len(breadcrumbs) > 0) // breadcrumbs should be set
 }

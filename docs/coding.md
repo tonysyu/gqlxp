@@ -22,9 +22,9 @@
   - `is.True(x != y)` → proper error assertion or inverse check
   - `is.True(err == nil)` → `is.NoErr(err)`
   - `is.True(err != nil)` → proper error assertion
+  - `is.True(strings.Contains(x, y))` → `assert.StringContains(x, y)`
+    - Using `assert := assert.New(t)` from `"github.com/tonysyu/gqlxp/utils/testx/assert"`
   - Keep `is.True(boolValue)` and `is.True(!boolValue)` as-is
-- Use `assert.StringContains` (from `"github.com/tonysyu/gqlxp/utils/testx/assert"`) for
-  substring assertions
 
 ### Test Readability
 

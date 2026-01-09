@@ -3,6 +3,7 @@ package acceptance
 import (
 	"testing"
 
+	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 )
 
@@ -264,13 +265,12 @@ func TestEdgeCaseEmptyPanelNavigation(t *testing.T) {
 }
 
 func TestWindowResizing(t *testing.T) {
+	is := is.New(t)
 	h := New(t, testSchema, WithWindowSize(80, 30))
 
 	// Verify view renders at specified size
 	view := h.explorer.View()
-	if view == "" {
-		t.Error("expected view to render with custom window size")
-	}
+	is.True(view != "") // view should render with custom window size
 
 	// Navigation should still work
 	h.nav.NextPanel()

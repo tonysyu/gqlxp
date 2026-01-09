@@ -3,6 +3,7 @@ package adapters
 import (
 	"testing"
 
+	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 )
 
@@ -116,13 +117,11 @@ func TestSchemaView_FindTypeCategory(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+
 			gotCategory, gotFound := schema.FindTypeCategory(tt.typeName)
-			if gotCategory != tt.wantCategory {
-				t.Errorf("FindTypeCategory() category = %v, want %v", gotCategory, tt.wantCategory)
-			}
-			if gotFound != tt.wantFound {
-				t.Errorf("FindTypeCategory() found = %v, want %v", gotFound, tt.wantFound)
-			}
+			is.Equal(gotCategory, tt.wantCategory) // FindTypeCategory() category
+			is.Equal(gotFound, tt.wantFound) // FindTypeCategory() found
 		})
 	}
 }
