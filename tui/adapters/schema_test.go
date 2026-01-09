@@ -121,7 +121,7 @@ func TestSchemaView_FindTypeCategory(t *testing.T) {
 
 			gotCategory, gotFound := schema.FindTypeCategory(tt.typeName)
 			is.Equal(gotCategory, tt.wantCategory) // FindTypeCategory() category
-			is.Equal(gotFound, tt.wantFound) // FindTypeCategory() found
+			is.Equal(gotFound, tt.wantFound)       // FindTypeCategory() found
 		})
 	}
 }

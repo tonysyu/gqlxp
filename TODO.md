@@ -32,7 +32,7 @@ This file tracks opportunities to improve code quality based on [docs/coding.md]
 Consider converting these white-box tests (`package foo`) to black-box tests (`package foo_test`) if they're testing public APIs:
 
 - [ ] `cli/show_test.go` - Review if should use `package cli_test`
-- [ ] `cli/prompt_test.go` - Review if should use `package cli_test`
+- [x] `cli/prompt_test.go` - Migrated to `package cli_test`
 - [ ] `cli/app_test.go` - Review if should use `package cli_test`
 - [ ] `tui/model_test.go` - Review if should use `package tui_test`
 - [ ] `tui/overlay/model_test.go` - Review if should use `package overlay_test`

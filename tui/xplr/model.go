@@ -46,10 +46,10 @@ type Model struct {
 	HasLibraryData bool   // Whether this schema has library metadata
 
 	// Search state
-	searchInput    components.SearchInput
-	searchFocused  bool
-	searchResults  []components.ListItem
-	searchBaseDir  string // Base directory for search indexes
+	searchInput   components.SearchInput
+	searchFocused bool
+	searchResults []components.ListItem
+	searchBaseDir string // Base directory for search indexes
 
 	width          int
 	height         int

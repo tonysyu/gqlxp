@@ -44,7 +44,7 @@ func TestParseSelectionTarget(t *testing.T) {
 			is := is.New(t)
 
 			gotTypeName, gotFieldName := parseSelectionTarget(tt.target)
-			is.Equal(gotTypeName, tt.wantTypeName) // parseSelectionTarget() typeName
+			is.Equal(gotTypeName, tt.wantTypeName)   // parseSelectionTarget() typeName
 			is.Equal(gotFieldName, tt.wantFieldName) // parseSelectionTarget() fieldName
 		})
 	}
