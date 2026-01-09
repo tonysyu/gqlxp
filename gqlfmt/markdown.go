@@ -14,45 +14,68 @@ func GenerateMarkdown(schema gql.GraphQLSchema, typeName string) (string, error)
 
 	// Handle Query fields (Query.fieldName)
 	if strings.HasPrefix(typeName, "Query.") {
-		fieldName := strings.TrimPrefix(typeName, "Query.")
-		field, ok := schema.Query[fieldName]
-		if !ok {
-			return "", fmt.Errorf("query field %q not found in schema", fieldName)
-		}
-		return GenerateFieldMarkdown(field, resolver), nil
+		return generateQueryFieldMarkdown(schema, typeName, resolver)
 	}
 
 	// Handle Mutation fields (Mutation.fieldName)
 	if strings.HasPrefix(typeName, "Mutation.") {
-		fieldName := strings.TrimPrefix(typeName, "Mutation.")
-		field, ok := schema.Mutation[fieldName]
-		if !ok {
-			return "", fmt.Errorf("mutation field %q not found in schema", fieldName)
-		}
-		return GenerateFieldMarkdown(field, resolver), nil
+		return generateMutationFieldMarkdown(schema, typeName, resolver)
 	}
 
 	// Handle Directives (@directiveName)
 	if strings.HasPrefix(typeName, "@") {
-		directiveName := strings.TrimPrefix(typeName, "@")
-		directive, ok := schema.Directive[directiveName]
-		if !ok {
-			return "", fmt.Errorf("directive %q not found in schema", directiveName)
-		}
-		return GenerateDirectiveMarkdown(directive, resolver), nil
+		return generateDirectiveMarkdown(schema, typeName, resolver)
 	}
 
 	// Handle regular types (Object, Input, Enum, Scalar, Interface, Union)
+	return generateTypeMarkdown(schema, typeName, resolver)
+}
+
+// generateQueryFieldMarkdown generates markdown for a query field
+func generateQueryFieldMarkdown(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver) (string, error) {
+	fieldName := strings.TrimPrefix(typeName, "Query.")
+	field, ok := schema.Query[fieldName]
+	if !ok {
+		return "", fmt.Errorf("query field %q not found in schema", fieldName)
+	}
+	return GenerateFieldMarkdown(field, resolver), nil
+}
+
+// generateMutationFieldMarkdown generates markdown for a mutation field
+func generateMutationFieldMarkdown(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver) (string, error) {
+	fieldName := strings.TrimPrefix(typeName, "Mutation.")
+	field, ok := schema.Mutation[fieldName]
+	if !ok {
+		return "", fmt.Errorf("mutation field %q not found in schema", fieldName)
+	}
+	return GenerateFieldMarkdown(field, resolver), nil
+}
+
+// generateDirectiveMarkdown generates markdown for a directive
+func generateDirectiveMarkdown(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver) (string, error) {
+	directiveName := strings.TrimPrefix(typeName, "@")
+	directive, ok := schema.Directive[directiveName]
+	if !ok {
+		return "", fmt.Errorf("directive %q not found in schema", directiveName)
+	}
+	return GenerateDirectiveMarkdown(directive, resolver), nil
+}
+
+// generateTypeMarkdown generates markdown for a type definition
+func generateTypeMarkdown(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver) (string, error) {
 	typeDef, err := schema.NamedToTypeDef(typeName)
-	if err != nil {
-		// If type not found and typeName contains a dot, try trimming the field part
-		if strings.Contains(typeName, ".") {
-			baseTypeName := typeName[:strings.LastIndex(typeName, ".")]
-			typeDef, retryErr := schema.NamedToTypeDef(baseTypeName)
-			if retryErr == nil {
-				return GenerateTypeDefMarkdown(typeDef, resolver), nil
-			}
-		}
+	if err == nil {
+		return GenerateTypeDefMarkdown(typeDef, resolver), nil
+	}
+
+	// If type not found and typeName contains a dot, try trimming the field part
+	if !strings.Contains(typeName, ".") {
+		return "", fmt.Errorf("type %q not found in schema: %w", typeName, err)
+	}
+
+	baseTypeName := typeName[:strings.LastIndex(typeName, ".")]
+	typeDef, retryErr := schema.NamedToTypeDef(baseTypeName)
+	if retryErr != nil {
 		return "", fmt.Errorf("type %q not found in schema: %w", typeName, err)
 	}
 

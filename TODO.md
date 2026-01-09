@@ -53,23 +53,23 @@ Apply guard clauses to keep happy path left-aligned and reduce nesting:
 
 ### `tui/xplr/model.go`
 
-- [ ] Lines 214-255: Extract nested key handling logic into separate methods
-- [ ] Lines 332-382: Refactor `handleNormal` to reduce nesting depth
+- [x] Lines 214-255: Extract nested key handling logic into separate methods
+- [x] Lines 332-382: Refactor `handleNormal` to reduce nesting depth
 
 ### `cli/library.go`
 
-- [ ] Lines 228-291: Apply guard clauses in `addCommand` to reduce if-else chains
-- [ ] Lines 320-330: Use early return in `removeCommand` confirmation check
+- [x] Lines 228-291: Apply guard clauses in `addCommand` to reduce if-else chains
+- [x] Lines 320-330: Use early return in `removeCommand` confirmation check
 
 ### `library/library.go`
 
-- [ ] Lines 231-267: Simplify `Get` method with early returns
-- [ ] Lines 294-310: Simplify `List` method nested conditionals
-- [ ] Lines 400-403: Return immediately when metadata match found
+- [x] Lines 231-267: Simplify `Get` method with early returns
+- [x] Lines 294-310: Simplify `List` method nested conditionals
+- [x] Lines 400-403: Return immediately when metadata match found
 
 ### `gqlfmt/markdown.go`
 
-- [ ] Lines 12-60: Use guard clauses instead of if-else chains in `GenerateMarkdown`
+- [x] Lines 12-60: Use guard clauses instead of if-else chains in `GenerateMarkdown`
 
 ## Low Priority: Minimize Public API
 

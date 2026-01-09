@@ -250,35 +250,16 @@ func addCommand() *cli.Command {
 				return fmt.Errorf("invalid GraphQL schema: %w", err)
 			}
 
-			// Get or prompt for schema ID
-			var schemaID string
-			if cmd.String("id") != "" {
-				schemaID = cmd.String("id")
-				if err := library.ValidateSchemaID(schemaID); err != nil {
-					return err
-				}
-			} else {
-				// Generate suggested ID from filename
-				basename := filepath.Base(filePath)
-				ext := filepath.Ext(basename)
-				suggested := strings.TrimSuffix(basename, ext)
-				suggested = library.SanitizeSchemaID(suggested)
-
-				schemaID, err = PromptSchemaID(suggested)
-				if err != nil {
-					return fmt.Errorf("failed to get schema ID: %w", err)
-				}
+			// Get schema ID (from flag or prompt)
+			schemaID, err := getSchemaID(cmd, filePath)
+			if err != nil {
+				return err
 			}
 
-			// Get or prompt for display name
-			var displayName string
-			if cmd.String("name") != "" {
-				displayName = cmd.String("name")
-			} else {
-				displayName, err = PromptString("Enter display name", schemaID)
-				if err != nil {
-					return fmt.Errorf("failed to get display name: %w", err)
-				}
+			// Get display name (from flag or prompt)
+			displayName, err := getDisplayName(cmd, schemaID)
+			if err != nil {
+				return err
 			}
 
 			// Add to library
@@ -290,6 +271,62 @@ func addCommand() *cli.Command {
 			return nil
 		},
 	}
+}
+
+// getSchemaID returns schema ID from flag or prompts user
+func getSchemaID(cmd *cli.Command, filePath string) (string, error) {
+	if flagID := cmd.String("id"); flagID != "" {
+		if err := library.ValidateSchemaID(flagID); err != nil {
+			return "", err
+		}
+		return flagID, nil
+	}
+
+	// Generate suggested ID from filename
+	basename := filepath.Base(filePath)
+	ext := filepath.Ext(basename)
+	suggested := strings.TrimSuffix(basename, ext)
+	suggested = library.SanitizeSchemaID(suggested)
+
+	schemaID, err := PromptSchemaID(suggested)
+	if err != nil {
+		return "", fmt.Errorf("failed to get schema ID: %w", err)
+	}
+
+	return schemaID, nil
+}
+
+// getDisplayName returns display name from flag or prompts user
+func getDisplayName(cmd *cli.Command, defaultName string) (string, error) {
+	if flagName := cmd.String("name"); flagName != "" {
+		return flagName, nil
+	}
+
+	displayName, err := PromptString("Enter display name", defaultName)
+	if err != nil {
+		return "", fmt.Errorf("failed to get display name: %w", err)
+	}
+
+	return displayName, nil
+}
+
+// confirmSchemaRemoval prompts user for confirmation unless --force is used
+func confirmSchemaRemoval(cmd *cli.Command, schemaID string, schema *library.Schema) error {
+	if cmd.Bool("force") {
+		return nil
+	}
+
+	confirm, err := PromptYesNo(fmt.Sprintf("Remove schema '%s' (%s)?", schemaID, schema.Metadata.DisplayName))
+	if err != nil {
+		return fmt.Errorf("failed to get confirmation: %w", err)
+	}
+
+	if !confirm {
+		fmt.Println("Cancelled")
+		return fmt.Errorf("removal cancelled")
+	}
+
+	return nil
 }
 
 func removeCommand() *cli.Command {
@@ -318,15 +355,8 @@ func removeCommand() *cli.Command {
 			}
 
 			// Confirm removal unless --force is used
-			if !cmd.Bool("force") {
-				confirm, err := PromptYesNo(fmt.Sprintf("Remove schema '%s' (%s)?", schemaID, schema.Metadata.DisplayName))
-				if err != nil {
-					return fmt.Errorf("failed to get confirmation: %w", err)
-				}
-				if !confirm {
-					fmt.Println("Cancelled")
-					return nil
-				}
+			if err := confirmSchemaRemoval(cmd, schemaID, schema); err != nil {
+				return err
 			}
 
 			// Check if this is the default schema

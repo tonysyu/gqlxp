@@ -234,10 +234,10 @@ func (l *FileLibrary) Get(id string) (*Schema, error) {
 	}
 
 	content, err := os.ReadFile(schemaFile)
+	if os.IsNotExist(err) {
+		return nil, fmt.Errorf("schema '%s' not found", id)
+	}
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("schema '%s' not found", id)
-		}
 		return nil, fmt.Errorf("failed to read schema file: %w", err)
 	}
 
@@ -247,23 +247,28 @@ func (l *FileLibrary) Get(id string) (*Schema, error) {
 		return nil, err
 	}
 
-	metadata, exists := allMetadata[id]
-	if !exists {
-		// Return default metadata if not found
-		metadata = SchemaMetadata{
-			DisplayName: id,
-			SourceFile:  "",
-			URLPatterns: make(map[string]string),
-			CreatedAt:   time.Time{},
-			UpdatedAt:   time.Time{},
-		}
-	}
+	metadata := getSchemaMetadata(allMetadata, id)
 
 	return &Schema{
 		ID:       id,
 		Content:  content,
 		Metadata: metadata,
 	}, nil
+}
+
+// getSchemaMetadata returns metadata for a schema ID or default metadata if not found
+func getSchemaMetadata(allMetadata map[string]SchemaMetadata, id string) SchemaMetadata {
+	if metadata, exists := allMetadata[id]; exists {
+		return metadata
+	}
+
+	return SchemaMetadata{
+		DisplayName: id,
+		SourceFile:  "",
+		URLPatterns: make(map[string]string),
+		CreatedAt:   time.Time{},
+		UpdatedAt:   time.Time{},
+	}
 }
 
 // List implements Library.List.
@@ -297,19 +302,23 @@ func (l *FileLibrary) List() ([]SchemaInfo, error) {
 		}
 
 		id := strings.TrimSuffix(entry.Name(), ".graphqls")
-		displayName := id
-
-		if metadata, exists := allMetadata[id]; exists {
-			displayName = metadata.DisplayName
-		}
-
-		schemas = append(schemas, SchemaInfo{
-			ID:          id,
-			DisplayName: displayName,
-		})
+		schemas = append(schemas, createSchemaInfo(id, allMetadata))
 	}
 
 	return schemas, nil
+}
+
+// createSchemaInfo creates a SchemaInfo from an ID and metadata map
+func createSchemaInfo(id string, allMetadata map[string]SchemaMetadata) SchemaInfo {
+	displayName := id
+	if metadata, exists := allMetadata[id]; exists {
+		displayName = metadata.DisplayName
+	}
+
+	return SchemaInfo{
+		ID:          id,
+		DisplayName: displayName,
+	}
 }
 
 // Remove implements Library.Remove.
