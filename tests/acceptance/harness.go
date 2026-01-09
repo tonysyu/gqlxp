@@ -34,8 +34,8 @@ import (
 var (
 	keyNextPanel = tea.KeyMsg{Type: tea.KeyTab}
 	keyPrevPanel = tea.KeyMsg{Type: tea.KeyShiftTab}
-	keyNextType  = tea.KeyMsg{Type: tea.KeyCtrlT}
-	keyPrevType  = tea.KeyMsg{Type: tea.KeyCtrlR}
+	keyNextType  = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}}
+	keyPrevType  = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'{'}}
 	keySpace     = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}}
 	keyEscape    = tea.KeyMsg{Type: tea.KeyEsc}
 	keyDown      = tea.KeyMsg{Type: tea.KeyDown}
@@ -193,12 +193,12 @@ func (n *Navigator) PrevPanel() {
 	n.explorer.Update(keyPrevPanel)
 }
 
-// NextGqlType cycles to the next GraphQL type (Ctrl+T key)
+// NextGqlType cycles to the next GraphQL type (} key)
 func (n *Navigator) NextGqlType() {
 	n.explorer.Update(keyNextType)
 }
 
-// PrevGqlType cycles to the previous GraphQL type (Ctrl+R key)
+// PrevGqlType cycles to the previous GraphQL type ({ key)
 func (n *Navigator) PrevGqlType() {
 	n.explorer.Update(keyPrevType)
 }

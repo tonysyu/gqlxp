@@ -13,8 +13,8 @@ import (
 var (
 	keyNextPanel = tea.KeyMsg{Type: tea.KeyTab}
 	keyPrevPanel = tea.KeyMsg{Type: tea.KeyShiftTab}
-	keyNextType  = tea.KeyMsg{Type: tea.KeyCtrlT}
-	keyPrevType  = tea.KeyMsg{Type: tea.KeyCtrlR}
+	keyNextType  = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}}
+	keyPrevType  = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'{'}}
 )
 
 func createTestSchema() string {

@@ -61,11 +61,12 @@ func TestGlobalNavigationKeysNotSentToPanels(t *testing.T) {
 
 	// Test all global navigation keys
 	globalKeys := []tea.KeyMsg{
-		{Type: tea.KeyTab},      // next
-		{Type: tea.KeyShiftTab}, // prev
-		{Type: tea.KeyCtrlC},    // quit
-		{Type: tea.KeyCtrlD},    // quit
-		{Type: tea.KeyCtrlT},    // toggle
+		{Type: tea.KeyTab},                       // next
+		{Type: tea.KeyShiftTab},                  // prev
+		{Type: tea.KeyCtrlC},                     // quit
+		{Type: tea.KeyCtrlD},                     // quit
+		{Type: tea.KeyRunes, Runes: []rune{'}'}}, // next type
+		{Type: tea.KeyRunes, Runes: []rune{'{'}}, // prev type
 	}
 
 	for _, keyMsg := range globalKeys {

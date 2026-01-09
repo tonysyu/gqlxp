@@ -158,13 +158,13 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 	}
 
 	for _, expectedType := range expectedTypes {
-		model, _ = model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
+		model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}})
 		is.Equal(model.nav.CurrentType(), expectedType)
 		is.Equal(model.nav.Stack().Position(), 0) // Stack position should reset to 0
 	}
 
 	// Test reverse cycling
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyCtrlR})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'{'}})
 	is.Equal(model.nav.CurrentType(), navigation.SearchType)
 }
 
@@ -193,7 +193,7 @@ func TestModelWithEmptySchema(t *testing.T) {
 	is.Equal(model.nav.CurrentType(), navigation.QueryType)
 
 	// Should be able to cycle through types even with empty schema
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}})
 	is.Equal(model.nav.CurrentType(), navigation.MutationType)
 }
 
@@ -206,8 +206,8 @@ func TestModelKeyboardShortcuts(t *testing.T) {
 	shortcuts := []tea.KeyMsg{
 		{Type: tea.KeyTab},
 		{Type: tea.KeyShiftTab},
-		{Type: tea.KeyCtrlT},
-		{Type: tea.KeyCtrlR},
+		{Type: tea.KeyRunes, Runes: []rune{'}'}},
+		{Type: tea.KeyRunes, Runes: []rune{'{'}},
 		{Type: tea.KeyCtrlC},
 		{Type: tea.KeyCtrlD},
 	}

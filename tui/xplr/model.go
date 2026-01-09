@@ -29,7 +29,7 @@ type SelectionTarget struct {
 
 type keymap = struct {
 	NextPanel, PrevPanel, Quit, NextGQLType, PrevGQLType, ToggleOverlay key.Binding
-	SearchFocus, SearchSubmit, SearchClear key.Binding
+	SearchFocus, SearchSubmit, SearchClear                              key.Binding
 }
 
 // Model is the main schema explorer model
@@ -50,7 +50,6 @@ type Model struct {
 	searchFocused  bool
 	searchResults  []components.ListItem
 	searchBaseDir  string // Base directory for search indexes
-	searchIndexing bool   // Whether search index is being built
 
 	width          int
 	height         int
