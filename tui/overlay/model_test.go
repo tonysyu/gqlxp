@@ -30,7 +30,7 @@ func TestOverlay(t *testing.T) {
 		updatedOverlay, cmd, intercepted := overlay.Update(tea.KeyMsg{Type: tea.KeyEnter})
 
 		is.Equal(intercepted, false)
-		is.True(cmd == nil)
+		is.Equal(cmd, nil)
 		is.Equal(updatedOverlay.active, false)
 	})
 
@@ -56,7 +56,7 @@ func TestOverlay(t *testing.T) {
 		updatedOverlay, cmd, intercepted := overlay.Update(spaceKey)
 
 		is.Equal(intercepted, true)
-		is.True(cmd == nil)
+		is.Equal(cmd, nil)
 		is.Equal(updatedOverlay.active, false)
 	})
 

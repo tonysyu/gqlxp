@@ -6,16 +6,16 @@ This file tracks opportunities to improve code quality based on [docs/coding.md]
 
 ### Replace `is.True()` with `is.Equal()` for better error messages
 
-- [ ] `tui/overlay/model_test.go:33, 59` - Replace `is.True(cmd == nil)` with `is.Equal(cmd, nil)`
-- [ ] `tui/model_test.go:79` - Replace `is.True(cmd == nil)` with `is.Equal(cmd, nil)`
-- [ ] `tui/libselect/model_test.go:87, 105` - Replace `is.True(cmd == nil)` with `is.Equal(cmd, nil)`
-- [ ] `tui/xplr/components/panels_test.go:173` - Fix tautology `is.True(cmd != nil || cmd == nil)`
-- [ ] `gql/parse_test.go:570` - Replace `is.True(result == nil)` with `is.Equal(result, nil)`
-- [ ] `gql/parse_error_handling_test.go:38, 42, 185, 186, 210, 214, 248, 252, 258` - Replace `is.True(err == nil)` with `is.NoErr(err)`
-- [ ] `tui/adapters/items_test.go:534` - Replace `is.True(panel == nil)` with `is.Equal(panel, nil)`
-- [ ] `library/config_test.go:18` - Replace `is.True(configDir != "")` with better assertion
-- [ ] `library/config_test.go:41` - Replace `is.True(info.IsDir())` with better assertion
-- [ ] `cli/prompt_test.go:23` - Replace `is.True(err != nil)` with proper error check
+- [x] `tui/overlay/model_test.go:33, 59` - Replace `is.True(cmd == nil)` with `is.Equal(cmd, nil)`
+- [x] `tui/model_test.go:79` - Replace `is.True(cmd == nil)` with `is.Equal(cmd, nil)`
+- [x] `tui/libselect/model_test.go:87, 105` - Replace `is.True(cmd == nil)` with `is.Equal(cmd, nil)`
+- [x] `tui/xplr/components/panels_test.go:173` - Fix tautology `is.True(cmd != nil || cmd == nil)`
+- [x] `gql/parse_test.go:570` - Replace `is.True(result == nil)` with `is.Equal(result, nil)`
+- [x] `gql/parse_error_handling_test.go:38, 42, 185, 186, 210, 214, 248, 252, 258` - Replace `is.True(err == nil)` with `is.NoErr(err)`
+- [x] `tui/adapters/items_test.go:534` - Replace `is.True(panel == nil)` with `is.Equal(panel, nil)`
+- [x] `library/config_test.go:18` - Replace `is.True(configDir != "")` with better assertion
+- [x] `library/config_test.go:41` - Keep `is.True(info.IsDir())` (boolean values are fine)
+- [x] `cli/prompt_test.go:23` - Keep `is.True(err != nil)` (proper error check exists)
 
 ### Migrate from `t.Error/t.Errorf` to `is` library
 

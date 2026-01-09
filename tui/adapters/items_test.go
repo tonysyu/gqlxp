@@ -531,7 +531,7 @@ func TestSimpleItemInterface(t *testing.T) {
 	// Simple items should not be openable
 	panel, ok := item.OpenPanel()
 	is.True(!ok)
-	is.True(panel == nil)
+	is.Equal(panel, nil)
 }
 
 func TestArgumentListCreation(t *testing.T) {

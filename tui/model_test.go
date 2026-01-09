@@ -76,7 +76,7 @@ func TestModel_TransitionFromLibselectToXplr(t *testing.T) {
 
 	// Initialize the model
 	cmd := model.Init()
-	is.True(cmd == nil) // libselect.Init() returns nil
+	is.Equal(cmd, nil) // libselect.Init() returns nil
 
 	// Simulate selecting a schema by sending SchemaSelectedMsg
 	parsedSchema, err := adapters.ParseSchemaString(schemaContent)

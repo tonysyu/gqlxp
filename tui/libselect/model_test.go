@@ -84,7 +84,7 @@ func TestModel_Init(t *testing.T) {
 	is.NoErr(err)
 
 	cmd := model.Init()
-	is.True(cmd == nil) // Init should return nil cmd
+	is.Equal(cmd, nil) // Init should return nil cmd
 }
 
 func TestModel_Update_WindowSize(t *testing.T) {
@@ -102,7 +102,7 @@ func TestModel_Update_WindowSize(t *testing.T) {
 	// Send window size message
 	msg := tea.WindowSizeMsg{Width: 100, Height: 50}
 	newModel, cmd := model.Update(msg)
-	is.True(cmd == nil)            // Window size should not return a cmd
+	is.Equal(cmd, nil)             // Window size should not return a cmd
 	is.True(newModel.View() != "") // Model should update
 }
 

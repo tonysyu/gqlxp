@@ -15,7 +15,7 @@ func TestConfigDir(t *testing.T) {
 	t.Run("returns non-empty config directory", func(t *testing.T) {
 		configDir, err := configDir()
 		is.NoErr(err)
-		is.True(configDir != "")
+		is.True(len(configDir) > 0)
 	})
 }
 

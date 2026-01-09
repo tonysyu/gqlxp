@@ -169,8 +169,7 @@ func TestPanelWithManyItems(t *testing.T) {
 	is.True(len(view) > 0)
 
 	// Should be able to navigate
-	_, cmd := panel.Update(tea.KeyMsg{Type: tea.KeyDown})
-	is.True(cmd != nil || cmd == nil) // Either command or no command is acceptable
+	_, _ = panel.Update(tea.KeyMsg{Type: tea.KeyDown})
 }
 
 func TestPanelSizeEdgeCases(t *testing.T) {

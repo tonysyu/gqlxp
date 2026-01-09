@@ -35,11 +35,11 @@ func TestMainWithUnreadableSchemaFile(t *testing.T) {
 
 	// Create the file first
 	err := os.WriteFile(unreadableFile, []byte("type Query { test: String }"), 0644)
-	is.True(err == nil)
+	is.NoErr(err)
 
 	// Remove read permissions
 	err = os.Chmod(unreadableFile, 0000)
-	is.True(err == nil)
+	is.NoErr(err)
 
 	// Restore permissions after test for cleanup
 	defer func() { _ = os.Chmod(unreadableFile, 0644) }()
@@ -207,11 +207,11 @@ func TestEmptyFileHandling(t *testing.T) {
 	emptyFile := filepath.Join(tempDir, "empty.graphqls")
 
 	err := os.WriteFile(emptyFile, []byte(""), 0644)
-	is.True(err == nil)
+	is.NoErr(err)
 
 	// Read the empty file
 	content, err := os.ReadFile(emptyFile)
-	is.True(err == nil)
+	is.NoErr(err)
 	is.Equal(len(content), 0)
 
 	// Parse empty content
@@ -245,17 +245,17 @@ func TestSchemaFilePermissions(t *testing.T) {
 
 	validSchema := "type Query { test: String }"
 	err := os.WriteFile(testFile, []byte(validSchema), 0644)
-	is.True(err == nil)
+	is.NoErr(err)
 
 	// Verify file exists and is readable
 	info, err := os.Stat(testFile)
-	is.True(err == nil)
+	is.NoErr(err)
 	is.True(info.Size() > 0)
 	is.True(!info.IsDir())
 
 	// Read and parse the file
 	content, err := os.ReadFile(testFile)
-	is.True(err == nil)
+	is.NoErr(err)
 
 	schema, _ := ParseSchema(content)
 	is.Equal(len(schema.Query), 1)

@@ -567,7 +567,7 @@ func TestNamedToTypeDefinition(t *testing.T) {
 			result, err := schema.NamedToTypeDef(tt.typeName)
 
 			is.True(err != nil)
-			is.True(result == nil)
+			is.Equal(result, nil)
 		})
 	}
 }

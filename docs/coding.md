@@ -17,7 +17,12 @@
 - Prefer `package foo_test` (black-box) for public API tests
 - Use `package foo` (white-box) only when testing private implementation
 - Use `"github.com/matryer/is"` instead of `t.Error`/`t.Errorf`
-- Avoid `is.True(got == want)` - use `is.Equal(got, want)` for better error messages
+- Avoid `is.True()` for comparisons - use specific assertions:
+  - `is.True(x == y)` → `is.Equal(x, y)`
+  - `is.True(x != y)` → proper error assertion or inverse check
+  - `is.True(err == nil)` → `is.NoErr(err)`
+  - `is.True(err != nil)` → proper error assertion
+  - Keep `is.True(boolValue)` and `is.True(!boolValue)` as-is
 - Use `assert.StringContains` (from `"github.com/tonysyu/gqlxp/utils/testx/assert"`) for
   substring assertions
 
