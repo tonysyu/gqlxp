@@ -8,25 +8,28 @@
 
 ### GraphQL Type Exploration
 Supports exploring all GraphQL schema types:
-- **9 Type Categories**: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive
-- **Type Cycling**: Ctrl+T (or `}`) cycles forward, Ctrl+R (or `{`) cycles backward through types
+- **10 Type Categories**: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, Search
+- **Type Cycling**: `}` cycles forward, `{` cycles backward through types
 - **Auto-Loading**: Panels auto-populate when switching types
 
 ### Interactive Navigation
-- **Panel Focus**: Tab/Shift+Tab (or `]`/`[`) to navigate between panels
-- **Sub-Tabs**: Shift-H/Shift-L to navigate between tabs within a panel (e.g., Type/Inputs)
+- **Panel Focus**: `]`/Tab navigates forward, `[`/Shift+Tab navigates backward between panels
+- **Sub-Tabs**: `H`/Shift+Left for previous tab, `L`/Shift+Right for next tab within a panel
+- **Search**: `/` to open search, Enter to submit, Esc to clear
 - **Auto-Open**: Selecting items automatically opens details in adjacent panel
 - **Detail Overlay**: Space bar shows full item details in centered overlay
 - **Multi-Panel**: Supports up to 6 panels horizontally
 - **Breadcrumbs**: Shows navigation path when panels scroll off-screen
+- **Directives**: Clickable directive references open directive details in new panel
 
 ## Navigation Flow
 1. Application parses GraphQL schema from provided file path
 2. Displays Query fields by default in main panel
 3. Selecting items auto-opens details in adjacent panel
-4. Tab/Shift+Tab navigates between panels
-5. Ctrl+T/Ctrl+R cycles through GQL type categories
-6. Space bar opens detail overlay for focused item
+4. Tab/Shift+Tab (or `]`/`[`) navigates between panels
+5. `}`/`{` cycles through GQL type categories (including Search)
+6. `/` opens search input within the TUI
+7. Space bar opens detail overlay for focused item
 
 ## Usage
 
