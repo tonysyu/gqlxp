@@ -18,7 +18,7 @@ type GraphQLSchema struct {
 	Scalar     map[string]*Scalar
 	Interface  map[string]*Interface
 	Union      map[string]*Union
-	Directive  map[string]*Directive
+	Directive  map[string]*DirectiveDef
 	NameToType map[string]string
 }
 
@@ -32,7 +32,7 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 		Scalar:     make(map[string]*Scalar),
 		Interface:  make(map[string]*Interface),
 		Union:      make(map[string]*Union),
-		Directive:  make(map[string]*Directive),
+		Directive:  make(map[string]*DirectiveDef),
 		NameToType: make(map[string]string),
 	}
 
@@ -110,7 +110,7 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 		if directive.Position == nil {
 			continue
 		}
-		gqlSchema.Directive[name] = newDirective(directive)
+		gqlSchema.Directive[name] = newDirectiveDef(directive)
 		gqlSchema.NameToType[name] = "Directive"
 	}
 

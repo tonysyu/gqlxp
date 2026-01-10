@@ -1,6 +1,7 @@
 package gql_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/matryer/is"
@@ -86,6 +87,115 @@ func TestField_Methods(t *testing.T) {
 		union, ok := typeDef.(*Union)
 		is.True(ok)
 		is.Equal(union.Name(), "SearchResult")
+	})
+}
+
+func TestDirectives_OnFields(t *testing.T) {
+	is := is.New(t)
+	schema, _ := ParseSchema([]byte(`
+		type User {
+			id: ID!
+			name: String! @deprecated(reason: "Use fullName instead")
+			email: String!
+		}
+
+		type Query {
+			getUser(id: ID!): User
+		}
+	`))
+
+	user, err := schema.NamedToTypeDef("User")
+	is.NoErr(err)
+
+	userObj, ok := user.(*Object)
+	is.True(ok)
+
+	// Find the name field
+	var nameField *Field
+	for _, field := range userObj.Fields() {
+		if field.Name() == "name" {
+			nameField = field
+			break
+		}
+	}
+	is.True(nameField != nil) // name field should exist
+
+	t.Run("Field has directives", func(t *testing.T) {
+		directives := nameField.Directives()
+		is.True(len(directives) > 0) // should have directives
+		is.Equal(directives[0].Name(), "deprecated")
+	})
+
+	t.Run("Field signature does not include directives", func(t *testing.T) {
+		sig := nameField.Signature()
+		is.True(!strings.Contains(sig, "@deprecated")) // signature should not include directive
+	})
+}
+
+func TestDirectives_OnEnumValues(t *testing.T) {
+	is := is.New(t)
+	schema, _ := ParseSchema([]byte(`
+		enum Role {
+			ADMIN
+			USER @deprecated(reason: "Use MEMBER instead")
+			MEMBER
+		}
+
+		type Query {
+			dummy: String
+		}
+	`))
+
+	roleType, err := schema.NamedToTypeDef("Role")
+	is.NoErr(err)
+
+	roleEnum, ok := roleType.(*Enum)
+	is.True(ok)
+
+	// Find the USER value
+	var userValue *EnumValue
+	for _, val := range roleEnum.Values() {
+		if val.Name() == "USER" {
+			userValue = val
+			break
+		}
+	}
+	is.True(userValue != nil) // USER value should exist
+
+	t.Run("EnumValue has directives", func(t *testing.T) {
+		directives := userValue.Directives()
+		is.True(len(directives) > 0) // should have directives
+		is.Equal(directives[0].Name(), "deprecated")
+	})
+
+	t.Run("EnumValue signature does not include directives", func(t *testing.T) {
+		sig := userValue.Signature()
+		is.True(!strings.Contains(sig, "@deprecated")) // signature should not include directive
+	})
+}
+
+func TestDirectives_OnTypes(t *testing.T) {
+	is := is.New(t)
+	schema, _ := ParseSchema([]byte(`
+		type User @deprecated(reason: "Use Person instead") {
+			id: ID!
+		}
+
+		type Query {
+			dummy: String
+		}
+	`))
+
+	user, err := schema.NamedToTypeDef("User")
+	is.NoErr(err)
+
+	userObj, ok := user.(*Object)
+	is.True(ok)
+
+	t.Run("Object type has directives", func(t *testing.T) {
+		directives := userObj.Directives()
+		is.True(len(directives) > 0) // should have directives
+		is.Equal(directives[0].Name(), "deprecated")
 	})
 }
 

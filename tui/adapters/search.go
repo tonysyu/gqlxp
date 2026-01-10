@@ -228,7 +228,7 @@ func adaptDirective(result search.SearchResult, schemaView *SchemaView) componen
 		return createFallbackItem(result)
 	}
 
-	wrappedItem := newDirectiveDefinitionItem(directive, schemaView.resolver)
+	wrappedItem := newDirectiveDefItem(directive, schemaView.resolver)
 	return newSearchResultItem(result, wrappedItem)
 }
 

@@ -71,7 +71,7 @@ func getTypeName[T gqlType](node T) string {
 		return n.Name()
 	case *Union:
 		return n.Name()
-	case *Directive:
+	case *DirectiveDef:
 		return n.Name()
 	default:
 		return ""
@@ -206,4 +206,28 @@ func CollectAndSortMapValues[T gqlType](m map[string]T) []T {
 		return getTypeName(values[i]) < getTypeName(values[j])
 	})
 	return values
+}
+
+// formatAppliedDirective formats an applied directive (ast.Directive) with its argument values
+// e.g., "@deprecated(reason: \"Use newField\")"
+func formatAppliedDirective(dir *ast.Directive) string {
+	if dir == nil {
+		return ""
+	}
+
+	name := "@" + dir.Name
+
+	// If no arguments, just return the name
+	if len(dir.Arguments) == 0 {
+		return name
+	}
+
+	// Format arguments with their values
+	var args []string
+	for _, arg := range dir.Arguments {
+		argStr := fmt.Sprintf("%s: %s", arg.Name, formatValue(arg.Value))
+		args = append(args, argStr)
+	}
+
+	return fmt.Sprintf("%s(%s)", name, strings.Join(args, ", "))
 }

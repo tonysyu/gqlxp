@@ -575,7 +575,7 @@ func TestDirectiveDefinitionItemCreation(t *testing.T) {
 	resolver := gql.NewSchemaResolver(&schema)
 	directive := schema.Directive["deprecated"]
 
-	item := newDirectiveDefinitionItem(directive, resolver)
+	item := newDirectiveDefItem(directive, resolver)
 	is.Equal(item.Title(), "@deprecated(reason: String = \"No longer supported\")")
 	is.Equal(item.Description(), "")
 

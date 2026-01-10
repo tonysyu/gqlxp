@@ -11,7 +11,8 @@ import (
 var _ components.ListItem = (*fieldItem)(nil)
 var _ components.ListItem = (*argumentItem)(nil)
 var _ components.ListItem = (*typeDefItem)(nil)
-var _ components.ListItem = (*directiveItem)(nil)
+var _ components.ListItem = (*directiveDefItem)(nil)
+var _ components.ListItem = (*appliedDirectiveItem)(nil)
 
 // Adapter/delegate for gql.FieldDefinition to support ListItem interface
 type fieldItem struct {
@@ -45,6 +46,7 @@ func (i fieldItem) Details() string {
 func (i fieldItem) OpenPanel() (*components.Panel, bool) {
 	argumentItems := AdaptArguments(i.gqlField.Arguments(), i.resolver)
 	resultTypeItem := newTypeDefItemFromField(i.gqlField, i.resolver)
+	directiveItems := AdaptAppliedDirectives(i.gqlField.Directives(), i.resolver)
 
 	panel := components.NewPanel([]components.ListItem{}, i.fieldName)
 	panel.SetDescription(i.Description())
@@ -59,6 +61,12 @@ func (i fieldItem) OpenPanel() (*components.Panel, bool) {
 		tabs = append(tabs, components.Tab{
 			Label:   "Inputs",
 			Content: argumentItems,
+		})
+	}
+	if len(directiveItems) > 0 {
+		tabs = append(tabs, components.Tab{
+			Label:   "Directives",
+			Content: directiveItems,
 		})
 	}
 	panel.SetTabs(tabs)
@@ -149,6 +157,7 @@ func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 	// Create list items for the detail view
 	var detailItems []components.ListItem
 	var tabs []components.Tab
+	var directiveItems []components.ListItem
 
 	switch typeDef := (i.typeDef).(type) {
 	case *gql.Object:
@@ -164,16 +173,30 @@ func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 				Content: AdaptInterfaces(interfaces, i.resolver),
 			})
 		}
+		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.Scalar:
 		// No details needed
+		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.Interface:
 		detailItems = append(detailItems, AdaptFields(typeDef.Fields(), i.resolver)...)
+		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.Union:
 		detailItems = append(detailItems, AdaptUnionTypes(typeDef.Types(), i.resolver)...)
+		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.Enum:
 		detailItems = append(detailItems, AdaptEnumValues(typeDef.Values())...)
+		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.InputObject:
 		detailItems = append(detailItems, AdaptFields(typeDef.Fields(), i.resolver)...)
+		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
+	}
+
+	// Add Directives tab if the type has directives
+	if len(directiveItems) > 0 {
+		tabs = append(tabs, components.Tab{
+			Label:   "Directives",
+			Content: directiveItems,
+		})
 	}
 
 	panel := components.NewPanel(detailItems, i.Title())
@@ -237,40 +260,76 @@ func newTypeDefItemFromArgument(argument *gql.Argument, resolver gql.TypeResolve
 	}
 }
 
-// Adapter/delegate for gql.Directive to support ListItem interface
-type directiveItem struct {
-	gqlDirective  *gql.Directive
+// Adapter/delegate for gql.DirectiveDef to support ListItem interface (for schema directives)
+type directiveDefItem struct {
+	gqlDirective  *gql.DirectiveDef
 	resolver      gql.TypeResolver
 	directiveName string
 }
 
-func newDirectiveDefinitionItem(directive *gql.Directive, resolver gql.TypeResolver) components.ListItem {
-	return directiveItem{
+func newDirectiveDefItem(directive *gql.DirectiveDef, resolver gql.TypeResolver) components.ListItem {
+	return directiveDefItem{
 		gqlDirective:  directive,
 		resolver:      resolver,
 		directiveName: directive.Name(),
 	}
 }
 
-func (i directiveItem) Title() string       { return i.gqlDirective.Signature() }
-func (i directiveItem) FilterValue() string { return i.directiveName }
-func (i directiveItem) TypeName() string    { return "@" + i.directiveName }
-func (i directiveItem) RefName() string     { return i.directiveName }
+func (i directiveDefItem) Title() string       { return i.gqlDirective.Signature() }
+func (i directiveDefItem) FilterValue() string { return i.directiveName }
+func (i directiveDefItem) TypeName() string    { return "@" + i.directiveName }
+func (i directiveDefItem) RefName() string     { return i.directiveName }
 
-func (i directiveItem) Description() string {
+func (i directiveDefItem) Description() string {
 	return i.gqlDirective.Description()
 }
 
-func (i directiveItem) Details() string {
+func (i directiveDefItem) Details() string {
 	return gqlfmt.GenerateDirectiveMarkdown(i.gqlDirective, i.resolver)
 }
 
 // OpenPanel displays arguments of directive (if any)
-func (i directiveItem) OpenPanel() (*components.Panel, bool) {
+func (i directiveDefItem) OpenPanel() (*components.Panel, bool) {
 	argumentItems := AdaptArguments(i.gqlDirective.Arguments(), i.resolver)
 
 	panel := components.NewPanel(argumentItems, "@"+i.directiveName)
 	panel.SetDescription(i.Description())
 
 	return panel, true
+}
+
+// Adapter/delegate for gql.AppliedDirective to support ListItem interface (for directives on fields/types)
+type appliedDirectiveItem struct {
+	gqlDirective  *gql.AppliedDirective
+	resolver      gql.TypeResolver
+	directiveName string
+}
+
+func newAppliedDirectiveItem(directive *gql.AppliedDirective, resolver gql.TypeResolver) components.ListItem {
+	return appliedDirectiveItem{
+		gqlDirective:  directive,
+		resolver:      resolver,
+		directiveName: directive.Name(),
+	}
+}
+
+func (i appliedDirectiveItem) Title() string       { return i.gqlDirective.Signature() }
+func (i appliedDirectiveItem) FilterValue() string { return i.directiveName }
+func (i appliedDirectiveItem) TypeName() string    { return "@" + i.directiveName }
+func (i appliedDirectiveItem) RefName() string     { return i.directiveName }
+
+func (i appliedDirectiveItem) Description() string {
+	return ""
+}
+
+func (i appliedDirectiveItem) Details() string {
+	return text.JoinParagraphs(
+		text.H1("@"+i.directiveName),
+		text.GqlCode(i.gqlDirective.Signature()),
+	)
+}
+
+// OpenPanel returns nil for applied directives (no detailed view needed)
+func (i appliedDirectiveItem) OpenPanel() (*components.Panel, bool) {
+	return nil, false
 }

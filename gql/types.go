@@ -9,7 +9,7 @@ type TypeDef interface {
 }
 
 var _ TypeDef = (*Argument)(nil)
-var _ TypeDef = (*Directive)(nil)
+var _ TypeDef = (*DirectiveDef)(nil)
 var _ TypeDef = (*Enum)(nil)
 var _ TypeDef = (*Field)(nil)
 var _ TypeDef = (*InputObject)(nil)
@@ -23,14 +23,14 @@ type Callable interface {
 	Arguments() []*Argument
 }
 
-var _ Callable = (*Directive)(nil)
+var _ Callable = (*DirectiveDef)(nil)
 var _ Callable = (*Field)(nil)
 
 // gqlType interface for types that have a Name field (both ast and wrapped types)
 type gqlType interface {
 	*Field | *Object | *InputObject |
 		*Enum | *Scalar | *Interface |
-		*Union | *Directive
+		*Union | *DirectiveDef
 }
 
 // Field represents GraphQL query fields, mutation fields, or object fields.
@@ -94,6 +94,14 @@ func (f *Field) FormatSignature(maxWidth int) string {
 // Arguments returns the field's arguments as wrapped Arguments
 func (f *Field) Arguments() []*Argument {
 	return wrapArguments(f.arguments)
+}
+
+// Directives returns the field's applied directives
+func (f *Field) Directives() []*AppliedDirective {
+	if f.astField == nil {
+		return nil
+	}
+	return wrapDirectives(f.astField.Directives)
 }
 
 // Default value if defined (empty-string if not)
@@ -173,6 +181,14 @@ func (a *Argument) DefaultValue() string {
 	return formatValue(a.astArg.DefaultValue)
 }
 
+// Directives returns the argument's applied directives
+func (a *Argument) Directives() []*AppliedDirective {
+	if a.astArg == nil {
+		return nil
+	}
+	return wrapDirectives(a.astArg.Directives)
+}
+
 // ResolveObjectTypeDef returns the TypeDef for this argument's input type.
 // Returns an error if the type is a built-in scalar (String, Int, Boolean, etc.)
 func (a *Argument) ResolveObjectTypeDef(schema *GraphQLSchema) (TypeDef, error) {
@@ -226,6 +242,14 @@ func (o *Object) Fields() []*Field {
 	return o.fields
 }
 
+// Directives returns the object's applied directives
+func (o *Object) Directives() []*AppliedDirective {
+	if o.astDef == nil {
+		return nil
+	}
+	return wrapDirectives(o.astDef.Directives)
+}
+
 // InputObject represents GraphQL input objects.
 // See https://spec.graphql.org/October2021/#sec-Input-Objects
 type InputObject struct {
@@ -255,6 +279,14 @@ func (i *InputObject) Description() string { return i.description }
 // Fields returns the input object's fields
 func (i *InputObject) Fields() []*Field {
 	return i.fields
+}
+
+// Directives returns the input object's applied directives
+func (i *InputObject) Directives() []*AppliedDirective {
+	if i.astDef == nil {
+		return nil
+	}
+	return wrapDirectives(i.astDef.Directives)
 }
 
 // Enum represents GraphQL enums.
@@ -288,6 +320,14 @@ func (e *Enum) Values() []*EnumValue {
 	return e.values
 }
 
+// Directives returns the enum's applied directives
+func (e *Enum) Directives() []*AppliedDirective {
+	if e.astDef == nil {
+		return nil
+	}
+	return wrapDirectives(e.astDef.Directives)
+}
+
 // Scalar represents GraphQL scalar types.
 // See https://spec.graphql.org/October2021/#sec-Scalars
 type Scalar struct {
@@ -311,6 +351,14 @@ func newScalar(def *ast.Definition) *Scalar {
 
 func (s *Scalar) Name() string        { return s.name }
 func (s *Scalar) Description() string { return s.description }
+
+// Directives returns the scalar's applied directives
+func (s *Scalar) Directives() []*AppliedDirective {
+	if s.astDef == nil {
+		return nil
+	}
+	return wrapDirectives(s.astDef.Directives)
+}
 
 // Interface represents GraphQL interface types.
 // See https://spec.graphql.org/October2021/#sec-Interfaces
@@ -341,6 +389,14 @@ func (i *Interface) Description() string { return i.description }
 // Fields returns the interface's fields
 func (i *Interface) Fields() []*Field {
 	return i.fields
+}
+
+// Directives returns the interface's applied directives
+func (i *Interface) Directives() []*AppliedDirective {
+	if i.astDef == nil {
+		return nil
+	}
+	return wrapDirectives(i.astDef.Directives)
 }
 
 // Union represents GraphQL union types.
@@ -374,9 +430,17 @@ func (u *Union) Types() []string {
 	return u.types
 }
 
-// Directive represents GraphQL directive types.
+// Directives returns the union's applied directives
+func (u *Union) Directives() []*AppliedDirective {
+	if u.astDef == nil {
+		return nil
+	}
+	return wrapDirectives(u.astDef.Directives)
+}
+
+// DirectiveDef represents GraphQL directive type definitions.
 // See https://spec.graphql.org/October2021/#sec-Type-System.Directives
-type Directive struct {
+type DirectiveDef struct {
 	name         string
 	description  string
 	arguments    ast.ArgumentDefinitionList
@@ -386,8 +450,8 @@ type Directive struct {
 	astDirective *ast.DirectiveDefinition
 }
 
-// newDirective creates a wrapper for ast.DirectiveDefinition
-func newDirective(directive *ast.DirectiveDefinition) *Directive {
+// newDirectiveDef creates a wrapper for ast.DirectiveDefinition
+func newDirectiveDef(directive *ast.DirectiveDefinition) *DirectiveDef {
 	if directive == nil {
 		return nil
 	}
@@ -396,7 +460,7 @@ func newDirective(directive *ast.DirectiveDefinition) *Directive {
 	for i, loc := range directive.Locations {
 		locations[i] = string(loc)
 	}
-	return &Directive{
+	return &DirectiveDef{
 		name:         directive.Name,
 		description:  directive.Description,
 		arguments:    directive.Arguments,
@@ -406,8 +470,8 @@ func newDirective(directive *ast.DirectiveDefinition) *Directive {
 	}
 }
 
-func (d *Directive) Name() string        { return d.name }
-func (d *Directive) Description() string { return d.description }
+func (d *DirectiveDef) Name() string        { return d.name }
+func (d *DirectiveDef) Description() string { return d.description }
 
 // Signature returns the directive signature including arguments.
 // This can be as simple as:
@@ -417,25 +481,52 @@ func (d *Directive) Description() string { return d.description }
 // Or can be as complex as:
 //
 //	"directiveWithArgs(count: Int = 10, special: Boolean!)"
-func (d *Directive) Signature() string {
+func (d *DirectiveDef) Signature() string {
 	return formatCallable(d, formatOpts{prefix: "@"})
 }
 
 // FormatSignature returns the field signature with optional multiline formatting.
 // If maxWidth <= 0, always uses inline format (same as Signature()).
 // If maxWidth > 0 and inline signature exceeds maxWidth, formats arguments on separate lines.
-func (d *Directive) FormatSignature(maxWidth int) string {
+func (d *DirectiveDef) FormatSignature(maxWidth int) string {
 	return formatCallable(d, formatOpts{prefix: "@", maxWidth: maxWidth})
 }
 
 // Arguments returns the directive's arguments as wrapped Arguments
-func (d *Directive) Arguments() []*Argument {
+func (d *DirectiveDef) Arguments() []*Argument {
 	return wrapArguments(d.arguments)
 }
 
 // Locations returns the directive's valid locations
-func (d *Directive) Locations() []string {
+func (d *DirectiveDef) Locations() []string {
 	return d.locations
+}
+
+// AppliedDirective represents a directive applied to a schema element (field, type, etc.).
+type AppliedDirective struct {
+	name             string
+	appliedDirective *ast.Directive
+}
+
+func (d *AppliedDirective) Name() string        { return d.name }
+func (d *AppliedDirective) Description() string { return "" }
+
+// Signature returns the applied directive with its argument values.
+// e.g., "@deprecated(reason: "Use newField")"
+func (d *AppliedDirective) Signature() string {
+	return formatAppliedDirective(d.appliedDirective)
+}
+
+// AppliedArguments returns the directive's applied argument values as a map
+func (d *AppliedDirective) AppliedArguments() map[string]*ast.Value {
+	if d.appliedDirective == nil {
+		return nil
+	}
+	result := make(map[string]*ast.Value)
+	for _, arg := range d.appliedDirective.Arguments {
+		result[arg.Name] = arg.Value
+	}
+	return result
 }
 
 // EnumValue represents values on GraphQL enum types.
@@ -462,6 +553,19 @@ func newEnumValue(enumValue *ast.EnumValueDefinition) *EnumValue {
 func (e *EnumValue) Name() string        { return e.name }
 func (e *EnumValue) Description() string { return e.description }
 
+// Signature returns the enum value signature
+func (e *EnumValue) Signature() string {
+	return e.name
+}
+
+// Directives returns the enum value's applied directives
+func (e *EnumValue) Directives() []*AppliedDirective {
+	if e.astEnumValue == nil {
+		return nil
+	}
+	return wrapDirectives(e.astEnumValue.Directives)
+}
+
 // wrapEnumValues converts a slice of ast.EnumValueDefinition to wrapped types
 func wrapEnumValues(astEnumValues ast.EnumValueList) []*EnumValue {
 	enumValues := make([]*EnumValue, 0, len(astEnumValues))
@@ -469,4 +573,30 @@ func wrapEnumValues(astEnumValues ast.EnumValueList) []*EnumValue {
 		enumValues = append(enumValues, newEnumValue(ev))
 	}
 	return enumValues
+}
+
+// wrapDirectives converts a slice of ast.Directive to wrapped AppliedDirective types
+func wrapDirectives(astDirectives ast.DirectiveList) []*AppliedDirective {
+	if len(astDirectives) == 0 {
+		return nil
+	}
+	directives := make([]*AppliedDirective, 0, len(astDirectives))
+	for _, dir := range astDirectives {
+		directives = append(directives, newAppliedDirective(dir))
+	}
+	return directives
+}
+
+// newAppliedDirective creates a wrapper for applied ast.Directive (not DirectiveDefinition)
+// Applied directives have arguments with values, not argument definitions
+func newAppliedDirective(dir *ast.Directive) *AppliedDirective {
+	if dir == nil {
+		return nil
+	}
+	// Note: Applied directives (ast.Directive) are different from directive definitions
+	// (ast.DirectiveDefinition). Applied directives have argument values, not definitions.
+	return &AppliedDirective{
+		name:             dir.Name,
+		appliedDirective: dir,
+	}
 }

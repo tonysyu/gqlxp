@@ -63,7 +63,7 @@ func (p *SchemaView) GetUnionItems() []components.ListItem {
 }
 
 func (p *SchemaView) GetDirectiveItems() []components.ListItem {
-	return AdaptDirectives(gql.CollectAndSortMapValues(p.schema.Directive), p.resolver)
+	return AdaptDirectiveDefs(gql.CollectAndSortMapValues(p.schema.Directive), p.resolver)
 }
 
 // FindTypeCategory returns the GQL type category for the given type name

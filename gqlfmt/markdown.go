@@ -89,11 +89,17 @@ func GenerateFieldMarkdown(field *gql.Field, resolver gql.TypeResolver) string {
 		text.GqlCode(field.FormatSignature(80)),
 		field.Description(),
 	}
+
+	// Add directives if available
+	if dirStr := formatDirectiveList(field.Directives()); dirStr != "" {
+		parts = append(parts, "**Directives:** "+dirStr)
+	}
+
 	return text.JoinParagraphs(parts...)
 }
 
 // GenerateDirectiveMarkdown generates markdown for a GraphQL directive
-func GenerateDirectiveMarkdown(directive *gql.Directive, resolver gql.TypeResolver) string {
+func GenerateDirectiveMarkdown(directive *gql.DirectiveDef, resolver gql.TypeResolver) string {
 	parts := []string{
 		text.H1("@" + directive.Name()),
 		text.GqlCode(directive.FormatSignature(80)),
@@ -116,6 +122,11 @@ func GenerateTypeDefMarkdown(typeDef gql.TypeDef, resolver gql.TypeResolver) str
 	// Add description if available
 	if desc := typeDef.Description(); desc != "" {
 		parts = append(parts, desc)
+	}
+
+	// Add directives if available
+	if dirStr := formatTypeDirectives(typeDef); dirStr != "" {
+		parts = append(parts, "**Directives:** "+dirStr)
 	}
 
 	// Add type-specific details
@@ -165,7 +176,12 @@ func FormatFieldDefinitionsWithDescriptions(fieldNodes []*gql.Field) string {
 		if desc := field.Description(); desc != "" {
 			fieldParts = append(fieldParts, text.GqlDocString(desc))
 		}
-		fieldParts = append(fieldParts, field.Signature())
+		// Add field signature with directives
+		sig := field.Signature()
+		if directives := field.Directives(); len(directives) > 0 {
+			sig = sig + " " + formatDirectiveList(field.Directives())
+		}
+		fieldParts = append(fieldParts, sig)
 		parts = append(parts, text.JoinLines(fieldParts...))
 	}
 	return text.GqlCode(text.JoinParagraphs(parts...))
@@ -182,8 +198,49 @@ func FormatEnumValuesWithDescriptions(enumValues []*gql.EnumValue) string {
 		if desc := val.Description(); desc != "" {
 			valParts = append(valParts, text.GqlDocString(desc))
 		}
-		valParts = append(valParts, val.Name())
+		// Add enum value signature with directives
+		sig := val.Signature()
+		if directives := val.Directives(); len(directives) > 0 {
+			sig = sig + " " + formatDirectiveList(val.Directives())
+		}
+		valParts = append(valParts, sig)
 		parts = append(parts, text.JoinLines(valParts...))
 	}
 	return text.GqlCode(text.JoinParagraphs(parts...))
+}
+
+// formatTypeDirectives extracts and formats directives from a TypeDef
+func formatTypeDirectives(typeDef gql.TypeDef) string {
+	var directives []*gql.AppliedDirective
+
+	// Extract directives based on concrete type
+	switch t := typeDef.(type) {
+	case *gql.Object:
+		directives = t.Directives()
+	case *gql.Interface:
+		directives = t.Directives()
+	case *gql.Union:
+		directives = t.Directives()
+	case *gql.Enum:
+		directives = t.Directives()
+	case *gql.Scalar:
+		directives = t.Directives()
+	case *gql.InputObject:
+		directives = t.Directives()
+	}
+
+	return formatDirectiveList(directives)
+}
+
+// formatDirectiveList formats a list of applied directives as a string
+// e.g., "@deprecated(reason: \"Use newField\") @custom"
+func formatDirectiveList(directives []*gql.AppliedDirective) string {
+	if len(directives) == 0 {
+		return ""
+	}
+	var parts []string
+	for _, dir := range directives {
+		parts = append(parts, dir.Signature())
+	}
+	return strings.Join(parts, " ")
 }

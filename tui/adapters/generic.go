@@ -38,9 +38,14 @@ func AdaptArguments(args []*gql.Argument, resolver gql.TypeResolver) []component
 	return adaptSlice(args, resolver, newArgumentItem)
 }
 
-// AdaptDirectives converts Directive slices to ListItems
-func AdaptDirectives(directives []*gql.Directive, resolver gql.TypeResolver) []components.ListItem {
-	return adaptSlice(directives, resolver, newDirectiveDefinitionItem)
+// AdaptDirectiveDefs converts DirectiveDef slices to ListItems (for schema directives)
+func AdaptDirectiveDefs(directives []*gql.DirectiveDef, resolver gql.TypeResolver) []components.ListItem {
+	return adaptSlice(directives, resolver, newDirectiveDefItem)
+}
+
+// AdaptAppliedDirectives converts AppliedDirective slices to ListItems (for directives on fields/types)
+func AdaptAppliedDirectives(directives []*gql.AppliedDirective, resolver gql.TypeResolver) []components.ListItem {
+	return adaptSlice(directives, resolver, newAppliedDirectiveItem)
 }
 
 // AdaptUnionTypes converts type name slices to ListItems
