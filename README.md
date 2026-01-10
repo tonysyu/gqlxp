@@ -1,35 +1,57 @@
 # gqlxp
 
-`gqlxp` is an interactive GraphQL query explorer TUI (Terminal User Interface) for exploring GraphQL schema files. Built with Bubble Tea, it provides a multi-panel interface for navigating through all GraphQL type definitions including Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, and Directive types.
+`gqlxp` is an interactive GraphQL query explorer TUI (Terminal User Interface) for exploring GraphQL schema files. It provides a multi-panel interface for navigating through GraphQL schemas.
 
 ![Demo of gqlxp use](demo.gif "gqlxp-demo")
 
-## Features
+## TUI Components
 
-### GraphQL Type Exploration
-Supports exploring all GraphQL schema types:
-- **10 Type Categories**: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, Search
-- **Type Cycling**: `}` cycles forward, `{` cycles backward through types
-- **Auto-Loading**: Panels auto-populate when switching types
+```
+                 ┌─────────────────────────────────────────────────────────────────────┐
+ Type Class Nav  │ ▸ Query | Mutation | Object | Input | Enum | Scalar | Interface | … │
+                 │                                                                     │
+    Breadcrumbs  │ Query > user > User                                                 │
+                 ├────────────────────────────────────┬────────────────────────────────┤
+Type/Field Name  │ User                               │ email                          │
+                 │                                    │                                │
+  Panel SubTabs  │ ▸ Fields | Interfaces              │ Type                           │
+                 ├────────────────────────────────────┤                                │
+    Panel Items  │   name: String                     │ EmailAddress                   │
+                 │ ▸ email: EmailAddress              │                                │
+                 │   avatarUrl: URI                   │                                │
+                 │   createdAt: Date                  │                                │
+                 │                                    │                                │
+                 │                                    │                                │
+       Page Nav  │ ...                                │                                │
+                 └────────────────────────────────────┴────────────────────────────────┘
 
-### Interactive Navigation
-- **Panel Focus**: `]`/Tab navigates forward, `[`/Shift+Tab navigates backward between panels
-- **Sub-Tabs**: `H`/Shift+Left for previous tab, `L`/Shift+Right for next tab within a panel
-- **Search**: `/` to open search, Enter to submit, Esc to clear
-- **Auto-Open**: Selecting items automatically opens details in adjacent panel
-- **Detail Overlay**: Space bar shows full item details in centered overlay
-- **Multi-Panel**: Supports up to 6 panels horizontally
-- **Breadcrumbs**: Shows navigation path when panels scroll off-screen
-- **Directives**: Clickable directive references open directive details in new panel
+                  Active Panel                         Detail Panel
+```
 
-## Navigation Flow
-1. Application parses GraphQL schema from provided file path
-2. Displays Query fields by default in main panel
-3. Selecting items auto-opens details in adjacent panel
-4. Tab/Shift+Tab (or `]`/`[`) navigates between panels
-5. `}`/`{` cycles through GQL type categories (including Search)
-6. `/` opens search input within the TUI
-7. Space bar opens detail overlay for focused item
+- **Type Class Nav**: Navbar for GraphQL Type Classes + Search-mode
+  - GraphQL Type Classes: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive
+  - Search: Search all GraphQL types and fields by name, description. See [[#Search Syntax]] below
+  - Currently focused Type Class will be displayed in the Active Panel
+  - Keymaps:
+    - `}`: Focus on next type
+    - `{`: Focus on previous type
+- **Active Panel**: Left panel displaying currently focused Type or Field
+  - Keymaps:
+    - `]`/`Tab`: Make next panel the Active Panel
+    - `[`/`⇧+Tab` Make previous panel the Active Panel
+    - `j`/`↓`: Next item in Panel Items list
+    - `k`/`↑`: Previous item in Panel Items list
+    - `l`/`→`: Next page in Panel Items list
+    - `h`/`←`: Previous page in Panel Items list
+    - `L`/`⇧+→`: Next Panel SubTab
+    - `H`/`⇧+←`: Previous Panel SubTab
+    - `Spacebar`: Open detail view of the current Type or Field in Active Panel
+- **Detail Panel**: Right panel displaying currently focused Panel Item in Active Panel
+- **Breadcrumbs**: Displays names of current Active Panel and any hidden Panels used to
+  navigate to the current Active Panel
+- **Detail Overlay** (not pictured): Shows full details of Type or Field in Active Panel
+  - Keymaps:
+    - `Spacebar`: Toggles display of Detail Overlay
 
 ## Usage
 
