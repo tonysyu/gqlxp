@@ -442,7 +442,7 @@ func (m *Model) sizePanels() {
 	if m.nav.NextPanel() != nil {
 		m.nav.NextPanel().SetSize(
 			panelWidth-m.Styles.BlurredPanel.GetHorizontalFrameSize(),
-			panelHeight-m.Styles.BlurredPanel.GetHorizontalFrameSize(),
+			panelHeight-m.Styles.BlurredPanel.GetVerticalFrameSize(),
 		)
 	}
 }
