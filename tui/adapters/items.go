@@ -179,6 +179,17 @@ func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.Interface:
 		detailItems = append(detailItems, AdaptFields(typeDef.Fields(), i.resolver)...)
+		tabs = append(tabs, components.Tab{
+			Label:   "Fields",
+			Content: detailItems,
+		})
+		// Add Interfaces tab if the interface implements any interfaces
+		if interfaces := typeDef.Interfaces(); len(interfaces) > 0 {
+			tabs = append(tabs, components.Tab{
+				Label:   "Interfaces",
+				Content: AdaptInterfaces(interfaces, i.resolver),
+			})
+		}
 		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.Union:
 		detailItems = append(detailItems, AdaptUnionTypes(typeDef.Types(), i.resolver)...)

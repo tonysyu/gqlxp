@@ -284,6 +284,7 @@ func TestNavigateFromObjectToInterface(t *testing.T) {
 	// Verify the interface panel shows its fields
 	assert.StringContains(content, testx.NormalizeView(`
 		Node
+		Fields
 		id: ID!
 	`))
 }
@@ -396,8 +397,63 @@ func TestInterfaceDefinitionItemOpenPanel(t *testing.T) {
 
 	assert.StringContains(content, testx.NormalizeView(`
 		Node
+		Fields
 		id: ID!
 		createdAt: String
+	`))
+}
+
+func TestInterfaceWithInterfacesOpenPanel(t *testing.T) {
+	is := is.New(t)
+	assert := assert.New(t)
+
+	schemaString := `
+		interface Node {
+		  id: ID!
+		}
+
+		interface Timestamped {
+		  createdAt: String
+		  updatedAt: String
+		}
+
+		interface Resource implements Node & Timestamped {
+		  id: ID!
+		  createdAt: String
+		  updatedAt: String
+		  name: String!
+		}
+	`
+
+	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
+
+	interfaceObj := schema.Interface["Resource"]
+	item := newTypeDefItem(interfaceObj, resolver)
+	panel, ok := item.OpenPanel()
+
+	is.True(ok)
+	panel.SetSize(80, 40)
+
+	// First tab (Fields) should be displayed by default
+	content := renderMinimalPanel(panel)
+	assert.StringContains(content, testx.NormalizeView(`
+		Resource
+		Fields    Interfaces
+		id: ID!
+		createdAt: String
+		updatedAt: String
+		name: String!
+	`))
+
+	// Navigate to Interfaces tab
+	panel = nextPanelTab(panel)
+	content = renderMinimalPanel(panel)
+	assert.StringContains(content, testx.NormalizeView(`
+		Resource
+		Fields    Interfaces
+		Node
+		Timestamped
 	`))
 }
 

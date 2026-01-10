@@ -365,6 +365,7 @@ func (s *Scalar) Directives() []*AppliedDirective {
 type Interface struct {
 	name        string
 	description string
+	interfaces  []string
 	fields      []*Field
 	// Keep reference to underlying ast for operations within gql package
 	astDef *ast.Definition
@@ -378,6 +379,7 @@ func newInterface(def *ast.Definition) *Interface {
 	return &Interface{
 		name:        def.Name,
 		description: def.Description,
+		interfaces:  def.Interfaces,
 		fields:      wrapFields(def.Fields),
 		astDef:      def,
 	}
@@ -385,6 +387,11 @@ func newInterface(def *ast.Definition) *Interface {
 
 func (i *Interface) Name() string        { return i.name }
 func (i *Interface) Description() string { return i.description }
+
+// Interfaces returns the interfaces this interface implements
+func (i *Interface) Interfaces() []string {
+	return i.interfaces
+}
 
 // Fields returns the interface's fields
 func (i *Interface) Fields() []*Field {
