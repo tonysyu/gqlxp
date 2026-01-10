@@ -329,7 +329,20 @@ func (i appliedDirectiveItem) Details() string {
 	)
 }
 
-// OpenPanel returns nil for applied directives (no detailed view needed)
+// OpenPanel displays arguments from the directive definition
 func (i appliedDirectiveItem) OpenPanel() (*components.Panel, bool) {
-	return nil, false
+	// Resolve the directive name to its definition
+	directiveDef, err := i.resolver.ResolveDirective(i.directiveName)
+	if err != nil {
+		// If we can't resolve the directive, return no panel
+		return nil, false
+	}
+
+	// Get the arguments from the directive definition
+	argumentItems := AdaptArguments(directiveDef.Arguments(), i.resolver)
+
+	panel := components.NewPanel(argumentItems, "@"+i.directiveName)
+	panel.SetDescription(directiveDef.Description())
+
+	return panel, true
 }

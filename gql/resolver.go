@@ -1,5 +1,7 @@
 package gql
 
+import "fmt"
+
 // TypeResolver provides methods for resolving GraphQL type definitions
 type TypeResolver interface {
 	// ResolveType resolves a type name to its definition
@@ -10,6 +12,9 @@ type TypeResolver interface {
 
 	// ResolveArgumentType resolves an argument's input type
 	ResolveArgumentType(arg *Argument) (TypeDef, error)
+
+	// ResolveDirective resolves a directive name to its definition
+	ResolveDirective(directiveName string) (*DirectiveDef, error)
 }
 
 // SchemaResolver implements TypeResolver using a GraphQLSchema
@@ -35,4 +40,13 @@ func (r *SchemaResolver) ResolveFieldType(field *Field) (TypeDef, error) {
 // ResolveArgumentType resolves an argument's input type
 func (r *SchemaResolver) ResolveArgumentType(arg *Argument) (TypeDef, error) {
 	return arg.ResolveObjectTypeDef(r.schema)
+}
+
+// ResolveDirective resolves a directive name to its definition
+func (r *SchemaResolver) ResolveDirective(directiveName string) (*DirectiveDef, error) {
+	directive, ok := r.schema.Directive[directiveName]
+	if !ok {
+		return nil, fmt.Errorf("directive %q not found in schema", directiveName)
+	}
+	return directive, nil
 }
