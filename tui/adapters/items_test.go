@@ -281,10 +281,10 @@ func TestNavigateFromObjectToInterface(t *testing.T) {
 	interfacePanel.SetSize(80, 40)
 	content := renderMinimalPanel(interfacePanel)
 
-	// Verify the interface panel shows its fields
+	// Verify the interface panel shows its fields and usages
 	assert.StringContains(content, testx.NormalizeView(`
 		Node
-		Fields
+		Fields    Usages
 		id: ID!
 	`))
 }

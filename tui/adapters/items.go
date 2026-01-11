@@ -182,7 +182,13 @@ func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 		}
 		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.Scalar:
-		// No details needed
+		// Add Usages tab if the type is used elsewhere
+		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
+			tabs = append(tabs, components.Tab{
+				Label:   "Usages",
+				Content: AdaptUsages(usages, i.resolver),
+			})
+		}
 		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.Interface:
 		detailItems = append(detailItems, AdaptFields(typeDef.Fields(), i.resolver)...)
@@ -197,15 +203,47 @@ func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 				Content: AdaptInterfaces(interfaces, i.resolver),
 			})
 		}
+		// Add Usages tab if the type is used elsewhere
+		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
+			tabs = append(tabs, components.Tab{
+				Label:   "Usages",
+				Content: AdaptUsages(usages, i.resolver),
+			})
+		}
 		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.Union:
 		detailItems = append(detailItems, AdaptUnionTypes(typeDef.Types(), i.resolver)...)
+		// Add Usages tab if the type is used elsewhere
+		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
+			tabs = append(tabs, components.Tab{
+				Label:   "Usages",
+				Content: AdaptUsages(usages, i.resolver),
+			})
+		}
 		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.Enum:
 		detailItems = append(detailItems, AdaptEnumValues(typeDef.Values())...)
+		// Add Usages tab if the type is used elsewhere
+		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
+			tabs = append(tabs, components.Tab{
+				Label:   "Usages",
+				Content: AdaptUsages(usages, i.resolver),
+			})
+		}
 		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.InputObject:
 		detailItems = append(detailItems, AdaptFields(typeDef.Fields(), i.resolver)...)
+		// Only add tabs if we have usages or directives
+		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
+			tabs = append(tabs, components.Tab{
+				Label:   "Fields",
+				Content: detailItems,
+			})
+			tabs = append(tabs, components.Tab{
+				Label:   "Usages",
+				Content: AdaptUsages(usages, i.resolver),
+			})
+		}
 		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	}
 
@@ -310,8 +348,28 @@ func (i directiveDefItem) Details() string {
 func (i directiveDefItem) OpenPanel() (*components.Panel, bool) {
 	argumentItems := AdaptArguments(i.gqlDirective.Arguments(), i.resolver)
 
-	panel := components.NewPanel(argumentItems, "@"+i.directiveName)
+	panel := components.NewPanel([]components.ListItem{}, "@"+i.directiveName)
 	panel.SetDescription(i.Description())
+
+	var tabs []components.Tab
+	if len(argumentItems) > 0 {
+		tabs = append(tabs, components.Tab{
+			Label:   "Arguments",
+			Content: argumentItems,
+		})
+	}
+
+	// Add Usages tab if the directive is used elsewhere
+	if usages, _ := i.resolver.ResolveUsages(i.directiveName); len(usages) > 0 {
+		tabs = append(tabs, components.Tab{
+			Label:   "Usages",
+			Content: AdaptUsages(usages, i.resolver),
+		})
+	}
+
+	if len(tabs) > 0 {
+		panel.SetTabs(tabs)
+	}
 
 	return panel, true
 }

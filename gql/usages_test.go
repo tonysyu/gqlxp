@@ -5,6 +5,7 @@ import (
 
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/gql"
+	"slices"
 )
 
 func TestBuildUsageIndex_FieldReturnTypes(t *testing.T) {
@@ -43,9 +44,9 @@ func TestBuildUsageIndex_FieldReturnTypes(t *testing.T) {
 	}
 
 	// Verify all three paths exist
-	is.True(contains(paths, "Query.user"))
-	is.True(contains(paths, "Query.users"))
-	is.True(contains(paths, "Post.author"))
+	is.True(slices.Contains(paths, "Query.user"))
+	is.True(slices.Contains(paths, "Query.users"))
+	is.True(slices.Contains(paths, "Post.author"))
 
 	// Test Post usages
 	postUsages := schema.Usages["Post"]
@@ -89,8 +90,8 @@ func TestBuildUsageIndex_MutationFields(t *testing.T) {
 	}
 
 	// Verify both paths exist
-	is.True(contains(paths, "Mutation.createUser"))
-	is.True(contains(paths, "Mutation.updateUser"))
+	is.True(slices.Contains(paths, "Mutation.createUser"))
+	is.True(slices.Contains(paths, "Mutation.updateUser"))
 }
 
 func TestBuildUsageIndex_NestedFields(t *testing.T) {
@@ -122,8 +123,8 @@ func TestBuildUsageIndex_NestedFields(t *testing.T) {
 	}
 
 	// Verify both paths exist
-	is.True(contains(paths, "Query.user"))
-	is.True(contains(paths, "User.friends"))
+	is.True(slices.Contains(paths, "Query.user"))
+	is.True(slices.Contains(paths, "User.friends"))
 }
 
 func TestBuildUsageIndex_WrappedTypes(t *testing.T) {
@@ -155,10 +156,10 @@ func TestBuildUsageIndex_WrappedTypes(t *testing.T) {
 	}
 
 	// All should reference User despite different wrapping
-	is.True(contains(paths, "Query.user"))
-	is.True(contains(paths, "Query.users"))
-	is.True(contains(paths, "Query.requiredUser"))
-	is.True(contains(paths, "Query.requiredUsers"))
+	is.True(slices.Contains(paths, "Query.user"))
+	is.True(slices.Contains(paths, "Query.users"))
+	is.True(slices.Contains(paths, "Query.requiredUser"))
+	is.True(slices.Contains(paths, "Query.requiredUsers"))
 }
 
 func TestBuildUsageIndex_NoUsages(t *testing.T) {
@@ -258,19 +259,19 @@ func TestBuildUsageIndex_ArgumentTypes(t *testing.T) {
 	inputUsages := schema.Usages["UserInput"]
 	is.True(inputUsages != nil)
 	is.Equal(len(inputUsages), 1)
-	is.True(contains(getPaths(inputUsages), "Query.createUser(input: UserInput)"))
+	is.True(slices.Contains(getPaths(inputUsages), "Query.createUser(input: UserInput)"))
 
 	// Test Role (enum) usages (in arguments)
 	roleUsages := schema.Usages["Role"]
 	is.True(roleUsages != nil)
 	is.Equal(len(roleUsages), 1)
-	is.True(contains(getPaths(roleUsages), "Query.user(role: Role)"))
+	is.True(slices.Contains(getPaths(roleUsages), "Query.user(role: Role)"))
 
 	// Test DateTime (scalar) usages (in arguments)
 	dateTimeUsages := schema.Usages["DateTime"]
 	is.True(dateTimeUsages != nil)
 	is.Equal(len(dateTimeUsages), 1)
-	is.True(contains(getPaths(dateTimeUsages), "Query.search(createdAfter: DateTime)"))
+	is.True(slices.Contains(getPaths(dateTimeUsages), "Query.search(createdAfter: DateTime)"))
 }
 
 func TestBuildUsageIndex_InputObjectFieldTypes(t *testing.T) {
@@ -312,19 +313,19 @@ func TestBuildUsageIndex_InputObjectFieldTypes(t *testing.T) {
 	emailUsages := schema.Usages["Email"]
 	is.True(emailUsages != nil)
 	is.Equal(len(emailUsages), 1)
-	is.True(contains(getPaths(emailUsages), "UserInput.email"))
+	is.True(slices.Contains(getPaths(emailUsages), "UserInput.email"))
 
 	// Test Status (enum) used in InputObject field
 	statusUsages := schema.Usages["Status"]
 	is.True(statusUsages != nil)
 	is.Equal(len(statusUsages), 1)
-	is.True(contains(getPaths(statusUsages), "UserInput.status"))
+	is.True(slices.Contains(getPaths(statusUsages), "UserInput.status"))
 
 	// Test AddressInput used in InputObject field
 	addressUsages := schema.Usages["AddressInput"]
 	is.True(addressUsages != nil)
 	is.Equal(len(addressUsages), 1)
-	is.True(contains(getPaths(addressUsages), "UserInput.address"))
+	is.True(slices.Contains(getPaths(addressUsages), "UserInput.address"))
 }
 
 func TestBuildUsageIndex_InterfaceImplementations(t *testing.T) {
@@ -370,21 +371,21 @@ func TestBuildUsageIndex_InterfaceImplementations(t *testing.T) {
 	// Should have: Query.node (field), User implements Node, Post implements Node
 	is.Equal(len(nodeUsages), 3)
 	paths := getPaths(nodeUsages)
-	is.True(contains(paths, "Query.node"))
-	is.True(contains(paths, "User"))
-	is.True(contains(paths, "Post"))
+	is.True(slices.Contains(paths, "Query.node"))
+	is.True(slices.Contains(paths, "User"))
+	is.True(slices.Contains(paths, "Post"))
 
 	// Test Entity interface implementation
 	entityUsages := schema.Usages["Entity"]
 	is.True(entityUsages != nil)
 	is.Equal(len(entityUsages), 1)
-	is.True(contains(getPaths(entityUsages), "User"))
+	is.True(slices.Contains(getPaths(entityUsages), "User"))
 
 	// Test Timestamped interface implementation
 	timestampedUsages := schema.Usages["Timestamped"]
 	is.True(timestampedUsages != nil)
 	is.Equal(len(timestampedUsages), 1)
-	is.True(contains(getPaths(timestampedUsages), "Post"))
+	is.True(slices.Contains(getPaths(timestampedUsages), "Post"))
 }
 
 func TestBuildUsageIndex_InterfaceImplementsInterface(t *testing.T) {
@@ -419,8 +420,8 @@ func TestBuildUsageIndex_InterfaceImplementsInterface(t *testing.T) {
 	is.True(nodeUsages != nil)
 	paths := getPaths(nodeUsages)
 	// Should include: Resource implements Node, Image implements Node
-	is.True(contains(paths, "Resource"))
-	is.True(contains(paths, "Image"))
+	is.True(slices.Contains(paths, "Resource"))
+	is.True(slices.Contains(paths, "Image"))
 }
 
 func TestBuildUsageIndex_UnionMemberTypes(t *testing.T) {
@@ -456,19 +457,19 @@ func TestBuildUsageIndex_UnionMemberTypes(t *testing.T) {
 	userUsages := schema.Usages["User"]
 	is.True(userUsages != nil)
 	paths := getPaths(userUsages)
-	is.True(contains(paths, "SearchResult"))
+	is.True(slices.Contains(paths, "SearchResult"))
 
 	// Test Post as union member
 	postUsages := schema.Usages["Post"]
 	is.True(postUsages != nil)
 	paths = getPaths(postUsages)
-	is.True(contains(paths, "SearchResult"))
+	is.True(slices.Contains(paths, "SearchResult"))
 
 	// Test Comment as union member
 	commentUsages := schema.Usages["Comment"]
 	is.True(commentUsages != nil)
 	paths = getPaths(commentUsages)
-	is.True(contains(paths, "SearchResult"))
+	is.True(slices.Contains(paths, "SearchResult"))
 }
 
 func TestBuildUsageIndex_DirectiveArgumentTypes(t *testing.T) {
@@ -501,23 +502,13 @@ func TestBuildUsageIndex_DirectiveArgumentTypes(t *testing.T) {
 	cacheControlUsages := schema.Usages["CacheControl"]
 	is.True(cacheControlUsages != nil)
 	is.Equal(len(cacheControlUsages), 1)
-	is.True(contains(getPaths(cacheControlUsages), "cache(control: CacheControl)"))
+	is.True(slices.Contains(getPaths(cacheControlUsages), "cache(control: CacheControl)"))
 
 	// Test CacheConfig input used in directive argument
 	cacheConfigUsages := schema.Usages["CacheConfig"]
 	is.True(cacheConfigUsages != nil)
 	is.Equal(len(cacheConfigUsages), 1)
-	is.True(contains(getPaths(cacheConfigUsages), "cache(config: CacheConfig)"))
-}
-
-// Helper function
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
+	is.True(slices.Contains(getPaths(cacheConfigUsages), "cache(config: CacheConfig)"))
 }
 
 // getPaths extracts all paths from a slice of usages
