@@ -18,8 +18,8 @@ func adaptSlice[T any](
 	return result
 }
 
-// AdaptTypeDefs is a specialized version for types implementing gql.TypeDef
-func AdaptTypeDefs[T gql.TypeDef](
+// adaptTypeDefs is a specialized version for types implementing gql.TypeDef
+func adaptTypeDefs[T gql.TypeDef](
 	items []T,
 	resolver gql.TypeResolver,
 ) []components.ListItem {
@@ -28,38 +28,38 @@ func AdaptTypeDefs[T gql.TypeDef](
 	})
 }
 
-// AdaptFields converts Field slices to ListItems
-func AdaptFields(fields []*gql.Field, resolver gql.TypeResolver) []components.ListItem {
+// adaptFields converts Field slices to ListItems
+func adaptFields(fields []*gql.Field, resolver gql.TypeResolver) []components.ListItem {
 	return adaptSlice(fields, resolver, newFieldItem)
 }
 
-// AdaptArguments converts Argument slices to ListItems
-func AdaptArguments(args []*gql.Argument, resolver gql.TypeResolver) []components.ListItem {
+// adaptArguments converts Argument slices to ListItems
+func adaptArguments(args []*gql.Argument, resolver gql.TypeResolver) []components.ListItem {
 	return adaptSlice(args, resolver, newArgumentItem)
 }
 
-// AdaptDirectiveDefs converts DirectiveDef slices to ListItems (for schema directives)
-func AdaptDirectiveDefs(directives []*gql.DirectiveDef, resolver gql.TypeResolver) []components.ListItem {
+// adaptDirectiveDefs converts DirectiveDef slices to ListItems (for schema directives)
+func adaptDirectiveDefs(directives []*gql.DirectiveDef, resolver gql.TypeResolver) []components.ListItem {
 	return adaptSlice(directives, resolver, newDirectiveDefItem)
 }
 
-// AdaptAppliedDirectives converts AppliedDirective slices to ListItems (for directives on fields/types)
-func AdaptAppliedDirectives(directives []*gql.AppliedDirective, resolver gql.TypeResolver) []components.ListItem {
+// adaptAppliedDirectives converts AppliedDirective slices to ListItems (for directives on fields/types)
+func adaptAppliedDirectives(directives []*gql.AppliedDirective, resolver gql.TypeResolver) []components.ListItem {
 	return adaptSlice(directives, resolver, newAppliedDirectiveItem)
 }
 
-// AdaptUnionTypes converts type name slices to ListItems
-func AdaptUnionTypes(typeNames []string, resolver gql.TypeResolver) []components.ListItem {
+// adaptUnionTypes converts type name slices to ListItems
+func adaptUnionTypes(typeNames []string, resolver gql.TypeResolver) []components.ListItem {
 	return adaptSlice(typeNames, resolver, newNamedItem)
 }
 
-// AdaptInterfaces converts interface name slices to ListItems
-func AdaptInterfaces(interfaceNames []string, resolver gql.TypeResolver) []components.ListItem {
+// adaptInterfaces converts interface name slices to ListItems
+func adaptInterfaces(interfaceNames []string, resolver gql.TypeResolver) []components.ListItem {
 	return adaptSlice(interfaceNames, resolver, newNamedItem)
 }
 
-// AdaptEnumValues converts EnumValue slices to ListItems (no resolver needed)
-func AdaptEnumValues(values []*gql.EnumValue) []components.ListItem {
+// adaptEnumValues converts EnumValue slices to ListItems (no resolver needed)
+func adaptEnumValues(values []*gql.EnumValue) []components.ListItem {
 	return adaptSlice(values, nil, func(v *gql.EnumValue, _ gql.TypeResolver) components.ListItem {
 		return components.NewSimpleItem(
 			v.Name(),
@@ -68,7 +68,7 @@ func AdaptEnumValues(values []*gql.EnumValue) []components.ListItem {
 	})
 }
 
-// AdaptUsages converts Usage slices to ListItems
-func AdaptUsages(usages []*gql.Usage, resolver gql.TypeResolver) []components.ListItem {
+// adaptUsages converts Usage slices to ListItems
+func adaptUsages(usages []*gql.Usage, resolver gql.TypeResolver) []components.ListItem {
 	return adaptSlice(usages, resolver, newUsageItem)
 }

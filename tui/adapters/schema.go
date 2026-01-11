@@ -31,39 +31,39 @@ func NewSchemaView(schema gql.GraphQLSchema) SchemaView {
 }
 
 func (p *SchemaView) GetQueryItems() []components.ListItem {
-	return AdaptFields(gql.CollectAndSortMapValues(p.schema.Query), p.resolver)
+	return adaptFields(gql.CollectAndSortMapValues(p.schema.Query), p.resolver)
 }
 
 func (p *SchemaView) GetMutationItems() []components.ListItem {
-	return AdaptFields(gql.CollectAndSortMapValues(p.schema.Mutation), p.resolver)
+	return adaptFields(gql.CollectAndSortMapValues(p.schema.Mutation), p.resolver)
 }
 
 func (p *SchemaView) GetObjectItems() []components.ListItem {
-	return AdaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Object), p.resolver)
+	return adaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Object), p.resolver)
 }
 
 func (p *SchemaView) GetInputItems() []components.ListItem {
-	return AdaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Input), p.resolver)
+	return adaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Input), p.resolver)
 }
 
 func (p *SchemaView) GetEnumItems() []components.ListItem {
-	return AdaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Enum), p.resolver)
+	return adaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Enum), p.resolver)
 }
 
 func (p *SchemaView) GetScalarItems() []components.ListItem {
-	return AdaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Scalar), p.resolver)
+	return adaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Scalar), p.resolver)
 }
 
 func (p *SchemaView) GetInterfaceItems() []components.ListItem {
-	return AdaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Interface), p.resolver)
+	return adaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Interface), p.resolver)
 }
 
 func (p *SchemaView) GetUnionItems() []components.ListItem {
-	return AdaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Union), p.resolver)
+	return adaptTypeDefs(gql.CollectAndSortMapValues(p.schema.Union), p.resolver)
 }
 
 func (p *SchemaView) GetDirectiveItems() []components.ListItem {
-	return AdaptDirectiveDefs(gql.CollectAndSortMapValues(p.schema.Directive), p.resolver)
+	return adaptDirectiveDefs(gql.CollectAndSortMapValues(p.schema.Directive), p.resolver)
 }
 
 // FindTypeCategory returns the GQL type category for the given type name

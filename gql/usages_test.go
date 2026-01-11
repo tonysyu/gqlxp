@@ -555,20 +555,20 @@ func TestBuildUsageIndex_DirectiveUsages(t *testing.T) {
 	deprecatedUsages := schema.Usages["deprecated"]
 	is.True(deprecatedUsages != nil)
 	paths := getPaths(deprecatedUsages)
-	is.True(slices.Contains(paths, "Role"))        // on Enum type
-	is.True(slices.Contains(paths, "Role.USER"))   // on EnumValue
-	is.True(slices.Contains(paths, "User.email"))  // on Object field
+	is.True(slices.Contains(paths, "Role"))         // on Enum type
+	is.True(slices.Contains(paths, "Role.USER"))    // on EnumValue
+	is.True(slices.Contains(paths, "User.email"))   // on Object field
 	is.True(slices.Contains(paths, "SearchResult")) // on Union type
-	is.True(slices.Contains(paths, "Query.user"))  // on Query field
+	is.True(slices.Contains(paths, "Query.user"))   // on Query field
 
 	// Test @auth directive usages
 	authUsages := schema.Usages["auth"]
 	is.True(authUsages != nil)
 	paths = getPaths(authUsages)
-	is.True(slices.Contains(paths, "User"))            // on Object type
-	is.True(slices.Contains(paths, "Node.id"))         // on Interface field
-	is.True(slices.Contains(paths, "UserInput"))       // on Input type
-	is.True(slices.Contains(paths, "Query.user(id)"))  // on argument
+	is.True(slices.Contains(paths, "User"))           // on Object type
+	is.True(slices.Contains(paths, "Node.id"))        // on Interface field
+	is.True(slices.Contains(paths, "UserInput"))      // on Input type
+	is.True(slices.Contains(paths, "Query.user(id)")) // on argument
 
 	// Test @specifiedBy directive usages
 	specifiedByUsages := schema.Usages["specifiedBy"]
