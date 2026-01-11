@@ -173,6 +173,13 @@ func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 				Content: AdaptInterfaces(interfaces, i.resolver),
 			})
 		}
+		// Add Usages tab if the type is used elsewhere
+		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
+			tabs = append(tabs, components.Tab{
+				Label:   "Usages",
+				Content: AdaptUsages(usages, i.resolver),
+			})
+		}
 		directiveItems = AdaptAppliedDirectives(typeDef.Directives(), i.resolver)
 	case *gql.Scalar:
 		// No details needed

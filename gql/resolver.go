@@ -15,6 +15,12 @@ type TypeResolver interface {
 
 	// ResolveDirective resolves a directive name to its definition
 	ResolveDirective(directiveName string) (*DirectiveDef, error)
+
+	// ResolveUsages returns all usages of a given type name
+	ResolveUsages(typeName string) ([]*Usage, error)
+
+	// ResolveQueryOrMutationField resolves a field from Query or Mutation
+	ResolveQueryOrMutationField(parentType, fieldName string) (*Field, error)
 }
 
 // SchemaResolver implements TypeResolver using a GraphQLSchema
@@ -49,4 +55,33 @@ func (r *SchemaResolver) ResolveDirective(directiveName string) (*DirectiveDef, 
 		return nil, fmt.Errorf("directive %q not found in schema", directiveName)
 	}
 	return directive, nil
+}
+
+// ResolveUsages returns all usages of a given type name
+func (r *SchemaResolver) ResolveUsages(typeName string) ([]*Usage, error) {
+	usages, ok := r.schema.Usages[typeName]
+	if !ok {
+		return []*Usage{}, nil
+	}
+	return usages, nil
+}
+
+// ResolveQueryOrMutationField resolves a field from Query or Mutation
+func (r *SchemaResolver) ResolveQueryOrMutationField(parentType, fieldName string) (*Field, error) {
+	var field *Field
+	var ok bool
+
+	switch parentType {
+	case "Query":
+		field, ok = r.schema.Query[fieldName]
+	case "Mutation":
+		field, ok = r.schema.Mutation[fieldName]
+	default:
+		return nil, fmt.Errorf("%q is not Query or Mutation", parentType)
+	}
+
+	if !ok {
+		return nil, fmt.Errorf("field %q not found in %s", fieldName, parentType)
+	}
+	return field, nil
 }

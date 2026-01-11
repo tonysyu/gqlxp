@@ -67,3 +67,8 @@ func AdaptEnumValues(values []*gql.EnumValue) []components.ListItem {
 		)
 	})
 }
+
+// AdaptUsages converts Usage slices to ListItems
+func AdaptUsages(usages []*gql.Usage, resolver gql.TypeResolver) []components.ListItem {
+	return adaptSlice(usages, resolver, newUsageItem)
+}

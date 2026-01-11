@@ -20,6 +20,7 @@ type GraphQLSchema struct {
 	Union      map[string]*Union
 	Directive  map[string]*DirectiveDef
 	NameToType map[string]string
+	Usages     map[string][]*Usage
 }
 
 func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
@@ -34,6 +35,7 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 		Union:      make(map[string]*Union),
 		Directive:  make(map[string]*DirectiveDef),
 		NameToType: make(map[string]string),
+		Usages:     make(map[string][]*Usage),
 	}
 
 	// Process Query type
@@ -113,6 +115,9 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 		gqlSchema.Directive[name] = newDirectiveDef(directive)
 		gqlSchema.NameToType[name] = "Directive"
 	}
+
+	// Build usage index after all types are loaded
+	buildUsageIndex(&gqlSchema)
 
 	return gqlSchema
 }
