@@ -511,6 +511,72 @@ func TestBuildUsageIndex_DirectiveArgumentTypes(t *testing.T) {
 	is.True(slices.Contains(getPaths(cacheConfigUsages), "cache(config: CacheConfig)"))
 }
 
+func TestBuildUsageIndex_DirectiveUsages(t *testing.T) {
+	is := is.New(t)
+
+	schemaContent := []byte(`
+		directive @deprecated(
+			reason: String = "No longer supported"
+		) on FIELD_DEFINITION | ENUM_VALUE
+
+		directive @auth on OBJECT | FIELD_DEFINITION
+
+		scalar DateTime @specifiedBy(url: "https://tools.ietf.org/html/rfc3339")
+
+		enum Role @deprecated(reason: "Use UserRole instead") {
+			ADMIN
+			USER @deprecated(reason: "Use MEMBER instead")
+		}
+
+		type User @auth {
+			id: ID!
+			email: String! @deprecated(reason: "Use contactEmail")
+		}
+
+		interface Node {
+			id: ID! @auth
+		}
+
+		union SearchResult @deprecated = User
+
+		input UserInput @auth {
+			name: String!
+		}
+
+		type Query {
+			user(id: ID! @auth): User @deprecated
+		}
+	`)
+
+	schema, err := gql.ParseSchema(schemaContent)
+	is.NoErr(err)
+
+	// Test @deprecated directive usages
+	deprecatedUsages := schema.Usages["deprecated"]
+	is.True(deprecatedUsages != nil)
+	paths := getPaths(deprecatedUsages)
+	is.True(slices.Contains(paths, "Role"))        // on Enum type
+	is.True(slices.Contains(paths, "Role.USER"))   // on EnumValue
+	is.True(slices.Contains(paths, "User.email"))  // on Object field
+	is.True(slices.Contains(paths, "SearchResult")) // on Union type
+	is.True(slices.Contains(paths, "Query.user"))  // on Query field
+
+	// Test @auth directive usages
+	authUsages := schema.Usages["auth"]
+	is.True(authUsages != nil)
+	paths = getPaths(authUsages)
+	is.True(slices.Contains(paths, "User"))            // on Object type
+	is.True(slices.Contains(paths, "Node.id"))         // on Interface field
+	is.True(slices.Contains(paths, "UserInput"))       // on Input type
+	is.True(slices.Contains(paths, "Query.user(id)"))  // on argument
+
+	// Test @specifiedBy directive usages
+	specifiedByUsages := schema.Usages["specifiedBy"]
+	is.True(specifiedByUsages != nil)
+	is.Equal(len(specifiedByUsages), 1)
+	is.True(slices.Contains(getPaths(specifiedByUsages), "DateTime")) // on Scalar type
+}
+
 // getPaths extracts all paths from a slice of usages
 func getPaths(usages []*gql.Usage) []string {
 	paths := make([]string, len(usages))
