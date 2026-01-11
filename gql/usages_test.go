@@ -224,6 +224,292 @@ func TestBuildUsageIndex_InterfaceFields(t *testing.T) {
 	is.Equal(userUsages[0].Path, "Node.owner")
 }
 
+func TestBuildUsageIndex_ArgumentTypes(t *testing.T) {
+	is := is.New(t)
+
+	schemaContent := []byte(`
+		input UserInput {
+			name: String!
+			age: Int!
+		}
+
+		enum Role {
+			ADMIN
+			USER
+		}
+
+		scalar DateTime
+
+		type User {
+			id: ID!
+		}
+
+		type Query {
+			user(id: ID!, role: Role): User
+			createUser(input: UserInput!): User!
+			search(createdAfter: DateTime): [User!]!
+		}
+	`)
+
+	schema, err := gql.ParseSchema(schemaContent)
+	is.NoErr(err)
+
+	// Test UserInput usages (in arguments)
+	inputUsages := schema.Usages["UserInput"]
+	is.True(inputUsages != nil)
+	is.Equal(len(inputUsages), 1)
+	is.True(contains(getPaths(inputUsages), "Query.createUser(input: UserInput)"))
+
+	// Test Role (enum) usages (in arguments)
+	roleUsages := schema.Usages["Role"]
+	is.True(roleUsages != nil)
+	is.Equal(len(roleUsages), 1)
+	is.True(contains(getPaths(roleUsages), "Query.user(role: Role)"))
+
+	// Test DateTime (scalar) usages (in arguments)
+	dateTimeUsages := schema.Usages["DateTime"]
+	is.True(dateTimeUsages != nil)
+	is.Equal(len(dateTimeUsages), 1)
+	is.True(contains(getPaths(dateTimeUsages), "Query.search(createdAfter: DateTime)"))
+}
+
+func TestBuildUsageIndex_InputObjectFieldTypes(t *testing.T) {
+	is := is.New(t)
+
+	schemaContent := []byte(`
+		enum Status {
+			ACTIVE
+			INACTIVE
+		}
+
+		scalar Email
+
+		input AddressInput {
+			street: String!
+			city: String!
+		}
+
+		input UserInput {
+			name: String!
+			email: Email!
+			status: Status!
+			address: AddressInput!
+		}
+
+		type User {
+			id: ID!
+		}
+
+		type Mutation {
+			createUser(input: UserInput!): User!
+		}
+	`)
+
+	schema, err := gql.ParseSchema(schemaContent)
+	is.NoErr(err)
+
+	// Test Email (scalar) used in InputObject field
+	emailUsages := schema.Usages["Email"]
+	is.True(emailUsages != nil)
+	is.Equal(len(emailUsages), 1)
+	is.True(contains(getPaths(emailUsages), "UserInput.email"))
+
+	// Test Status (enum) used in InputObject field
+	statusUsages := schema.Usages["Status"]
+	is.True(statusUsages != nil)
+	is.Equal(len(statusUsages), 1)
+	is.True(contains(getPaths(statusUsages), "UserInput.status"))
+
+	// Test AddressInput used in InputObject field
+	addressUsages := schema.Usages["AddressInput"]
+	is.True(addressUsages != nil)
+	is.Equal(len(addressUsages), 1)
+	is.True(contains(getPaths(addressUsages), "UserInput.address"))
+}
+
+func TestBuildUsageIndex_InterfaceImplementations(t *testing.T) {
+	is := is.New(t)
+
+	schemaContent := []byte(`
+		interface Node {
+			id: ID!
+		}
+
+		interface Entity {
+			id: ID!
+			createdAt: String!
+		}
+
+		interface Timestamped {
+			createdAt: String!
+		}
+
+		type User implements Node & Entity {
+			id: ID!
+			createdAt: String!
+			name: String!
+		}
+
+		type Post implements Node & Timestamped {
+			id: ID!
+			createdAt: String!
+			title: String!
+		}
+
+		type Query {
+			node(id: ID!): Node
+		}
+	`)
+
+	schema, err := gql.ParseSchema(schemaContent)
+	is.NoErr(err)
+
+	// Test Node interface implementations
+	nodeUsages := schema.Usages["Node"]
+	is.True(nodeUsages != nil)
+	// Should have: Query.node (field), User implements Node, Post implements Node
+	is.Equal(len(nodeUsages), 3)
+	paths := getPaths(nodeUsages)
+	is.True(contains(paths, "Query.node"))
+	is.True(contains(paths, "User"))
+	is.True(contains(paths, "Post"))
+
+	// Test Entity interface implementation
+	entityUsages := schema.Usages["Entity"]
+	is.True(entityUsages != nil)
+	is.Equal(len(entityUsages), 1)
+	is.True(contains(getPaths(entityUsages), "User"))
+
+	// Test Timestamped interface implementation
+	timestampedUsages := schema.Usages["Timestamped"]
+	is.True(timestampedUsages != nil)
+	is.Equal(len(timestampedUsages), 1)
+	is.True(contains(getPaths(timestampedUsages), "Post"))
+}
+
+func TestBuildUsageIndex_InterfaceImplementsInterface(t *testing.T) {
+	is := is.New(t)
+
+	schemaContent := []byte(`
+		interface Node {
+			id: ID!
+		}
+
+		interface Resource implements Node {
+			id: ID!
+			url: String!
+		}
+
+		type Image implements Resource & Node {
+			id: ID!
+			url: String!
+			width: Int!
+		}
+
+		type Query {
+			resource(id: ID!): Resource
+		}
+	`)
+
+	schema, err := gql.ParseSchema(schemaContent)
+	is.NoErr(err)
+
+	// Test Node interface usages
+	nodeUsages := schema.Usages["Node"]
+	is.True(nodeUsages != nil)
+	paths := getPaths(nodeUsages)
+	// Should include: Resource implements Node, Image implements Node
+	is.True(contains(paths, "Resource"))
+	is.True(contains(paths, "Image"))
+}
+
+func TestBuildUsageIndex_UnionMemberTypes(t *testing.T) {
+	is := is.New(t)
+
+	schemaContent := []byte(`
+		type User {
+			id: ID!
+			name: String!
+		}
+
+		type Post {
+			id: ID!
+			title: String!
+		}
+
+		type Comment {
+			id: ID!
+			text: String!
+		}
+
+		union SearchResult = User | Post | Comment
+
+		type Query {
+			search(query: String!): [SearchResult!]!
+		}
+	`)
+
+	schema, err := gql.ParseSchema(schemaContent)
+	is.NoErr(err)
+
+	// Test User as union member
+	userUsages := schema.Usages["User"]
+	is.True(userUsages != nil)
+	paths := getPaths(userUsages)
+	is.True(contains(paths, "SearchResult"))
+
+	// Test Post as union member
+	postUsages := schema.Usages["Post"]
+	is.True(postUsages != nil)
+	paths = getPaths(postUsages)
+	is.True(contains(paths, "SearchResult"))
+
+	// Test Comment as union member
+	commentUsages := schema.Usages["Comment"]
+	is.True(commentUsages != nil)
+	paths = getPaths(commentUsages)
+	is.True(contains(paths, "SearchResult"))
+}
+
+func TestBuildUsageIndex_DirectiveArgumentTypes(t *testing.T) {
+	is := is.New(t)
+
+	schemaContent := []byte(`
+		enum CacheControl {
+			PUBLIC
+			PRIVATE
+		}
+
+		input CacheConfig {
+			maxAge: Int!
+		}
+
+		directive @cache(
+			control: CacheControl!
+			config: CacheConfig
+		) on FIELD_DEFINITION
+
+		type Query {
+			user: String @cache(control: PUBLIC)
+		}
+	`)
+
+	schema, err := gql.ParseSchema(schemaContent)
+	is.NoErr(err)
+
+	// Test CacheControl enum used in directive argument
+	cacheControlUsages := schema.Usages["CacheControl"]
+	is.True(cacheControlUsages != nil)
+	is.Equal(len(cacheControlUsages), 1)
+	is.True(contains(getPaths(cacheControlUsages), "cache(control: CacheControl)"))
+
+	// Test CacheConfig input used in directive argument
+	cacheConfigUsages := schema.Usages["CacheConfig"]
+	is.True(cacheConfigUsages != nil)
+	is.Equal(len(cacheConfigUsages), 1)
+	is.True(contains(getPaths(cacheConfigUsages), "cache(config: CacheConfig)"))
+}
+
 // Helper function
 func contains(slice []string, item string) bool {
 	for _, s := range slice {
@@ -232,4 +518,13 @@ func contains(slice []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// getPaths extracts all paths from a slice of usages
+func getPaths(usages []*gql.Usage) []string {
+	paths := make([]string, len(usages))
+	for i, usage := range usages {
+		paths[i] = usage.Path
+	}
+	return paths
 }
