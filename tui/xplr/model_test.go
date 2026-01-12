@@ -11,6 +11,17 @@ import (
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 )
 
+// Key messages for simulating user input
+var (
+	keyNextPanel     = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{']'}}
+	keyPrevPanel     = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'['}}
+	keyNextType      = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}}
+	keyPrevType      = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'{'}}
+	keyNextItem      = tea.KeyMsg{Type: tea.KeyDown}
+	keyPrevItem      = tea.KeyMsg{Type: tea.KeyUp}
+	keyToggleOverlay = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}}
+)
+
 func TestNewModel(t *testing.T) {
 	is := is.New(t)
 
@@ -74,35 +85,35 @@ func TestModelPanelNavigation(t *testing.T) {
 	// Now we have 4 panels total
 
 	// Test next panel navigation (move forward in stack)
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	model, _ = model.Update(keyNextPanel)
 	is.Equal(model.nav.Stack().Position(), 1)
 
 	// Test another forward navigation
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	model, _ = model.Update(keyNextPanel)
 	is.Equal(model.nav.Stack().Position(), 2)
 
 	// Test another forward navigation
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	model, _ = model.Update(keyNextPanel)
 	is.Equal(model.nav.Stack().Position(), 3)
 
 	// Test that we can't go beyond the last panel
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyTab})
+	model, _ = model.Update(keyNextPanel)
 	is.Equal(model.nav.Stack().Position(), 3) // Should stay at 3
 
 	// Test previous panel navigation (move backward in stack)
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
+	model, _ = model.Update(keyPrevPanel)
 	is.Equal(model.nav.Stack().Position(), 2)
 
 	// Test another backward navigation
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
+	model, _ = model.Update(keyPrevPanel)
 	is.Equal(model.nav.Stack().Position(), 1)
 
 	// Navigate to beginning
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
+	model, _ = model.Update(keyPrevPanel)
 	is.Equal(model.nav.Stack().Position(), 0)
 
 	// Test that we can't go before the beginning
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyShiftTab})
+	model, _ = model.Update(keyPrevPanel)
 	is.Equal(model.nav.Stack().Position(), 0) // Should stay at 0
 }
 
@@ -158,13 +169,13 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 	}
 
 	for _, expectedType := range expectedTypes {
-		model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}})
+		model, _ = model.Update(keyNextType)
 		is.Equal(model.nav.CurrentType(), expectedType)
 		is.Equal(model.nav.Stack().Position(), 0) // Stack position should reset to 0
 	}
 
 	// Test reverse cycling
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'{'}})
+	model, _ = model.Update(keyPrevType)
 	is.Equal(model.nav.CurrentType(), navigation.SearchType)
 }
 
@@ -204,12 +215,13 @@ func TestModelKeyboardShortcuts(t *testing.T) {
 
 	// Test all keyboard shortcuts don't crash
 	shortcuts := []tea.KeyMsg{
-		{Type: tea.KeyTab},
-		{Type: tea.KeyShiftTab},
-		{Type: tea.KeyRunes, Runes: []rune{'}'}},
-		{Type: tea.KeyRunes, Runes: []rune{'{'}},
-		{Type: tea.KeyCtrlC},
-		{Type: tea.KeyCtrlD},
+		keyNextPanel,
+		keyPrevPanel,
+		keyNextType,
+		keyPrevType,
+		keyNextItem,
+		keyPrevItem,
+		keyToggleOverlay,
 	}
 
 	for _, shortcut := range shortcuts {

@@ -75,7 +75,7 @@ func NewEmpty() Model {
 				key.WithHelp("]/tab", "next"),
 			),
 			PrevPanel: key.NewBinding(
-				key.WithKeys("shift+tab", "["),
+				key.WithKeys("[", "shift+tab"),
 				key.WithHelp("[/⇧+tab", "prev"),
 			),
 			Quit: key.NewBinding(

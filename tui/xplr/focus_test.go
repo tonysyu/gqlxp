@@ -23,7 +23,7 @@ func TestShouldPanelReceiveMessage(t *testing.T) {
 		{
 			name:          "left panel (offset 0) receives key message",
 			displayOffset: 0,
-			msg:           tea.KeyMsg{Type: tea.KeyEnter},
+			msg:           tea.KeyMsg{Type: tea.KeyDown},
 			shouldReceive: true,
 		},
 		{
@@ -35,7 +35,7 @@ func TestShouldPanelReceiveMessage(t *testing.T) {
 		{
 			name:          "global navigation keys not sent to panels",
 			displayOffset: 0,
-			msg:           tea.KeyMsg{Type: tea.KeyTab},
+			msg:           keyNextPanel,
 			shouldReceive: false,
 		},
 		{
@@ -61,17 +61,21 @@ func TestGlobalNavigationKeysNotSentToPanels(t *testing.T) {
 
 	// Test all global navigation keys
 	globalKeys := []tea.KeyMsg{
-		{Type: tea.KeyTab},                       // next
-		{Type: tea.KeyShiftTab},                  // prev
-		{Type: tea.KeyCtrlC},                     // quit
-		{Type: tea.KeyCtrlD},                     // quit
-		{Type: tea.KeyRunes, Runes: []rune{'}'}}, // next type
-		{Type: tea.KeyRunes, Runes: []rune{'{'}}, // prev type
+		{Type: tea.KeyCtrlC}, // quit
+		{Type: tea.KeyCtrlD}, // quit
+		keyNextPanel,
+		{Type: tea.KeyTab}, // next panel
+		keyPrevPanel,
+		{Type: tea.KeyShiftTab}, // prev panel
+		keyNextType,
+		keyPrevType,
 	}
 
 	for _, keyMsg := range globalKeys {
 		// Even the left panel (offset 0) should not receive global navigation keys
-		shouldReceive := model.shouldFocusedPanelReceiveMessage(keyMsg)
-		is.True(!shouldReceive)
+		t.Run(keyMsg.String(), func(t *testing.T) {
+			shouldReceive := model.shouldFocusedPanelReceiveMessage(keyMsg)
+			is.True(!shouldReceive)
+		})
 	}
 }

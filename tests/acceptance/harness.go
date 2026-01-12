@@ -32,8 +32,8 @@ import (
 
 // Key messages for simulating user input
 var (
-	keyNextPanel = tea.KeyMsg{Type: tea.KeyTab}
-	keyPrevPanel = tea.KeyMsg{Type: tea.KeyShiftTab}
+	keyNextPanel = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{']'}}
+	keyPrevPanel = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'['}}
 	keyNextType  = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}}
 	keyPrevType  = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'{'}}
 	keySpace     = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}}

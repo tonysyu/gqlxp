@@ -10,13 +10,6 @@ import (
 	"github.com/tonysyu/gqlxp/utils/text"
 )
 
-var (
-	keyNextPanel = tea.KeyMsg{Type: tea.KeyTab}
-	keyPrevPanel = tea.KeyMsg{Type: tea.KeyShiftTab}
-	keyNextType  = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}}
-	keyPrevType  = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'{'}}
-)
-
 func createTestSchema() string {
 	return `
 		type Object1 {
