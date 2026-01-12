@@ -75,11 +75,8 @@ func (m *Model) renderGQLTypeNavbar() string {
 
 	// Calculate max width per tab to fit all tabs in available width
 	// Account for padding in tab styles by using a small buffer
-	const styleOverhead = 4 // Approximate horizontal padding per tab
-	availableWidth := m.width - (len(allTypes) * styleOverhead)
-	if availableWidth < len(allTypes) {
-		availableWidth = len(allTypes) // Ensure at least 1 char per tab
-	}
+	const styleOverhead = 2 // Approximate horizontal padding per tab
+	availableWidth := max(m.width - (len(allTypes) * styleOverhead), len(allTypes))
 	maxTabWidth := availableWidth / len(allTypes)
 
 	var tabs []string

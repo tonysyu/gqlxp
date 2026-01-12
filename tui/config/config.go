@@ -67,18 +67,18 @@ func DefaultStyles() Styles {
 		ActiveTab: lipgloss.NewStyle().
 			Foreground(terminal.ColorCream).
 			Background(terminal.ColorBrightIndigo).
-			Padding(0, 2).
+			Padding(0, 1).
 			Bold(true),
 
 		ActiveSubTab: lipgloss.NewStyle().
 			Foreground(terminal.ColorDarkGray).
 			Background(terminal.ColorLightBlue).
-			Padding(0, 2).
+			Padding(0, 1).
 			Bold(true),
 
 		InactiveTab: lipgloss.NewStyle().
 			Foreground(terminal.ColorLightGray).
-			Padding(0, 2),
+			Padding(0, 1),
 
 		Breadcrumbs: lipgloss.NewStyle().
 			Foreground(terminal.ColorLightGray).

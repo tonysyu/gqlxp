@@ -78,7 +78,7 @@ func TestObjectWithInterfacesOpenPanel(t *testing.T) {
 	content := renderMinimalPanel(panel)
 	assert.StringContains(content, testx.NormalizeView(`
 		User
-		Fields    Interfaces
+		Fields  Interfaces
 		id: ID!
 		name: String!
 	`))
@@ -88,7 +88,7 @@ func TestObjectWithInterfacesOpenPanel(t *testing.T) {
 	content = renderMinimalPanel(panel)
 	assert.StringContains(content, testx.NormalizeView(`
 		User
-		Fields    Interfaces
+		Fields  Interfaces
 		Node
 		Named
 	`))
@@ -139,7 +139,7 @@ func TestNavigateFromObjectToInterface(t *testing.T) {
 	// Verify the interface panel shows its fields and usages
 	assert.StringContains(content, testx.NormalizeView(`
 		Node
-		Fields    Usages
+		Fields  Usages
 		id: ID!
 	`))
 }
@@ -299,7 +299,7 @@ func TestInterfaceWithInterfacesOpenPanel(t *testing.T) {
 	assert.StringContains(content, testx.NormalizeView(`
 		Resource
 
-		Fields    Interfaces
+		Fields  Interfaces
 
 		id: ID!
 		createdAt: String
@@ -313,7 +313,7 @@ func TestInterfaceWithInterfacesOpenPanel(t *testing.T) {
 	assert.StringContains(content, testx.NormalizeView(`
 		Resource
 
-		Fields    Interfaces
+		Fields  Interfaces
 
 		Node
 		Timestamped

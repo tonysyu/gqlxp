@@ -72,14 +72,14 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 		// Verify Result Type tab (default active tab)
 		content := renderMinimalPanel(panel)
 		assert.StringContains(content, testx.NormalizeView(`
-			Type    Inputs
+			Type  Inputs
 			Post
 		`))
 
 		panel = nextPanelTab(panel) // Switch to Input Arguments tab
 		content = renderMinimalPanel(panel)
 		assert.StringContains(content, testx.NormalizeView(`
-			Type    Inputs
+			Type  Inputs
 			id: ID!
 		`))
 	})
@@ -98,7 +98,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 			createPost
 			Create a new post
 
-			Type    Inputs
+			Type  Inputs
 			Post!
 		`))
 
@@ -108,7 +108,7 @@ func TestQueryAndMutationItemOpenPanel(t *testing.T) {
 			createPost
 			Create a new post
 
-			Type    Inputs
+			Type  Inputs
 			title: String!
 			content: String!
 			authorId: ID!
@@ -184,14 +184,14 @@ func TestFieldDefinitionWithComplexArguments(t *testing.T) {
 	// Verify Result Type tab (default active tab)
 	content := renderMinimalPanel(panel)
 	assert.StringContains(content, testx.NormalizeView(`
-		Type    Inputs
+		Type  Inputs
 		[String!]!
 	`))
 
 	panel = nextPanelTab(panel) // Switch to Input Arguments tab
 	content = renderMinimalPanel(panel)
 	assert.StringContains(content, testx.NormalizeView(`
-		Type    Inputs
+		Type  Inputs
 		id: ID!
 		filters: FilterInput
 		tags: [String!]!

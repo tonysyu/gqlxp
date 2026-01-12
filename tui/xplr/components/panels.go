@@ -331,11 +331,8 @@ func (p *Panel) renderTabBar() string {
 
 	// Calculate max width per tab to fit all tabs in available width
 	// Account for padding in tab styles by using a small buffer
-	const styleOverhead = 4 // Approximate horizontal padding per tab
-	availableWidth := p.width - (len(p.tabs) * styleOverhead)
-	if availableWidth < len(p.tabs) {
-		availableWidth = len(p.tabs) // Ensure at least 1 char per tab
-	}
+	const styleOverhead = 2 // Approximate horizontal padding per tab
+	availableWidth := max(p.width - (len(p.tabs) * styleOverhead), len(p.tabs))
 	maxTabWidth := availableWidth / len(p.tabs)
 
 	var tabParts []string
