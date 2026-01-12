@@ -72,3 +72,52 @@ func adaptEnumValues(values []*gql.EnumValue) []components.ListItem {
 func adaptUsages(usages []*gql.Usage, resolver gql.TypeResolver) []components.ListItem {
 	return adaptSlice(usages, resolver, newUsageItem)
 }
+
+func newArgumentsTab(args []*gql.Argument, resolver gql.TypeResolver) components.Tab {
+	return components.Tab{
+		Label:   "Arguments",
+		Content: adaptArguments(args, resolver),
+	}
+}
+
+func newUsagesTab(usages []*gql.Usage, resolver gql.TypeResolver) components.Tab {
+	return components.Tab{
+		Label:   "Usages",
+		Content: adaptUsages(usages, resolver),
+	}
+}
+
+func newTypeTab(item components.ListItem) components.Tab {
+	return components.Tab{
+		Label:   "Type",
+		Content: []components.ListItem{item},
+	}
+}
+
+func newInputsTab(args []*gql.Argument, resolver gql.TypeResolver) components.Tab {
+	return components.Tab{
+		Label:   "Inputs",
+		Content: adaptArguments(args, resolver),
+	}
+}
+
+func newDirectivesTab(directives []*gql.AppliedDirective, resolver gql.TypeResolver) components.Tab {
+	return components.Tab{
+		Label:   "Directives",
+		Content: adaptAppliedDirectives(directives, resolver),
+	}
+}
+
+func newFieldsTab(fields []*gql.Field, resolver gql.TypeResolver) components.Tab {
+	return components.Tab{
+		Label:   "Fields",
+		Content: adaptFields(fields, resolver),
+	}
+}
+
+func newInterfacesTab(interfaceNames []string, resolver gql.TypeResolver) components.Tab {
+	return components.Tab{
+		Label:   "Interfaces",
+		Content: adaptInterfaces(interfaceNames, resolver),
+	}
+}

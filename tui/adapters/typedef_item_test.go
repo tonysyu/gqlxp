@@ -171,6 +171,8 @@ func TestInputDefinitionItemOpenPanel(t *testing.T) {
 	assert.StringContains(content, testx.NormalizeView(`
 		CreateUserInput
 
+		Fields
+
 		name: String!
 		email: String!
 		age: Int = 18
@@ -252,7 +254,9 @@ func TestInterfaceDefinitionItemOpenPanel(t *testing.T) {
 
 	assert.StringContains(content, testx.NormalizeView(`
 		Node
+
 		Fields
+
 		id: ID!
 		createdAt: String
 	`))
@@ -294,7 +298,9 @@ func TestInterfaceWithInterfacesOpenPanel(t *testing.T) {
 	content := renderMinimalPanel(panel)
 	assert.StringContains(content, testx.NormalizeView(`
 		Resource
+
 		Fields    Interfaces
+
 		id: ID!
 		createdAt: String
 		updatedAt: String
@@ -306,7 +312,9 @@ func TestInterfaceWithInterfacesOpenPanel(t *testing.T) {
 	content = renderMinimalPanel(panel)
 	assert.StringContains(content, testx.NormalizeView(`
 		Resource
+
 		Fields    Interfaces
+
 		Node
 		Timestamped
 	`))
@@ -342,6 +350,9 @@ func TestUnionDefinitionItemOpenPanel(t *testing.T) {
 
 	assert.StringContains(content, testx.NormalizeView(`
 		SearchResult
+
+		Types
+
 		User
 		Post
 	`))

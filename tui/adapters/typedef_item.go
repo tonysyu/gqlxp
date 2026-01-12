@@ -44,113 +44,79 @@ func (i typeDefItem) Details() string {
 
 // OpenPanel displays list of fields on type (if any)
 func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
-	// Create list items for the detail view
-	var detailItems []components.ListItem
 	var tabs []components.Tab
-	var directiveItems []components.ListItem
 
 	switch typeDef := (i.typeDef).(type) {
 	case *gql.Object:
-		detailItems = append(detailItems, adaptFields(typeDef.Fields(), i.resolver)...)
-		tabs = append(tabs, components.Tab{
-			Label:   "Fields",
-			Content: detailItems,
-		})
-		// Add Interfaces tab if the object implements any interfaces
+		tabs = append(tabs, newFieldsTab(typeDef.Fields(), i.resolver))
 		if interfaces := typeDef.Interfaces(); len(interfaces) > 0 {
-			tabs = append(tabs, components.Tab{
-				Label:   "Interfaces",
-				Content: adaptInterfaces(interfaces, i.resolver),
-			})
+			tabs = append(tabs, newInterfacesTab(interfaces, i.resolver))
 		}
-		// Add Usages tab if the type is used elsewhere
 		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
-			tabs = append(tabs, components.Tab{
-				Label:   "Usages",
-				Content: adaptUsages(usages, i.resolver),
-			})
+			tabs = append(tabs, newUsagesTab(usages, i.resolver))
 		}
-		directiveItems = adaptAppliedDirectives(typeDef.Directives(), i.resolver)
+		if len(typeDef.Directives()) > 0 {
+			tabs = append(tabs, newDirectivesTab(typeDef.Directives(), i.resolver))
+		}
 	case *gql.Scalar:
-		// Add Usages tab if the type is used elsewhere
+		// Note that Scalars have no "default" data (e.g. fields, values, etc.)
 		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
-			tabs = append(tabs, components.Tab{
-				Label:   "Usages",
-				Content: adaptUsages(usages, i.resolver),
-			})
+			tabs = append(tabs, newUsagesTab(usages, i.resolver))
 		}
-		directiveItems = adaptAppliedDirectives(typeDef.Directives(), i.resolver)
+		if len(typeDef.Directives()) > 0 {
+			tabs = append(tabs, newDirectivesTab(typeDef.Directives(), i.resolver))
+		}
 	case *gql.Interface:
-		detailItems = append(detailItems, adaptFields(typeDef.Fields(), i.resolver)...)
-		tabs = append(tabs, components.Tab{
-			Label:   "Fields",
-			Content: detailItems,
-		})
-		// Add Interfaces tab if the interface implements any interfaces
+		tabs = append(tabs, newFieldsTab(typeDef.Fields(), i.resolver))
 		if interfaces := typeDef.Interfaces(); len(interfaces) > 0 {
-			tabs = append(tabs, components.Tab{
-				Label:   "Interfaces",
-				Content: adaptInterfaces(interfaces, i.resolver),
-			})
+			tabs = append(tabs, newInterfacesTab(interfaces, i.resolver))
 		}
-		// Add Usages tab if the type is used elsewhere
 		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
-			tabs = append(tabs, components.Tab{
-				Label:   "Usages",
-				Content: adaptUsages(usages, i.resolver),
-			})
+			tabs = append(tabs, newUsagesTab(usages, i.resolver))
 		}
-		directiveItems = adaptAppliedDirectives(typeDef.Directives(), i.resolver)
+		if len(typeDef.Directives()) > 0 {
+			tabs = append(tabs, newDirectivesTab(typeDef.Directives(), i.resolver))
+		}
 	case *gql.Union:
-		detailItems = append(detailItems, adaptUnionTypes(typeDef.Types(), i.resolver)...)
-		// Add Usages tab if the type is used elsewhere
-		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
-			tabs = append(tabs, components.Tab{
-				Label:   "Usages",
-				Content: adaptUsages(usages, i.resolver),
-			})
-		}
-		directiveItems = adaptAppliedDirectives(typeDef.Directives(), i.resolver)
-	case *gql.Enum:
-		detailItems = append(detailItems, adaptEnumValues(typeDef.Values())...)
-		// Add Usages tab if the type is used elsewhere
-		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
-			tabs = append(tabs, components.Tab{
-				Label:   "Usages",
-				Content: adaptUsages(usages, i.resolver),
-			})
-		}
-		directiveItems = adaptAppliedDirectives(typeDef.Directives(), i.resolver)
-	case *gql.InputObject:
-		detailItems = append(detailItems, adaptFields(typeDef.Fields(), i.resolver)...)
-		// Only add tabs if we have usages or directives
-		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
-			tabs = append(tabs, components.Tab{
-				Label:   "Fields",
-				Content: detailItems,
-			})
-			tabs = append(tabs, components.Tab{
-				Label:   "Usages",
-				Content: adaptUsages(usages, i.resolver),
-			})
-		}
-		directiveItems = adaptAppliedDirectives(typeDef.Directives(), i.resolver)
-	}
-
-	// Add Directives tab if the type has directives
-	if len(directiveItems) > 0 {
 		tabs = append(tabs, components.Tab{
-			Label:   "Directives",
-			Content: directiveItems,
+			Label:   "Types",
+			Content: adaptUnionTypes(typeDef.Types(), i.resolver),
 		})
+		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
+			tabs = append(tabs, newUsagesTab(usages, i.resolver))
+		}
+		if len(typeDef.Directives()) > 0 {
+			tabs = append(tabs, newDirectivesTab(typeDef.Directives(), i.resolver))
+		}
+	case *gql.Enum:
+		tabs = append(tabs, components.Tab{
+			Label:   "Values",
+			Content: adaptEnumValues(typeDef.Values()),
+		})
+		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
+			tabs = append(tabs, newUsagesTab(usages, i.resolver))
+		}
+		if len(typeDef.Directives()) > 0 {
+			tabs = append(tabs, newDirectivesTab(typeDef.Directives(), i.resolver))
+		}
+	case *gql.InputObject:
+		tabs = append(tabs, newFieldsTab(typeDef.Fields(), i.resolver))
+		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
+			tabs = append(tabs, newUsagesTab(usages, i.resolver))
+		}
+		if len(typeDef.Directives()) > 0 {
+			tabs = append(tabs, newDirectivesTab(typeDef.Directives(), i.resolver))
+		}
 	}
 
-	panel := components.NewPanel(detailItems, i.Title())
+	// Pass empty list of items since all the default types have SubTabs
+	panel := components.NewPanel([]components.ListItem{}, i.Title())
+
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
 		panel.SetDescription(desc)
 	}
-	// Set tabs if any were created
+
 	if len(tabs) > 0 {
 		panel.SetTabs(tabs)
 	}

@@ -36,25 +36,17 @@ func (i directiveDefItem) Details() string {
 
 // OpenPanel displays arguments of directive (if any)
 func (i directiveDefItem) OpenPanel() (*components.Panel, bool) {
-	argumentItems := adaptArguments(i.gqlDirective.Arguments(), i.resolver)
-
 	panel := components.NewPanel([]components.ListItem{}, "@"+i.directiveName)
 	panel.SetDescription(i.Description())
 
 	var tabs []components.Tab
-	if len(argumentItems) > 0 {
-		tabs = append(tabs, components.Tab{
-			Label:   "Arguments",
-			Content: argumentItems,
-		})
+	if len(i.gqlDirective.Arguments()) > 0 {
+		tabs = append(tabs, newArgumentsTab(i.gqlDirective.Arguments(), i.resolver))
 	}
 
 	// Add Usages tab if the directive is used elsewhere
 	if usages, _ := i.resolver.ResolveUsages(i.directiveName); len(usages) > 0 {
-		tabs = append(tabs, components.Tab{
-			Label:   "Usages",
-			Content: adaptUsages(usages, i.resolver),
-		})
+		tabs = append(tabs, newUsagesTab(usages, i.resolver))
 	}
 
 	if len(tabs) > 0 {

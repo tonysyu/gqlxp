@@ -47,10 +47,7 @@ func (i argumentItem) OpenPanel() (*components.Panel, bool) {
 
 	// Create a single tab for Result Type
 	panel.SetTabs([]components.Tab{
-		{
-			Label:   "Type",
-			Content: []components.ListItem{resultTypeItem},
-		},
+		newTypeTab(resultTypeItem),
 	})
 
 	return panel, true

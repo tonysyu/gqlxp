@@ -36,30 +36,19 @@ func (i fieldItem) Details() string {
 
 // OpenPanel displays arguments of field (if any) and the field's ObjectType
 func (i fieldItem) OpenPanel() (*components.Panel, bool) {
-	argumentItems := adaptArguments(i.gqlField.Arguments(), i.resolver)
 	resultTypeItem := newTypeDefItemFromField(i.gqlField, i.resolver)
-	directiveItems := adaptAppliedDirectives(i.gqlField.Directives(), i.resolver)
 
 	panel := components.NewPanel([]components.ListItem{}, i.fieldName)
 	panel.SetDescription(i.Description())
 
 	// Create tabs for Result Type and Input Arguments
 	var tabs []components.Tab
-	tabs = append(tabs, components.Tab{
-		Label:   "Type",
-		Content: []components.ListItem{resultTypeItem},
-	})
-	if len(argumentItems) > 0 {
-		tabs = append(tabs, components.Tab{
-			Label:   "Inputs",
-			Content: argumentItems,
-		})
+	tabs = append(tabs, newTypeTab(resultTypeItem))
+	if len(i.gqlField.Arguments()) > 0 {
+		tabs = append(tabs, newInputsTab(i.gqlField.Arguments(), i.resolver))
 	}
-	if len(directiveItems) > 0 {
-		tabs = append(tabs, components.Tab{
-			Label:   "Directives",
-			Content: directiveItems,
-		})
+	if len(i.gqlField.Directives()) > 0 {
+		tabs = append(tabs, newDirectivesTab(i.gqlField.Directives(), i.resolver))
 	}
 	panel.SetTabs(tabs)
 
