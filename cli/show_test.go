@@ -289,3 +289,80 @@ func TestGenerateTypeDefMarkdown(t *testing.T) {
 		assert.StringContains(markdown, expected) // markdown contains expected substring
 	}
 }
+
+func TestGenerateJSON(t *testing.T) {
+	tests := []struct {
+		name     string
+		schema   string
+		typeName string
+		want     []string // substrings that should be present in JSON
+		wantErr  bool
+	}{
+		{
+			name: "Query field JSON",
+			schema: `
+				type Query {
+					"""Get user by ID"""
+					getUser(id: ID!): User
+				}
+				type User { id: ID! }
+			`,
+			typeName: "Query.getUser",
+			want:     []string{`"name": "getUser"`, `"type": "User"`, `"description": "Get user by ID"`},
+		},
+		{
+			name: "Object type JSON",
+			schema: `
+				type Query { placeholder: String }
+				"""A user in the system"""
+				type User {
+					id: ID!
+					name: String!
+				}
+			`,
+			typeName: "User",
+			want:     []string{`"name": "User"`, `"kind": "Object"`, `"description": "A user in the system"`},
+		},
+		{
+			name: "Enum type JSON",
+			schema: `
+				type Query { placeholder: String }
+				enum Role {
+					ADMIN
+					USER
+				}
+			`,
+			typeName: "Role",
+			want:     []string{`"name": "Role"`, `"kind": "Enum"`, `"values"`},
+		},
+		{
+			name:     "Non-existent type JSON",
+			schema:   `type Query { placeholder: String }`,
+			typeName: "NonExistent",
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			assert := assert.New(t)
+
+			schema, err := gql.ParseSchema([]byte(tt.schema))
+			if err != nil {
+				t.Fatalf("Failed to parse schema: %v", err)
+			}
+
+			got, err := gqlfmt.GenerateJSON(schema, tt.typeName)
+			is.Equal((err != nil), tt.wantErr) // generateJSON() error status
+
+			if tt.wantErr {
+				return
+			}
+
+			for _, want := range tt.want {
+				assert.StringContains(got, want) // generateJSON() contains expected substring
+			}
+		})
+	}
+}

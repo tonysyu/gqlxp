@@ -536,6 +536,18 @@ func (d *AppliedDirective) AppliedArguments() map[string]*ast.Value {
 	return result
 }
 
+// FormattedArguments returns the directive's applied argument values as formatted strings
+func (d *AppliedDirective) FormattedArguments() map[string]string {
+	if d.appliedDirective == nil {
+		return nil
+	}
+	result := make(map[string]string)
+	for _, arg := range d.appliedDirective.Arguments {
+		result[arg.Name] = formatValue(arg.Value)
+	}
+	return result
+}
+
 // EnumValue represents values on GraphQL enum types.
 // See https://spec.graphql.org/October2021/#sec-Enums
 type EnumValue struct {

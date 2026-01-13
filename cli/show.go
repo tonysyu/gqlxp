@@ -33,7 +33,8 @@ Examples:
   gqlxp show -s github-api User          # Uses library ID
   gqlxp show -s github-api Query.getUser
   gqlxp show Mutation.createUser
-  gqlxp show @auth`,
+  gqlxp show @auth
+  gqlxp show --json User                 # Output as JSON`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "schema",
@@ -44,6 +45,10 @@ Examples:
 				Name:  "no-pager",
 				Usage: "disable pager and show directly to stdout",
 			},
+			&cli.BoolFlag{
+				Name:  "json",
+				Usage: "output as JSON instead of markdown",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if cmd.Args().Len() != 1 {
@@ -52,16 +57,17 @@ Examples:
 
 			typeName := cmd.Args().First()
 			noPager := cmd.Bool("no-pager")
+			jsonOutput := cmd.Bool("json")
 
 			// Get schema (empty string for default when no flag specified)
 			schemaArg := cmd.String("schema")
 
-			return printType(schemaArg, typeName, noPager)
+			return printType(schemaArg, typeName, noPager, jsonOutput)
 		},
 	}
 }
 
-func printType(schemaArg, typeName string, noPager bool) error {
+func printType(schemaArg, typeName string, noPager bool, jsonOutput bool) error {
 	// Resolve schema argument (path, ID, or default)
 	schema, err := resolveSchemaFromArgument(schemaArg)
 	if err != nil {
@@ -72,6 +78,16 @@ func printType(schemaArg, typeName string, noPager bool) error {
 	parsedSchema, err := gql.ParseSchema(schema.Content)
 	if err != nil {
 		return fmt.Errorf("error parsing schema: %w", err)
+	}
+
+	// Handle JSON output
+	if jsonOutput {
+		jsonStr, err := gqlfmt.GenerateJSON(parsedSchema, typeName)
+		if err != nil {
+			return err
+		}
+		fmt.Println(jsonStr)
+		return nil
 	}
 
 	// Generate markdown content based on type name
