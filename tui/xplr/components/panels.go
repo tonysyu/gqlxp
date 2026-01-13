@@ -24,10 +24,6 @@ type Tab struct {
 	Content []ListItem
 }
 
-type keymap = struct {
-	nextTab, prevTab key.Binding
-}
-
 // Panel wraps a list.Model to provide panel functionality in the TUI
 type Panel struct {
 	ListModel         list.Model
@@ -41,7 +37,7 @@ type Panel struct {
 	focusedDelegate   list.ItemDelegate // Item delegate for rendering when panel is focused
 	blurredDelegate   list.ItemDelegate // Item delegate for rendering when panel is blurred
 	wrapperStyle      lipgloss.Style    // Current style of wrapper (focused or blurred)
-	keymap            keymap
+	keymap            config.PanelKeymaps
 	styles            config.Styles
 	width             int
 	height            int
@@ -81,18 +77,8 @@ func NewPanel[T list.Item](choices []T, title string) *Panel {
 		blurredDelegate:   blurredItemDelegate,
 		focusedDelegate:   list.NewDefaultDelegate(),
 		wrapperStyle:      styles.BlurredPanel,
-		// Only include single keymaps for short help (overridden for full help)
-		keymap: keymap{
-			nextTab: key.NewBinding(
-				key.WithKeys("L", "shift+right"),
-				key.WithHelp("L", "next tab"),
-			),
-			prevTab: key.NewBinding(
-				key.WithKeys("H", "shift+left"),
-				key.WithHelp("H", "prev tab"),
-			),
-		},
-		styles: styles,
+		keymap:            config.NewPanelKeymaps(),
+		styles:            styles,
 	}
 	panel.configureTabHelp()
 	return panel
@@ -113,7 +99,7 @@ func (p *Panel) configureTabHelp() {
 		if len(p.tabs) <= 1 {
 			return nil
 		}
-		return []key.Binding{p.keymap.nextTab, p.keymap.prevTab}
+		return []key.Binding{p.keymap.NextTab, p.keymap.PrevTab}
 	}
 	p.ListModel.AdditionalFullHelpKeys = func() []key.Binding {
 		// Only show tab navigation help when there are multiple tabs
@@ -123,12 +109,12 @@ func (p *Panel) configureTabHelp() {
 		// Include additional keymaps when displaying full help
 		return []key.Binding{
 			key.NewBinding(
-				key.WithKeys(p.keymap.nextTab.Keys()...),
-				key.WithHelp("L/⇧+→", p.keymap.nextTab.Help().Desc),
+				key.WithKeys(p.keymap.NextTab.Keys()...),
+				key.WithHelp("L/⇧+→", p.keymap.NextTab.Help().Desc),
 			),
 			key.NewBinding(
-				key.WithKeys(p.keymap.prevTab.Keys()...),
-				key.WithHelp("H/⇧+←", p.keymap.prevTab.Help().Desc),
+				key.WithKeys(p.keymap.PrevTab.Keys()...),
+				key.WithHelp("H/⇧+←", p.keymap.PrevTab.Help().Desc),
 			),
 		}
 	}
@@ -143,14 +129,14 @@ func (p *Panel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		if len(p.tabs) > 1 {
 			switch {
-			case key.Matches(keyMsg, p.keymap.prevTab):
+			case key.Matches(keyMsg, p.keymap.PrevTab):
 				if p.activeTab > 0 {
 					p.activeTab--
 					p.switchToActiveTab()
 					return p, p.OpenSelectedItem()
 				}
 				return p, nil
-			case key.Matches(keyMsg, p.keymap.nextTab):
+			case key.Matches(keyMsg, p.keymap.NextTab):
 				if p.activeTab < len(p.tabs)-1 {
 					p.activeTab++
 					p.switchToActiveTab()

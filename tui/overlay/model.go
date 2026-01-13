@@ -11,13 +11,6 @@ import (
 	"github.com/tonysyu/gqlxp/utils/text"
 )
 
-var (
-	quitKeyBinding = key.NewBinding(
-		key.WithKeys("ctrl+c", "ctrl+d"),
-		key.WithHelp("ctrl+c", "quit"),
-	)
-)
-
 // Panel inside the overlay must be inset by padding, margin, and a 1-char border on all sides.
 var overlayPanelMargin = 2 * (config.OverlayMargin + config.OverlayPadding + 1)
 
@@ -32,18 +25,16 @@ type Model struct {
 
 	width  int
 	height int
-	keymap overlayKeymap
+	keymap config.OverlayKeymaps
 	help   help.Model
 }
 
-type overlayKeymap struct {
-	Close key.Binding
-	Quit  key.Binding
-}
-
 // ShortHelp returns keybindings to be shown in the mini help view.
-func (k overlayKeymap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Close, k.Quit}
+func (m Model) ShortHelp() []key.Binding {
+	return []key.Binding{
+		m.keymap.Close,
+		m.keymap.Quit,
+	}
 }
 
 // New creates a new overlay model
@@ -59,13 +50,7 @@ func New(styles config.Styles) Model {
 		renderer: nil,
 		help:     help.New(),
 		Styles:   styles,
-		keymap: overlayKeymap{
-			Close: key.NewBinding(
-				key.WithKeys(" ", "q"),
-				key.WithHelp("space", "close overlay"),
-			),
-			Quit: quitKeyBinding,
-		},
+		keymap:   config.NewOverlayKeymaps(),
 	}
 
 	if err == nil {
@@ -141,7 +126,7 @@ func (o Model) View() string {
 	if !o.active {
 		return ""
 	}
-	helpView := o.help.ShortHelpView(o.keymap.ShortHelp())
+	helpView := o.help.ShortHelpView(o.ShortHelp())
 	content := text.JoinParagraphs(o.viewport.View(), helpView)
 
 	overlay := o.Styles.Overlay.Render(content)

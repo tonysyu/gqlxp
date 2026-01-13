@@ -27,11 +27,6 @@ type SelectionTarget struct {
 	FieldName string
 }
 
-type keymap = struct {
-	NextPanel, PrevPanel, Quit, NextGQLType, PrevGQLType, ToggleOverlay key.Binding
-	SearchFocus, SearchSubmit, SearchClear                              key.Binding
-}
-
 // Model is the main schema explorer model
 type Model struct {
 	// Parsed GraphQL schema that's displayed in the TUI.
@@ -54,7 +49,7 @@ type Model struct {
 	width          int
 	height         int
 	Styles         config.Styles
-	keymap         keymap
+	keymap         config.MainKeymaps
 	globalKeyBinds []key.Binding
 	help           help.Model
 }
@@ -69,44 +64,7 @@ func NewEmpty() Model {
 		overlay:     overlay.New(styles),
 		nav:         navigation.NewNavigationManager(config.VisiblePanelCount),
 		searchInput: components.NewSearchInput(),
-		keymap: keymap{
-			NextPanel: key.NewBinding(
-				key.WithKeys("]", "tab"),
-				key.WithHelp("]/tab", "next"),
-			),
-			PrevPanel: key.NewBinding(
-				key.WithKeys("[", "shift+tab"),
-				key.WithHelp("[/⇧+tab", "prev"),
-			),
-			Quit: key.NewBinding(
-				key.WithKeys("ctrl+c", "ctrl+d"),
-				key.WithHelp("⌃+c", "quit"),
-			),
-			NextGQLType: key.NewBinding(
-				key.WithKeys("}"),
-				key.WithHelp("}", "next type"),
-			),
-			PrevGQLType: key.NewBinding(
-				key.WithKeys("{"),
-				key.WithHelp("{", "prev type"),
-			),
-			ToggleOverlay: key.NewBinding(
-				key.WithKeys(" "),
-				key.WithHelp("space", "details"),
-			),
-			SearchFocus: key.NewBinding(
-				key.WithKeys("/"),
-				key.WithHelp("/", "search"),
-			),
-			SearchSubmit: key.NewBinding(
-				key.WithKeys("enter"),
-				key.WithHelp("enter", "submit search "),
-			),
-			SearchClear: key.NewBinding(
-				key.WithKeys("esc"),
-				key.WithHelp("esc", "clear search"),
-			),
-		},
+		keymap:      config.NewMainKeymaps(),
 	}
 
 	// Build globalKeyBinds from all keymap fields

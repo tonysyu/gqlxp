@@ -12,13 +12,6 @@ import (
 	"github.com/tonysyu/gqlxp/tui/config"
 )
 
-var (
-	quitKeyBinding = key.NewBinding(
-		key.WithKeys("ctrl+c", "ctrl+d"),
-		key.WithHelp("ctrl+c", "quit"),
-	)
-)
-
 // Model is the TUI for selecting a schema from the library
 type Model struct {
 	list   list.Model
@@ -26,6 +19,7 @@ type Model struct {
 	styles config.Styles
 	width  int
 	height int
+	keymap config.LibSelectKeymaps
 }
 
 type schemaListItem struct {
@@ -67,20 +61,19 @@ func New(lib library.Library) (Model, error) {
 	listModel := list.New(items, delegate, 0, 0)
 	listModel.Title = "Select a Schema"
 	listModel.SetShowStatusBar(false)
-	listModel.AdditionalShortHelpKeys = func() []key.Binding {
-		return []key.Binding{
-			key.NewBinding(
-				key.WithKeys("enter"),
-				key.WithHelp("enter", "select"),
-			),
-		}
-	}
 
-	return Model{
+	m := Model{
 		list:   listModel,
 		lib:    lib,
 		styles: styles,
-	}, nil
+		keymap: config.NewLibSelectKeymaps(),
+	}
+
+	listModel.AdditionalShortHelpKeys = func() []key.Binding {
+		return []key.Binding{m.keymap.Select}
+	}
+
+	return m, nil
 }
 
 func (m Model) Init() tea.Cmd {
@@ -91,9 +84,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, quitKeyBinding):
+		case key.Matches(msg, m.keymap.Quit):
 			return m, tea.Quit
-		case msg.String() == "enter":
+		case key.Matches(msg, m.keymap.Select):
 			// Load selected schema
 			if item, ok := m.list.SelectedItem().(schemaListItem); ok {
 				return m, m.loadSchema(item.id)
