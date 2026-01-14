@@ -34,12 +34,6 @@ type Styles struct {
 
 	// Overlay style for view displaying Details of GQL Types
 	Overlay lipgloss.Style
-
-	// Section and item styles for virtual navigation items
-	SectionLabel  lipgloss.Style
-	FocusedItem   lipgloss.Style
-	UnfocusedItem lipgloss.Style
-	Divider       lipgloss.Style
 }
 
 // DefaultStyles returns the default style configuration
@@ -92,25 +86,5 @@ func DefaultStyles() Styles {
 			BorderForeground(terminal.ColorDarkGray).
 			Padding(OverlayPadding).
 			Margin(OverlayMargin),
-
-		SectionLabel: lipgloss.NewStyle().
-			Foreground(terminal.ColorMidGray).
-			Bold(true).
-			Padding(0, 1),
-
-		FocusedItem: lipgloss.NewStyle().
-			// Use left-border to indicated selected/focused item.
-			// (Adapted from bubbles/list/defaultitem)
-			Border(lipgloss.NormalBorder(), false, false, false, true).
-			BorderForeground(terminal.ColorDimMagenta).
-			Foreground(terminal.ColorDimMagenta).
-			Padding(0, 0, 0, ItemLeftPadding-1), // Subtract 1 due to left-border
-
-		UnfocusedItem: lipgloss.NewStyle().
-			Foreground(terminal.ColorDimWhite).
-			Padding(0, 0, 0, ItemLeftPadding),
-
-		Divider: lipgloss.NewStyle().
-			Foreground(terminal.ColorDarkGray),
 	}
 }

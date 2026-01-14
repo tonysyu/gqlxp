@@ -8,6 +8,7 @@ import (
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/search"
 	"github.com/tonysyu/gqlxp/tui/adapters"
+	"github.com/tonysyu/gqlxp/tui/cmdpalette"
 	"github.com/tonysyu/gqlxp/tui/config"
 	"github.com/tonysyu/gqlxp/tui/overlay"
 	"github.com/tonysyu/gqlxp/tui/xplr/components"
@@ -35,6 +36,8 @@ type Model struct {
 	nav *navigation.NavigationManager
 	// Overlay for displaying ListItem.Details()
 	overlay overlay.Model
+	// Command palette for discovering and executing commands
+	commandPalette cmdpalette.Model
 
 	// Library integration (optional)
 	SchemaID       string // Schema ID if loaded from library
@@ -58,14 +61,25 @@ type Model struct {
 // The schema can be loaded later via SchemaLoadedMsg
 func NewEmpty() Model {
 	styles := config.DefaultStyles()
+	mainKeymap := config.NewMainKeymaps()
+	panelKeymap := config.NewPanelKeymaps()
+	overlayKeymap := config.NewOverlayKeymaps()
+
 	m := Model{
 		help:        help.New(),
 		Styles:      styles,
 		overlay:     overlay.New(styles),
 		nav:         navigation.NewNavigationManager(config.VisiblePanelCount),
 		searchInput: components.NewSearchInput(),
-		keymap:      config.NewMainKeymaps(),
+		keymap:      mainKeymap,
 	}
+
+	// Create command palette with all keymaps
+	m.commandPalette = cmdpalette.New(styles, cmdpalette.CommandKeymaps{
+		Main:    mainKeymap,
+		Panel:   panelKeymap,
+		Overlay: overlayKeymap,
+	})
 
 	// Build globalKeyBinds from all keymap fields
 	m.globalKeyBinds = []key.Binding{
@@ -75,6 +89,7 @@ func NewEmpty() Model {
 		m.keymap.NextGQLType,
 		m.keymap.PrevGQLType,
 		m.keymap.ToggleOverlay,
+		m.keymap.CommandPalette,
 	}
 
 	// Don't load panels until schema is provided
@@ -136,9 +151,16 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	// Try overlay first - it intercepts messages when active
-	var overlayCmd tea.Cmd
+	// Try command palette first - it intercepts messages when active
+	var paletteCmd tea.Cmd
 	var intercepted bool
+	m.commandPalette, paletteCmd, intercepted = m.commandPalette.Update(msg)
+	if intercepted {
+		return m, paletteCmd
+	}
+
+	// Try overlay second - it intercepts messages when active
+	var overlayCmd tea.Cmd
 	m.overlay, overlayCmd, intercepted = m.overlay.Update(msg)
 	if intercepted {
 		return m, overlayCmd
@@ -173,6 +195,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keymap.Quit):
 			return m, tea.Quit
+		case key.Matches(msg, m.keymap.CommandPalette):
+			// Open command palette
+			overlayActive := m.overlay.IsActive()
+			searchActive := m.nav.CurrentType() == navigation.SearchType
+			m.commandPalette.Show(m.width, m.height, overlayActive, searchActive)
+			return m, nil
 		case key.Matches(msg, m.keymap.NextGQLType):
 			cmds = m.cycleGQLType(true, cmds)
 		case key.Matches(msg, m.keymap.PrevGQLType):

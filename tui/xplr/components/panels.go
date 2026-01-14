@@ -63,6 +63,7 @@ func NewPanel[T list.Item](choices []T, title string) *Panel {
 	for i, choice := range choices {
 		items[i] = choice
 	}
+	// New panel is inactive, a.k.a. "blurred"
 	blurredItemDelegate := newBlurredItemDelegate()
 	m := list.New(items, blurredItemDelegate, 0, 0)
 	m.DisableQuitKeybindings()
@@ -84,9 +85,12 @@ func NewPanel[T list.Item](choices []T, title string) *Panel {
 	return panel
 }
 
+// newBlurredItemDelegate creates ItemDelegate that renders "selected" items as if they aren't
+// selected. Lists have an item selected by default, but a BlurredPanel is inactive and should not
+// have selected items.
 func newBlurredItemDelegate() list.ItemDelegate {
 	delegate := list.NewDefaultDelegate()
-	// Match "Selected" styles to "Normal" styles, since blurred items shouldn't render as selected
+	// Set "Selected" styles to "Normal", since items in BlurredPanel shouldn't render as selected.
 	delegate.Styles.SelectedTitle = delegate.Styles.NormalTitle
 	delegate.Styles.SelectedDesc = delegate.Styles.NormalDesc
 	return delegate
@@ -318,7 +322,7 @@ func (p *Panel) renderTabBar() string {
 	// Calculate max width per tab to fit all tabs in available width
 	// Account for padding in tab styles by using a small buffer
 	const styleOverhead = 2 // Approximate horizontal padding per tab
-	availableWidth := max(p.width - (len(p.tabs) * styleOverhead), len(p.tabs))
+	availableWidth := max(p.width-(len(p.tabs)*styleOverhead), len(p.tabs))
 	maxTabWidth := availableWidth / len(p.tabs)
 
 	var tabParts []string

@@ -4,15 +4,20 @@ import "github.com/charmbracelet/bubbles/key"
 
 // GlobalKeymaps contains keymaps used across all TUI models
 type GlobalKeymaps struct {
-	Quit key.Binding
+	Quit           key.Binding
+	CommandPalette key.Binding
 }
 
 // newGlobalKeymaps creates a new GlobalKeymaps with default bindings
 func newGlobalKeymaps() GlobalKeymaps {
 	return GlobalKeymaps{
 		Quit: key.NewBinding(
-			key.WithKeys("ctrl+c"),
-			key.WithHelp("⌃+c", "quit"),
+			key.WithKeys("ctrl+c", "ctrl+d"),
+			key.WithHelp("⌃+c/⌃+d", "quit"),
+		),
+		CommandPalette: key.NewBinding(
+			key.WithKeys("ctrl+p"),
+			key.WithHelp("⌃+p", "command palette"),
 		),
 	}
 }

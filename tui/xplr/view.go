@@ -11,6 +11,11 @@ import (
 func (m Model) View() string {
 	help := m.help.ShortHelpView(m.helpBindings())
 
+	// Show command palette if active, and return immediately
+	if m.commandPalette.IsActive() {
+		return m.commandPalette.View()
+	}
+
 	// Show overlay if active, and return immediately
 	if m.Overlay().IsActive() {
 		return m.Overlay().View()
@@ -76,7 +81,7 @@ func (m *Model) renderGQLTypeNavbar() string {
 	// Calculate max width per tab to fit all tabs in available width
 	// Account for padding in tab styles by using a small buffer
 	const styleOverhead = 2 // Approximate horizontal padding per tab
-	availableWidth := max(m.width - (len(allTypes) * styleOverhead), len(allTypes))
+	availableWidth := max(m.width-(len(allTypes)*styleOverhead), len(allTypes))
 	maxTabWidth := availableWidth / len(allTypes)
 
 	var tabs []string
