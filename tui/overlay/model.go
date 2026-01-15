@@ -5,8 +5,8 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/tui/config"
+	"github.com/tonysyu/gqlxp/tui/utils"
 	"github.com/tonysyu/gqlxp/utils/terminal"
 	"github.com/tonysyu/gqlxp/utils/text"
 )
@@ -94,8 +94,8 @@ func (o *Model) Show(content string, width, height int) {
 	o.active = true
 
 	// Set viewport size
-	viewportWidth := width - overlayPanelMargin
-	viewportHeight := height - overlayPanelMargin - config.HelpHeight
+	viewportWidth := width - config.OverlayInsetMargin
+	viewportHeight := height - config.OverlayInsetMargin - config.HelpHeight
 	o.viewport.Width = viewportWidth
 	o.viewport.Height = viewportHeight
 
@@ -128,28 +128,6 @@ func (o Model) View() string {
 	}
 	helpView := o.help.ShortHelpView(o.ShortHelp())
 	content := text.JoinParagraphs(o.viewport.View(), helpView)
-
 	overlay := o.Styles.Overlay.Render(content)
-
-	// Center the overlay on screen
-	overlayHeight := lipgloss.Height(overlay)
-	overlayWidth := lipgloss.Width(overlay)
-
-	verticalMargin := (o.height - overlayHeight) / 2
-	horizontalMargin := (o.width - overlayWidth) / 2
-
-	if verticalMargin < 0 {
-		verticalMargin = 0
-	}
-	if horizontalMargin < 0 {
-		horizontalMargin = 0
-	}
-
-	// Position the overlay over the main view
-	positionedOverlay := lipgloss.NewStyle().
-		MarginTop(verticalMargin).
-		MarginLeft(horizontalMargin).
-		Render(overlay)
-
-	return lipgloss.Place(o.width, o.height, lipgloss.Center, lipgloss.Center, positionedOverlay)
+	return utils.CenterOverlay(overlay, o.width, o.height)
 }

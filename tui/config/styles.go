@@ -15,6 +15,8 @@ const (
 	ItemLeftPadding    = 2
 	OverlayPadding     = 1
 	OverlayMargin      = 2
+	// Content inside the overlay must be inset by padding, margin, and a 1-char border on all sides.
+	OverlayInsetMargin = 2 * (OverlayMargin + OverlayPadding + 1)
 )
 
 // Styles contains all lipgloss styles used in the TUI
@@ -34,6 +36,9 @@ type Styles struct {
 
 	// Overlay style for view displaying Details of GQL Types
 	Overlay lipgloss.Style
+
+	// CommandPalette style for command palette overlay
+	CommandPalette lipgloss.Style
 }
 
 // DefaultStyles returns the default style configuration

@@ -143,7 +143,7 @@ func NewCommandPaletteKeymaps() CommandPaletteKeymaps {
 		GlobalKeymaps: newGlobalKeymaps(),
 		Close: key.NewBinding(
 			key.WithKeys(closeKeys...),
-			key.WithHelp("space/q/esc", "close"),
+			key.WithHelp("q/esc", "close"),
 		),
 		Execute: key.NewBinding(
 			key.WithKeys("enter"),

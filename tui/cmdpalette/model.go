@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/tui/config"
+	"github.com/tonysyu/gqlxp/tui/utils"
 	"github.com/tonysyu/gqlxp/utils/terminal"
 )
 
@@ -289,37 +290,15 @@ func (m Model) View() string {
 	if !m.active {
 		return ""
 	}
-
 	content := m.list.View()
 	overlay := m.styles.Overlay.Render(content)
-
-	// Center the overlay on screen
-	overlayHeight := lipgloss.Height(overlay)
-	overlayWidth := lipgloss.Width(overlay)
-
-	verticalMargin := (m.height - overlayHeight) / 2
-	horizontalMargin := (m.width - overlayWidth) / 2
-
-	if verticalMargin < 0 {
-		verticalMargin = 0
-	}
-	if horizontalMargin < 0 {
-		horizontalMargin = 0
-	}
-
-	positionedOverlay := lipgloss.NewStyle().
-		MarginTop(verticalMargin).
-		MarginLeft(horizontalMargin).
-		Render(overlay)
-
-	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, positionedOverlay)
+	return utils.CenterOverlay(overlay, m.width, m.height)
 }
 
 // updateSize updates the list size based on window dimensions
 func (m *Model) updateSize() {
-	const margin = 4
-	listWidth := m.width - margin*2
-	listHeight := m.height - margin*2
+	listWidth := m.width - config.OverlayInsetMargin
+	listHeight := m.height - config.OverlayInsetMargin
 	if listWidth < 10 {
 		listWidth = 10
 	}
