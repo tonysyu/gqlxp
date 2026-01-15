@@ -105,16 +105,17 @@ func (d commandDelegate) Render(w io.Writer, m list.Model, index int, item list.
 
 // Model manages the command palette
 type Model struct {
-	active bool
-	list   list.Model
-	styles config.Styles
-	width  int
-	height int
+	active  bool
+	list    list.Model
+	styles  config.Styles
+	keymaps config.CommandPaletteKeymaps
+	width   int
+	height  int
 }
 
 // New creates a new command palette model
-func New(styles config.Styles, keymaps CommandKeymaps) Model {
-	items := buildCommandItems(keymaps)
+func New(styles config.Styles, paletteKeymaps config.CommandPaletteKeymaps, commandKeymaps CommandKeymaps) Model {
+	items := buildCommandItems(commandKeymaps)
 
 	delegate := commandDelegate{styles: styles}
 	l := list.New(items, delegate, 0, 0)
@@ -122,11 +123,20 @@ func New(styles config.Styles, keymaps CommandKeymaps) Model {
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(true)
 	l.DisableQuitKeybindings()
+	l.AdditionalShortHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			paletteKeymaps.Execute,
+			paletteKeymaps.Close,
+			paletteKeymaps.Quit,
+		}
+	}
+	l.AdditionalFullHelpKeys = l.AdditionalShortHelpKeys
 
 	return Model{
-		active: false,
-		list:   l,
-		styles: styles,
+		active:  false,
+		list:    l,
+		styles:  styles,
+		keymaps: paletteKeymaps,
 	}
 }
 
@@ -224,12 +234,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, bool) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case " ", "q", "esc":
+		switch {
+		case key.Matches(msg, m.keymaps.Close):
 			// Close palette without executing
 			m.active = false
 			return m, nil, true
-		case "enter":
+		case key.Matches(msg, m.keymaps.Execute):
 			// Execute selected command and close
 			m.active = false
 			selectedItem := m.list.SelectedItem()
@@ -240,7 +250,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, bool) {
 				return m, func() tea.Msg { return keyMsg }, true
 			}
 			return m, nil, true
-		case "ctrl+c":
+		case key.Matches(msg, m.keymaps.Quit):
 			return m, tea.Quit, true
 		}
 	case tea.WindowSizeMsg:

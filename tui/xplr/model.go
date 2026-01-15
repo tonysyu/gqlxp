@@ -64,6 +64,7 @@ func NewEmpty() Model {
 	mainKeymap := config.NewMainKeymaps()
 	panelKeymap := config.NewPanelKeymaps()
 	overlayKeymap := config.NewOverlayKeymaps()
+	paletteKeymap := config.NewCommandPaletteKeymaps()
 
 	m := Model{
 		help:        help.New(),
@@ -75,7 +76,7 @@ func NewEmpty() Model {
 	}
 
 	// Create command palette with all keymaps
-	m.commandPalette = cmdpalette.New(styles, cmdpalette.CommandKeymaps{
+	m.commandPalette = cmdpalette.New(styles, paletteKeymap, cmdpalette.CommandKeymaps{
 		Main:    mainKeymap,
 		Panel:   panelKeymap,
 		Overlay: overlayKeymap,

@@ -8,6 +8,13 @@ type GlobalKeymaps struct {
 	CommandPalette key.Binding
 }
 
+// toggleCmdPaletteKey used to both open and close CmdPalette
+const toggleCmdPaletteKey string = "ctrl+p"
+// toggleOverlayKey used to both open and close Detail Overlay
+const toggleOverlayKey string = " "
+// closeOverlayKeys used to close CmdPalette and Detail Overlays
+var closeOverlayKeys []string = []string{"q", "esc"}
+
 // newGlobalKeymaps creates a new GlobalKeymaps with default bindings
 func newGlobalKeymaps() GlobalKeymaps {
 	return GlobalKeymaps{
@@ -16,7 +23,7 @@ func newGlobalKeymaps() GlobalKeymaps {
 			key.WithHelp("⌃+c/⌃+d", "quit"),
 		),
 		CommandPalette: key.NewBinding(
-			key.WithKeys("ctrl+p"),
+			key.WithKeys(toggleCmdPaletteKey),
 			key.WithHelp("⌃+p", "command palette"),
 		),
 	}
@@ -50,7 +57,7 @@ func NewMainKeymaps() MainKeymaps {
 			key.WithHelp("{", "prev type"),
 		),
 		ToggleOverlay: key.NewBinding(
-			key.WithKeys(" "),
+			key.WithKeys(toggleOverlayKey),
 			key.WithHelp("space", "details"),
 		),
 		SearchFocus: key.NewBinding(
@@ -76,11 +83,12 @@ type OverlayKeymaps struct {
 
 // NewOverlayKeymaps creates a new OverlayKeymaps with default bindings
 func NewOverlayKeymaps() OverlayKeymaps {
+	closeKeys := append(closeOverlayKeys, toggleOverlayKey)
 	return OverlayKeymaps{
 		GlobalKeymaps: newGlobalKeymaps(),
 		Close: key.NewBinding(
-			key.WithKeys(" ", "q"),
-			key.WithHelp("space", "close overlay"),
+			key.WithKeys(closeKeys...),
+			key.WithHelp("space/q/esc", "close overlay"),
 		),
 	}
 }
@@ -117,6 +125,29 @@ func NewPanelKeymaps() PanelKeymaps {
 		PrevTab: key.NewBinding(
 			key.WithKeys("H", "shift+left"),
 			key.WithHelp("H", "prev tab"),
+		),
+	}
+}
+
+// CommandPaletteKeymaps contains keymaps for the command palette
+type CommandPaletteKeymaps struct {
+	GlobalKeymaps
+	Close   key.Binding
+	Execute key.Binding
+}
+
+// NewCommandPaletteKeymaps creates a new CommandPaletteKeymaps with default bindings
+func NewCommandPaletteKeymaps() CommandPaletteKeymaps {
+	closeKeys := append(closeOverlayKeys, toggleCmdPaletteKey)
+	return CommandPaletteKeymaps{
+		GlobalKeymaps: newGlobalKeymaps(),
+		Close: key.NewBinding(
+			key.WithKeys(closeKeys...),
+			key.WithHelp("space/q/esc", "close"),
+		),
+		Execute: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "execute"),
 		),
 	}
 }
