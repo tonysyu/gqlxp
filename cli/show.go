@@ -49,6 +49,10 @@ Examples:
 				Name:  "json",
 				Usage: "output as JSON instead of markdown",
 			},
+			&cli.StringFlag{
+				Name:  "include",
+				Usage: "comma-separated list of additional sections to include (usages)",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if cmd.Args().Len() != 1 {
@@ -58,16 +62,17 @@ Examples:
 			typeName := cmd.Args().First()
 			noPager := cmd.Bool("no-pager")
 			jsonOutput := cmd.Bool("json")
+			include := cmd.String("include")
 
 			// Get schema (empty string for default when no flag specified)
 			schemaArg := cmd.String("schema")
 
-			return printType(schemaArg, typeName, noPager, jsonOutput)
+			return printType(schemaArg, typeName, noPager, jsonOutput, include)
 		},
 	}
 }
 
-func printType(schemaArg, typeName string, noPager bool, jsonOutput bool) error {
+func printType(schemaArg, typeName string, noPager bool, jsonOutput bool, include string) error {
 	// Resolve schema argument (path, ID, or default)
 	schema, err := resolveSchemaFromArgument(schemaArg)
 	if err != nil {
@@ -80,9 +85,12 @@ func printType(schemaArg, typeName string, noPager bool, jsonOutput bool) error 
 		return fmt.Errorf("error parsing schema: %w", err)
 	}
 
+	// Parse include options
+	opts := gqlfmt.ParseIncludeOptions(include)
+
 	// Handle JSON output
 	if jsonOutput {
-		jsonStr, err := gqlfmt.GenerateJSON(parsedSchema, typeName)
+		jsonStr, err := gqlfmt.GenerateJSON(parsedSchema, typeName, opts)
 		if err != nil {
 			return err
 		}
@@ -91,7 +99,7 @@ func printType(schemaArg, typeName string, noPager bool, jsonOutput bool) error 
 	}
 
 	// Generate markdown content based on type name
-	markdown, err := gqlfmt.GenerateMarkdown(parsedSchema, typeName)
+	markdown, err := gqlfmt.GenerateMarkdown(parsedSchema, typeName, opts)
 	if err != nil {
 		return err
 	}

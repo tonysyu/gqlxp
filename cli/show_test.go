@@ -204,7 +204,7 @@ func TestGenerateMarkdown(t *testing.T) {
 				t.Fatalf("Failed to parse schema: %v", err)
 			}
 
-			got, err := gqlfmt.GenerateMarkdown(schema, tt.typeName)
+			got, err := gqlfmt.GenerateMarkdown(schema, tt.typeName, gqlfmt.IncludeOptions{})
 			is.Equal((err != nil), tt.wantErr) // generateMarkdown() error status
 
 			if tt.wantErr {
@@ -353,7 +353,7 @@ func TestGenerateJSON(t *testing.T) {
 				t.Fatalf("Failed to parse schema: %v", err)
 			}
 
-			got, err := gqlfmt.GenerateJSON(schema, tt.typeName)
+			got, err := gqlfmt.GenerateJSON(schema, tt.typeName, gqlfmt.IncludeOptions{})
 			is.Equal((err != nil), tt.wantErr) // generateJSON() error status
 
 			if tt.wantErr {

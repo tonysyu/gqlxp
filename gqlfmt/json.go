@@ -9,50 +9,58 @@ import (
 )
 
 // GenerateJSON generates JSON output for a given type name in the schema
-func GenerateJSON(schema gql.GraphQLSchema, typeName string) (string, error) {
+func GenerateJSON(schema gql.GraphQLSchema, typeName string, opts IncludeOptions) (string, error) {
 	resolver := gql.NewSchemaResolver(&schema)
 
 	// Handle Query fields (Query.fieldName)
 	if strings.HasPrefix(typeName, "Query.") {
-		return generateQueryFieldJSON(schema, typeName, resolver)
+		return generateQueryFieldJSON(schema, typeName, resolver, opts)
 	}
 
 	// Handle Mutation fields (Mutation.fieldName)
 	if strings.HasPrefix(typeName, "Mutation.") {
-		return generateMutationFieldJSON(schema, typeName, resolver)
+		return generateMutationFieldJSON(schema, typeName, resolver, opts)
 	}
 
 	// Handle Directives (@directiveName)
 	if strings.HasPrefix(typeName, "@") {
-		return generateDirectiveJSON(schema, typeName, resolver)
+		return generateDirectiveJSON(schema, typeName, resolver, opts)
 	}
 
 	// Handle regular types (Object, Input, Enum, Scalar, Interface, Union)
-	return generateTypeJSON(schema, typeName, resolver)
+	return generateTypeJSON(schema, typeName, resolver, opts)
 }
 
 // generateQueryFieldJSON generates JSON for a query field
-func generateQueryFieldJSON(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver) (string, error) {
+func generateQueryFieldJSON(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver, opts IncludeOptions) (string, error) {
 	fieldName := strings.TrimPrefix(typeName, "Query.")
 	field, ok := schema.Query[fieldName]
 	if !ok {
 		return "", fmt.Errorf("query field %q not found in schema", fieldName)
 	}
-	return marshalJSON(convertFieldToJSONWithKind(field, "Query")), nil
+	result := convertFieldToJSONWithKind(field, "Query")
+	if opts.Usages {
+		result.Usages = getUsagesJSON(resolver, field.ObjectTypeName())
+	}
+	return marshalJSON(result), nil
 }
 
 // generateMutationFieldJSON generates JSON for a mutation field
-func generateMutationFieldJSON(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver) (string, error) {
+func generateMutationFieldJSON(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver, opts IncludeOptions) (string, error) {
 	fieldName := strings.TrimPrefix(typeName, "Mutation.")
 	field, ok := schema.Mutation[fieldName]
 	if !ok {
 		return "", fmt.Errorf("mutation field %q not found in schema", fieldName)
 	}
-	return marshalJSON(convertFieldToJSONWithKind(field, "Mutation")), nil
+	result := convertFieldToJSONWithKind(field, "Mutation")
+	if opts.Usages {
+		result.Usages = getUsagesJSON(resolver, field.ObjectTypeName())
+	}
+	return marshalJSON(result), nil
 }
 
 // generateDirectiveJSON generates JSON for a directive
-func generateDirectiveJSON(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver) (string, error) {
+func generateDirectiveJSON(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver, opts IncludeOptions) (string, error) {
 	directiveName := strings.TrimPrefix(typeName, "@")
 	directive, ok := schema.Directive[directiveName]
 	if !ok {
@@ -60,16 +68,41 @@ func generateDirectiveJSON(schema gql.GraphQLSchema, typeName string, resolver g
 	}
 	jsonDir := convertDirectiveToJSON(directive)
 	jsonDir.Kind = "Directive"
+	if opts.Usages {
+		jsonDir.Usages = getUsagesJSON(resolver, directiveName)
+	}
 	return marshalJSON(jsonDir), nil
 }
 
 // generateTypeJSON generates JSON for a type definition
-func generateTypeJSON(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver) (string, error) {
+func generateTypeJSON(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver, opts IncludeOptions) (string, error) {
 	typeDef, err := schema.NamedToTypeDef(typeName)
 	if err != nil {
 		return "", fmt.Errorf("type %q not found in schema: %w", typeName, err)
 	}
-	return marshalJSON(convertTypeDefToJSON(typeDef)), nil
+	result := convertTypeDefToJSON(typeDef)
+	if opts.Usages {
+		result.Usages = getUsagesJSON(resolver, typeDef.Name())
+	}
+	return marshalJSON(result), nil
+}
+
+// getUsagesJSON retrieves usages for a type and converts them to JSON format
+func getUsagesJSON(resolver gql.TypeResolver, typeName string) []JSONUsage {
+	usages, _ := resolver.ResolveUsages(typeName)
+	if len(usages) == 0 {
+		return nil
+	}
+	result := make([]JSONUsage, 0, len(usages))
+	for _, u := range usages {
+		result = append(result, JSONUsage{
+			Path:       u.Path,
+			ParentType: u.ParentType,
+			ParentKind: u.ParentKind,
+			FieldName:  u.FieldName,
+		})
+	}
+	return result
 }
 
 // JSONField represents a field in JSON format
@@ -80,6 +113,7 @@ type JSONField struct {
 	Description string               `json:"description,omitempty"`
 	Arguments   []JSONArgument       `json:"arguments,omitempty"`
 	Directives  []JSONDirectiveUsage `json:"directives,omitempty"`
+	Usages      []JSONUsage          `json:"usages,omitempty"`
 }
 
 // JSONArgument represents an argument in JSON format
@@ -103,6 +137,14 @@ type JSONArgValue struct {
 	Value string `json:"value"`
 }
 
+// JSONUsage represents a type usage in JSON format
+type JSONUsage struct {
+	Path       string `json:"path"`
+	ParentType string `json:"parentType"`
+	ParentKind string `json:"parentKind"`
+	FieldName  string `json:"fieldName"`
+}
+
 // JSONEnumValue represents an enum value in JSON format
 type JSONEnumValue struct {
 	Name        string               `json:"name"`
@@ -120,6 +162,7 @@ type JSONTypeDef struct {
 	Types       []string             `json:"types,omitempty"`
 	Interfaces  []string             `json:"interfaces,omitempty"`
 	Directives  []JSONDirectiveUsage `json:"directives,omitempty"`
+	Usages      []JSONUsage          `json:"usages,omitempty"`
 }
 
 // JSONDirective represents a directive definition in JSON format
@@ -129,6 +172,7 @@ type JSONDirective struct {
 	Description string         `json:"description,omitempty"`
 	Locations   []string       `json:"locations,omitempty"`
 	Arguments   []JSONArgument `json:"arguments,omitempty"`
+	Usages      []JSONUsage    `json:"usages,omitempty"`
 }
 
 // convertFieldToJSON converts a gql.Field to JSON format

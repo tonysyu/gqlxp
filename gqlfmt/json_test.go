@@ -249,7 +249,7 @@ func TestGenerateJSON(t *testing.T) {
 				t.Fatalf("Failed to parse schema: %v", err)
 			}
 
-			got, err := GenerateJSON(schema, tt.typeName)
+			got, err := GenerateJSON(schema, tt.typeName, IncludeOptions{})
 			is.Equal((err != nil), tt.wantErr) // GenerateJSON() error status
 
 			if tt.wantErr {
@@ -284,7 +284,7 @@ func TestJSONPrettyPrint(t *testing.T) {
 		t.Fatalf("Failed to parse schema: %v", err)
 	}
 
-	jsonStr, err := GenerateJSON(parsedSchema, "Query.getUser")
+	jsonStr, err := GenerateJSON(parsedSchema, "Query.getUser", IncludeOptions{})
 	if err != nil {
 		t.Fatalf("Failed to generate JSON: %v", err)
 	}
