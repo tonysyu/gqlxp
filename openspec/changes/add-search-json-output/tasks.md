@@ -2,11 +2,11 @@
 
 ## Implementation Tasks
 
-1. [ ] Add `--json` flag to search command in `cli/search.go`
-2. [ ] Create JSON output function for search results
-3. [ ] Integrate JSON output into search command action (bypass pager and styled output)
-4. [ ] Add tests for JSON output functionality
-5. [ ] Run `just test` to verify changes
+1. [x] Add `--json` flag to search command in `cli/search.go`
+2. [x] Create JSON output function for search results
+3. [x] Integrate JSON output into search command action (bypass pager and styled output)
+4. [x] Add tests for JSON output functionality
+5. [x] Run `just test` to verify changes
 
 ## Validation
 

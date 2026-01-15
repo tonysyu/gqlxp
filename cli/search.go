@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -49,6 +50,10 @@ Examples:
 				Name:  "no-pager",
 				Usage: "disable pager and show directly to stdout",
 			},
+			&cli.BoolFlag{
+				Name:  "json",
+				Usage: "output results as JSON",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if cmd.Args().Len() != 1 {
@@ -58,6 +63,7 @@ Examples:
 			query := cmd.Args().First()
 			limit := cmd.Int("limit")
 			noPager := cmd.Bool("no-pager")
+			jsonOutput := cmd.Bool("json")
 
 			// Get schema (empty string for default when no flag specified)
 			schemaArg := cmd.String("schema")
@@ -102,6 +108,11 @@ Examples:
 				return fmt.Errorf("search failed: %w (try using 'gqlxp library reindex %s')", err, schemaID)
 			}
 
+			// Handle JSON output
+			if jsonOutput {
+				return printSearchResultsJSON(results)
+			}
+
 			// Display results
 			if len(results) == 0 {
 				fmt.Printf("No results found for query: %q\n", query)
@@ -141,4 +152,14 @@ Examples:
 			return nil
 		},
 	}
+}
+
+// printSearchResultsJSON outputs search results as pretty-printed JSON
+func printSearchResultsJSON(results []search.SearchResult) error {
+	jsonBytes, err := json.MarshalIndent(results, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal results to JSON: %w", err)
+	}
+	fmt.Println(string(jsonBytes))
+	return nil
 }

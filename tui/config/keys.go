@@ -10,8 +10,10 @@ type GlobalKeymaps struct {
 
 // toggleCmdPaletteKey used to both open and close CmdPalette
 const toggleCmdPaletteKey string = "ctrl+p"
+
 // toggleOverlayKey used to both open and close Detail Overlay
 const toggleOverlayKey string = " "
+
 // closeOverlayKeys used to close CmdPalette and Detail Overlays
 var closeOverlayKeys []string = []string{"q", "esc"}
 

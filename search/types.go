@@ -4,11 +4,11 @@ import "github.com/tonysyu/gqlxp/gql"
 
 // SearchResult represents a single search result with ranking information
 type SearchResult struct {
-	Type        string  // Type of result (Object, Field, Enum, etc.)
-	Name        string  // Name of the type or field
-	Path        string  // Full path (e.g., "Query.user.name")
-	Description string  // Description text
-	Score       float64 // Relevance score from Bleve
+	Type        string  `json:"type"`        // Type of result (Object, Field, Enum, etc.)
+	Name        string  `json:"name"`        // Name of the type or field
+	Path        string  `json:"path"`        // Full path (e.g., "Query.user.name")
+	Description string  `json:"description"` // Description text
+	Score       float64 `json:"score"`       // Relevance score from Bleve
 }
 
 // Indexer manages schema indexing operations
