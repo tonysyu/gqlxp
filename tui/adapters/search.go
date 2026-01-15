@@ -12,14 +12,22 @@ import (
 var _ components.ListItem = (*searchResultItem)(nil)
 
 // searchResultItem wraps a resolved ListItem to preserve search result context
-// in the display while delegating OpenPanel functionality to the wrapped item
+// in the display while showing parent context with field highlighting for field types
 type searchResultItem struct {
 	result       search.SearchResult
 	wrappedItem  components.ListItem
 	displayTitle string
+	resolver     gql.TypeResolver
+	parentType   string // Parent type name (e.g., "User" for "User.email")
+	fieldName    string // Field name (e.g., "email" for "User.email")
 }
 
-func newSearchResultItem(result search.SearchResult, wrappedItem components.ListItem) components.ListItem {
+func newSearchResultItem(
+	result search.SearchResult,
+	wrappedItem components.ListItem,
+	resolver gql.TypeResolver,
+	parentType, fieldName string,
+) components.ListItem {
 	// Create display title that shows the path/type context
 	displayTitle := result.Path
 	if displayTitle == "" {
@@ -30,6 +38,9 @@ func newSearchResultItem(result search.SearchResult, wrappedItem components.List
 		result:       result,
 		wrappedItem:  wrappedItem,
 		displayTitle: displayTitle,
+		resolver:     resolver,
+		parentType:   parentType,
+		fieldName:    fieldName,
 	}
 }
 
@@ -53,8 +64,25 @@ func (i searchResultItem) RefName() string {
 func (i searchResultItem) Description() string { return i.wrappedItem.Description() }
 func (i searchResultItem) Details() string     { return i.wrappedItem.Details() }
 
-// OpenPanel delegates to the wrapped item for full functionality
+// OpenPanel opens the parent type's panel with the field highlighted for field types,
+// or delegates to the wrapped item for non-field types
 func (i searchResultItem) OpenPanel() (*components.Panel, bool) {
+	// For field types, show the parent type's panel with the field highlighted
+	switch i.result.Type {
+	case "ObjectField", "InputField", "InterfaceField":
+		if i.resolver != nil && i.parentType != "" && i.fieldName != "" {
+			typeDef, err := i.resolver.ResolveType(i.parentType)
+			if err == nil {
+				typeItem := newTypeDefItem(typeDef, i.resolver)
+				panel, ok := typeItem.OpenPanel()
+				if ok {
+					panel.SelectItemByName(i.fieldName)
+				}
+				return panel, ok
+			}
+		}
+	}
+	// For non-field types (Object, Enum, Directive, etc.) or fallback
 	return i.wrappedItem.OpenPanel()
 }
 
@@ -112,6 +140,7 @@ func adaptQueryOrMutationField(result search.SearchResult, schemaView *SchemaVie
 		return createFallbackItem(result)
 	}
 
+	parentType := parts[0]
 	fieldName := parts[1]
 	var field *gql.Field
 
@@ -126,7 +155,7 @@ func adaptQueryOrMutationField(result search.SearchResult, schemaView *SchemaVie
 	}
 
 	wrappedItem := newFieldItem(field, schemaView.resolver)
-	return newSearchResultItem(result, wrappedItem)
+	return newSearchResultItem(result, wrappedItem, schemaView.resolver, parentType, fieldName)
 }
 
 // adaptObjectField handles ObjectField results
@@ -151,7 +180,7 @@ func adaptObjectField(result search.SearchResult, schemaView *SchemaView) compon
 	}
 
 	wrappedItem := newFieldItem(field, schemaView.resolver)
-	return newSearchResultItem(result, wrappedItem)
+	return newSearchResultItem(result, wrappedItem, schemaView.resolver, typeName, fieldName)
 }
 
 // adaptInputField handles InputField results
@@ -176,7 +205,7 @@ func adaptInputField(result search.SearchResult, schemaView *SchemaView) compone
 	}
 
 	wrappedItem := newFieldItem(field, schemaView.resolver)
-	return newSearchResultItem(result, wrappedItem)
+	return newSearchResultItem(result, wrappedItem, schemaView.resolver, typeName, fieldName)
 }
 
 // adaptInterfaceField handles InterfaceField results
@@ -201,7 +230,7 @@ func adaptInterfaceField(result search.SearchResult, schemaView *SchemaView) com
 	}
 
 	wrappedItem := newFieldItem(field, schemaView.resolver)
-	return newSearchResultItem(result, wrappedItem)
+	return newSearchResultItem(result, wrappedItem, schemaView.resolver, typeName, fieldName)
 }
 
 // adaptType handles type definition results (Object, Input, Enum, etc.)
@@ -215,7 +244,7 @@ func adaptType(result search.SearchResult, schemaView *SchemaView) components.Li
 	}
 
 	wrappedItem := newTypeDefItem(typeDef, schemaView.resolver)
-	return newSearchResultItem(result, wrappedItem)
+	return newSearchResultItem(result, wrappedItem, schemaView.resolver, "", "")
 }
 
 // adaptDirective handles Directive results
@@ -229,7 +258,7 @@ func adaptDirective(result search.SearchResult, schemaView *SchemaView) componen
 	}
 
 	wrappedItem := newDirectiveDefItem(directive, schemaView.resolver)
-	return newSearchResultItem(result, wrappedItem)
+	return newSearchResultItem(result, wrappedItem, schemaView.resolver, "", "")
 }
 
 // createFallbackItem creates a SimpleItem when resolution fails
