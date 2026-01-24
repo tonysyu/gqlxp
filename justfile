@@ -66,6 +66,18 @@ install:
     go install ./cmd/gqlxp
 
 # Record demo
-[group('deploy')]
+[group('maintenance')]
 create-demo: install
     vhs demo.tape
+
+# List any outdated dependencies
+[group('maintenance')]
+list-old-dependencies:
+    go list -m -u all
+
+# Update dependencies to latest minor/patch versions
+[group('maintenance')]
+update-dependencies:
+    go get -u ./...
+    go mod tidy
+    go mod verify
