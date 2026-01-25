@@ -81,3 +81,11 @@ update-dependencies:
     go get -u ./...
     go mod tidy
     go mod verify
+
+# Tag version and push release
+[group('maintenance')]
+tag-release version:
+    @: "${GITHUB_TOKEN_GQLXP:?Error: GITHUB_TOKEN_GQLXP env var required to tag release}"
+    git tag -a {{version}}
+    git push origin main --follow-tags
+    GITHUB_TOKEN=$GITHUB_TOKEN_GQLXP goreleaser release --clean
