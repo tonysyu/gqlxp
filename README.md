@@ -53,14 +53,28 @@ Type/Field Name  │ User                               │ email               
   - Keymaps:
     - `Spacebar`: Toggles display of Detail Overlay
 
-## Usage
+## Installation
 
-Currently, there's no installer or executable distribution. Install from source using:
+### Quick install (Linux/macOS)
 
 ```sh
-$ git clone https://github.com/tonysyu/gqlxp
-$ just install
+curl -sSfL https://raw.githubusercontent.com/tonysyu/gqlxp/main/install.sh | sh
 ```
+
+To install to a custom directory:
+```sh
+curl -sSfL https://raw.githubusercontent.com/tonysyu/gqlxp/main/install.sh | sh -s -- -b ~/.local/bin
+```
+
+### Install from source
+
+```sh
+git clone https://github.com/tonysyu/gqlxp
+cd gqlxp
+just install
+```
+
+## Usage
 
 Then open a schema file to explore:
 ```sh
