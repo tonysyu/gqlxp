@@ -3,11 +3,13 @@ package cli
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/tonysyu/gqlxp/gql"
+	"github.com/tonysyu/gqlxp/gql/introspection"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/search"
 	"github.com/urfave/cli/v3"
@@ -213,8 +215,8 @@ func listCommand() *cli.Command {
 func addCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "add",
-		Usage:     "Add a schema to the library",
-		ArgsUsage: "<schema-file>",
+		Usage:     "Add a schema to the library from a file or URL",
+		ArgsUsage: "<schema-file-or-url>",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "id",
@@ -224,25 +226,42 @@ func addCommand() *cli.Command {
 				Name:  "name",
 				Usage: "display name for the schema",
 			},
+			&cli.StringSliceFlag{
+				Name:    "header",
+				Aliases: []string{"H"},
+				Usage:   "HTTP header for URL requests (e.g., 'Authorization: Bearer token')",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			if cmd.Args().Len() != 1 {
-				return fmt.Errorf("requires exactly 1 argument: <schema-file>")
+				return fmt.Errorf("requires exactly 1 argument: <schema-file-or-url>")
 			}
 
-			filePath := cmd.Args().First()
+			source := cmd.Args().First()
 			lib := library.NewLibrary()
 
-			// Normalize to absolute path
-			absPath, err := filepath.Abs(filePath)
-			if err != nil {
-				return fmt.Errorf("failed to resolve absolute path: %w", err)
-			}
+			var content []byte
+			var sourceInfo string
+			var err error
 
-			// Load file content to validate it exists and is readable
-			content, err := loadSchemaFromFile(absPath)
-			if err != nil {
-				return err
+			if introspection.IsURL(source) {
+				// Fetch schema from URL via introspection
+				content, err = fetchSchemaFromURL(ctx, source, cmd.StringSlice("header"))
+				if err != nil {
+					return err
+				}
+				sourceInfo = source
+			} else {
+				// Load from file
+				absPath, err := filepath.Abs(source)
+				if err != nil {
+					return fmt.Errorf("failed to resolve absolute path: %w", err)
+				}
+				content, err = loadSchemaFromFile(absPath)
+				if err != nil {
+					return err
+				}
+				sourceInfo = absPath
 			}
 
 			// Validate it's a valid GraphQL schema
@@ -251,7 +270,7 @@ func addCommand() *cli.Command {
 			}
 
 			// Get schema ID (from flag or prompt)
-			schemaID, err := getSchemaID(cmd, filePath)
+			schemaID, err := getSchemaID(cmd, source)
 			if err != nil {
 				return err
 			}
@@ -263,7 +282,7 @@ func addCommand() *cli.Command {
 			}
 
 			// Add to library
-			if err := lib.Add(schemaID, displayName, absPath); err != nil {
+			if err := lib.AddFromContent(schemaID, displayName, content, sourceInfo); err != nil {
 				return err
 			}
 
@@ -274,7 +293,7 @@ func addCommand() *cli.Command {
 }
 
 // getSchemaID returns schema ID from flag or prompts user
-func getSchemaID(cmd *cli.Command, filePath string) (string, error) {
+func getSchemaID(cmd *cli.Command, source string) (string, error) {
 	if flagID := cmd.String("id"); flagID != "" {
 		if err := library.ValidateSchemaID(flagID); err != nil {
 			return "", err
@@ -282,10 +301,16 @@ func getSchemaID(cmd *cli.Command, filePath string) (string, error) {
 		return flagID, nil
 	}
 
-	// Generate suggested ID from filename
-	basename := filepath.Base(filePath)
-	ext := filepath.Ext(basename)
-	suggested := strings.TrimSuffix(basename, ext)
+	var suggested string
+	if introspection.IsURL(source) {
+		// Extract hostname from URL as suggested ID
+		suggested = extractHostnameAsID(source)
+	} else {
+		// Generate suggested ID from filename
+		basename := filepath.Base(source)
+		ext := filepath.Ext(basename)
+		suggested = strings.TrimSuffix(basename, ext)
+	}
 	suggested = library.SanitizeSchemaID(suggested)
 
 	schemaID, err := PromptSchemaID(suggested)
@@ -294,6 +319,54 @@ func getSchemaID(cmd *cli.Command, filePath string) (string, error) {
 	}
 
 	return schemaID, nil
+}
+
+// extractHostnameAsID extracts the hostname from a URL and sanitizes it for use as an ID.
+func extractHostnameAsID(urlStr string) string {
+	parsed, err := url.Parse(urlStr)
+	if err != nil {
+		return "schema"
+	}
+	hostname := parsed.Hostname()
+	// Remove common prefixes/suffixes
+	hostname = strings.TrimPrefix(hostname, "api.")
+	hostname = strings.TrimPrefix(hostname, "www.")
+	// Take just the first part if it's a subdomain
+	parts := strings.Split(hostname, ".")
+	if len(parts) > 0 {
+		return parts[0]
+	}
+	return hostname
+}
+
+// fetchSchemaFromURL fetches a GraphQL schema via introspection from the given URL.
+func fetchSchemaFromURL(ctx context.Context, endpoint string, headers []string) ([]byte, error) {
+	opts := introspection.DefaultClientOptions()
+
+	// Parse and add custom headers
+	if len(headers) > 0 {
+		customHeaders, err := introspection.ParseHeaders(headers)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse headers: %w", err)
+		}
+		for k, v := range customHeaders {
+			opts.Headers[k] = v
+		}
+	}
+
+	fmt.Printf("Fetching schema from %s...\n", endpoint)
+
+	resp, err := introspection.FetchSchema(ctx, endpoint, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch schema: %w", err)
+	}
+
+	sdl, err := introspection.ToSDL(resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert to SDL: %w", err)
+	}
+
+	return sdl, nil
 }
 
 // getDisplayName returns display name from flag or prompts user

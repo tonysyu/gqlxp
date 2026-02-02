@@ -5,7 +5,8 @@ import "time"
 // SchemaMetadata contains metadata for a stored schema.
 type SchemaMetadata struct {
 	DisplayName string            `json:"displayName"`
-	SourceFile  string            `json:"sourceFile"`
+	SourceFile  string            `json:"sourceFile,omitempty"`
+	SourceURL   string            `json:"sourceURL,omitempty"`
 	FileHash    string            `json:"fileHash"`
 	URLPatterns map[string]string `json:"urlPatterns"`
 	CreatedAt   time.Time         `json:"createdAt"`

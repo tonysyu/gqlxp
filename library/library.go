@@ -20,6 +20,10 @@ type Library interface {
 	// Add adds a new schema to the library from a file path.
 	Add(id string, displayName string, sourcePath string) error
 
+	// AddFromContent adds a new schema to the library from content directly.
+	// sourceInfo is either a file path or URL depending on the source.
+	AddFromContent(id, displayName string, content []byte, sourceInfo string) error
+
 	// Get retrieves a schema by ID.
 	Get(id string) (*Schema, error)
 
@@ -224,6 +228,82 @@ func (l *FileLibrary) Add(id string, displayName string, sourcePath string) erro
 	go indexSchema(id, content)
 
 	return nil
+}
+
+// AddFromContent implements Library.AddFromContent.
+func (l *FileLibrary) AddFromContent(id, displayName string, content []byte, sourceInfo string) error {
+	if err := ValidateSchemaID(id); err != nil {
+		return err
+	}
+
+	// Ensure config directory exists
+	if err := InitConfigDir(); err != nil {
+		return fmt.Errorf("failed to initialize config directory: %w", err)
+	}
+
+	// Check if schema already exists
+	schemaFile, err := schemaFilePath(id)
+	if err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(schemaFile); err == nil {
+		return fmt.Errorf("schema with ID '%s' already exists", id)
+	}
+
+	// Calculate content hash
+	fileHash := CalculateFileHash(content)
+
+	// Write schema file
+	if err := os.WriteFile(schemaFile, content, 0644); err != nil {
+		return fmt.Errorf("failed to write schema file: %w", err)
+	}
+
+	// Load existing metadata
+	allMetadata, err := loadAllMetadata()
+	if err != nil {
+		return err
+	}
+
+	// Determine if sourceInfo is a URL or file path
+	now := time.Now()
+	metadata := SchemaMetadata{
+		DisplayName: displayName,
+		FileHash:    fileHash,
+		URLPatterns: make(map[string]string),
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+
+	if isURL(sourceInfo) {
+		metadata.SourceURL = sourceInfo
+	} else {
+		// Convert to absolute path
+		absPath, err := filepath.Abs(sourceInfo)
+		if err != nil {
+			absPath = sourceInfo
+		}
+		metadata.SourceFile = absPath
+	}
+
+	allMetadata[id] = metadata
+
+	// Save metadata
+	if err := saveAllMetadata(allMetadata); err != nil {
+		// Try to clean up schema file on metadata save error
+		os.Remove(schemaFile)
+		return err
+	}
+
+	// Index the schema in the background (non-blocking)
+	go indexSchema(id, content)
+
+	return nil
+}
+
+// isURL checks if a string is a URL (http:// or https://).
+func isURL(s string) bool {
+	return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://")
 }
 
 // Get implements Library.Get.

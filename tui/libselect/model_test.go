@@ -23,6 +23,10 @@ func (m *mockLibrary) Add(id, displayName, sourcePath string) error {
 	return nil
 }
 
+func (m *mockLibrary) AddFromContent(id, displayName string, content []byte, sourceInfo string) error {
+	return nil
+}
+
 func (m *mockLibrary) Get(id string) (*library.Schema, error) {
 	if m.getErr != nil {
 		return nil, m.getErr

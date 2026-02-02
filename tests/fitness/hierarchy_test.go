@@ -22,6 +22,7 @@ var PACKAGE_HIERARCHY = []string{
 	"cli",
 	"tui",
 	"library",
+	"introspection",
 	"search",
 	"gqlfmt",
 	"gql",
