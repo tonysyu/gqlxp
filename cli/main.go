@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/tonysyu/gqlxp/cli/library"
 	"github.com/tonysyu/gqlxp/tui"
 	"github.com/urfave/cli/v3"
 )
@@ -26,7 +27,7 @@ Use the TUI interface to manage library schemas (remove, view, etc).`,
 			appCommand(),
 			searchCommand(),
 			showCommand(),
-			libraryCommand(),
+			library.Command(),
 		},
 	}
 }
