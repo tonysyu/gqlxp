@@ -103,6 +103,15 @@ $ gqlxp app -s examples/github.graphqls
 Enter schema ID (lowercase letters, numbers, hyphens) [github]: github-api
 Enter display name [github-api]: GitHub GraphQL API
 
+# PREFERRED: Load schema from graphql endpoint (requires introspection to download
+schema)
+$ gqlxp library add --id rick-and-morty-api https://rickandmortyapi.com/graphql
+
+# Schemas added/updated with url can be updated
+$ gqlxp library update --id rick-and-morty-api
+Fetching schema from https://rickandmortyapi.com/graphql...
+Schema 'rick-and-morty-api' is already up to date (timestamp updated)
+
 # Set default schema for commands that omit --schema
 $ gqlxp library default github-api
 
