@@ -1,0 +1,9 @@
+schema: spec-driven
+
+context: |
+  gqlxp: interactive GraphQL schema explorer TUI (read-only, terminal-only, no external services).
+  Tech stack: Go, Bubble Tea (TUI), Bubbles/Lipgloss/Glamour (UI), vektah/gqlparser/v2, just (build).
+  Packages: cmd/gqlxp (entry), gql (parsing), tui (UI), utils (helpers).
+  Key abstractions: NavigationManager, tea.Model components, ListItem/Panel interfaces, GraphQL adapters.
+  Domain: 9 GraphQL type categories (Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive).
+  Conventions: private by default, minimal public API, fmt.Errorf with context, run `just test` after changes.
