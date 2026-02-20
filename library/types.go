@@ -24,6 +24,7 @@ type Schema struct {
 type SchemaInfo struct {
 	ID          string
 	DisplayName string
+	UpdatedAt   time.Time
 }
 
 // UserConfig contains user preferences and settings.

@@ -390,15 +390,12 @@ func (l *FileLibrary) List() ([]SchemaInfo, error) {
 
 // createSchemaInfo creates a SchemaInfo from an ID and metadata map
 func createSchemaInfo(id string, allMetadata map[string]SchemaMetadata) SchemaInfo {
-	displayName := id
+	info := SchemaInfo{ID: id}
 	if metadata, exists := allMetadata[id]; exists {
-		displayName = metadata.DisplayName
+		info.DisplayName = metadata.DisplayName
+		info.UpdatedAt = metadata.UpdatedAt
 	}
-
-	return SchemaInfo{
-		ID:          id,
-		DisplayName: displayName,
-	}
+	return info
 }
 
 // Remove implements Library.Remove.

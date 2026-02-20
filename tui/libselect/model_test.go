@@ -3,6 +3,7 @@ package libselect_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/matryer/is"
@@ -157,10 +158,11 @@ func TestModel_View_WithSchemas(t *testing.T) {
 	is := is.New(t)
 	assert := assert.New(t)
 
+	updatedAt := time.Date(2024, 3, 15, 10, 30, 0, 0, time.UTC)
 	lib := &mockLibrary{
 		schemas: []library.SchemaInfo{
-			{ID: "schema1", DisplayName: "Schema One"},
-			{ID: "schema2", DisplayName: "Schema Two"},
+			{ID: "schema1", DisplayName: "Schema One", UpdatedAt: updatedAt},
+			{ID: "schema2", DisplayName: "Schema Two", UpdatedAt: updatedAt},
 		},
 	}
 
@@ -172,11 +174,33 @@ func TestModel_View_WithSchemas(t *testing.T) {
 	model, _ = model.Update(msg)
 
 	assert.StringContains(testx.NormalizeView(model.View()), testx.NormalizeView(`
-		│ Schema One
-		│ schema1
+		│ Schema One (id: schema1)
+		│ last updated: 2024-03-15 10:30
 
-		  Schema Two
-		  schema2
+		  Schema Two (id: schema2)
+		  last updated: 2024-03-15 10:30
+	`))
+}
+
+func TestModel_View_WithSchemas_NoName(t *testing.T) {
+	is := is.New(t)
+	assert := assert.New(t)
+
+	lib := &mockLibrary{
+		schemas: []library.SchemaInfo{
+			{ID: "schema1"},
+		},
+	}
+
+	model, err := libselect.New(lib)
+	is.NoErr(err)
+
+	msg := tea.WindowSizeMsg{Width: 80, Height: 24}
+	model, _ = model.Update(msg)
+
+	assert.StringContains(testx.NormalizeView(model.View()), testx.NormalizeView(`
+		│ schema1
+		│ last updated: unknown
 	`))
 }
 

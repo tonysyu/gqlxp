@@ -2,6 +2,7 @@ package libselect
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -25,10 +26,23 @@ type Model struct {
 type schemaListItem struct {
 	id          string
 	displayName string
+	updatedAt   time.Time
 }
 
-func (i schemaListItem) Title() string       { return i.displayName }
-func (i schemaListItem) Description() string { return i.id }
+func (i schemaListItem) Title() string {
+	if i.displayName == "" || i.displayName == i.id {
+		return i.id
+	}
+	return fmt.Sprintf("%s (id: %s)", i.displayName, i.id)
+}
+
+func (i schemaListItem) Description() string {
+	if i.updatedAt.IsZero() {
+		return "last updated: unknown"
+	}
+	return "last updated: " + i.updatedAt.Format("2006-01-02 15:04")
+}
+
 func (i schemaListItem) FilterValue() string { return i.displayName + " " + i.id }
 
 // SchemaSelectedMsg is sent when a schema is selected
@@ -54,6 +68,7 @@ func New(lib library.Library) (Model, error) {
 		items[i] = schemaListItem{
 			id:          schema.ID,
 			displayName: schema.DisplayName,
+			updatedAt:   schema.UpdatedAt,
 		}
 	}
 
