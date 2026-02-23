@@ -14,29 +14,32 @@ func newBreadcrumbsModel() breadcrumbsModel {
 }
 
 // Push adds a new breadcrumb to the trail
-func (b *breadcrumbsModel) Push(title string) {
+func (b breadcrumbsModel) Push(title string) breadcrumbsModel {
 	b.crumbs = append(b.crumbs, title)
+	return b
 }
 
 // Pop removes the last breadcrumb from the trail
-func (b *breadcrumbsModel) Pop() {
+func (b breadcrumbsModel) Pop() breadcrumbsModel {
 	if len(b.crumbs) > 0 {
 		b.crumbs = b.crumbs[:b.Len()-1]
 	}
+	return b
 }
 
 // Reset clears all breadcrumbs
-func (b *breadcrumbsModel) Reset() {
+func (b breadcrumbsModel) Reset() breadcrumbsModel {
 	b.crumbs = []string{}
+	return b
 }
 
 // Len returns the number of breadcrumbs
-func (b *breadcrumbsModel) Len() int {
+func (b breadcrumbsModel) Len() int {
 	return len(b.crumbs)
 }
 
 // Get returns a copy of the breadcrumb trail
-func (b *breadcrumbsModel) Get() []string {
+func (b breadcrumbsModel) Get() []string {
 	if len(b.crumbs) == 0 {
 		return nil
 	}

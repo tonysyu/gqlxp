@@ -42,7 +42,7 @@ type Model struct {
 	// Parsed GraphQL schema that's displayed in the TUI.
 	schema adapters.SchemaView
 	// Navigation manager coordinates panel stack, breadcrumbs, and type selection
-	nav *navigation.NavigationManager
+	nav navigation.NavigationManager
 	// Overlay for displaying ListItem.Details()
 	overlay overlay.Model
 	// Command palette for discovering and executing commands
@@ -142,7 +142,7 @@ func (m Model) CurrentType() string {
 // SwitchToType switches to the specified GraphQL type
 // This is primarily used for testing
 func (m *Model) SwitchToType(typeName string) {
-	m.nav.SwitchType(navigation.GQLType(typeName))
+	m.nav = m.nav.SwitchType(navigation.GQLType(typeName))
 	m.resetAndLoadMainPanel()
 }
 
@@ -276,9 +276,9 @@ func (m *Model) cycleGQLType(forward bool, cmds []tea.Cmd) []tea.Cmd {
 
 	// Cycle type
 	if forward {
-		m.nav.CycleTypeForward()
+		m.nav, _ = m.nav.CycleTypeForward()
 	} else {
-		m.nav.CycleTypeBackward()
+		m.nav, _ = m.nav.CycleTypeBackward()
 	}
 	m.resetAndLoadMainPanel()
 
@@ -358,7 +358,9 @@ func (m *Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
 
 // handleNextPanel moves forward in the navigation stack
 func (m *Model) handleNextPanel(cmds []tea.Cmd) []tea.Cmd {
-	if !m.nav.NavigateForward() {
+	var moved bool
+	m.nav, moved = m.nav.NavigateForward()
+	if !moved {
 		return cmds
 	}
 
@@ -379,7 +381,9 @@ func (m *Model) handleNextPanel(cmds []tea.Cmd) []tea.Cmd {
 
 // handlePrevPanel moves backward in the navigation stack
 func (m *Model) handlePrevPanel() {
-	if m.nav.NavigateBackward() {
+	var moved bool
+	m.nav, moved = m.nav.NavigateBackward()
+	if moved {
 		m.updatePanelFocusStates()
 	}
 }
@@ -484,7 +488,7 @@ func (m *Model) updatePanelFocusStates() {
 // handleOpenPanel handles when an item is opened
 // The new panel is added to the stack after the currently focused panel
 func (m *Model) handleOpenPanel(newPanel *components.Panel) {
-	m.nav.OpenPanel(newPanel)
+	m.nav = m.nav.OpenPanel(newPanel)
 	m.sizePanels()
 }
 
@@ -527,7 +531,7 @@ func (m *Model) convertSearchResultsToListItems(results []search.SearchResult) [
 // This method is called on initilization and when switching types, so that detail panels get
 // cleared out to avoid inconsistencies across panels.
 func (m *Model) resetAndLoadMainPanel() {
-	m.nav.Reset()
+	m.nav = m.nav.Reset()
 	m.loadMainPanel()
 }
 
@@ -574,7 +578,7 @@ func (m *Model) loadMainPanel() {
 		title = "Search Results"
 	}
 
-	m.nav.SetCurrentPanel(components.NewPanel(items, title))
+	m.nav = m.nav.SetCurrentPanel(components.NewPanel(items, title))
 	m.updatePanelFocusStates()
 
 	// Auto-open detail panel for the first item if available (but not for Search tab)
@@ -599,7 +603,7 @@ func (m *Model) ApplySelection(target SelectionTarget) {
 	}
 
 	// Switch to that type category
-	m.nav.SwitchType(gqlType)
+	m.nav = m.nav.SwitchType(gqlType)
 	m.resetAndLoadMainPanel()
 
 	currentPanel := m.nav.CurrentPanel()
@@ -648,7 +652,9 @@ func (m *Model) selectQueryOrMutationField(panel *components.Panel, fieldName st
 	}
 
 	m.handleOpenPanel(msg.Panel)
-	if m.nav.NavigateForward() {
+	var moved bool
+	m.nav, moved = m.nav.NavigateForward()
+	if moved {
 		m.updatePanelFocusStates()
 	}
 }
@@ -671,7 +677,9 @@ func (m *Model) selectTypeField(panel *components.Panel, fieldName string) {
 	m.handleOpenPanel(msg.Panel)
 
 	// Then navigate forward (this adds breadcrumb from current panel's selected item)
-	if !m.nav.NavigateForward() {
+	var moved bool
+	m.nav, moved = m.nav.NavigateForward()
+	if !moved {
 		return
 	}
 

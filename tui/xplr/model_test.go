@@ -72,17 +72,17 @@ func TestModelPanelNavigation(t *testing.T) {
 	// Test initial stack position
 	is.Equal(model.nav.Stack().Position(), 0)
 
-	// Directly add panels to the stack for testing (simulating real navigation)
-	// In real usage, panels are added via OpenPanel which truncates and appends
-	stack := model.nav.Stack()
-	allPanels := []*components.Panel{
-		stack.All()[0],
-		stack.All()[1],
-		components.NewEmptyPanel("test3"),
-		components.NewEmptyPanel("test4"),
-	}
-	stack.Replace(allPanels)
-	// Now we have 4 panels total
+	// Build a 4-panel stack for navigation testing.
+	// OpenPanel truncates-and-appends after current position, so navigate
+	// forward between each push to accumulate without truncation.
+	model.nav = model.nav.OpenPanel(components.NewEmptyPanel("test3")) // [p0, test3] at 0
+	model.nav, _ = model.nav.NavigateForward()                         // pos 1
+	model.nav = model.nav.OpenPanel(components.NewEmptyPanel("test4")) // [p0, test3, test4] at 1
+	model.nav, _ = model.nav.NavigateForward()                         // pos 2
+	model.nav = model.nav.OpenPanel(components.NewEmptyPanel("test5")) // [p0, test3, test4, test5] at 2
+	model.nav, _ = model.nav.NavigateBackward()                        // pos 1
+	model.nav, _ = model.nav.NavigateBackward()                        // pos 0
+	// Now we have 4 panels at position 0
 
 	// Test next panel navigation (move forward in stack)
 	model, _ = model.Update(keyNextPanel)

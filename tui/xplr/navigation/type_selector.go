@@ -21,49 +21,50 @@ type typeSelector struct {
 	selected GQLType
 }
 
-func newTypeSelector() *typeSelector {
+func newTypeSelector() typeSelector {
 	types := []GQLType{
 		QueryType, MutationType, ObjectType, InputType,
 		EnumType, ScalarType, InterfaceType, UnionType, DirectiveType, SearchType,
 	}
-	return &typeSelector{
+	return typeSelector{
 		types:    types,
 		selected: QueryType,
 	}
 }
 
 // Current returns currently selected type
-func (ts *typeSelector) Current() GQLType {
+func (ts typeSelector) Current() GQLType {
 	return ts.selected
 }
 
 // Set changes selected type
-func (ts *typeSelector) Set(gqlType GQLType) {
+func (ts typeSelector) Set(gqlType GQLType) typeSelector {
 	ts.selected = gqlType
+	return ts
 }
 
 // Next cycles to next type (with wraparound)
-func (ts *typeSelector) Next() GQLType {
+func (ts typeSelector) Next() (typeSelector, GQLType) {
 	idx := ts.currentIndex()
 	nextIdx := (idx + 1) % len(ts.types)
 	ts.selected = ts.types[nextIdx]
-	return ts.selected
+	return ts, ts.selected
 }
 
 // Previous cycles to previous type (with wraparound)
-func (ts *typeSelector) Previous() GQLType {
+func (ts typeSelector) Previous() (typeSelector, GQLType) {
 	idx := ts.currentIndex()
 	prevIdx := (idx - 1 + len(ts.types)) % len(ts.types)
 	ts.selected = ts.types[prevIdx]
-	return ts.selected
+	return ts, ts.selected
 }
 
 // All returns all available types
-func (ts *typeSelector) All() []GQLType {
+func (ts typeSelector) All() []GQLType {
 	return ts.types
 }
 
-func (ts *typeSelector) currentIndex() int {
+func (ts typeSelector) currentIndex() int {
 	for i, t := range ts.types {
 		if t == ts.selected {
 			return i

@@ -16,7 +16,7 @@ func TestTypeSelector_newTypeSelector(t *testing.T) {
 func TestTypeSelector_Set(t *testing.T) {
 	is := is.New(t)
 	ts := newTypeSelector()
-	ts.Set(MutationType)
+	ts = ts.Set(MutationType)
 	is.Equal(ts.Current(), MutationType)
 }
 
@@ -25,22 +25,23 @@ func TestTypeSelector_Next(t *testing.T) {
 	ts := newTypeSelector()
 	is.Equal(ts.Current(), QueryType)
 
-	next := ts.Next()
+	var next GQLType
+	ts, next = ts.Next()
 	is.Equal(next, MutationType)
 	is.Equal(ts.Current(), MutationType)
 
 	// Cycle through all types
 	for i := 0; i < 7; i++ {
-		ts.Next()
+		ts, _ = ts.Next()
 	}
 	is.Equal(ts.Current(), DirectiveType)
 
 	// Next should be SearchType
-	next = ts.Next()
+	ts, next = ts.Next()
 	is.Equal(next, SearchType)
 
 	// Test wraparound
-	next = ts.Next()
+	_, next = ts.Next()
 	is.Equal(next, QueryType)
 }
 
@@ -50,16 +51,17 @@ func TestTypeSelector_Previous(t *testing.T) {
 	is.Equal(ts.Current(), QueryType)
 
 	// Test wraparound at beginning - should go to SearchType (last in list)
-	prev := ts.Previous()
+	var prev GQLType
+	ts, prev = ts.Previous()
 	is.Equal(prev, SearchType)
 	is.Equal(ts.Current(), SearchType)
 
 	// Previous from SearchType should be DirectiveType
-	prev = ts.Previous()
+	ts, prev = ts.Previous()
 	is.Equal(prev, DirectiveType)
 
 	// Move back one more
-	prev = ts.Previous()
+	_, prev = ts.Previous()
 	is.Equal(prev, UnionType)
 }
 
@@ -89,17 +91,17 @@ func TestTypeSelector_CurrentIndex(t *testing.T) {
 	is.Equal(idx, 0)
 
 	// Test middle type
-	ts.Set(EnumType)
+	ts = ts.Set(EnumType)
 	idx = ts.currentIndex()
 	is.Equal(idx, 4)
 
 	// Test DirectiveType
-	ts.Set(DirectiveType)
+	ts = ts.Set(DirectiveType)
 	idx = ts.currentIndex()
 	is.Equal(idx, 8)
 
 	// Test last type (SearchType)
-	ts.Set(SearchType)
+	ts = ts.Set(SearchType)
 	idx = ts.currentIndex()
 	is.Equal(idx, 9)
 }
