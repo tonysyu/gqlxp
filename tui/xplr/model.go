@@ -211,7 +211,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, tea.Quit
 		case key.Matches(msg, m.keymap.CommandPalette):
 			searchActive := m.nav.CurrentType() == navigation.SearchType
-			m.commandPalette.Show(m.width, m.height, searchActive)
+			m.commandPalette = m.commandPalette.Show(m.width, m.height, searchActive)
 			m.state = xplrCmdPaletteView
 			return m, nil
 		case key.Matches(msg, m.keymap.NextGQLType):
@@ -258,7 +258,7 @@ func (m *Model) openOverlayForSelectedItem() {
 		if listItem, ok := selectedItem.(components.ListItem); ok {
 			// Some items don't have details, so these should now open the overlay
 			if content := listItem.Details(); content != "" {
-				m.overlay.Show(content, m.width, m.height)
+				m.overlay = m.overlay.Show(content, m.width, m.height)
 				m.state = xplrOverlayView
 			}
 		}
@@ -270,7 +270,7 @@ func (m *Model) cycleGQLType(forward bool, cmds []tea.Cmd) []tea.Cmd {
 	// Blur search input when switching away from Search tab
 	if m.searchFocused {
 		m.searchFocused = false
-		m.searchInput.Blur()
+		m.searchInput = m.searchInput.Blur()
 		m.updateKeybindings()
 	}
 
@@ -286,7 +286,9 @@ func (m *Model) cycleGQLType(forward bool, cmds []tea.Cmd) []tea.Cmd {
 	if m.nav.CurrentType() == navigation.SearchType {
 		m.searchFocused = true
 		m.updateKeybindings()
-		cmds = append(cmds, m.searchInput.Focus())
+		var cmd tea.Cmd
+		m.searchInput, cmd = m.searchInput.Focus()
+		cmds = append(cmds, cmd)
 	}
 
 	return cmds
@@ -304,14 +306,14 @@ func (m *Model) handleSearchFocused(msg tea.Msg) (Model, tea.Cmd) {
 			query := m.searchInput.Value()
 			if query != "" {
 				m.searchFocused = false
-				m.searchInput.Blur()
+				m.searchInput = m.searchInput.Blur()
 				m.updateKeybindings()
 				cmds = append(cmds, m.executeSearch(query))
 			}
 			return *m, tea.Batch(cmds...)
 		case key.Matches(msg, m.keymap.SearchClear):
 			// Clear input and keep focus
-			m.searchInput.SetValue("")
+			m.searchInput = m.searchInput.SetValue("")
 			return *m, nil
 		default:
 			// Pass message to search input
@@ -335,7 +337,9 @@ func (m *Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
 	if m.nav.CurrentType() == navigation.SearchType && key.Matches(keyMsg, m.keymap.SearchFocus) && !m.searchFocused {
 		m.searchFocused = true
 		m.updateKeybindings()
-		cmds = append(cmds, m.searchInput.Focus())
+		var cmd tea.Cmd
+		m.searchInput, cmd = m.searchInput.Focus()
+		cmds = append(cmds, cmd)
 		return *m, tea.Batch(cmds...)
 	}
 

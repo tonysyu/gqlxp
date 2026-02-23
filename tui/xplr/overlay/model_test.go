@@ -10,7 +10,7 @@ import (
 
 func showDefaultOverlay() Model {
 	overlay := New(config.DefaultStyles())
-	overlay.Show("test content", 100, 50)
+	overlay = overlay.Show("test content", 100, 50)
 	return overlay
 }
 
@@ -63,7 +63,7 @@ func TestOverlay(t *testing.T) {
 	t.Run("Show sets viewport size with margin", func(t *testing.T) {
 		width, height := 200, 100
 		overlay := New(config.DefaultStyles())
-		overlay.Show("test content", width, height)
+		overlay = overlay.Show("test content", width, height)
 
 		is.Equal(overlay.viewport.Width, width-overlayPanelMargin)
 		is.Equal(overlay.viewport.Height, height-overlayPanelMargin-config.HelpHeight)

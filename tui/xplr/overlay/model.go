@@ -86,7 +86,7 @@ func (o Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 // Show configures the overlay with the given markdown content and size.
 // xplr.Model is responsible for setting its state to xplrOverlayView when calling this.
-func (o *Model) Show(content string, width, height int) {
+func (o Model) Show(content string, width, height int) Model {
 	o.content = content
 
 	// Set viewport size
@@ -100,11 +100,12 @@ func (o *Model) Show(content string, width, height int) {
 		rendered := terminal.RenderMarkdownOrPlain(o.renderer, content)
 		o.rendered = rendered
 		o.viewport.SetContent(rendered)
-		return
+		return o
 	}
 
 	// Fallback to plain content if viewport not properly sized
 	o.viewport.SetContent(content)
+	return o
 }
 
 // View renders the overlay viewport content with help

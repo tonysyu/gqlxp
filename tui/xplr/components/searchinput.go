@@ -40,13 +40,15 @@ func (si SearchInput) View() string {
 }
 
 // Focus focuses the input field
-func (si *SearchInput) Focus() tea.Cmd {
-	return si.textInput.Focus()
+func (si SearchInput) Focus() (SearchInput, tea.Cmd) {
+	cmd := si.textInput.Focus()
+	return si, cmd
 }
 
 // Blur removes focus from the input field
-func (si *SearchInput) Blur() {
+func (si SearchInput) Blur() SearchInput {
 	si.textInput.Blur()
+	return si
 }
 
 // Value returns the current input value
@@ -55,8 +57,9 @@ func (si SearchInput) Value() string {
 }
 
 // SetValue sets the input value
-func (si *SearchInput) SetValue(value string) {
+func (si SearchInput) SetValue(value string) SearchInput {
 	si.textInput.SetValue(value)
+	return si
 }
 
 // Focused returns whether the input is focused

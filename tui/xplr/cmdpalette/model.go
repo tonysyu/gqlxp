@@ -252,7 +252,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.updateSize()
+		m = m.updateSize()
 	}
 
 	// Pass message to list
@@ -263,11 +263,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 // Show configures the command palette with current dimensions and context.
 // xplr.Model is responsible for setting its state to xplrCmdPaletteView when calling this.
-func (m *Model) Show(width, height int, searchActive bool) {
+func (m Model) Show(width, height int, searchActive bool) Model {
 	m.width = width
 	m.height = height
-	m.updateSize()
-	m.updateCommandAvailability(searchActive)
+	m = m.updateSize()
+	m = m.updateCommandAvailability(searchActive)
+	return m
 }
 
 // View renders the command palette
@@ -278,7 +279,7 @@ func (m Model) View() string {
 }
 
 // updateSize updates the list size based on window dimensions
-func (m *Model) updateSize() {
+func (m Model) updateSize() Model {
 	listWidth := m.width - config.OverlayInsetMargin
 	listHeight := m.height - config.OverlayInsetMargin
 	if listWidth < 10 {
@@ -288,10 +289,11 @@ func (m *Model) updateSize() {
 		listHeight = 5
 	}
 	m.list.SetSize(listWidth, listHeight)
+	return m
 }
 
 // updateCommandAvailability updates the enabled state of commands based on context
-func (m *Model) updateCommandAvailability(searchActive bool) {
+func (m Model) updateCommandAvailability(searchActive bool) Model {
 	items := m.list.Items()
 	for i, item := range items {
 		if cmd, ok := item.(commandItem); ok {
@@ -311,6 +313,7 @@ func (m *Model) updateCommandAvailability(searchActive bool) {
 		}
 	}
 	m.list.SetItems(items)
+	return m
 }
 
 // parseKeyString converts a key string to a tea.KeyMsg

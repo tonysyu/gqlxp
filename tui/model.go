@@ -113,7 +113,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			HasLibraryData: true,
 		}
 		m.xplr, cmd = m.xplr.Update(schemaLoadedMsg)
-		return m, tea.Batch(cmd, m.xplr.Init())
+		return m, cmd
 	}
 
 	// Delegate to active submodel
