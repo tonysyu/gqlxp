@@ -500,15 +500,11 @@ func (m *Model) executeSearch(query string) tea.Cmd {
 	}
 
 	return func() tea.Msg {
-		// Create searcher
 		searcher := search.NewSearcher(m.searchBaseDir)
 		defer searcher.Close()
 
-		// Perform search
 		results, err := searcher.Search(m.SchemaID, query, 50)
 		if err != nil {
-			// If index doesn't exist, need to create it
-			// For now, return empty results - indexing should be handled separately
 			return searchResultsMsg{results: nil, err: err}
 		}
 

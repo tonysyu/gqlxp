@@ -66,6 +66,11 @@ func (p *SchemaView) GetDirectiveItems() []components.ListItem {
 	return adaptDirectiveDefs(gql.CollectAndSortMapValues(p.schema.Directive), p.resolver)
 }
 
+// Schema returns the underlying GraphQL schema
+func (p *SchemaView) Schema() *gql.GraphQLSchema {
+	return &p.schema
+}
+
 // FindTypeCategory returns the GQL type category for the given type name
 // Returns (category, true) if found, ("", false) if not found
 func (p *SchemaView) FindTypeCategory(typeName string) (navigation.GQLType, bool) {

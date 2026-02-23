@@ -5,6 +5,7 @@ import (
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/libselect"
+	"github.com/tonysyu/gqlxp/tui/utils"
 	"github.com/tonysyu/gqlxp/tui/xplr"
 )
 
@@ -113,7 +114,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			HasLibraryData: true,
 		}
 		m.xplr, cmd = m.xplr.Update(schemaLoadedMsg)
-		return m, cmd
+		// Ensure search index exists in the background
+		indexCmd := ensureSearchIndexCmd(msg.SchemaID, msg.Schema)
+		return m, tea.Batch(cmd, indexCmd)
 	}
 
 	// Delegate to active submodel
@@ -126,6 +129,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	default:
 		return m, nil
+	}
+}
+
+// ensureSearchIndexCmd returns a tea.Cmd that creates the search index if it doesn't exist.
+func ensureSearchIndexCmd(schemaID string, schema adapters.SchemaView) tea.Cmd {
+	return func() tea.Msg {
+		utils.EnsureSearchIndexForSchema(schemaID, schema.Schema())
+		return nil
 	}
 }
 
