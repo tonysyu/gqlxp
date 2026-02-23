@@ -11,14 +11,11 @@ import (
 func (m Model) View() string {
 	help := m.help.ShortHelpView(m.helpBindings())
 
-	// Show command palette if active, and return immediately
-	if m.commandPalette.IsActive() {
+	switch m.state {
+	case xplrCmdPaletteView:
 		return m.commandPalette.View()
-	}
-
-	// Show overlay if active, and return immediately
-	if m.Overlay().IsActive() {
-		return m.Overlay().View()
+	case xplrOverlayView:
+		return m.overlay.View()
 	}
 
 	var views []string

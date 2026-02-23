@@ -289,7 +289,7 @@ func (a *Assert) BreadcrumbsEquals(expected string) {
 // OverlayVisible checks if the overlay is currently visible
 func (a *Assert) OverlayVisible() {
 	a.t.Helper()
-	if !a.explorer.model.Overlay().IsActive() {
+	if !a.explorer.model.IsOverlayVisible() {
 		a.t.Error("overlay is not visible")
 	}
 }

@@ -19,78 +19,45 @@ func TestOverlay(t *testing.T) {
 	overlay := New(config.DefaultStyles())
 
 	t.Run("NewOverlayModel initializes correctly", func(t *testing.T) {
-		is.Equal(overlay.active, false)
 		is.Equal(overlay.content, "")
 		is.True(overlay.keymap.Close.Enabled())
 		is.True(overlay.keymap.Quit.Enabled())
 	})
 
-	t.Run("Inactive overlay passes through messages", func(t *testing.T) {
-		// When inactive, should not intercept messages
-		updatedOverlay, cmd, intercepted := overlay.Update(tea.KeyMsg{Type: tea.KeyEnter})
-
-		is.Equal(intercepted, false)
-		is.Equal(cmd, nil)
-		is.Equal(updatedOverlay.active, false)
-	})
-
-	t.Run("Show and Hide toggle overlay state", func(t *testing.T) {
+	t.Run("Show sets content and viewport size", func(t *testing.T) {
 		overlay := showDefaultOverlay()
 
-		is.Equal(overlay.active, true)
 		is.Equal(overlay.content, "test content")
-		is.Equal(overlay.IsActive(), true)
-
-		// Test Hide
-		overlay.Hide()
-		is.Equal(overlay.active, false)
-		is.Equal(overlay.IsActive(), false)
 	})
 
-	t.Run("Close key binding deactivates overlay", func(t *testing.T) {
+	t.Run("Close key returns ClosedMsg command", func(t *testing.T) {
 		overlay := showDefaultOverlay()
-
-		is.Equal(overlay.active, true)
 
 		spaceKey := tea.KeyMsg{Type: tea.KeySpace}
-		updatedOverlay, cmd, intercepted := overlay.Update(spaceKey)
+		_, cmd := overlay.Update(spaceKey)
 
-		is.Equal(intercepted, true)
-		is.Equal(cmd, nil)
-		is.Equal(updatedOverlay.active, false)
+		is.True(cmd != nil)
+		msg := cmd()
+		_, ok := msg.(ClosedMsg)
+		is.True(ok)
 	})
 
-	t.Run("Quit key binding returns quit command", func(t *testing.T) {
+	t.Run("Quit key returns quit command", func(t *testing.T) {
 		overlay := showDefaultOverlay()
 
-		// Send quit key (ctrl+c)
 		quitKey := tea.KeyMsg{Type: tea.KeyCtrlC}
-		updatedOverlay, cmd, intercepted := overlay.Update(quitKey)
+		_, cmd := overlay.Update(quitKey)
 
-		is.Equal(intercepted, true)
-		is.True(cmd != nil)                   // Should return quit command
-		is.Equal(updatedOverlay.active, true) // Active state unchanged
-	})
-
-	t.Run("Active overlay intercepts messages", func(t *testing.T) {
-		overlay := showDefaultOverlay()
-
-		// Any key message should be intercepted when active
-		testKey := tea.KeyMsg{Type: tea.KeyEnter}
-		_, _, intercepted := overlay.Update(testKey)
-
-		is.Equal(intercepted, true)
+		is.True(cmd != nil)
 	})
 
 	t.Run("Viewport receives update messages", func(t *testing.T) {
 		overlay := showDefaultOverlay()
 
-		// Send a message to update viewport
 		msg := tea.KeyMsg{Type: tea.KeyDown}
-		updatedOverlay, _, intercepted := overlay.Update(msg)
+		updatedOverlay, _ := overlay.Update(msg)
 
-		is.Equal(intercepted, true)
-		is.Equal(updatedOverlay.active, true)
+		is.Equal(updatedOverlay.content, "test content")
 	})
 
 	t.Run("Show sets viewport size with margin", func(t *testing.T) {

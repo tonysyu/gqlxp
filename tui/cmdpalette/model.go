@@ -104,9 +104,11 @@ func (d commandDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	fmt.Fprint(w, output)
 }
 
+// ClosedMsg is sent when the command palette requests to be closed
+type ClosedMsg struct{}
+
 // Model manages the command palette
 type Model struct {
-	active  bool
 	list    list.Model
 	styles  config.Styles
 	keymaps config.CommandPaletteKeymaps
@@ -134,7 +136,6 @@ func New(styles config.Styles, paletteKeymaps config.CommandPaletteKeymaps, comm
 	l.AdditionalFullHelpKeys = l.AdditionalShortHelpKeys
 
 	return Model{
-		active:  false,
 		list:    l,
 		styles:  styles,
 		keymaps: paletteKeymaps,
@@ -226,33 +227,27 @@ func buildCommandItems(keymaps CommandKeymaps) []list.Item {
 	return items
 }
 
-// Update processes messages and returns (model, cmd, intercepted)
-// intercepted=true means the message was handled and should not be passed to main panels
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, bool) {
-	if !m.active {
-		return m, nil, false
-	}
-
+// Update processes messages and returns (model, cmd).
+// xplr.Model is responsible for routing messages here only when the palette is active.
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keymaps.Close):
-			// Close palette without executing
-			m.active = false
-			return m, nil, true
+			return m, func() tea.Msg { return ClosedMsg{} }
 		case key.Matches(msg, m.keymaps.Execute):
-			// Execute selected command and close
-			m.active = false
 			selectedItem := m.list.SelectedItem()
 			cmd, ok := selectedItem.(commandItem)
-			// Send KeyMsg with the first key from the binding
 			if ok && cmd.enabled {
 				keyMsg := parseKeyString(cmd.key)
-				return m, func() tea.Msg { return keyMsg }, true
+				return m, tea.Sequence(
+					func() tea.Msg { return ClosedMsg{} },
+					func() tea.Msg { return keyMsg },
+				)
 			}
-			return m, nil, true
+			return m, func() tea.Msg { return ClosedMsg{} }
 		case key.Matches(msg, m.keymaps.Quit):
-			return m, tea.Quit, true
+			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -263,33 +258,20 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd, bool) {
 	// Pass message to list
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
-	return m, cmd, true
+	return m, cmd
 }
 
-// Show activates the command palette
-func (m *Model) Show(width, height int, overlayActive bool, searchActive bool) {
-	m.active = true
+// Show configures the command palette with current dimensions and context.
+// xplr.Model is responsible for setting its state to xplrCmdPaletteView when calling this.
+func (m *Model) Show(width, height int, searchActive bool) {
 	m.width = width
 	m.height = height
 	m.updateSize()
-	m.updateCommandAvailability(overlayActive, searchActive)
-}
-
-// Hide deactivates the command palette
-func (m *Model) Hide() {
-	m.active = false
-}
-
-// IsActive returns whether the command palette is currently active
-func (m Model) IsActive() bool {
-	return m.active
+	m.updateCommandAvailability(searchActive)
 }
 
 // View renders the command palette
 func (m Model) View() string {
-	if !m.active {
-		return ""
-	}
 	content := m.list.View()
 	overlay := m.styles.Overlay.Render(content)
 	return utils.CenterOverlay(overlay, m.width, m.height)
@@ -309,7 +291,7 @@ func (m *Model) updateSize() {
 }
 
 // updateCommandAvailability updates the enabled state of commands based on context
-func (m *Model) updateCommandAvailability(overlayActive bool, searchActive bool) {
+func (m *Model) updateCommandAvailability(searchActive bool) {
 	items := m.list.Items()
 	for i, item := range items {
 		if cmd, ok := item.(commandItem); ok {
@@ -321,11 +303,7 @@ func (m *Model) updateCommandAvailability(overlayActive bool, searchActive bool)
 			}
 
 			if cmd.context == "Overlay" {
-				enabled = overlayActive
-			}
-
-			if cmd.context == "Panel" {
-				enabled = !overlayActive
+				enabled = false
 			}
 
 			cmd.enabled = enabled

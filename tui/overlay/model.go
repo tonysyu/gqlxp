@@ -14,9 +14,11 @@ import (
 // Panel inside the overlay must be inset by padding, margin, and a 1-char border on all sides.
 var overlayPanelMargin = 2 * (config.OverlayMargin + config.OverlayPadding + 1)
 
+// ClosedMsg is sent when the overlay requests to be closed
+type ClosedMsg struct{}
+
 // Model manages overlay display and message interception
 type Model struct {
-	active   bool
 	viewport viewport.Model
 	renderer terminal.Renderer
 	content  string // original markdown content
@@ -45,7 +47,6 @@ func New(styles config.Styles) Model {
 	renderer, err := terminal.NewMarkdownRenderer()
 	// If renderer fails, renderer will be nil and we'll use plain content
 	model := Model{
-		active:   false,
 		viewport: vp,
 		renderer: nil,
 		help:     help.New(),
@@ -60,22 +61,17 @@ func New(styles config.Styles) Model {
 	return model
 }
 
-// Update processes messages and returns (model, cmd, intercepted)
-// intercepted=true means the message was handled and should not be passed to main panels
-func (o Model) Update(msg tea.Msg) (Model, tea.Cmd, bool) {
-	if !o.active {
-		return o, nil, false // pass through to main model
-	}
-
+// Update processes messages and returns (model, cmd).
+// xplr.Model is responsible for routing messages here only when overlay is active.
+func (o Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	// Handle overlay-specific keys
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, o.keymap.Close):
-			o.active = false
-			return o, nil, true // intercepted
+			return o, func() tea.Msg { return ClosedMsg{} }
 		case key.Matches(msg, o.keymap.Quit):
-			return o, tea.Quit, true // intercepted
+			return o, tea.Quit
 		}
 	case tea.WindowSizeMsg:
 		o.height = msg.Height
@@ -85,13 +81,13 @@ func (o Model) Update(msg tea.Msg) (Model, tea.Cmd, bool) {
 	// Update viewport with the message
 	var cmd tea.Cmd
 	o.viewport, cmd = o.viewport.Update(msg)
-	return o, cmd, true // intercepted
+	return o, cmd
 }
 
-// Show activates the overlay with the given markdown content and size
+// Show configures the overlay with the given markdown content and size.
+// xplr.Model is responsible for setting its state to xplrOverlayView when calling this.
 func (o *Model) Show(content string, width, height int) {
 	o.content = content
-	o.active = true
 
 	// Set viewport size
 	viewportWidth := width - config.OverlayInsetMargin
@@ -111,21 +107,8 @@ func (o *Model) Show(content string, width, height int) {
 	o.viewport.SetContent(content)
 }
 
-// Hide deactivates the overlay
-func (o *Model) Hide() {
-	o.active = false
-}
-
-// IsActive returns whether the overlay is currently shown
-func (o Model) IsActive() bool {
-	return o.active
-}
-
 // View renders the overlay viewport content with help
 func (o Model) View() string {
-	if !o.active {
-		return ""
-	}
 	helpView := o.help.ShortHelpView(o.ShortHelp())
 	content := text.JoinParagraphs(o.viewport.View(), helpView)
 	overlay := o.Styles.Overlay.Render(content)

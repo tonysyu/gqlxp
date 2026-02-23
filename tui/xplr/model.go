@@ -28,8 +28,17 @@ type SelectionTarget struct {
 	FieldName string
 }
 
+type xplrState uint
+
+const (
+	xplrNormalView     xplrState = iota
+	xplrOverlayView              // overlay is displayed
+	xplrCmdPaletteView           // command palette is displayed
+)
+
 // Model is the main schema explorer model
 type Model struct {
+	state xplrState
 	// Parsed GraphQL schema that's displayed in the TUI.
 	schema adapters.SchemaView
 	// Navigation manager coordinates panel stack, breadcrumbs, and type selection
@@ -137,9 +146,9 @@ func (m *Model) SwitchToType(typeName string) {
 	m.resetAndLoadMainPanel()
 }
 
-// Overlay returns the overlay model
-func (m Model) Overlay() overlay.Model {
-	return m.overlay
+// IsOverlayVisible returns whether the overlay is currently displayed
+func (m Model) IsOverlayVisible() bool {
+	return m.state == xplrOverlayView
 }
 
 // SetOverlayStyle sets the overlay style (primarily for testing)
@@ -152,24 +161,28 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
-	// Try command palette first - it intercepts messages when active
-	var paletteCmd tea.Cmd
-	var intercepted bool
-	m.commandPalette, paletteCmd, intercepted = m.commandPalette.Update(msg)
-	if intercepted {
-		return m, paletteCmd
+	// Handle close messages from sub-views before routing
+	switch msg.(type) {
+	case overlay.ClosedMsg, cmdpalette.ClosedMsg:
+		m.state = xplrNormalView
+		return m, nil
 	}
 
-	// Try overlay second - it intercepts messages when active
-	var overlayCmd tea.Cmd
-	m.overlay, overlayCmd, intercepted = m.overlay.Update(msg)
-	if intercepted {
-		return m, overlayCmd
+	// Route to the active sub-view
+	switch m.state {
+	case xplrCmdPaletteView:
+		var cmd tea.Cmd
+		m.commandPalette, cmd = m.commandPalette.Update(msg)
+		return m, cmd
+	case xplrOverlayView:
+		var cmd tea.Cmd
+		m.overlay, cmd = m.overlay.Update(msg)
+		return m, cmd
 	}
 
 	var cmds []tea.Cmd
 
-	// Handle global messages
+	// Handle global messages (only reached in xplrNormalView)
 	switch msg := msg.(type) {
 	case SchemaLoadedMsg:
 		// Update schema and related properties
@@ -197,10 +210,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.Quit):
 			return m, tea.Quit
 		case key.Matches(msg, m.keymap.CommandPalette):
-			// Open command palette
-			overlayActive := m.overlay.IsActive()
 			searchActive := m.nav.CurrentType() == navigation.SearchType
-			m.commandPalette.Show(m.width, m.height, overlayActive, searchActive)
+			m.commandPalette.Show(m.width, m.height, searchActive)
+			m.state = xplrCmdPaletteView
 			return m, nil
 		case key.Matches(msg, m.keymap.NextGQLType):
 			cmds = m.cycleGQLType(true, cmds)
@@ -251,6 +263,7 @@ func (m *Model) openOverlayForSelectedItem() {
 			// Some items don't have details, so these should now open the overlay
 			if content := listItem.Details(); content != "" {
 				m.overlay.Show(content, m.width, m.height)
+				m.state = xplrOverlayView
 			}
 		}
 	}
