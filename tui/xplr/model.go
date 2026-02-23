@@ -8,9 +8,9 @@ import (
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/search"
 	"github.com/tonysyu/gqlxp/tui/adapters"
-	"github.com/tonysyu/gqlxp/tui/cmdpalette"
+	"github.com/tonysyu/gqlxp/tui/xplr/cmdpalette"
 	"github.com/tonysyu/gqlxp/tui/config"
-	"github.com/tonysyu/gqlxp/tui/overlay"
+	"github.com/tonysyu/gqlxp/tui/xplr/overlay"
 	"github.com/tonysyu/gqlxp/tui/xplr/components"
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 )
