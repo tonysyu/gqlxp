@@ -234,14 +234,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 	m.sizePanels()
 
-	// Update visible panels in the stack
-	var cmd tea.Cmd
-
 	// Only the left (focused) panel receives input; right panel is display-only
 	shouldReceiveMsg := m.shouldFocusedPanelReceiveMessage(msg)
 	if shouldReceiveMsg && m.nav.CurrentPanel() != nil {
-		currentPanel := m.nav.CurrentPanel()
-		_, cmd = currentPanel.Update(msg)
+		updatedPanel, cmd := m.nav.CurrentPanel().Update(msg)
+		m.nav = m.nav.SetCurrentPanel(updatedPanel)
 		cmds = append(cmds, cmd)
 	}
 
@@ -395,8 +392,8 @@ func (m *Model) updateFocusedPanel(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd)
 		return *m, tea.Batch(cmds...)
 	}
 
-	currentPanel := m.nav.CurrentPanel()
-	_, cmd := currentPanel.Update(msg)
+	updatedPanel, cmd := m.nav.CurrentPanel().Update(msg)
+	m.nav = m.nav.SetCurrentPanel(updatedPanel)
 	cmds = append(cmds, cmd)
 
 	return *m, tea.Batch(cmds...)

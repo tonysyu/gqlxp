@@ -187,6 +187,31 @@ func (p *Panel) switchToActiveTab() {
 func (p *Panel) SetSize(width, height int) {
 	p.width = width
 	p.height = height
+	p.updateListDimensions()
+}
+
+// updateListDimensions computes the height available to the list model (subtracting
+// title, description, and tab bar) and applies the result to the embedded list model.
+// Must be called whenever p.width, p.height, p.title, p.description, or p.tabs change.
+func (p *Panel) updateListDimensions() {
+	availableHeight := p.height
+
+	truncatedTitle := text.Truncate(p.title, p.width-2*config.PanelTitleHPadding)
+	title := p.styles.PanelTitle.Render(truncatedTitle)
+	availableHeight -= lipgloss.Height(title)
+
+	if p.description != "" {
+		desc := text.WrapAndTruncate(p.description, p.width, maxDescriptionHeight)
+		availableHeight -= lipgloss.Height(desc)
+	}
+
+	if len(p.tabs) > 0 {
+		tabBar := p.renderTabBar()
+		availableHeight -= 1 + lipgloss.Height(tabBar)
+	}
+
+	p.ListModel.SetWidth(p.width)
+	p.ListModel.SetHeight(availableHeight)
 }
 
 func (p *Panel) SetTitle(title string) {
@@ -271,33 +296,24 @@ func (p *Panel) SelectItemByName(name string) bool {
 
 // View renders the panel
 func (p *Panel) View() string {
-	availableHeight := p.height
 	parts := []string{}
 
 	// Render title
 	truncatedTitle := text.Truncate(p.Title(), p.width-2*config.PanelTitleHPadding)
-	title := p.styles.PanelTitle.Render(truncatedTitle)
-	parts = append(parts, title)
-	availableHeight -= lipgloss.Height(title)
+	parts = append(parts, p.styles.PanelTitle.Render(truncatedTitle))
 
 	// Render description if present
 	if p.Description() != "" {
-		desc := text.WrapAndTruncate(p.Description(), p.width, maxDescriptionHeight)
-		parts = append(parts, desc)
-		availableHeight -= lipgloss.Height(desc)
+		parts = append(parts, text.WrapAndTruncate(p.Description(), p.width, maxDescriptionHeight))
 	}
 
 	// Render tabs if configured (even if only one tab for consistency)
 	if len(p.tabs) > 0 {
-		tabBar := p.renderTabBar()
-		parts = append(parts, "", tabBar)
-		availableHeight -= 1 + lipgloss.Height(tabBar) // 1 for empty line
+		parts = append(parts, "", p.renderTabBar())
 	}
 
 	// Render list content
 	if len(p.ListModel.Items()) > 0 {
-		p.ListModel.SetWidth(p.width)
-		p.ListModel.SetHeight(availableHeight)
 		parts = append(parts, p.ListModel.View())
 	}
 
