@@ -45,10 +45,15 @@ lint-fix:
     go vet ./...
     go tool golangci-lint run
 
+# Check for known security vulnerabilities
+[group('code')]
+security-check:
+    go tool govulncheck ./...
+
 # Run tests tests, lint, and fix
 [group('code')]
-verify: && test lint-fix
-    @echo "Testing, linting, and fixing"
+verify: && test lint-fix security-check
+    @echo "Testing, linting, fixing, and checking vulnerabilities"
 
 # Display directory tree
 [group('code')]
