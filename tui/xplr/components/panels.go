@@ -124,11 +124,7 @@ func (p *Panel) configureTabHelp() {
 	}
 }
 
-func (p *Panel) Init() tea.Cmd {
-	return nil
-}
-
-func (p *Panel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (p *Panel) Update(msg tea.Msg) (*Panel, tea.Cmd) {
 	// Handle tab navigation with Shift-H (previous) and Shift-L (next)
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		if len(p.tabs) > 1 {

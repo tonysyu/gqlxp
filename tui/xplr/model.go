@@ -8,11 +8,11 @@ import (
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/search"
 	"github.com/tonysyu/gqlxp/tui/adapters"
-	"github.com/tonysyu/gqlxp/tui/xplr/cmdpalette"
 	"github.com/tonysyu/gqlxp/tui/config"
-	"github.com/tonysyu/gqlxp/tui/xplr/overlay"
+	"github.com/tonysyu/gqlxp/tui/xplr/cmdpalette"
 	"github.com/tonysyu/gqlxp/tui/xplr/components"
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
+	"github.com/tonysyu/gqlxp/tui/xplr/overlay"
 )
 
 // SchemaLoadedMsg is sent when a schema is loaded or updated
@@ -235,17 +235,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	m.sizePanels()
 
 	// Update visible panels in the stack
-	var newModel tea.Model
 	var cmd tea.Cmd
 
 	// Only the left (focused) panel receives input; right panel is display-only
 	shouldReceiveMsg := m.shouldFocusedPanelReceiveMessage(msg)
 	if shouldReceiveMsg && m.nav.CurrentPanel() != nil {
 		currentPanel := m.nav.CurrentPanel()
-		newModel, cmd = currentPanel.Update(msg)
-		if panel, ok := newModel.(*components.Panel); ok {
-			m.nav.SetCurrentPanel(panel)
-		}
+		_, cmd = currentPanel.Update(msg)
 		cmds = append(cmds, cmd)
 	}
 
@@ -392,10 +388,7 @@ func (m *Model) updateFocusedPanel(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd)
 	}
 
 	currentPanel := m.nav.CurrentPanel()
-	newModel, cmd := currentPanel.Update(msg)
-	if panel, ok := newModel.(*components.Panel); ok {
-		m.nav.SetCurrentPanel(panel)
-	}
+	_, cmd := currentPanel.Update(msg)
 	cmds = append(cmds, cmd)
 
 	return *m, tea.Batch(cmds...)

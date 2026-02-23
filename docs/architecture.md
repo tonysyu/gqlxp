@@ -24,6 +24,18 @@ For build and development commands, see [Development Commands](development.md).
 
 Internal imports are restricted by package. See `tests/fitness/hierarchy_test.go`.
 
+## The Elm Architecture (Bubble Tea)
+
+Bubble Tea follows The Elm Architecture (TEA), a unidirectional data flow pattern:
+
+- **Model**: Immutable state struct — each component owns its state
+- **Init**: Returns initial `tea.Cmd` to run on startup (often `nil`)
+- **Update**: `(Model, tea.Msg) → (Model, tea.Cmd)` — pure state transitions; returns updated model copy and optional side effects
+- **View**: `Model → string` — pure rendering; no side effects
+- **Msg**: Events dispatched through the runtime (key presses, window resize, custom types like `SchemaLoadedMsg`)
+- **Cmd**: Deferred side effect (I/O, async work) that eventually produces a `Msg`; compose multiple with `tea.Batch`
+- Parent models delegate to sub-models in `Update`, storing results back: `m.sub, cmd = m.sub.Update(msg)`
+
 ## Key Interfaces
 - **`ListItem`**: Interactive list items with `Open() Panel` method
 - **`Panel`**: Resizable Bubble Tea model with `SetSize(width, height int)`

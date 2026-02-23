@@ -29,8 +29,8 @@ func renderMinimalPanel(panel *components.Panel) string {
 }
 
 func nextPanelTab(panel *components.Panel) *components.Panel {
-	updatedModel, _ := panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'L'}})
-	return updatedModel.(*components.Panel)
+	panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'L'}})
+	return panel
 }
 
 type minimalItemDelegate struct{}
