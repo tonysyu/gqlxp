@@ -1,6 +1,7 @@
 package libselect
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/tonysyu/gqlxp/gql/introspection"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/config"
@@ -22,6 +24,7 @@ type Model struct {
 	width  int
 	height int
 	keymap config.LibSelectKeymaps
+	errMsg string
 }
 
 type schemaListItem struct {
@@ -63,6 +66,17 @@ type SchemaSelectedMsg struct {
 // DefaultSchemaSetMsg is sent when a schema is set as the default
 type DefaultSchemaSetMsg struct {
 	SchemaID string
+}
+
+// SchemaUpdatedMsg is sent when a schema is successfully updated from its source URL
+type SchemaUpdatedMsg struct {
+	SchemaID  string
+	UpdatedAt time.Time
+}
+
+// schemaUpdateErrMsg carries an error from an update attempt
+type schemaUpdateErrMsg struct {
+	err error
 }
 
 // New creates a new library selection model
@@ -108,10 +122,10 @@ func New(lib library.Library) (Model, error) {
 	listModel.Title = "Select a Schema"
 	listModel.SetShowStatusBar(false)
 	listModel.AdditionalShortHelpKeys = func() []key.Binding {
-		return []key.Binding{keymap.Select, keymap.SetDefault}
+		return []key.Binding{keymap.Select, keymap.SetDefault, keymap.UpdateSchema}
 	}
 	listModel.AdditionalFullHelpKeys = func() []key.Binding {
-		return []key.Binding{keymap.Select, keymap.SetDefault}
+		return []key.Binding{keymap.Select, keymap.SetDefault, keymap.UpdateSchema}
 	}
 
 	m := Model{
@@ -143,6 +157,12 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if item, ok := m.list.SelectedItem().(schemaListItem); ok {
 				return m, m.setDefaultSchema(item.id)
 			}
+		case key.Matches(msg, m.keymap.UpdateSchema):
+			if item, ok := m.list.SelectedItem().(schemaListItem); ok {
+				m.errMsg = ""
+				m.list.SetSize(m.width, m.height-2)
+				return m, m.updateSchema(item.id)
+			}
 		}
 	case DefaultSchemaSetMsg:
 		items := m.list.Items()
@@ -154,10 +174,28 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 		cmd := m.list.SetItems(items)
 		return m, cmd
+	case SchemaUpdatedMsg:
+		items := m.list.Items()
+		for i, item := range items {
+			if si, ok := item.(schemaListItem); ok && si.id == msg.SchemaID {
+				si.updatedAt = msg.UpdatedAt
+				items[i] = si
+			}
+		}
+		cmd := m.list.SetItems(items)
+		return m, cmd
+	case schemaUpdateErrMsg:
+		m.errMsg = msg.err.Error()
+		m.list.SetSize(m.width, m.height-3)
+		return m, nil
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.list.SetSize(msg.Width, msg.Height-2)
+		listHeight := msg.Height - 2
+		if m.errMsg != "" {
+			listHeight--
+		}
+		m.list.SetSize(msg.Width, listHeight)
 	}
 
 	var cmd tea.Cmd
@@ -172,6 +210,34 @@ func (m Model) setDefaultSchema(schemaID string) tea.Cmd {
 			return nil
 		}
 		return DefaultSchemaSetMsg{SchemaID: schemaID}
+	}
+}
+
+func (m Model) updateSchema(schemaID string) tea.Cmd {
+	return func() tea.Msg {
+		schema, err := m.lib.Get(schemaID)
+		if err != nil {
+			return schemaUpdateErrMsg{fmt.Errorf("failed to get schema: %w", err)}
+		}
+		if schema.Metadata.SourceURL == "" {
+			return schemaUpdateErrMsg{fmt.Errorf("schema '%s' has no URL to update from", schemaID)}
+		}
+
+		resp, err := introspection.FetchSchema(context.Background(), schema.Metadata.SourceURL, introspection.DefaultClientOptions())
+		if err != nil {
+			return schemaUpdateErrMsg{fmt.Errorf("failed to fetch schema: %w", err)}
+		}
+
+		content, err := introspection.ToSDL(resp)
+		if err != nil {
+			return schemaUpdateErrMsg{fmt.Errorf("failed to convert schema: %w", err)}
+		}
+
+		if err := m.lib.UpdateContent(schemaID, content); err != nil {
+			return schemaUpdateErrMsg{fmt.Errorf("failed to update schema: %w", err)}
+		}
+
+		return SchemaUpdatedMsg{SchemaID: schemaID, UpdatedAt: time.Now()}
 	}
 }
 
@@ -205,6 +271,10 @@ func (m Model) View() string {
 			Align(lipgloss.Center, lipgloss.Center).
 			Render("No schemas in library\n\nAdd schemas with: gqlxp library add <id> <file>")
 		return emptyMsg
+	}
+	if m.errMsg != "" {
+		errStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
+		return lipgloss.JoinVertical(lipgloss.Left, m.list.View(), errStyle.Render(m.errMsg))
 	}
 	return m.list.View()
 }

@@ -15,11 +15,14 @@ import (
 
 // mockLibrary provides a mock library for testing
 type mockLibrary struct {
-	schemas        []library.SchemaInfo
-	getErr         error
-	listErr        error
-	setDefaultErr  error
-	setDefaultID   string
+	schemas         []library.SchemaInfo
+	getErr          error
+	listErr         error
+	setDefaultErr   error
+	setDefaultID    string
+	sourceURL       string
+	updateContentID string
+	updateContentErr error
 }
 
 func (m *mockLibrary) Add(id, displayName, sourcePath string) error {
@@ -39,6 +42,7 @@ func (m *mockLibrary) Get(id string) (*library.Schema, error) {
 		Content: []byte(`type Query { hello: String }`),
 		Metadata: library.SchemaMetadata{
 			DisplayName: "Test Schema",
+			SourceURL:   m.sourceURL,
 		},
 	}, nil
 }
@@ -67,7 +71,8 @@ func (m *mockLibrary) FindByPath(absolutePath string) (*library.Schema, error) {
 }
 
 func (m *mockLibrary) UpdateContent(id string, content []byte) error {
-	return nil
+	m.updateContentID = id
+	return m.updateContentErr
 }
 
 func (m *mockLibrary) GetDefaultSchema() (string, error) {
@@ -263,4 +268,56 @@ func TestModel_Update_DefaultSchemaSetMsg(t *testing.T) {
 	model, _ = model.Update(libselect.DefaultSchemaSetMsg{SchemaID: "schema2"})
 
 	assert.StringContains(testx.NormalizeView(model.View()), "Schema Two (Default; id: schema2)")
+}
+
+func TestModel_Update_UpdateKey_NoURL(t *testing.T) {
+	is := is.New(t)
+	assert := assert.New(t)
+
+	lib := &mockLibrary{
+		schemas: []library.SchemaInfo{
+			{ID: "schema1", DisplayName: "Schema One"},
+		},
+		// sourceURL is empty - no URL associated
+	}
+
+	model, err := libselect.New(lib)
+	is.NoErr(err)
+
+	msg := tea.WindowSizeMsg{Width: 80, Height: 24}
+	model, _ = model.Update(msg)
+
+	// Press "u" to update
+	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'u'}}
+	model, cmd := model.Update(keyMsg)
+	is.True(cmd != nil) // Should return a cmd
+
+	// Execute the cmd - should return an error since no URL
+	result := cmd()
+	model, _ = model.Update(result)
+
+	assert.StringContains(model.View(), "has no URL to update from")
+}
+
+func TestModel_Update_SchemaUpdatedMsg(t *testing.T) {
+	is := is.New(t)
+	assert := assert.New(t)
+
+	updatedAt := time.Date(2024, 3, 15, 10, 30, 0, 0, time.UTC)
+	lib := &mockLibrary{
+		schemas: []library.SchemaInfo{
+			{ID: "schema1", DisplayName: "Schema One"},
+		},
+	}
+
+	model, err := libselect.New(lib)
+	is.NoErr(err)
+
+	msg := tea.WindowSizeMsg{Width: 80, Height: 24}
+	model, _ = model.Update(msg)
+
+	// Send SchemaUpdatedMsg
+	model, _ = model.Update(libselect.SchemaUpdatedMsg{SchemaID: "schema1", UpdatedAt: updatedAt})
+
+	assert.StringContains(testx.NormalizeView(model.View()), "last updated: 2024-03-15 10:30")
 }

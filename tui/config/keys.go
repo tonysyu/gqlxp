@@ -98,8 +98,9 @@ func NewOverlayKeymaps() OverlayKeymaps {
 // LibSelectKeymaps contains keymaps for the library selection model
 type LibSelectKeymaps struct {
 	GlobalKeymaps
-	Select     key.Binding
-	SetDefault key.Binding
+	Select       key.Binding
+	SetDefault   key.Binding
+	UpdateSchema key.Binding
 }
 
 // NewLibSelectKeymaps creates a new LibSelectKeymaps with default bindings
@@ -113,6 +114,10 @@ func NewLibSelectKeymaps() LibSelectKeymaps {
 		SetDefault: key.NewBinding(
 			key.WithKeys("s"),
 			key.WithHelp("s", "set as default"),
+		),
+		UpdateSchema: key.NewBinding(
+			key.WithKeys("u"),
+			key.WithHelp("u", "update schema"),
 		),
 	}
 }
