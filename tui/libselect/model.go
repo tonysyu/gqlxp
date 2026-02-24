@@ -60,6 +60,11 @@ type SchemaSelectedMsg struct {
 	Metadata library.SchemaMetadata
 }
 
+// DefaultSchemaSetMsg is sent when a schema is set as the default
+type DefaultSchemaSetMsg struct {
+	SchemaID string
+}
+
 // New creates a new library selection model
 func New(lib library.Library) (Model, error) {
 	styles := config.DefaultStyles()
@@ -96,20 +101,24 @@ func New(lib library.Library) (Model, error) {
 		items[i] = item
 	}
 
+	keymap := config.NewLibSelectKeymaps()
+
 	delegate := list.NewDefaultDelegate()
 	listModel := list.New(items, delegate, 0, 0)
 	listModel.Title = "Select a Schema"
 	listModel.SetShowStatusBar(false)
+	listModel.AdditionalShortHelpKeys = func() []key.Binding {
+		return []key.Binding{keymap.Select, keymap.SetDefault}
+	}
+	listModel.AdditionalFullHelpKeys = func() []key.Binding {
+		return []key.Binding{keymap.Select, keymap.SetDefault}
+	}
 
 	m := Model{
 		list:   listModel,
 		lib:    lib,
 		styles: styles,
-		keymap: config.NewLibSelectKeymaps(),
-	}
-
-	listModel.AdditionalShortHelpKeys = func() []key.Binding {
-		return []key.Binding{m.keymap.Select}
+		keymap: keymap,
 	}
 
 	return m, nil
@@ -130,7 +139,21 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			if item, ok := m.list.SelectedItem().(schemaListItem); ok {
 				return m, m.loadSchema(item.id)
 			}
+		case key.Matches(msg, m.keymap.SetDefault):
+			if item, ok := m.list.SelectedItem().(schemaListItem); ok {
+				return m, m.setDefaultSchema(item.id)
+			}
 		}
+	case DefaultSchemaSetMsg:
+		items := m.list.Items()
+		for i, item := range items {
+			if si, ok := item.(schemaListItem); ok {
+				si.isDefault = si.id == msg.SchemaID
+				items[i] = si
+			}
+		}
+		cmd := m.list.SetItems(items)
+		return m, cmd
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -140,6 +163,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
 	return m, cmd
+}
+
+func (m Model) setDefaultSchema(schemaID string) tea.Cmd {
+	return func() tea.Msg {
+		if err := m.lib.SetDefaultSchema(schemaID); err != nil {
+			// TODO: Show error in UI
+			return nil
+		}
+		return DefaultSchemaSetMsg{SchemaID: schemaID}
+	}
 }
 
 func (m Model) loadSchema(schemaID string) tea.Cmd {
