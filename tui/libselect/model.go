@@ -2,6 +2,7 @@ package libselect
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -27,11 +28,18 @@ type schemaListItem struct {
 	id          string
 	displayName string
 	updatedAt   time.Time
+	isDefault   bool
 }
 
 func (i schemaListItem) Title() string {
 	if i.displayName == "" || i.displayName == i.id {
+		if i.isDefault {
+			return fmt.Sprintf("%s (Default)", i.id)
+		}
 		return i.id
+	}
+	if i.isDefault {
+		return fmt.Sprintf("%s (Default; id: %s)", i.displayName, i.id)
 	}
 	return fmt.Sprintf("%s (id: %s)", i.displayName, i.id)
 }
@@ -62,14 +70,30 @@ func New(lib library.Library) (Model, error) {
 		return Model{}, fmt.Errorf("failed to load schemas: %w", err)
 	}
 
+	defaultID, err := lib.GetDefaultSchema()
+	if err != nil {
+		return Model{}, fmt.Errorf("failed to get default schema: %w", err)
+	}
+
 	// Convert to list items
-	items := make([]list.Item, len(schemas))
+	schemaItems := make([]schemaListItem, len(schemas))
 	for i, schema := range schemas {
-		items[i] = schemaListItem{
+		schemaItems[i] = schemaListItem{
 			id:          schema.ID,
 			displayName: schema.DisplayName,
 			updatedAt:   schema.UpdatedAt,
+			isDefault:   schema.ID == defaultID,
 		}
+	}
+
+	// Sort so default schema appears first
+	sort.SliceStable(schemaItems, func(i, j int) bool {
+		return schemaItems[i].isDefault && !schemaItems[j].isDefault
+	})
+
+	items := make([]list.Item, len(schemaItems))
+	for i, item := range schemaItems {
+		items[i] = item
 	}
 
 	delegate := list.NewDefaultDelegate()
