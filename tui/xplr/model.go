@@ -215,9 +215,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.state = xplrCmdPaletteView
 			return m, nil
 		case key.Matches(msg, m.keymap.NextGQLType):
-			cmds = m.cycleGQLType(true, cmds)
+			var cmd tea.Cmd
+			m, cmd = m.cycleGQLType(true)
+			cmds = append(cmds, cmd)
 		case key.Matches(msg, m.keymap.PrevGQLType):
-			cmds = m.cycleGQLType(false, cmds)
+			var cmd tea.Cmd
+			m, cmd = m.cycleGQLType(false)
+			cmds = append(cmds, cmd)
 		default:
 			// Delegate to appropriate handler based on search focus state
 			if m.nav.CurrentType() == navigation.SearchType && m.searchFocused {
@@ -245,10 +249,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *Model) openOverlayForSelectedItem() {
-	// Always use the left panel (first visible panel in stack)
+func (m Model) openOverlayForSelectedItem() Model {
 	if m.nav.CurrentPanel() == nil {
-		return
+		return m
 	}
 	focusedPanel := m.nav.CurrentPanel()
 	if selectedItem := focusedPanel.SelectedItem(); selectedItem != nil {
@@ -260,10 +263,11 @@ func (m *Model) openOverlayForSelectedItem() {
 			}
 		}
 	}
+	return m
 }
 
 // cycleGQLType handles cycling between GQL types (forward or backward)
-func (m *Model) cycleGQLType(forward bool, cmds []tea.Cmd) []tea.Cmd {
+func (m Model) cycleGQLType(forward bool) (Model, tea.Cmd) {
 	// Blur search input when switching away from Search tab
 	if m.searchFocused {
 		m.searchFocused = false
@@ -285,16 +289,14 @@ func (m *Model) cycleGQLType(forward bool, cmds []tea.Cmd) []tea.Cmd {
 		m.updateKeybindings()
 		var cmd tea.Cmd
 		m.searchInput, cmd = m.searchInput.Focus()
-		cmds = append(cmds, cmd)
+		return m, cmd
 	}
 
-	return cmds
+	return m, nil
 }
 
 // handleSearchFocused handles messages when the search input is focused
-func (m *Model) handleSearchFocused(msg tea.Msg) (Model, tea.Cmd) {
-	var cmds []tea.Cmd
-
+func (m Model) handleSearchFocused(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch {
@@ -305,26 +307,26 @@ func (m *Model) handleSearchFocused(msg tea.Msg) (Model, tea.Cmd) {
 				m.searchFocused = false
 				m.searchInput = m.searchInput.Blur()
 				m.updateKeybindings()
-				cmds = append(cmds, m.executeSearch(query))
+				return m, m.executeSearch(query)
 			}
-			return *m, tea.Batch(cmds...)
+			return m, nil
 		case key.Matches(msg, m.keymap.SearchClear):
 			// Clear input and keep focus
 			m.searchInput = m.searchInput.SetValue("")
-			return *m, nil
+			return m, nil
 		default:
 			// Pass message to search input
 			var cmd tea.Cmd
 			m.searchInput, cmd = m.searchInput.Update(msg)
-			return *m, cmd
+			return m, cmd
 		}
 	}
 
-	return *m, nil
+	return m, nil
 }
 
 // handleNormal handles messages in normal mode (when search is not focused)
-func (m *Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
+func (m Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
 	keyMsg, ok := msg.(tea.KeyMsg)
 	if !ok {
 		return m.updateFocusedPanel(msg, cmds)
@@ -337,28 +339,28 @@ func (m *Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.searchInput, cmd = m.searchInput.Focus()
 		cmds = append(cmds, cmd)
-		return *m, tea.Batch(cmds...)
+		return m, tea.Batch(cmds...)
 	}
 
 	// Handle remaining global keys
 	switch {
 	case key.Matches(keyMsg, m.keymap.ToggleOverlay):
-		m.openOverlayForSelectedItem()
+		m = m.openOverlayForSelectedItem()
 	case key.Matches(keyMsg, m.keymap.NextPanel):
-		cmds = m.handleNextPanel(cmds)
+		m, cmds = m.handleNextPanel(cmds)
 	case key.Matches(keyMsg, m.keymap.PrevPanel):
-		m.handlePrevPanel()
+		m = m.handlePrevPanel()
 	}
 
 	return m.updateFocusedPanel(msg, cmds)
 }
 
 // handleNextPanel moves forward in the navigation stack
-func (m *Model) handleNextPanel(cmds []tea.Cmd) []tea.Cmd {
+func (m Model) handleNextPanel(cmds []tea.Cmd) (Model, []tea.Cmd) {
 	var moved bool
 	m.nav, moved = m.nav.NavigateForward()
 	if !moved {
-		return cmds
+		return m, cmds
 	}
 
 	m.updatePanelFocusStates()
@@ -366,41 +368,42 @@ func (m *Model) handleNextPanel(cmds []tea.Cmd) []tea.Cmd {
 	// Open up child panel for ResultType if it exists
 	focusedPanel := m.nav.CurrentPanel()
 	if focusedPanel == nil {
-		return cmds
+		return m, cmds
 	}
 
 	if openCmd := focusedPanel.OpenSelectedItem(); openCmd != nil {
 		cmds = append(cmds, openCmd)
 	}
 
-	return cmds
+	return m, cmds
 }
 
 // handlePrevPanel moves backward in the navigation stack
-func (m *Model) handlePrevPanel() {
+func (m Model) handlePrevPanel() Model {
 	var moved bool
 	m.nav, moved = m.nav.NavigateBackward()
 	if moved {
 		m.updatePanelFocusStates()
 	}
+	return m
 }
 
 // updateFocusedPanel updates the currently focused panel with the message
-func (m *Model) updateFocusedPanel(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
+func (m Model) updateFocusedPanel(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
 	shouldReceiveMsg := m.shouldFocusedPanelReceiveMessage(msg)
 	if !shouldReceiveMsg || m.nav.CurrentPanel() == nil {
-		return *m, tea.Batch(cmds...)
+		return m, tea.Batch(cmds...)
 	}
 
 	updatedPanel, cmd := m.nav.CurrentPanel().Update(msg)
 	m.nav = m.nav.SetCurrentPanel(updatedPanel)
 	cmds = append(cmds, cmd)
 
-	return *m, tea.Batch(cmds...)
+	return m, tea.Batch(cmds...)
 }
 
 // shouldFocusedPanelReceiveMessage determines if the focused panel should receive a message
-func (m *Model) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
+func (m Model) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Global navigation keys handled by main model should not go to panels
