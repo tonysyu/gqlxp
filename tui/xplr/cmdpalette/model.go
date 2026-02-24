@@ -165,7 +165,6 @@ func buildCommandItems(keymaps CommandKeymaps) []list.Item {
 		keymaps.Main.PrevPanel,
 	))
 	items = append(items, newCommandItem(
-
 		"Main",
 		"Go to next GQL type class",
 		keymaps.Main.NextGQLType,
@@ -174,6 +173,11 @@ func buildCommandItems(keymaps CommandKeymaps) []list.Item {
 		"Main",
 		"Go to previous GQL type class",
 		keymaps.Main.PrevGQLType,
+	))
+	items = append(items, newCommandItem(
+		"Main",
+		"Open schema library",
+		keymaps.Main.OpenLibSelect,
 	))
 	items = append(items, newCommandItem(
 		"Main",

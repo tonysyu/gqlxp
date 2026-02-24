@@ -15,6 +15,9 @@ import (
 	"github.com/tonysyu/gqlxp/tui/xplr/overlay"
 )
 
+// OpenLibSelectMsg is sent when the user requests to open the library selection view
+type OpenLibSelectMsg struct{}
+
 // SchemaLoadedMsg is sent when a schema is loaded or updated
 type SchemaLoadedMsg struct {
 	Schema         adapters.SchemaView
@@ -100,6 +103,7 @@ func NewEmpty() Model {
 		m.keymap.PrevGQLType,
 		m.keymap.ToggleOverlay,
 		m.keymap.CommandPalette,
+		m.keymap.OpenLibSelect,
 	}
 
 	// Don't load panels until schema is provided
@@ -209,6 +213,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keymap.Quit):
 			return m, tea.Quit
+		case key.Matches(msg, m.keymap.OpenLibSelect):
+			return m, func() tea.Msg { return OpenLibSelectMsg{} }
 		case key.Matches(msg, m.keymap.CommandPalette):
 			searchActive := m.nav.CurrentType() == navigation.SearchType
 			m.commandPalette = m.commandPalette.Show(m.width, m.height, searchActive)

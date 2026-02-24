@@ -36,6 +36,7 @@ type MainKeymaps struct {
 	GlobalKeymaps
 	NextPanel, PrevPanel, NextGQLType, PrevGQLType, ToggleOverlay key.Binding
 	SearchFocus, SearchSubmit, SearchClear                        key.Binding
+	OpenLibSelect                                                 key.Binding
 }
 
 // NewMainKeymaps creates a new MainKeymaps with default bindings
@@ -73,6 +74,10 @@ func NewMainKeymaps() MainKeymaps {
 		SearchClear: key.NewBinding(
 			key.WithKeys("esc"),
 			key.WithHelp("esc", "clear search"),
+		),
+		OpenLibSelect: key.NewBinding(
+			key.WithKeys("ctrl+o"),
+			key.WithHelp("⌃+o", "open library"),
 		),
 	}
 }

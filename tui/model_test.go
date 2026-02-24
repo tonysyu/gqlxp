@@ -10,6 +10,7 @@ import (
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/libselect"
+	"github.com/tonysyu/gqlxp/tui/xplr"
 )
 
 // setupTestLibrary creates a temporary config directory for testing
@@ -202,4 +203,62 @@ func TestModel_ForwardsWindowSizeOnTransition(t *testing.T) {
 	// Verify xplr model received the window size
 	is.Equal(model.xplr.Width(), 120)
 	is.Equal(model.xplr.Height(), 60)
+}
+
+func TestModel_TransitionFromXplrToLibselect(t *testing.T) {
+	is := is.New(t)
+
+	// Setup test library (required for newModelWithLibselect)
+	_, cleanup := setupTestLibrary(t)
+	defer cleanup()
+
+	schemaContent := `
+		type Query {
+			hello: String!
+		}
+	`
+	parsedSchema, err := adapters.ParseSchemaString(schemaContent)
+	is.NoErr(err)
+
+	model := newModelWithXplr(parsedSchema)
+	is.Equal(model.state, xplrView)
+
+	updatedModel, _ := model.Update(xplr.OpenLibSelectMsg{})
+
+	m, ok := updatedModel.(Model)
+	is.True(ok)
+	is.Equal(m.state, libselectView)
+}
+
+func TestModel_OpenLibSelectKeyTransitionsToLibselect(t *testing.T) {
+	is := is.New(t)
+
+	_, cleanup := setupTestLibrary(t)
+	defer cleanup()
+
+	schemaContent := `
+		type Query {
+			hello: String!
+		}
+	`
+	parsedSchema, err := adapters.ParseSchemaString(schemaContent)
+	is.NoErr(err)
+
+	model := newModelWithXplr(parsedSchema)
+	is.Equal(model.state, xplrView)
+
+	// Press ctrl+o to open libselect
+	keyMsg := tea.KeyMsg{Type: tea.KeyCtrlO}
+	updatedModel, cmd := model.Update(keyMsg)
+
+	// The key press in xplr returns a cmd; execute it to get OpenLibSelectMsg
+	is.True(cmd != nil)
+	msg := cmd()
+
+	// Forward the returned message to the top-level model
+	updatedModel, _ = updatedModel.(Model).Update(msg)
+
+	m, ok := updatedModel.(Model)
+	is.True(ok)
+	is.Equal(m.state, libselectView)
 }

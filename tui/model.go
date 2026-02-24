@@ -105,6 +105,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Handle transitions between submodes
 	switch msg := msg.(type) {
+	case xplr.OpenLibSelectMsg:
+		_ = msg
+		m.state = libselectView
+		return m, m.libselect.Init()
 	case libselect.SchemaSelectedMsg:
 		// Transition from libselect to xplr by sending schema to existing xplr model
 		m.state = xplrView

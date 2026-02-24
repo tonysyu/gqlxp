@@ -20,6 +20,7 @@ var (
 	keyNextItem      = tea.KeyMsg{Type: tea.KeyDown}
 	keyPrevItem      = tea.KeyMsg{Type: tea.KeyUp}
 	keyToggleOverlay = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}}
+	keyOpenLibSelect = tea.KeyMsg{Type: tea.KeyCtrlO}
 )
 
 func TestNewModel(t *testing.T) {
@@ -206,6 +207,19 @@ func TestModelWithEmptySchema(t *testing.T) {
 	// Should be able to cycle through types even with empty schema
 	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}})
 	is.Equal(model.nav.CurrentType(), navigation.MutationType)
+}
+
+func TestModelOpenLibSelect(t *testing.T) {
+	is := is.New(t)
+
+	model := New(adapters.SchemaView{})
+
+	_, cmd := model.Update(keyOpenLibSelect)
+
+	is.True(cmd != nil)
+	msg := cmd()
+	_, ok := msg.(OpenLibSelectMsg)
+	is.True(ok)
 }
 
 func TestModelKeyboardShortcuts(t *testing.T) {
