@@ -81,6 +81,7 @@ get_latest_app_version() {
     if [ -z "$version" ]; then
         echo "Error: Could not determine latest version" >&2
         echo "Tip: If you're hitting rate limits (e.g. 403 error), set GITHUB_TOKEN environment variable" >&2
+        echo "Tip: Alternatively, download and extract the appropriate archive from https://github.com/${REPO}/releases/" >&2
         exit 1
     fi
     echo "$version"
