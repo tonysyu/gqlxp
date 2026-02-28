@@ -2,6 +2,7 @@ package libselect_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,13 +16,13 @@ import (
 
 // mockLibrary provides a mock library for testing
 type mockLibrary struct {
-	schemas         []library.SchemaInfo
-	getErr          error
-	listErr         error
-	setDefaultErr   error
-	setDefaultID    string
-	sourceURL       string
-	updateContentID string
+	schemas          []library.SchemaInfo
+	getErr           error
+	listErr          error
+	setDefaultErr    error
+	setDefaultID     string
+	sourceURL        string
+	updateContentID  string
 	updateContentErr error
 }
 
@@ -270,6 +271,28 @@ func TestModel_Update_DefaultSchemaSetMsg(t *testing.T) {
 	assert.StringContains(testx.NormalizeView(model.View()), "Schema Two (Default; id: schema2)")
 }
 
+func TestModel_Update_UpdateKey_ShowsLoadingIndicator(t *testing.T) {
+	assert := assert.New(t)
+
+	lib := &mockLibrary{
+		schemas: []library.SchemaInfo{
+			{ID: "schema1", DisplayName: "Schema One"},
+		},
+	}
+
+	model, err := libselect.New(lib)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	model, _ = model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+
+	// Press "u" to update — before any cmd completes
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'u'}})
+
+	assert.StringContains(model.View(), "Updating schema...")
+}
+
 func TestModel_Update_UpdateKey_NoURL(t *testing.T) {
 	is := is.New(t)
 	assert := assert.New(t)
@@ -292,10 +315,15 @@ func TestModel_Update_UpdateKey_NoURL(t *testing.T) {
 	model, cmd := model.Update(keyMsg)
 	is.True(cmd != nil) // Should return a cmd
 
-	// Execute the cmd - should return an error since no URL
-	result := cmd()
-	model, _ = model.Update(result)
+	// Execute the batch cmd and process each sub-cmd result
+	batchMsg, ok := cmd().(tea.BatchMsg)
+	is.True(ok) // Should return a BatchMsg from tea.Batch
+	for _, subCmd := range batchMsg {
+		result := subCmd()
+		model, _ = model.Update(result)
+	}
 
+	is.True(!strings.Contains(model.View(), "Updating schema...")) // Loading indicator should be gone
 	assert.StringContains(model.View(), "has no URL to update from")
 }
 
@@ -308,6 +336,7 @@ func TestModel_Update_SchemaUpdatedMsg(t *testing.T) {
 		schemas: []library.SchemaInfo{
 			{ID: "schema1", DisplayName: "Schema One"},
 		},
+		sourceURL: "http://example.com/graphql",
 	}
 
 	model, err := libselect.New(lib)
@@ -316,8 +345,13 @@ func TestModel_Update_SchemaUpdatedMsg(t *testing.T) {
 	msg := tea.WindowSizeMsg{Width: 80, Height: 24}
 	model, _ = model.Update(msg)
 
-	// Send SchemaUpdatedMsg
+	// Start update to set isUpdating = true
+	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'u'}})
+	is.True(strings.Contains(model.View(), "Updating schema...")) // Loading indicator should be shown
+
+	// Send SchemaUpdatedMsg — loading indicator should clear
 	model, _ = model.Update(libselect.SchemaUpdatedMsg{SchemaID: "schema1", UpdatedAt: updatedAt})
 
+	is.True(!strings.Contains(model.View(), "Updating schema...")) // Loading indicator should be gone
 	assert.StringContains(testx.NormalizeView(model.View()), "last updated: 2024-03-15 10:30")
 }

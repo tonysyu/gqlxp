@@ -8,6 +8,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/tonysyu/gqlxp/gql/introspection"
@@ -18,13 +19,15 @@ import (
 
 // Model is the TUI for selecting a schema from the library
 type Model struct {
-	list   list.Model
-	lib    library.Library
-	styles config.Styles
-	width  int
-	height int
-	keymap config.LibSelectKeymaps
-	errMsg string
+	list      list.Model
+	lib       library.Library
+	styles    config.Styles
+	width     int
+	height    int
+	keymap    config.LibSelectKeymaps
+	errMsg    string
+	spinner   spinner.Model
+	isUpdating bool
 }
 
 type schemaListItem struct {
@@ -128,11 +131,15 @@ func New(lib library.Library) (Model, error) {
 		return []key.Binding{keymap.Select, keymap.SetDefault, keymap.UpdateSchema}
 	}
 
+	s := spinner.New()
+	s.Spinner = spinner.Dot
+
 	m := Model{
-		list:   listModel,
-		lib:    lib,
-		styles: styles,
-		keymap: keymap,
+		list:    listModel,
+		lib:     lib,
+		styles:  styles,
+		keymap:  keymap,
+		spinner: s,
 	}
 
 	return m, nil
@@ -160,9 +167,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.UpdateSchema):
 			if item, ok := m.list.SelectedItem().(schemaListItem); ok {
 				m.errMsg = ""
-				m.list.SetSize(m.width, m.height-2)
-				return m, m.updateSchema(item.id)
+				m.isUpdating = true
+				m.list.SetSize(m.width, m.height-3)
+				return m, tea.Batch(m.updateSchema(item.id), m.spinner.Tick)
 			}
+		}
+	case spinner.TickMsg:
+		if m.isUpdating {
+			var cmd tea.Cmd
+			m.spinner, cmd = m.spinner.Update(msg)
+			return m, cmd
 		}
 	case DefaultSchemaSetMsg:
 		items := m.list.Items()
@@ -175,6 +189,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmd := m.list.SetItems(items)
 		return m, cmd
 	case SchemaUpdatedMsg:
+		m.isUpdating = false
+		m.list.SetSize(m.width, m.height-2)
 		items := m.list.Items()
 		for i, item := range items {
 			if si, ok := item.(schemaListItem); ok && si.id == msg.SchemaID {
@@ -185,6 +201,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmd := m.list.SetItems(items)
 		return m, cmd
 	case schemaUpdateErrMsg:
+		m.isUpdating = false
 		m.errMsg = msg.err.Error()
 		m.list.SetSize(m.width, m.height-3)
 		return m, nil
@@ -192,7 +209,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		listHeight := msg.Height - 2
-		if m.errMsg != "" {
+		if m.errMsg != "" || m.isUpdating {
 			listHeight--
 		}
 		m.list.SetSize(msg.Width, listHeight)
@@ -271,6 +288,10 @@ func (m Model) View() string {
 			Align(lipgloss.Center, lipgloss.Center).
 			Render("No schemas in library\n\nAdd schemas with: gqlxp library add <id> <file>")
 		return emptyMsg
+	}
+	if m.isUpdating {
+		statusLine := m.spinner.View() + " Updating schema..."
+		return lipgloss.JoinVertical(lipgloss.Left, m.list.View(), statusLine)
 	}
 	if m.errMsg != "" {
 		errStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
