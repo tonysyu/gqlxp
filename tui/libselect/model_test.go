@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/libselect"
@@ -135,9 +135,9 @@ func TestModel_Update_QuitKeys(t *testing.T) {
 	quitKeys := []string{"ctrl+c", "ctrl+d"}
 	for _, key := range quitKeys {
 		t.Run(key, func(t *testing.T) {
-			msg := tea.KeyMsg{Type: tea.KeyCtrlC}
+			msg := tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}
 			if key == "ctrl+d" {
-				msg = tea.KeyMsg{Type: tea.KeyCtrlD}
+				msg = tea.KeyPressMsg{Code: 'd', Mod: tea.ModCtrl}
 			}
 			_, cmd := model.Update(msg)
 			is.True(cmd != nil) // Quit key should return quit cmd
@@ -236,7 +236,7 @@ func TestModel_Update_SetDefaultKey(t *testing.T) {
 	model, err := libselect.New(lib)
 	is.NoErr(err)
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}}
+	msg := tea.KeyPressMsg{Code: 's'}
 	_, cmd := model.Update(msg)
 	is.True(cmd != nil) // Should return a cmd
 
@@ -288,7 +288,7 @@ func TestModel_Update_UpdateKey_ShowsLoadingIndicator(t *testing.T) {
 	model, _ = model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 
 	// Press "u" to update — before any cmd completes
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'u'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'u'})
 
 	assert.StringContains(model.View(), "Updating schema...")
 }
@@ -311,7 +311,7 @@ func TestModel_Update_UpdateKey_NoURL(t *testing.T) {
 	model, _ = model.Update(msg)
 
 	// Press "u" to update
-	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'u'}}
+	keyMsg := tea.KeyPressMsg{Code: 'u'}
 	model, cmd := model.Update(keyMsg)
 	is.True(cmd != nil) // Should return a cmd
 
@@ -346,7 +346,7 @@ func TestModel_Update_SchemaUpdatedMsg(t *testing.T) {
 	model, _ = model.Update(msg)
 
 	// Start update to set isUpdating = true
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'u'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'u'})
 	is.True(strings.Contains(model.View(), "Updating schema...")) // Loading indicator should be shown
 
 	// Send SchemaUpdatedMsg — loading indicator should clear

@@ -1,10 +1,21 @@
 package testx
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
-// NormalizeView strips leading/trailing whitespace and empty lines from multi-line strings
-// This is useful for testing bubble-tea views which may have empty-lines for spacing.
+var ansiEscape = regexp.MustCompile(`\x1b\[[0-9;]*[A-Za-z]`)
+
+// StripANSI removes ANSI escape codes from a string.
+func StripANSI(s string) string {
+	return ansiEscape.ReplaceAllString(s, "")
+}
+
+// NormalizeView strips ANSI escape codes, leading/trailing whitespace, and empty lines from multi-line strings.
+// This is useful for testing bubble-tea views which may have ANSI color codes and empty-lines for spacing.
 func NormalizeView(s string) string {
+	s = StripANSI(s)
 	lines := strings.Split(s, "\n")
 	var result []string
 

@@ -5,8 +5,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/xplr/components"
 	"github.com/tonysyu/gqlxp/utils/testx"
@@ -29,7 +29,7 @@ func renderMinimalPanel(panel *components.Panel) string {
 }
 
 func nextPanelTab(panel *components.Panel) *components.Panel {
-	panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'L'}})
+	panel.Update(tea.KeyPressMsg{Code: 'L'})
 	return panel
 }
 

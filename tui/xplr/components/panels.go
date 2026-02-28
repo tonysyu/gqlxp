@@ -1,10 +1,10 @@
 package components
 
 import (
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/tonysyu/gqlxp/tui/config"
 	"github.com/tonysyu/gqlxp/utils/text"
 )
@@ -126,7 +126,7 @@ func (p *Panel) configureTabHelp() {
 
 func (p *Panel) Update(msg tea.Msg) (*Panel, tea.Cmd) {
 	// Handle tab navigation with Shift-H (previous) and Shift-L (next)
-	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+	if keyMsg, ok := msg.(tea.KeyPressMsg); ok {
 		if len(p.tabs) > 1 {
 			switch {
 			case key.Matches(keyMsg, p.keymap.PrevTab):

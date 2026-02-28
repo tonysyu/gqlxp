@@ -5,10 +5,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/tonysyu/gqlxp/tui/config"
 	"github.com/tonysyu/gqlxp/tui/utils"
 	"github.com/tonysyu/gqlxp/utils/terminal"
@@ -235,7 +235,7 @@ func buildCommandItems(keymaps CommandKeymaps) []list.Item {
 // xplr.Model is responsible for routing messages here only when the palette is active.
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, m.keymaps.Close):
 			return m, func() tea.Msg { return ClosedMsg{} }
@@ -320,40 +320,44 @@ func (m Model) updateCommandAvailability(searchActive bool) Model {
 	return m
 }
 
-// parseKeyString converts a key string to a tea.KeyMsg
-func parseKeyString(keyStr string) tea.KeyMsg {
+// parseKeyString converts a key string to a tea.KeyPressMsg
+func parseKeyString(keyStr string) tea.KeyPressMsg {
 	// Handle common key combinations
 	lower := strings.ToLower(keyStr)
 
 	// Handle special keys
 	switch lower {
 	case "enter":
-		return tea.KeyMsg{Type: tea.KeyEnter}
+		return tea.KeyPressMsg{Code: tea.KeyEnter}
 	case "esc", "escape":
-		return tea.KeyMsg{Type: tea.KeyEsc}
+		return tea.KeyPressMsg{Code: tea.KeyEsc}
 	case "tab":
-		return tea.KeyMsg{Type: tea.KeyTab}
+		return tea.KeyPressMsg{Code: tea.KeyTab}
 	case "space", " ":
-		return tea.KeyMsg{Type: tea.KeySpace, Runes: []rune{' '}}
+		return tea.KeyPressMsg{Code: tea.KeySpace}
 	case "shift+tab":
-		return tea.KeyMsg{Type: tea.KeyShiftTab}
+		return tea.KeyPressMsg{Code: tea.KeyTab, Mod: tea.ModShift}
 	case "shift+left":
-		return tea.KeyMsg{Type: tea.KeyShiftLeft}
+		return tea.KeyPressMsg{Code: tea.KeyLeft, Mod: tea.ModShift}
 	case "shift+right":
-		return tea.KeyMsg{Type: tea.KeyShiftRight}
+		return tea.KeyPressMsg{Code: tea.KeyRight, Mod: tea.ModShift}
 	}
 
 	// Handle ctrl+ combinations
 	if strings.HasPrefix(lower, "ctrl+") {
 		key := strings.TrimPrefix(lower, "ctrl+")
-		return tea.KeyMsg{Type: tea.KeyCtrlC + tea.KeyType(key[0]-'a')} // Approximation
+		return tea.KeyPressMsg{Code: rune(key[0]), Mod: tea.ModCtrl}
 	}
 
 	// Handle single character keys and simple combinations
 	if len(keyStr) == 1 {
-		return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{rune(keyStr[0])}}
+		return tea.KeyPressMsg{Code: rune(keyStr[0])}
 	}
 
-	// Default: treat as runes
-	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(keyStr)}
+	// Default: treat as first rune
+	runes := []rune(keyStr)
+	if len(runes) > 0 {
+		return tea.KeyPressMsg{Code: runes[0]}
+	}
+	return tea.KeyPressMsg{}
 }

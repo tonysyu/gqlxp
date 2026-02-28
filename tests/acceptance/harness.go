@@ -20,8 +20,8 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/xplr"
@@ -32,14 +32,14 @@ import (
 
 // Key messages for simulating user input
 var (
-	keyNextPanel = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{']'}}
-	keyPrevPanel = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'['}}
-	keyNextType  = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}}
-	keyPrevType  = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'{'}}
-	keySpace     = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}}
-	keyEscape    = tea.KeyMsg{Type: tea.KeyEsc}
-	keyDown      = tea.KeyMsg{Type: tea.KeyDown}
-	keyUp        = tea.KeyMsg{Type: tea.KeyUp}
+	keyNextPanel = tea.KeyPressMsg{Code: ']'}
+	keyPrevPanel = tea.KeyPressMsg{Code: '['}
+	keyNextType  = tea.KeyPressMsg{Code: '}'}
+	keyPrevType  = tea.KeyPressMsg{Code: '{'}
+	keySpace     = tea.KeyPressMsg{Code: ' '}
+	keyEscape    = tea.KeyPressMsg{Code: tea.KeyEsc}
+	keyDown      = tea.KeyPressMsg{Code: tea.KeyDown}
+	keyUp        = tea.KeyPressMsg{Code: tea.KeyUp}
 )
 
 // Harness provides high-level test utilities for acceptance testing
@@ -242,7 +242,7 @@ func (a *Assert) getPanelContent(panelIdx int) string {
 
 // getBreadcrumbs returns the breadcrumb text from the rendered view
 func (a *Assert) getBreadcrumbs() string {
-	view := a.explorer.View()
+	view := testx.StripANSI(a.explorer.View())
 	lines := text.SplitLines(view)
 	// Breadcrumbs are on line index 2 (after navbar and empty line)
 	// But we need to look for the line that contains breadcrumb separators " > "

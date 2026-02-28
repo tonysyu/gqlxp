@@ -1,6 +1,6 @@
 package utils
 
-import "github.com/charmbracelet/lipgloss"
+import "charm.land/lipgloss/v2"
 
 // CenterOverlay positions rendered content in the center of the screen.
 func CenterOverlay(content string, width, height int) string {

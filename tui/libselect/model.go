@@ -6,11 +6,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/list"
+	"charm.land/bubbles/v2/spinner"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/tonysyu/gqlxp/gql/introspection"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/adapters"
@@ -19,14 +19,14 @@ import (
 
 // Model is the TUI for selecting a schema from the library
 type Model struct {
-	list      list.Model
-	lib       library.Library
-	styles    config.Styles
-	width     int
-	height    int
-	keymap    config.LibSelectKeymaps
-	errMsg    string
-	spinner   spinner.Model
+	list       list.Model
+	lib        library.Library
+	styles     config.Styles
+	width      int
+	height     int
+	keymap     config.LibSelectKeymaps
+	errMsg     string
+	spinner    spinner.Model
 	isUpdating bool
 }
 
@@ -151,7 +151,7 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, m.keymap.Quit):
 			return m, tea.Quit

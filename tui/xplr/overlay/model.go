@@ -1,10 +1,10 @@
 package overlay
 
 import (
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/viewport"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/viewport"
+	tea "charm.land/bubbletea/v2"
 	"github.com/tonysyu/gqlxp/tui/config"
 	"github.com/tonysyu/gqlxp/tui/utils"
 	"github.com/tonysyu/gqlxp/utils/terminal"
@@ -41,7 +41,7 @@ func (m Model) ShortHelp() []key.Binding {
 
 // New creates a new overlay model
 func New(styles config.Styles) Model {
-	vp := viewport.New(0, 0)
+	vp := viewport.New(viewport.WithWidth(0), viewport.WithHeight(0))
 
 	// Initialize markdown renderer once for the lifetime of the session
 	renderer, err := terminal.NewMarkdownRenderer()
@@ -66,7 +66,7 @@ func New(styles config.Styles) Model {
 func (o Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	// Handle overlay-specific keys
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, o.keymap.Close):
 			return o, func() tea.Msg { return ClosedMsg{} }
@@ -92,8 +92,8 @@ func (o Model) Show(content string, width, height int) Model {
 	// Set viewport size
 	viewportWidth := width - config.OverlayInsetMargin
 	viewportHeight := height - config.OverlayInsetMargin - config.HelpHeight
-	o.viewport.Width = viewportWidth
-	o.viewport.Height = viewportHeight
+	o.viewport.SetWidth(viewportWidth)
+	o.viewport.SetHeight(viewportHeight)
 
 	// Render markdown content using the shared glamour renderer
 	if viewportWidth > 0 {

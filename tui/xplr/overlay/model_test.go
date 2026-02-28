@@ -3,7 +3,7 @@ package overlay
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/config"
 )
@@ -33,7 +33,7 @@ func TestOverlay(t *testing.T) {
 	t.Run("Close key returns ClosedMsg command", func(t *testing.T) {
 		overlay := showDefaultOverlay()
 
-		spaceKey := tea.KeyMsg{Type: tea.KeySpace}
+		spaceKey := tea.KeyPressMsg{Code: tea.KeySpace}
 		_, cmd := overlay.Update(spaceKey)
 
 		is.True(cmd != nil)
@@ -45,7 +45,7 @@ func TestOverlay(t *testing.T) {
 	t.Run("Quit key returns quit command", func(t *testing.T) {
 		overlay := showDefaultOverlay()
 
-		quitKey := tea.KeyMsg{Type: tea.KeyCtrlC}
+		quitKey := tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl}
 		_, cmd := overlay.Update(quitKey)
 
 		is.True(cmd != nil)
@@ -54,7 +54,7 @@ func TestOverlay(t *testing.T) {
 	t.Run("Viewport receives update messages", func(t *testing.T) {
 		overlay := showDefaultOverlay()
 
-		msg := tea.KeyMsg{Type: tea.KeyDown}
+		msg := tea.KeyPressMsg{Code: tea.KeyDown}
 		updatedOverlay, _ := overlay.Update(msg)
 
 		is.Equal(updatedOverlay.content, "test content")
@@ -65,7 +65,7 @@ func TestOverlay(t *testing.T) {
 		overlay := New(config.DefaultStyles())
 		overlay = overlay.Show("test content", width, height)
 
-		is.Equal(overlay.viewport.Width, width-overlayPanelMargin)
-		is.Equal(overlay.viewport.Height, height-overlayPanelMargin-config.HelpHeight)
+		is.Equal(overlay.viewport.Width(), width-overlayPanelMargin)
+		is.Equal(overlay.viewport.Height(), height-overlayPanelMargin-config.HelpHeight)
 	})
 }

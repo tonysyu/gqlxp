@@ -1,7 +1,7 @@
 package tui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/libselect"
@@ -144,13 +144,13 @@ func ensureSearchIndexCmd(schemaID string, schema adapters.SchemaView) tea.Cmd {
 	}
 }
 
-func (m Model) View() string {
+func (m Model) View() tea.View {
+	var content string
 	switch m.state {
 	case libselectView:
-		return m.libselect.View()
+		content = m.libselect.View()
 	case xplrView:
-		return m.xplr.View()
-	default:
-		return ""
+		content = m.xplr.View()
 	}
+	return tea.View{Content: content}
 }

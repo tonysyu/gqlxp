@@ -1,10 +1,10 @@
 package xplr
 
 import (
-	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/help"
+	"charm.land/bubbles/v2/key"
+	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/search"
 	"github.com/tonysyu/gqlxp/tui/adapters"
@@ -208,7 +208,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.loadMainPanel()
 		}
 		return m, nil
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Handle global keys that should work even when search is focused
 		switch {
 		case key.Matches(msg, m.keymap.Quit):
@@ -304,7 +304,7 @@ func (m Model) cycleGQLType(forward bool) (Model, tea.Cmd) {
 // handleSearchFocused handles messages when the search input is focused
 func (m Model) handleSearchFocused(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		switch {
 		case key.Matches(msg, m.keymap.SearchSubmit):
 			// Execute search and transfer focus to results
@@ -333,7 +333,7 @@ func (m Model) handleSearchFocused(msg tea.Msg) (Model, tea.Cmd) {
 
 // handleNormal handles messages in normal mode (when search is not focused)
 func (m Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
-	keyMsg, ok := msg.(tea.KeyMsg)
+	keyMsg, ok := msg.(tea.KeyPressMsg)
 	if !ok {
 		return m.updateFocusedPanel(msg, cmds)
 	}
@@ -411,7 +411,7 @@ func (m Model) updateFocusedPanel(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) 
 // shouldFocusedPanelReceiveMessage determines if the focused panel should receive a message
 func (m Model) shouldFocusedPanelReceiveMessage(msg tea.Msg) bool {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Global navigation keys handled by main model should not go to panels
 		for _, binding := range m.globalKeyBinds {
 			if key.Matches(msg, binding) {

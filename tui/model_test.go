@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/adapters"
@@ -248,7 +248,7 @@ func TestModel_OpenLibSelectKeyTransitionsToLibselect(t *testing.T) {
 	is.Equal(model.state, xplrView)
 
 	// Press ctrl+o to open libselect
-	keyMsg := tea.KeyMsg{Type: tea.KeyCtrlO}
+	keyMsg := tea.KeyPressMsg{Code: 'o', Mod: tea.ModCtrl}
 	updatedModel, cmd := model.Update(keyMsg)
 
 	// The key press in xplr returns a cmd; execute it to get OpenLibSelectMsg

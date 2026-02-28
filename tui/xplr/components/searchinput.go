@@ -1,8 +1,8 @@
 package components
 
 import (
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 )
 
 // SearchInput is a Bubble Tea component for search input
@@ -15,7 +15,7 @@ func NewSearchInput() SearchInput {
 	ti := textinput.New()
 	ti.Placeholder = "Type to search schema..."
 	ti.CharLimit = 100
-	ti.Width = 50
+	ti.SetWidth(50)
 
 	return SearchInput{
 		textInput: ti,

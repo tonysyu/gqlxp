@@ -3,8 +3,8 @@ package components
 import (
 	"testing"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/list"
+	tea "charm.land/bubbletea/v2"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/utils/testx/assert"
 )
@@ -104,7 +104,7 @@ func TestPanelSelectionChange(t *testing.T) {
 	panel := NewPanel(items, "Test Panel")
 
 	// Simulate key down to change selection
-	_, cmd := panel.Update(tea.KeyMsg{Type: tea.KeyDown})
+	_, cmd := panel.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 
 	// Should generate OpenPanelMsg command when selection changes
 	is.True(cmd != nil)
@@ -128,7 +128,7 @@ func TestPanelAutoOpen(t *testing.T) {
 
 	// Simulate navigation which triggers auto-open
 	panel.lastSelectedIndex = -1 // Simulate fresh state
-	_, cmd := panel.Update(tea.KeyMsg{Type: tea.KeyDown})
+	_, cmd := panel.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 
 	// Should return a command for opening panel
 	is.True(cmd != nil)
@@ -168,7 +168,7 @@ func TestPanelWithManyItems(t *testing.T) {
 	is.True(len(view) > 0)
 
 	// Should be able to navigate
-	_, _ = panel.Update(tea.KeyMsg{Type: tea.KeyDown})
+	_, _ = panel.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 }
 
 func TestPanelSizeEdgeCases(t *testing.T) {
@@ -237,22 +237,22 @@ func TestPanelFilterExitRefresh(t *testing.T) {
 
 	// The list.Model starts at index 0 by default, but lastSelectedIndex is -1
 	// So we need to trigger an initial update to sync them
-	_, cmd := panel.Update(tea.KeyMsg{Type: tea.KeyDown})
+	_, cmd := panel.Update(tea.KeyPressMsg{Code: tea.KeyDown})
 	is.True(cmd != nil) // Should open panel for selected item
 	is.Equal(panel.lastSelectedIndex, 1)
 
 	// Start filtering by pressing "/"
-	_, _ = panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
+	_, _ = panel.Update(tea.KeyPressMsg{Code: '/'})
 	// wasFiltering should now be true (we're in filter mode)
 	is.True(panel.wasFiltering)
 
 	// Type a filter - the cursor might move during filtering
-	_, _ = panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'b'}})
+	_, _ = panel.Update(tea.KeyPressMsg{Code: 'b', Text: "b"})
 	is.True(panel.wasFiltering) // Still filtering
 
 	// Accept the filter by pressing Enter
 	// This should exit filter mode and trigger a refresh even if cursor is at the same index
-	_, cmd = panel.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd = panel.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	// After accepting filter:
 	// 1. wasFiltering should be false (no longer in filter mode)

@@ -1,8 +1,8 @@
 package xplr
 
 import (
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/bubbles/v2/key"
+	"charm.land/lipgloss/v2"
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 	"github.com/tonysyu/gqlxp/utils/text"
 )

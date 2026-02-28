@@ -14,15 +14,15 @@ import (
 
 // ALLOWED_IMPORTERS maps external dependencies to the packages allowed to import them.
 var ALLOWED_IMPORTERS = map[string][]string{
-	"github.com/blevesearch/bleve":       {"search"},
-	"github.com/charmbracelet/bubbles":   {"tui"},
-	"github.com/charmbracelet/bubbletea": {"tui"},
-	"github.com/charmbracelet/glamour":   {"utils/terminal"},
-	"github.com/charmbracelet/lipgloss":  {"cli", "tui", "utils/terminal"},
-	"github.com/muesli/reflow":           {"utils/text"},
-	"github.com/urfave/cli/v3":           {"cli"},
-	"github.com/vektah/gqlparser/v2":     {"gql"},
-	"golang.org/x/term":                  {"utils/terminal"},
+	"github.com/blevesearch/bleve":     {"search"},
+	"charm.land/bubbles/v2":            {"tui"},
+	"charm.land/bubbletea/v2":          {"tui"},
+	"github.com/charmbracelet/glamour": {"utils/terminal"},
+	"charm.land/lipgloss/v2":           {"cli", "tui", "utils/terminal"},
+	"github.com/muesli/reflow":         {"utils/text"},
+	"github.com/urfave/cli/v3":         {"cli"},
+	"github.com/vektah/gqlparser/v2":   {"gql"},
+	"golang.org/x/term":                {"utils/terminal"},
 }
 
 // TestDependencyRestrictions enforces that certain external dependencies

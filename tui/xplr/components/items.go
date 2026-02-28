@@ -1,7 +1,7 @@
 package components
 
 import (
-	"github.com/charmbracelet/bubbles/list"
+	"charm.land/bubbles/v2/list"
 	"github.com/tonysyu/gqlxp/utils/text"
 )
 

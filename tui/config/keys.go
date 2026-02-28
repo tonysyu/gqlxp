@@ -1,6 +1,6 @@
 package config
 
-import "github.com/charmbracelet/bubbles/key"
+import "charm.land/bubbles/v2/key"
 
 // GlobalKeymaps contains keymaps used across all TUI models
 type GlobalKeymaps struct {
@@ -12,7 +12,7 @@ type GlobalKeymaps struct {
 const toggleCmdPaletteKey string = "ctrl+p"
 
 // toggleOverlayKey used to both open and close Detail Overlay
-const toggleOverlayKey string = " "
+const toggleOverlayKey string = "space"
 
 // closeOverlayKeys used to close CmdPalette and Detail Overlays
 var closeOverlayKeys []string = []string{"q", "esc"}

@@ -3,7 +3,7 @@ package xplr
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/xplr/components"
@@ -23,7 +23,7 @@ func TestShouldPanelReceiveMessage(t *testing.T) {
 		{
 			name:          "left panel (offset 0) receives key message",
 			displayOffset: 0,
-			msg:           tea.KeyMsg{Type: tea.KeyDown},
+			msg:           tea.KeyPressMsg{Code: tea.KeyDown},
 			shouldReceive: true,
 		},
 		{
@@ -60,13 +60,13 @@ func TestGlobalNavigationKeysNotSentToPanels(t *testing.T) {
 	model := New(adapters.SchemaView{})
 
 	// Test all global navigation keys
-	globalKeys := []tea.KeyMsg{
-		{Type: tea.KeyCtrlC}, // quit
-		{Type: tea.KeyCtrlD}, // quit
+	globalKeys := []tea.KeyPressMsg{
+		{Code: 'c', Mod: tea.ModCtrl}, // quit
+		{Code: 'd', Mod: tea.ModCtrl}, // quit
 		keyNextPanel,
-		{Type: tea.KeyTab}, // next panel
+		{Code: tea.KeyTab}, // next panel
 		keyPrevPanel,
-		{Type: tea.KeyShiftTab}, // prev panel
+		{Code: tea.KeyTab, Mod: tea.ModShift}, // prev panel
 		keyNextType,
 		keyPrevType,
 	}

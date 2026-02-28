@@ -3,7 +3,7 @@ package xplr
 import (
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/config"
@@ -13,14 +13,14 @@ import (
 
 // Key messages for simulating user input
 var (
-	keyNextPanel     = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{']'}}
-	keyPrevPanel     = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'['}}
-	keyNextType      = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}}
-	keyPrevType      = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'{'}}
-	keyNextItem      = tea.KeyMsg{Type: tea.KeyDown}
-	keyPrevItem      = tea.KeyMsg{Type: tea.KeyUp}
-	keyToggleOverlay = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}}
-	keyOpenLibSelect = tea.KeyMsg{Type: tea.KeyCtrlO}
+	keyNextPanel     = tea.KeyPressMsg{Code: ']'}
+	keyPrevPanel     = tea.KeyPressMsg{Code: '['}
+	keyNextType      = tea.KeyPressMsg{Code: '}'}
+	keyPrevType      = tea.KeyPressMsg{Code: '{'}
+	keyNextItem      = tea.KeyPressMsg{Code: tea.KeyDown}
+	keyPrevItem      = tea.KeyPressMsg{Code: tea.KeyUp}
+	keyToggleOverlay = tea.KeyPressMsg{Code: ' '}
+	keyOpenLibSelect = tea.KeyPressMsg{Code: 'o', Mod: tea.ModCtrl}
 )
 
 func TestNewModel(t *testing.T) {
@@ -205,7 +205,7 @@ func TestModelWithEmptySchema(t *testing.T) {
 	is.Equal(model.nav.CurrentType(), navigation.QueryType)
 
 	// Should be able to cycle through types even with empty schema
-	model, _ = model.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'}'}})
+	model, _ = model.Update(tea.KeyPressMsg{Code: '}'})
 	is.Equal(model.nav.CurrentType(), navigation.MutationType)
 }
 
@@ -228,7 +228,7 @@ func TestModelKeyboardShortcuts(t *testing.T) {
 	model := New(adapters.SchemaView{})
 
 	// Test all keyboard shortcuts don't crash
-	shortcuts := []tea.KeyMsg{
+	shortcuts := []tea.KeyPressMsg{
 		keyNextPanel,
 		keyPrevPanel,
 		keyNextType,
@@ -241,7 +241,7 @@ func TestModelKeyboardShortcuts(t *testing.T) {
 	for _, shortcut := range shortcuts {
 		_, cmd := model.Update(shortcut)
 		// Quit commands should return a quit command
-		if shortcut.Type == tea.KeyCtrlC || shortcut.Type == tea.KeyCtrlD {
+		if (shortcut.Code == 'c' && shortcut.Mod == tea.ModCtrl) || (shortcut.Code == 'd' && shortcut.Mod == tea.ModCtrl) {
 			is.True(cmd != nil) // Should return tea.Quit command
 		}
 	}
