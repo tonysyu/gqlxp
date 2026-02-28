@@ -71,7 +71,7 @@ func TestModelPanelNavigation(t *testing.T) {
 	model := New(adapters.SchemaView{})
 
 	// Test initial stack position
-	is.Equal(model.nav.Stack().Position(), 0)
+	is.Equal(model.PanelPosition(), 0)
 
 	// Build a 4-panel stack for navigation testing.
 	// OpenPanel truncates-and-appends after current position, so navigate
@@ -87,35 +87,35 @@ func TestModelPanelNavigation(t *testing.T) {
 
 	// Test next panel navigation (move forward in stack)
 	model, _ = model.Update(keyNextPanel)
-	is.Equal(model.nav.Stack().Position(), 1)
+	is.Equal(model.PanelPosition(), 1)
 
 	// Test another forward navigation
 	model, _ = model.Update(keyNextPanel)
-	is.Equal(model.nav.Stack().Position(), 2)
+	is.Equal(model.PanelPosition(), 2)
 
 	// Test another forward navigation
 	model, _ = model.Update(keyNextPanel)
-	is.Equal(model.nav.Stack().Position(), 3)
+	is.Equal(model.PanelPosition(), 3)
 
 	// Test that we can't go beyond the last panel
 	model, _ = model.Update(keyNextPanel)
-	is.Equal(model.nav.Stack().Position(), 3) // Should stay at 3
+	is.Equal(model.PanelPosition(), 3) // Should stay at 3
 
 	// Test previous panel navigation (move backward in stack)
 	model, _ = model.Update(keyPrevPanel)
-	is.Equal(model.nav.Stack().Position(), 2)
+	is.Equal(model.PanelPosition(), 2)
 
 	// Test another backward navigation
 	model, _ = model.Update(keyPrevPanel)
-	is.Equal(model.nav.Stack().Position(), 1)
+	is.Equal(model.PanelPosition(), 1)
 
 	// Navigate to beginning
 	model, _ = model.Update(keyPrevPanel)
-	is.Equal(model.nav.Stack().Position(), 0)
+	is.Equal(model.PanelPosition(), 0)
 
 	// Test that we can't go before the beginning
 	model, _ = model.Update(keyPrevPanel)
-	is.Equal(model.nav.Stack().Position(), 0) // Should stay at 0
+	is.Equal(model.PanelPosition(), 0) // Should stay at 0
 }
 
 func TestModelGQLTypeSwitching(t *testing.T) {
@@ -223,26 +223,83 @@ func TestModelOpenLibSelect(t *testing.T) {
 }
 
 func TestModelKeyboardShortcuts(t *testing.T) {
-	is := is.New(t)
+	schemaString := `
+		type Query { getUser: User }
+		type Mutation { createUser: User }
+		type User { id: ID! }
+	`
+	schemaView, _ := adapters.ParseSchemaString(schemaString)
 
-	model := New(adapters.SchemaView{})
-
-	// Test all keyboard shortcuts don't crash
-	shortcuts := []tea.KeyPressMsg{
-		keyNextPanel,
-		keyPrevPanel,
-		keyNextType,
-		keyPrevType,
-		keyNextItem,
-		keyPrevItem,
-		keyToggleOverlay,
+	tests := []struct {
+		name   string
+		key    tea.KeyPressMsg
+		setup  func(m Model) Model
+		verify func(t *testing.T, m Model)
+	}{
+		{
+			name: "next panel moves stack forward",
+			key:  keyNextPanel,
+			setup: func(m Model) Model {
+				m.nav = m.nav.OpenPanel(components.NewEmptyPanel("test"))
+				return m
+			},
+			verify: func(t *testing.T, m Model) {
+				is.New(t).Equal(m.PanelPosition(), 1)
+			},
+		},
+		{
+			name: "prev panel has no effect at position 0",
+			key:  keyPrevPanel,
+			verify: func(t *testing.T, m Model) {
+				is.New(t).Equal(m.PanelPosition(), 0)
+			},
+		},
+		{
+			name: "next GQL type cycles forward",
+			key:  keyNextType,
+			verify: func(t *testing.T, m Model) {
+				is.New(t).Equal(m.nav.CurrentType(), navigation.MutationType)
+			},
+		},
+		{
+			name: "prev GQL type wraps to last type",
+			key:  keyPrevType,
+			verify: func(t *testing.T, m Model) {
+				is.New(t).Equal(m.nav.CurrentType(), navigation.SearchType)
+			},
+		},
+		{
+			name: "down key does not crash",
+			key:  keyNextItem,
+			verify: func(t *testing.T, m Model) {
+				is.New(t).True(m.View() != "")
+			},
+		},
+		{
+			name: "up key does not crash",
+			key:  keyPrevItem,
+			verify: func(t *testing.T, m Model) {
+				is.New(t).True(m.View() != "")
+			},
+		},
+		{
+			name: "space opens overlay",
+			key:  keyToggleOverlay,
+			verify: func(t *testing.T, m Model) {
+				is.New(t).True(m.IsOverlayVisible())
+			},
+		},
 	}
 
-	for _, shortcut := range shortcuts {
-		_, cmd := model.Update(shortcut)
-		// Quit commands should return a quit command
-		if (shortcut.Code == 'c' && shortcut.Mod == tea.ModCtrl) || (shortcut.Code == 'd' && shortcut.Mod == tea.ModCtrl) {
-			is.True(cmd != nil) // Should return tea.Quit command
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			model := New(schemaView)
+			model, _ = model.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
+			if tt.setup != nil {
+				model = tt.setup(model)
+			}
+			model, _ = model.Update(tt.key)
+			tt.verify(t, model)
+		})
 	}
 }

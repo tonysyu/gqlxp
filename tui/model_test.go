@@ -13,6 +13,21 @@ import (
 	"github.com/tonysyu/gqlxp/tui/xplr"
 )
 
+// runUpdate sends a message to the model and chains any resulting commands until exhausted
+func runUpdate(model Model, msg tea.Msg) Model {
+	for msg != nil {
+		var cmd tea.Cmd
+		var updated tea.Model
+		updated, cmd = model.Update(msg)
+		model = updated.(Model)
+		if cmd == nil {
+			break
+		}
+		msg = cmd()
+	}
+	return model
+}
+
 // setupTestLibrary creates a temporary config directory for testing
 func setupTestLibrary(t *testing.T) (string, func()) {
 	t.Helper()
@@ -247,18 +262,8 @@ func TestModel_OpenLibSelectKeyTransitionsToLibselect(t *testing.T) {
 	model := newModelWithXplr(parsedSchema)
 	is.Equal(model.state, xplrView)
 
-	// Press ctrl+o to open libselect
+	// Press ctrl+o to open libselect; runUpdate chains the resulting cmd
 	keyMsg := tea.KeyPressMsg{Code: 'o', Mod: tea.ModCtrl}
-	updatedModel, cmd := model.Update(keyMsg)
-
-	// The key press in xplr returns a cmd; execute it to get OpenLibSelectMsg
-	is.True(cmd != nil)
-	msg := cmd()
-
-	// Forward the returned message to the top-level model
-	updatedModel, _ = updatedModel.(Model).Update(msg)
-
-	m, ok := updatedModel.(Model)
-	is.True(ok)
-	is.Equal(m.state, libselectView)
+	result := runUpdate(model, keyMsg)
+	is.Equal(result.state, libselectView)
 }

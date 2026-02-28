@@ -38,8 +38,6 @@ var (
 	keyPrevType  = tea.KeyPressMsg{Code: '{'}
 	keySpace     = tea.KeyPressMsg{Code: ' '}
 	keyEscape    = tea.KeyPressMsg{Code: tea.KeyEsc}
-	keyDown      = tea.KeyPressMsg{Code: tea.KeyDown}
-	keyUp        = tea.KeyPressMsg{Code: tea.KeyUp}
 )
 
 // Harness provides high-level test utilities for acceptance testing
@@ -210,14 +208,7 @@ func (n *Navigator) GoToGqlType(gqlType navigation.GQLType) {
 
 // SelectItemAtIndex moves the cursor to the item at the given index (0-based)
 func (n *Navigator) SelectItemAtIndex(idx int) {
-	// Move cursor to top first (safety measure)
-	for i := 0; i < 100; i++ {
-		n.explorer.Update(keyUp)
-	}
-	// Move down to the desired index
-	for i := 0; i < idx; i++ {
-		n.explorer.Update(keyDown)
-	}
+	n.explorer.model.SelectItemAtIndex(idx)
 }
 
 // ============================================================================
@@ -240,25 +231,9 @@ func (a *Assert) getPanelContent(panelIdx int) string {
 	return ""
 }
 
-// getBreadcrumbs returns the breadcrumb text from the rendered view
+// getBreadcrumbs returns the breadcrumb text from the model
 func (a *Assert) getBreadcrumbs() string {
-	view := testx.StripANSI(a.explorer.View())
-	lines := text.SplitLines(view)
-	// Breadcrumbs are on line index 2 (after navbar and empty line)
-	// But we need to look for the line that contains breadcrumb separators " > "
-	// or check a few lines after the navbar
-	if len(lines) > 3 {
-		// Check lines 1-3 for breadcrumbs (accounting for empty lines)
-		for i := 1; i < 4 && i < len(lines); i++ {
-			line := strings.TrimSpace(lines[i])
-			// Breadcrumbs contain " > " separator or are non-empty text between navbar and panels
-			// Empty lines and panel borders start with special characters
-			if line != "" && !strings.HasPrefix(line, "╭") && !strings.Contains(line, "Query") {
-				return line
-			}
-		}
-	}
-	return ""
+	return strings.Join(a.explorer.model.Breadcrumbs(), " > ")
 }
 
 // PanelContains checks if the panel at the given index contains the expected text

@@ -155,6 +155,25 @@ func (m Model) IsOverlayVisible() bool {
 	return m.state == xplrOverlayView
 }
 
+// Breadcrumbs returns the current breadcrumb trail
+func (m Model) Breadcrumbs() []string {
+	return m.nav.Breadcrumbs()
+}
+
+// PanelPosition returns the current panel stack position
+func (m Model) PanelPosition() int {
+	return m.nav.Stack().Position()
+}
+
+// SelectItemAtIndex selects the item at the given index in the current panel.
+// Primarily used for testing.
+func (m *Model) SelectItemAtIndex(idx int) {
+	panel := m.nav.CurrentPanel()
+	if panel != nil {
+		panel.SelectByIndex(idx)
+	}
+}
+
 // SetOverlayStyle sets the overlay style (primarily for testing)
 func (m *Model) SetOverlayStyle(style lipgloss.Style) {
 	m.overlay.Styles.Overlay = style

@@ -294,6 +294,14 @@ func (p *Panel) SelectItemByName(name string) bool {
 	return false
 }
 
+// SelectByIndex selects the item at the given index
+func (p *Panel) SelectByIndex(idx int) {
+	if idx >= 0 && idx < len(p.ListModel.Items()) {
+		p.ListModel.Select(idx)
+		p.lastSelectedIndex = idx
+	}
+}
+
 // View renders the panel
 func (p *Panel) View() string {
 	parts := []string{}
