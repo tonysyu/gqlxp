@@ -53,6 +53,19 @@ Type/Field Name  │ User                               │ email               
   - Keymaps:
     - `Spacebar`: Toggles display of Detail Overlay
 
+## Quick Start
+
+```sh
+# Install gqlxp executable (defaults to $HOME/bin; see below for custom executable path)
+curl -sSfL https://raw.githubusercontent.com/tonysyu/gqlxp/main/install.sh
+
+# Add GraphQL schema to library using graphql endpoint with introspection enabled
+gqlxp library add --id rick-and-morty-api https://rickandmortyapi.com/graphql
+
+# Run gqlxp interactive schema explorer
+gqlxp
+```
+
 ## Installation
 
 ### Quick install (Linux/macOS)
@@ -78,7 +91,7 @@ just install
 
 Then open a schema file to explore:
 ```sh
-# Open library selector
+# Open library selector (app is optional here)
 $ gqlxp app
 
 # Open a specific schema file (-s is an alias for --schema)
