@@ -78,6 +78,7 @@ func TestObjectWithInterfacesOpenPanel(t *testing.T) {
 	content := renderMinimalPanel(panel)
 	assert.StringContains(content, testx.NormalizeView(`
 		User
+		Node
 		Fields  Interfaces
 		id: ID!
 		name: String!
@@ -88,6 +89,7 @@ func TestObjectWithInterfacesOpenPanel(t *testing.T) {
 	content = renderMinimalPanel(panel)
 	assert.StringContains(content, testx.NormalizeView(`
 		User
+		Node
 		Fields  Interfaces
 		Node
 		Named

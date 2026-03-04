@@ -1,6 +1,8 @@
 package overlay
 
 import (
+	"strings"
+
 	"charm.land/bubbles/v2/help"
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/viewport"
@@ -21,8 +23,9 @@ type ClosedMsg struct{}
 type Model struct {
 	viewport viewport.Model
 	renderer terminal.Renderer
-	content  string // original markdown content
-	rendered string // cache rendered content
+	content  string   // original markdown content
+	tags     []string // tag chips to display below the title
+	rendered string   // cache rendered content
 	Styles   config.Styles
 
 	width  int
@@ -84,10 +87,11 @@ func (o Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return o, cmd
 }
 
-// Show configures the overlay with the given markdown content and size.
+// Show configures the overlay with the given markdown content, tags, and size.
 // xplr.Model is responsible for setting its state to xplrOverlayView when calling this.
-func (o Model) Show(content string, width, height int) Model {
+func (o Model) Show(content string, tags []string, width, height int) Model {
 	o.content = content
+	o.tags = tags
 
 	// Set viewport size
 	viewportWidth := width - config.OverlayInsetMargin
@@ -98,6 +102,12 @@ func (o Model) Show(content string, width, height int) Model {
 	// Render markdown content using the shared glamour renderer
 	if viewportWidth > 0 {
 		rendered := terminal.RenderMarkdownOrPlain(o.renderer, content)
+		if len(tags) > 0 {
+			tagLine := "\n" + config.RenderTagRow(tags, o.Styles.Tag) + "\n"
+			if idx := strings.Index(rendered, "\n\n"); idx >= 0 {
+				rendered = rendered[:idx+2] + tagLine + rendered[idx+2:]
+			}
+		}
 		o.rendered = rendered
 		o.viewport.SetContent(rendered)
 		return o

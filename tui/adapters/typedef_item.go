@@ -38,6 +38,14 @@ func (i typeDefItem) TypeName() string    { return i.typeName }
 func (i typeDefItem) RefName() string     { return i.typeDef.Name() }
 func (i typeDefItem) Description() string { return i.typeDef.Description() }
 
+// Tags returns display tags for Object types (Entity, Node).
+func (i typeDefItem) Tags() []string {
+	if obj, ok := i.typeDef.(*gql.Object); ok {
+		return objectTags(obj)
+	}
+	return nil
+}
+
 func (i typeDefItem) Details() string {
 	return gqlfmt.GenerateTypeDefMarkdown(i.typeDef, i.resolver)
 }
@@ -128,6 +136,10 @@ func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 	// Add description as a header if available
 	if desc := i.Description(); desc != "" {
 		panel.SetDescription(desc)
+	}
+
+	if tags := i.Tags(); len(tags) > 0 {
+		panel.SetTags(tags)
 	}
 
 	if len(tabs) > 0 {

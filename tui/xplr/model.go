@@ -274,6 +274,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
+// tagger is implemented by list items that expose display tags.
+type tagger interface{ Tags() []string }
+
 func (m Model) openOverlayForSelectedItem() Model {
 	if m.nav.CurrentPanel() == nil {
 		return m
@@ -283,7 +286,11 @@ func (m Model) openOverlayForSelectedItem() Model {
 		if listItem, ok := selectedItem.(components.ListItem); ok {
 			// Some items don't have details, so these should now open the overlay
 			if content := listItem.Details(); content != "" {
-				m.overlay = m.overlay.Show(content, m.width, m.height)
+				var tags []string
+				if t, ok := listItem.(tagger); ok {
+					tags = t.Tags()
+				}
+				m.overlay = m.overlay.Show(content, tags, m.width, m.height)
 				m.state = xplrOverlayView
 			}
 		}

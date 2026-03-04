@@ -1,6 +1,8 @@
 package config
 
 import (
+	"strings"
+
 	"charm.land/lipgloss/v2"
 	"github.com/tonysyu/gqlxp/utils/terminal"
 )
@@ -39,6 +41,9 @@ type Styles struct {
 
 	// CommandPalette style for command palette overlay
 	CommandPalette lipgloss.Style
+
+	// Tag style for rendering entity/node type tags
+	Tag lipgloss.Style
 }
 
 // DefaultStyles returns the default style configuration
@@ -91,5 +96,19 @@ func DefaultStyles() Styles {
 			BorderForeground(terminal.ColorDarkGray).
 			Padding(OverlayPadding).
 			Margin(OverlayMargin),
+
+		Tag: lipgloss.NewStyle().
+			Background(terminal.ColorLightGray).
+			Foreground(terminal.ColorBlack).
+			Padding(0, 1),
 	}
+}
+
+// RenderTagRow renders a row of tag chips joined horizontally.
+func RenderTagRow(tags []string, style lipgloss.Style) string {
+	parts := make([]string, len(tags))
+	for i, tag := range tags {
+		parts[i] = style.Render(tag)
+	}
+	return strings.Join(parts, " ")
 }

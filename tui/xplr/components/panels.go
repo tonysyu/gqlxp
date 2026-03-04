@@ -29,6 +29,7 @@ type Panel struct {
 	ListModel         list.Model
 	title             string
 	description       string
+	tags              []string          // Tag chips displayed below the title
 	lastSelectedIndex int               // Track the last selected index to detect changes
 	wasFiltering      bool              // Track whether we were in filtering mode to detect exits
 	tabs              []Tab             // Tabs with labels and content
@@ -205,6 +206,10 @@ func (p *Panel) updateListDimensions() {
 		availableHeight -= lipgloss.Height(desc)
 	}
 
+	if len(p.tags) > 0 {
+		availableHeight -= 1 // one line for the tag row
+	}
+
 	if len(p.tabs) > 0 {
 		tabBar := p.renderTabBar()
 		availableHeight -= 1 + lipgloss.Height(tabBar)
@@ -228,6 +233,12 @@ func (p *Panel) SetDescription(description string) {
 
 func (p *Panel) Description() string {
 	return p.description
+}
+
+// SetTags sets the tag chips displayed below the title.
+func (p *Panel) SetTags(tags []string) {
+	p.tags = tags
+	p.updateListDimensions()
 }
 
 // SetTabs configures the panel with multiple tabs
@@ -313,6 +324,11 @@ func (p *Panel) View() string {
 	// Render description if present
 	if p.Description() != "" {
 		parts = append(parts, text.WrapAndTruncate(p.Description(), p.width, maxDescriptionHeight))
+	}
+
+	// Render tags if present
+	if len(p.tags) > 0 {
+		parts = append(parts, config.RenderTagRow(p.tags, p.styles.Tag))
 	}
 
 	// Render tabs if configured (even if only one tab for consistency)
