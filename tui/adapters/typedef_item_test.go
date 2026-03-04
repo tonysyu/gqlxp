@@ -136,11 +136,67 @@ func TestNavigateFromObjectToInterface(t *testing.T) {
 	interfacePanel.SetSize(80, 40)
 	content := renderMinimalPanel(interfacePanel)
 
-	// Verify the interface panel shows its fields and usages
+	// Verify the interface panel shows its fields and impls
 	assert.StringContains(content, testx.NormalizeView(`
 		Node
-		Fields  Usages
+		Fields  Impls
 		id: ID!
+	`))
+}
+
+func TestInterfaceWithUsagesAndImpls(t *testing.T) {
+	is := is.New(t)
+	assert := assert.New(t)
+
+	schemaString := `
+		interface Node {
+		  id: ID!
+		}
+
+		type User implements Node {
+		  id: ID!
+		  name: String!
+		}
+
+		type Query {
+		  node: Node
+		}
+	`
+
+	schema, _ := gql.ParseSchema([]byte(schemaString))
+	resolver := gql.NewSchemaResolver(&schema)
+
+	interfaceObj := schema.Interface["Node"]
+	item := newTypeDefItem(interfaceObj, resolver)
+	panel, ok := item.OpenPanel()
+
+	is.True(ok)
+	panel.SetSize(80, 40)
+
+	// First tab (Fields) should show fields and both Usages + Impls tabs
+	content := renderMinimalPanel(panel)
+	assert.StringContains(content, testx.NormalizeView(`
+		Node
+		Fields  Usages  Impls
+		id: ID!
+	`))
+
+	// Navigate to Usages tab (field usages)
+	panel = nextPanelTab(panel)
+	content = renderMinimalPanel(panel)
+	assert.StringContains(content, testx.NormalizeView(`
+		Node
+		Fields  Usages  Impls
+		Query.node
+	`))
+
+	// Navigate to Impls tab (implementations)
+	panel = nextPanelTab(panel)
+	content = renderMinimalPanel(panel)
+	assert.StringContains(content, testx.NormalizeView(`
+		Node
+		Fields  Usages  Impls
+		User
 	`))
 }
 

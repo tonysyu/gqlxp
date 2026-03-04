@@ -72,7 +72,20 @@ func (i typeDefItem) OpenPanel() (*components.Panel, bool) {
 			tabs = append(tabs, newInterfacesTab(interfaces, i.resolver))
 		}
 		if usages, _ := i.resolver.ResolveUsages(typeDef.Name()); len(usages) > 0 {
-			tabs = append(tabs, newUsagesTab(usages, i.resolver))
+			var fieldUsages, implUsages []*gql.Usage
+			for _, u := range usages {
+				if u.FieldName == "" {
+					implUsages = append(implUsages, u)
+				} else {
+					fieldUsages = append(fieldUsages, u)
+				}
+			}
+			if len(fieldUsages) > 0 {
+				tabs = append(tabs, newUsagesTab(fieldUsages, i.resolver))
+			}
+			if len(implUsages) > 0 {
+				tabs = append(tabs, newImplsTab(implUsages, i.resolver))
+			}
 		}
 		if len(typeDef.Directives()) > 0 {
 			tabs = append(tabs, newDirectivesTab(typeDef.Directives(), i.resolver))

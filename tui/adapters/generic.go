@@ -121,3 +121,19 @@ func newInterfacesTab(interfaceNames []string, resolver gql.TypeResolver) compon
 		Content: adaptInterfaces(interfaceNames, resolver),
 	}
 }
+
+// adaptImpls converts implementation usages to type-def list items
+func adaptImpls(usages []*gql.Usage, resolver gql.TypeResolver) []components.ListItem {
+	result := make([]components.ListItem, 0, len(usages))
+	for _, u := range usages {
+		result = append(result, newNamedItem(u.ParentType, resolver))
+	}
+	return result
+}
+
+func newImplsTab(usages []*gql.Usage, resolver gql.TypeResolver) components.Tab {
+	return components.Tab{
+		Label:   "Impls",
+		Content: adaptImpls(usages, resolver),
+	}
+}
