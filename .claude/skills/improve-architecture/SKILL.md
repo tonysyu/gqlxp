@@ -5,7 +5,7 @@ description: Explore a codebase to find opportunities for architectural improvem
 
 # Improve Codebase Architecture
 
-Explore a codebase like an AI would, surface architectural friction, discover opportunities for improving testability, and propose module-deepening refactors as GitHub issue RFCs.
+Explore a codebase like an AI would, surface architectural friction, discover opportunities for improving testability, and implement module-deepening refactors.
 
 A **deep module** (John Ousterhout, "A Philosophy of Software Design") has a small interface hiding a large implementation. Deep modules are more testable, more AI-navigable, and let you test at the boundary instead of inside.
 
@@ -23,22 +23,22 @@ Use the Agent tool with subagent_type=Explore to navigate the codebase naturally
 
 The friction you encounter IS the signal.
 
-### 2. Present candidates
+### 2. Present proposed refactors
 
-Present a numbered list of deepening opportunities. For each candidate, show:
+Present a numbered list of deepening opportunities. For each proposal, show:
 
 - **Cluster**: Which modules/concepts are involved
 - **Why they're coupled**: Shared types, call patterns, co-ownership of a concept
-- **Dependency category**: See [REFERENCE.md](REFERENCE.md) for the four categories
+- **Dependency category**: See [REFERENCE.md](REFERENCE.md) for the two categories
 - **Test impact**: What existing tests would be replaced by boundary tests
 
 Do NOT propose interfaces yet. Ask the user: "Which of these would you like to explore?"
 
-### 3. User picks a candidate
+### 3. User picks a proposed refactor
 
 ### 4. Frame the problem space
 
-Before spawning sub-agents, write a user-facing explanation of the problem space for the chosen candidate:
+Before spawning sub-agents, write a user-facing explanation of the problem space for the chosen proposal:
 
 - The constraints any new interface would need to satisfy
 - The dependencies it would need to rely on
@@ -55,7 +55,7 @@ Prompt each sub-agent with a separate technical brief (file paths, coupling deta
 - Agent 1: "Minimize the interface — aim for 1-3 entry points max"
 - Agent 2: "Maximize flexibility — support many use cases and extension"
 - Agent 3: "Optimize for the most common caller — make the default case trivial"
-- Agent 4 (if applicable): "Design around the ports & adapters pattern for cross-boundary dependencies"
+- Agent 4 (if applicable): "Optimize for testability — maximize what can be tested without real I/O"
 
 Each sub-agent outputs:
 
@@ -71,6 +71,6 @@ After comparing, give your own recommendation: which design you think is stronge
 
 ### 6. User picks an interface (or accepts recommendation)
 
-### 7. Create GitHub issue
+### 7. Implement
 
-Create a refactor RFC as a GitHub issue using `gh issue create`. Use the template in [REFERENCE.md](REFERENCE.md). Do NOT ask the user to review before creating — just create it and share the URL.
+Implement the chosen interface. Apply the testing strategy from [REFERENCE.md](REFERENCE.md): write new boundary tests, delete the old shallow module tests they replace.
