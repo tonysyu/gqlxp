@@ -50,14 +50,26 @@ type Library interface {
 
 	// SetDefaultSchema sets the default schema ID.
 	SetDefaultSchema(id string) error
+
+	// EnsureIndex creates the search index for a schema if it doesn't already exist.
+	EnsureIndex(schemaID string, schema *gql.GraphQLSchema) error
+
+	// Reindex rebuilds the search index for a schema from its stored content.
+	Reindex(schemaID string) error
 }
 
 // FileLibrary implements Library using file-based storage.
-type FileLibrary struct{}
+type FileLibrary struct {
+	indexer search.Indexer
+}
 
 // NewLibrary creates a new Library instance.
 func NewLibrary() Library {
-	return &FileLibrary{}
+	dir, err := schemasDir()
+	if err != nil {
+		return &FileLibrary{}
+	}
+	return &FileLibrary{indexer: search.NewIndexer(dir)}
 }
 
 // ValidateSchemaID checks if a schema ID is valid and returns an error with suggestions if not.
@@ -225,7 +237,7 @@ func (l *FileLibrary) Add(id string, displayName string, sourcePath string) erro
 	}
 
 	// Index the schema in the background (non-blocking)
-	go indexSchema(id, content)
+	l.indexAsync(id, content)
 
 	return nil
 }
@@ -296,7 +308,7 @@ func (l *FileLibrary) AddFromContent(id, displayName string, content []byte, sou
 	}
 
 	// Index the schema in the background (non-blocking)
-	go indexSchema(id, content)
+	l.indexAsync(id, content)
 
 	return nil
 }
@@ -428,7 +440,9 @@ func (l *FileLibrary) Remove(id string) error {
 	}
 
 	// Remove the search index
-	removeIndex(id)
+	if l.indexer != nil {
+		_ = l.indexer.Remove(id)
+	}
 
 	return nil
 }
@@ -522,7 +536,7 @@ func (l *FileLibrary) UpdateContent(id string, content []byte) error {
 	}
 
 	// Re-index the schema in the background (non-blocking)
-	go indexSchema(id, content)
+	l.indexAsync(id, content)
 
 	return nil
 }
@@ -609,37 +623,40 @@ func (l *FileLibrary) SetDefaultSchema(id string) error {
 	return saveUserConfig(config)
 }
 
-// indexSchema indexes a schema for search (runs in background goroutine)
-func indexSchema(id string, content []byte) {
-	// Parse the schema
-	schema, err := gql.ParseSchema(content)
-	if err != nil {
-		// Silently fail - indexing is optional
+// indexAsync indexes a schema in a background goroutine.
+func (l *FileLibrary) indexAsync(id string, content []byte) {
+	if l.indexer == nil {
 		return
 	}
-
-	// Get schemas directory for index storage
-	schemasDir, err := schemasDir()
-	if err != nil {
-		return
-	}
-
-	// Create indexer and index the schema
-	indexer := search.NewIndexer(schemasDir)
-	defer indexer.Close()
-
-	_ = indexer.Index(id, &schema) // Ignore errors - indexing is best effort
+	go func() {
+		schema, err := gql.ParseSchema(content)
+		if err != nil {
+			return
+		}
+		_ = l.indexer.Index(id, &schema)
+	}()
 }
 
-// removeIndex removes the search index for a schema
-func removeIndex(id string) {
-	schemasDir, err := schemasDir()
-	if err != nil {
-		return
+// EnsureIndex implements Library.EnsureIndex.
+func (l *FileLibrary) EnsureIndex(schemaID string, schema *gql.GraphQLSchema) error {
+	if l.indexer == nil || l.indexer.Exists(schemaID) {
+		return nil
 	}
+	return l.indexer.Index(schemaID, schema)
+}
 
-	indexer := search.NewIndexer(schemasDir)
-	defer indexer.Close()
-
-	_ = indexer.Remove(id) // Ignore errors
+// Reindex implements Library.Reindex.
+func (l *FileLibrary) Reindex(schemaID string) error {
+	if l.indexer == nil {
+		return nil
+	}
+	schema, err := l.Get(schemaID)
+	if err != nil {
+		return err
+	}
+	parsedSchema, err := gql.ParseSchema(schema.Content)
+	if err != nil {
+		return fmt.Errorf("failed to parse schema: %w", err)
+	}
+	return l.indexer.Index(schemaID, &parsedSchema)
 }

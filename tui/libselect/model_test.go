@@ -8,6 +8,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/matryer/is"
+	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/libselect"
 	"github.com/tonysyu/gqlxp/utils/testx"
@@ -84,6 +85,10 @@ func (m *mockLibrary) SetDefaultSchema(id string) error {
 	m.setDefaultID = id
 	return m.setDefaultErr
 }
+
+func (m *mockLibrary) EnsureIndex(_ string, _ *gql.GraphQLSchema) error { return nil }
+
+func (m *mockLibrary) Reindex(_ string) error { return nil }
 
 func TestModel_Init(t *testing.T) {
 	is := is.New(t)

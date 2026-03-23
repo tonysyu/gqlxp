@@ -8,7 +8,6 @@ import (
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui"
 	"github.com/tonysyu/gqlxp/tui/adapters"
-	"github.com/tonysyu/gqlxp/tui/utils"
 	"github.com/urfave/cli/v3"
 )
 
@@ -97,7 +96,8 @@ func loadAndStartFromFile(schemaFile, selectTarget string) error {
 	}
 
 	// Ensure search index exists before launching TUI
-	utils.EnsureSearchIndexForSchema(libSchema.ID, schema.Schema())
+	lib := library.NewLibrary()
+	_ = lib.EnsureIndex(libSchema.ID, schema.Schema())
 
 	// Start with library data
 	if selectTarget != "" {

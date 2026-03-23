@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/library"
-	"github.com/tonysyu/gqlxp/search"
 	"github.com/urfave/cli/v3"
 )
 
@@ -29,15 +27,6 @@ Examples:
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			lib := library.NewLibrary()
 
-			// Get schemas directory for indexing
-			schemasDir, err := library.GetSchemasDir()
-			if err != nil {
-				return fmt.Errorf("failed to get schemas directory: %w", err)
-			}
-
-			indexer := search.NewIndexer(schemasDir)
-			defer indexer.Close()
-
 			// Reindex all schemas
 			if cmd.Bool("all") {
 				schemas, err := lib.List()
@@ -51,7 +40,7 @@ Examples:
 				}
 
 				for _, schemaInfo := range schemas {
-					if err := reindexSchema(lib, indexer, schemaInfo.ID); err != nil {
+					if err := reindexSchema(lib, schemaInfo.ID); err != nil {
 						fmt.Printf("Error reindexing '%s': %v\n", schemaInfo.ID, err)
 						continue
 					}
@@ -67,31 +56,20 @@ Examples:
 			}
 
 			schemaID := cmd.Args().First()
-			return reindexSchema(lib, indexer, schemaID)
+			return reindexSchema(lib, schemaID)
 		},
 	}
 }
 
-func reindexSchema(lib library.Library, indexer search.Indexer, schemaID string) error {
-	// Get schema
-	schema, err := lib.Get(schemaID)
-	if err != nil {
+func reindexSchema(lib library.Library, schemaID string) error {
+	// Verify schema exists for user-friendly error message
+	if _, err := lib.Get(schemaID); err != nil {
 		return schemaNotFoundError(lib, schemaID)
 	}
 
 	fmt.Printf("Reindexing '%s'...\n", schemaID)
 
-	// Parse schema
-	parsedSchema, err := gql.ParseSchema(schema.Content)
-	if err != nil {
-		return fmt.Errorf("failed to parse schema: %w", err)
-	}
-
-	// Remove old index (ignore errors - index might not exist)
-	_ = indexer.Remove(schemaID)
-
-	// Create new index
-	if err := indexer.Index(schemaID, &parsedSchema); err != nil {
+	if err := lib.Reindex(schemaID); err != nil {
 		return fmt.Errorf("failed to index schema: %w", err)
 	}
 

@@ -5,7 +5,6 @@ import (
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/libselect"
-	"github.com/tonysyu/gqlxp/tui/utils"
 	"github.com/tonysyu/gqlxp/tui/xplr"
 )
 
@@ -139,7 +138,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // ensureSearchIndexCmd returns a tea.Cmd that creates the search index if it doesn't exist.
 func ensureSearchIndexCmd(schemaID string, schema adapters.SchemaView) tea.Cmd {
 	return func() tea.Msg {
-		utils.EnsureSearchIndexForSchema(schemaID, schema.Schema())
+		lib := library.NewLibrary()
+		_ = lib.EnsureIndex(schemaID, schema.Schema())
 		return nil
 	}
 }

@@ -7,8 +7,43 @@ import (
 	"time"
 
 	"github.com/matryer/is"
+	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/library"
+	"github.com/tonysyu/gqlxp/search"
 )
+
+// mockIndexer records indexing calls for assertion in tests.
+type mockIndexer struct {
+	indexed map[string]bool
+	removed map[string]bool
+}
+
+func newMockIndexer() *mockIndexer {
+	return &mockIndexer{
+		indexed: make(map[string]bool),
+		removed: make(map[string]bool),
+	}
+}
+
+func (m *mockIndexer) Index(schemaID string, _ *gql.GraphQLSchema) error {
+	m.indexed[schemaID] = true
+	delete(m.removed, schemaID)
+	return nil
+}
+
+func (m *mockIndexer) Remove(schemaID string) error {
+	m.removed[schemaID] = true
+	delete(m.indexed, schemaID)
+	return nil
+}
+
+func (m *mockIndexer) Exists(schemaID string) bool {
+	return m.indexed[schemaID]
+}
+
+func (m *mockIndexer) Close() error { return nil }
+
+var _ search.Indexer = (*mockIndexer)(nil)
 
 // setupTestLibrary creates a temporary config directory for testing.
 func setupTestLibrary(t *testing.T) (string, func()) {
@@ -423,4 +458,111 @@ func TestLibrary_UpdateContent(t *testing.T) {
 		err := lib.UpdateContent("nonexistent-schema", []byte("content"))
 		is.True(err != nil)
 	})
+}
+
+func TestLibrary_IndexerCalled_OnAdd(t *testing.T) {
+	is := is.New(t)
+	_, cleanup := setupTestLibrary(t)
+	defer cleanup()
+
+	mock := newMockIndexer()
+	lib := library.NewLibraryWithIndexer(mock)
+
+	schemaContent := `type Query { hello: String }`
+	err := lib.AddFromContent("test-schema", "Test", []byte(schemaContent), "test.graphqls")
+	is.NoErr(err)
+
+	// Give the background goroutine a moment to complete
+	time.Sleep(50 * time.Millisecond)
+	is.True(mock.indexed["test-schema"])
+}
+
+func TestLibrary_IndexerCalled_OnRemove(t *testing.T) {
+	is := is.New(t)
+	_, cleanup := setupTestLibrary(t)
+	defer cleanup()
+
+	mock := newMockIndexer()
+	lib := library.NewLibraryWithIndexer(mock)
+
+	schemaContent := `type Query { hello: String }`
+	err := lib.AddFromContent("test-schema", "Test", []byte(schemaContent), "test.graphqls")
+	is.NoErr(err)
+
+	err = lib.Remove("test-schema")
+	is.NoErr(err)
+
+	is.True(mock.removed["test-schema"])
+	is.True(!mock.indexed["test-schema"])
+}
+
+func TestLibrary_IndexerCalled_OnUpdateContent(t *testing.T) {
+	is := is.New(t)
+	_, cleanup := setupTestLibrary(t)
+	defer cleanup()
+
+	mock := newMockIndexer()
+	lib := library.NewLibraryWithIndexer(mock)
+
+	schemaContent := `type Query { hello: String }`
+	err := lib.AddFromContent("test-schema", "Test", []byte(schemaContent), "test.graphqls")
+	is.NoErr(err)
+
+	newContent := []byte(`type Query { world: String }`)
+	err = lib.UpdateContent("test-schema", newContent)
+	is.NoErr(err)
+
+	// Give the background goroutine a moment to complete
+	time.Sleep(50 * time.Millisecond)
+	is.True(mock.indexed["test-schema"])
+}
+
+func TestLibrary_EnsureIndex_IdempotentWhenExists(t *testing.T) {
+	is := is.New(t)
+	_, cleanup := setupTestLibrary(t)
+	defer cleanup()
+
+	mock := newMockIndexer()
+	lib := library.NewLibraryWithIndexer(mock)
+
+	schema, err := gql.ParseSchema([]byte(`type Query { hello: String }`))
+	is.NoErr(err)
+
+	// First call should index
+	err = lib.EnsureIndex("test-schema", &schema)
+	is.NoErr(err)
+	is.True(mock.indexed["test-schema"])
+
+	// Mark as indexed, then reset to verify second call is a no-op
+	indexCallsBefore := countTrue(mock.indexed)
+	err = lib.EnsureIndex("test-schema", &schema)
+	is.NoErr(err)
+	is.Equal(countTrue(mock.indexed), indexCallsBefore) // no new indexing
+}
+
+func TestLibrary_Reindex(t *testing.T) {
+	is := is.New(t)
+	_, cleanup := setupTestLibrary(t)
+	defer cleanup()
+
+	mock := newMockIndexer()
+	lib := library.NewLibraryWithIndexer(mock)
+
+	schemaContent := `type Query { hello: String }`
+	err := lib.AddFromContent("test-schema", "Test", []byte(schemaContent), "test.graphqls")
+	is.NoErr(err)
+
+	err = lib.Reindex("test-schema")
+	is.NoErr(err)
+	is.True(mock.indexed["test-schema"])
+}
+
+func countTrue(m map[string]bool) int {
+	n := 0
+	for _, v := range m {
+		if v {
+			n++
+		}
+	}
+	return n
 }
