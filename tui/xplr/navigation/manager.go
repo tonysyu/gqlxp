@@ -1,6 +1,9 @@
 package navigation
 
-import "github.com/tonysyu/gqlxp/tui/xplr/components"
+import (
+	tea "charm.land/bubbletea/v2"
+	"github.com/tonysyu/gqlxp/tui/xplr/components"
+)
 
 // NavigationManager coordinates panel stack, breadcrumbs, and type selection
 type NavigationManager struct {
@@ -17,6 +20,20 @@ func NewNavigationManager(visiblePanels int) NavigationManager {
 		typeSelector:  newTypeSelector(),
 		visiblePanels: visiblePanels,
 	}
+}
+
+// syncFocus sets the current panel as focused and all others as blurred.
+// Called internally after any mutation that changes which panel is current.
+func (nm NavigationManager) syncFocus() NavigationManager {
+	for _, p := range nm.stack.All() {
+		if p != nil {
+			p.SetBlurred()
+		}
+	}
+	if current := nm.stack.Current(); current != nil {
+		current.SetFocused()
+	}
+	return nm
 }
 
 // NavigateForward moves forward in panel stack
@@ -38,7 +55,7 @@ func (nm NavigationManager) NavigateForward() (NavigationManager, bool) {
 		nm.breadcrumbs = nm.breadcrumbs.Push(breadcrumbTitle)
 	}
 	nm.stack.position++
-	return nm, true
+	return nm.syncFocus(), true
 }
 
 // NavigateBackward moves backward in panel stack
@@ -49,7 +66,44 @@ func (nm NavigationManager) NavigateBackward() (NavigationManager, bool) {
 	}
 	nm.stack = stack
 	nm.breadcrumbs = nm.breadcrumbs.Pop()
-	return nm, true
+	return nm.syncFocus(), true
+}
+
+// GoForward navigates forward in the panel stack, syncs focus, and returns any
+// open command from the newly focused panel's selected item.
+func (nm NavigationManager) GoForward() (NavigationManager, bool, tea.Cmd) {
+	nm, moved := nm.NavigateForward()
+	if !moved {
+		return nm, false, nil
+	}
+	var openCmd tea.Cmd
+	if current := nm.stack.Current(); current != nil {
+		openCmd = current.OpenSelectedItem()
+	}
+	return nm, true, openCmd
+}
+
+// Load replaces the panel at the current position and syncs focus state.
+// Use this when loading a new panel as part of navigation (instead of SetCurrentPanel).
+func (nm NavigationManager) Load(panel *components.Panel) NavigationManager {
+	nm.stack.panels[nm.stack.position] = panel
+	return nm.syncFocus()
+}
+
+// ResetAndLoad resets the panel stack, loads the main panel at position 0,
+// and optionally pushes a child panel. Syncs focus state.
+func (nm NavigationManager) ResetAndLoad(panel *components.Panel, childPanel *components.Panel) NavigationManager {
+	initialPanels := make([]*components.Panel, nm.visiblePanels)
+	for i := range nm.visiblePanels {
+		initialPanels[i] = components.NewPanel([]components.ListItem{}, "")
+	}
+	nm.stack = nm.stack.Replace(initialPanels)
+	nm.breadcrumbs = nm.breadcrumbs.Reset()
+	nm.stack.panels[nm.stack.position] = panel
+	if childPanel != nil {
+		nm.stack = nm.stack.Push(childPanel)
+	}
+	return nm.syncFocus()
 }
 
 // OpenPanel pushes new panel onto stack
@@ -91,7 +145,9 @@ func (nm NavigationManager) CurrentPanel() *components.Panel {
 	return nm.stack.Current()
 }
 
-// SetCurrentPanel sets the panel at the current stack position
+// SetCurrentPanel sets the panel at the current stack position without syncing focus.
+// Use this for panel content updates (e.g. when a panel receives a message).
+// Use Load when replacing a panel as part of navigation.
 func (nm NavigationManager) SetCurrentPanel(panel *components.Panel) NavigationManager {
 	nm.stack.panels[nm.stack.position] = panel
 	return nm
@@ -125,7 +181,7 @@ func (nm NavigationManager) Reset() NavigationManager {
 	}
 	nm.stack = nm.stack.Replace(initialPanels)
 	nm.breadcrumbs = nm.breadcrumbs.Reset()
-	return nm
+	return nm.syncFocus()
 }
 
 // IsAtTopLevelPanel returns true if the current panel is the first panel (position 0)

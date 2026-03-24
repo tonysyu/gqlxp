@@ -305,6 +305,11 @@ func (p *Panel) SelectItemByName(name string) bool {
 	return false
 }
 
+// IsFocused returns whether this panel is currently focused
+func (p *Panel) IsFocused() bool {
+	return p.isFocused
+}
+
 // SelectByIndex selects the item at the given index
 func (p *Panel) SelectByIndex(idx int) {
 	if idx >= 0 && idx < len(p.ListModel.Items()) {

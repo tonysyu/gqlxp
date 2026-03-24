@@ -390,33 +390,20 @@ func (m Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
 // handleNextPanel moves forward in the navigation stack
 func (m Model) handleNextPanel(cmds []tea.Cmd) (Model, []tea.Cmd) {
 	var moved bool
-	m.nav, moved = m.nav.NavigateForward()
+	var openCmd tea.Cmd
+	m.nav, moved, openCmd = m.nav.GoForward()
 	if !moved {
 		return m, cmds
 	}
-
-	m.updatePanelFocusStates()
-
-	// Open up child panel for ResultType if it exists
-	focusedPanel := m.nav.CurrentPanel()
-	if focusedPanel == nil {
-		return m, cmds
-	}
-
-	if openCmd := focusedPanel.OpenSelectedItem(); openCmd != nil {
+	if openCmd != nil {
 		cmds = append(cmds, openCmd)
 	}
-
 	return m, cmds
 }
 
 // handlePrevPanel moves backward in the navigation stack
 func (m Model) handlePrevPanel() Model {
-	var moved bool
-	m.nav, moved = m.nav.NavigateBackward()
-	if moved {
-		m.updatePanelFocusStates()
-	}
+	m.nav, _ = m.nav.NavigateBackward()
 	return m
 }
 
@@ -502,20 +489,6 @@ func (m *Model) updateKeybindings() {
 	}
 }
 
-// updatePanelFocusStates updates focus state for all visible panels based on stackPosition
-func (m *Model) updatePanelFocusStates() {
-	// Blur all panels first
-	for _, panel := range m.nav.Stack().All() {
-		if panel != nil {
-			panel.SetBlurred()
-		}
-	}
-
-	// Set focused state only for the currently focused panel
-	if m.nav.CurrentPanel() != nil {
-		m.nav.CurrentPanel().SetFocused()
-	}
-}
 
 // handleOpenPanel handles when an item is opened
 // The new panel is added to the stack after the currently focused panel
@@ -563,55 +536,51 @@ func (m *Model) convertSearchResultsToListItems(results []search.SearchResult) [
 // This method is called on initilization and when switching types, so that detail panels get
 // cleared out to avoid inconsistencies across panels.
 func (m *Model) resetAndLoadMainPanel() {
-	m.nav = m.nav.Reset()
-	m.loadMainPanel()
+	items, title := m.buildItemsForCurrentType()
+	mainPanel := components.NewPanel(items, title)
+	var childPanel *components.Panel
+	if len(items) > 0 && m.nav.CurrentType() != navigation.SearchType {
+		childPanel, _ = items[0].OpenPanel()
+	}
+	m.nav = m.nav.ResetAndLoad(mainPanel, childPanel)
+	m.sizePanels()
 }
 
-// loadMainPanel loads the the currently selected GQL type in the main (left-most) panel
-func (m *Model) loadMainPanel() {
-	var items []components.ListItem
-	var title string
-
+// buildItemsForCurrentType returns the list items and title for the currently selected GQL type.
+func (m *Model) buildItemsForCurrentType() ([]components.ListItem, string) {
 	switch m.nav.CurrentType() {
 	case navigation.QueryType:
-		items = m.schema.GetQueryItems()
-		title = "Query Fields"
+		return m.schema.GetQueryItems(), "Query Fields"
 	case navigation.MutationType:
-		items = m.schema.GetMutationItems()
-		title = "Mutation Fields"
+		return m.schema.GetMutationItems(), "Mutation Fields"
 	case navigation.ObjectType:
-		items = m.schema.GetObjectItems()
-		title = "Object Types"
+		return m.schema.GetObjectItems(), "Object Types"
 	case navigation.InputType:
-		items = m.schema.GetInputItems()
-		title = "Input Types"
+		return m.schema.GetInputItems(), "Input Types"
 	case navigation.EnumType:
-		items = m.schema.GetEnumItems()
-		title = "Enum Types"
+		return m.schema.GetEnumItems(), "Enum Types"
 	case navigation.ScalarType:
-		items = m.schema.GetScalarItems()
-		title = "Scalar Types"
+		return m.schema.GetScalarItems(), "Scalar Types"
 	case navigation.InterfaceType:
-		items = m.schema.GetInterfaceItems()
-		title = "Interface Types"
+		return m.schema.GetInterfaceItems(), "Interface Types"
 	case navigation.UnionType:
-		items = m.schema.GetUnionItems()
-		title = "Union Types"
+		return m.schema.GetUnionItems(), "Union Types"
 	case navigation.DirectiveType:
-		items = m.schema.GetDirectiveItems()
-		title = "Directive Types"
+		return m.schema.GetDirectiveItems(), "Directive Types"
 	case navigation.SearchType:
-		// Use cached search results or show empty state
 		if m.searchResults != nil {
-			items = m.searchResults
-		} else {
-			items = []components.ListItem{}
+			return m.searchResults, "Search Results"
 		}
-		title = "Search Results"
+		return []components.ListItem{}, "Search Results"
 	}
+	return []components.ListItem{}, ""
+}
 
-	m.nav = m.nav.SetCurrentPanel(components.NewPanel(items, title))
-	m.updatePanelFocusStates()
+// loadMainPanel loads the currently selected GQL type in the main (left-most) panel.
+// Used when refreshing panel content without resetting the stack (e.g. search results update).
+func (m *Model) loadMainPanel() {
+	items, title := m.buildItemsForCurrentType()
+	m.nav = m.nav.Load(components.NewPanel(items, title))
 
 	// Auto-open detail panel for the first item if available (but not for Search tab)
 	if len(items) > 0 && m.nav.CurrentType() != navigation.SearchType {
@@ -684,11 +653,7 @@ func (m *Model) selectQueryOrMutationField(panel *components.Panel, fieldName st
 	}
 
 	m.handleOpenPanel(msg.Panel)
-	var moved bool
-	m.nav, moved = m.nav.NavigateForward()
-	if moved {
-		m.updatePanelFocusStates()
-	}
+	m.nav, _ = m.nav.NavigateForward()
 }
 
 // selectTypeField opens a type's panel and selects a specific field within it
@@ -715,11 +680,8 @@ func (m *Model) selectTypeField(panel *components.Panel, fieldName string) {
 		return
 	}
 
-	m.updatePanelFocusStates()
-
 	// Select the field in the newly opened panel (now at current position)
-	currentPanel := m.nav.CurrentPanel()
-	if currentPanel != nil {
+	if currentPanel := m.nav.CurrentPanel(); currentPanel != nil {
 		currentPanel.SelectItemByName(fieldName)
 	}
 }
