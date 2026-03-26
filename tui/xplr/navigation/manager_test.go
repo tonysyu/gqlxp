@@ -48,7 +48,7 @@ func TestNavigationManager_NavigateBackward_SyncsFocus(t *testing.T) {
 	nm = nm.OpenPanel(p2)
 	nm, _ = nm.NavigateForward()
 
-	nm, _ = nm.NavigateBackward()
+	_, _ = nm.NavigateBackward()
 	is.True(p1.IsFocused())
 	is.True(!p2.IsFocused())
 }

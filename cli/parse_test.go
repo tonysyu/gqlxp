@@ -46,7 +46,7 @@ func TestValidateOperation_UnknownField(t *testing.T) {
 	errorLines := validateOperation([]byte(parseTestSchema), operation, "query.graphql")
 
 	is.True(len(errorLines) > 0)                                                  // unknown field produces error, exits with code 1
-	is.True(strings.HasPrefix(errorLines[0], "query.graphql:"))                    // error identifies location
+	is.True(strings.HasPrefix(errorLines[0], "query.graphql:"))                   // error identifies location
 	is.True(strings.Contains(strings.Join(errorLines, "\n"), "nonExistentField")) // error identifies the unknown field
 }
 

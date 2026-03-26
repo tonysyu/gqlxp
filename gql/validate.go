@@ -38,7 +38,7 @@ func ValidateOperation(schemaContent []byte, operationContent string) ([]Validat
 		return []ValidationError{{Message: parseErr.Error()}}, nil
 	}
 
-	return toValidationErrors(validator.Validate(astSchema, doc)), nil
+	return toValidationErrors(validator.ValidateWithRules(astSchema, doc, nil)), nil
 }
 
 func toValidationErrors(errs gqlerror.List) []ValidationError {

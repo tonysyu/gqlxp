@@ -458,7 +458,6 @@ func (m *Model) updateKeybindings() {
 	}
 }
 
-
 // handleOpenPanel handles when an item is opened
 // The new panel is added to the stack after the currently focused panel
 func (m *Model) handleOpenPanel(newPanel *components.Panel) {
