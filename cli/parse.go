@@ -24,9 +24,16 @@ Reads from a file argument if provided, or from stdin if omitted.
 Exits with code 0 if valid, code 1 if there are errors.
 
 Examples:
-  gqlxp parse query.graphql
-  gqlxp parse -s my-schema query.graphql
-  cat query.graphql | gqlxp parse`,
+  gqlxp parse examples/queries/github-user.graphql
+  gqlxp parse -s github examples/queries/github-user.graphql
+  cat examples/queries/github-user.graphql | gqlxp parse
+  cat << EOF | gqlxp parse -s github
+    query MyUser {
+      user(login: "tonysyu") {
+        name
+      }
+    }
+  EOF`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "schema",
