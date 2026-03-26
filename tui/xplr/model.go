@@ -6,13 +6,13 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/tonysyu/gqlxp/library"
-	"github.com/tonysyu/gqlxp/search"
 	"github.com/tonysyu/gqlxp/tui/adapters"
 	"github.com/tonysyu/gqlxp/tui/config"
 	"github.com/tonysyu/gqlxp/tui/xplr/cmdpalette"
 	"github.com/tonysyu/gqlxp/tui/xplr/components"
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 	"github.com/tonysyu/gqlxp/tui/xplr/overlay"
+	"github.com/tonysyu/gqlxp/tui/xplr/searchmodel"
 )
 
 // OpenLibSelectMsg is sent when the user requests to open the library selection view
@@ -55,11 +55,8 @@ type Model struct {
 	SchemaID       string // Schema ID if loaded from library
 	HasLibraryData bool   // Whether this schema has library metadata
 
-	// Search state
-	searchInput   components.SearchInput
-	searchFocused bool
-	searchResults []components.ListItem
-	searchBaseDir string // Base directory for search indexes
+	// Search sub-model
+	search searchmodel.Model
 
 	width          int
 	height         int
@@ -79,12 +76,12 @@ func NewEmpty() Model {
 	paletteKeymap := config.NewCommandPaletteKeymaps()
 
 	m := Model{
-		help:        help.New(),
-		Styles:      styles,
-		overlay:     overlay.New(styles),
-		nav:         navigation.NewNavigationManager(config.VisiblePanelCount),
-		searchInput: components.NewSearchInput(),
-		keymap:      mainKeymap,
+		help:    help.New(),
+		Styles:  styles,
+		overlay: overlay.New(styles),
+		nav:     navigation.NewNavigationManager(config.VisiblePanelCount),
+		search:  searchmodel.New(mainKeymap),
+		keymap:  mainKeymap,
 	}
 
 	// Create command palette with all keymaps
@@ -212,17 +209,11 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.schema = msg.Schema
 		m.SchemaID = msg.SchemaID
 		m.HasLibraryData = msg.HasLibraryData
+		m.search = m.search.SetContext(&m.schema, msg.SchemaID)
 		m.resetAndLoadMainPanel()
 		return m, nil
-	case searchResultsMsg:
-		// Update search results
-		if msg.err != nil {
-			// Handle search error - show empty results
-			m.searchResults = nil
-		} else {
-			m.searchResults = m.convertSearchResultsToListItems(msg.results)
-		}
-		// Reload panel if we're on the search tab
+	case searchmodel.ResultsReadyMsg:
+		m.search = m.search.StoreResults(msg.Items)
 		if m.nav.CurrentType() == navigation.SearchType {
 			m.loadMainPanel()
 		}
@@ -249,7 +240,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		default:
 			// Delegate to appropriate handler based on search focus state
-			if m.nav.CurrentType() == navigation.SearchType && m.searchFocused {
+			if m.nav.CurrentType() == navigation.SearchType && m.search.IsFocused() {
 				return m.handleSearchFocused(msg)
 			}
 			return m.handleNormal(msg, cmds)
@@ -301,9 +292,8 @@ func (m Model) openOverlayForSelectedItem() Model {
 // cycleGQLType handles cycling between GQL types (forward or backward)
 func (m Model) cycleGQLType(forward bool) (Model, tea.Cmd) {
 	// Blur search input when switching away from Search tab
-	if m.searchFocused {
-		m.searchFocused = false
-		m.searchInput = m.searchInput.Blur()
+	if m.search.IsFocused() {
+		m.search = m.search.Blur()
 		m.updateKeybindings()
 	}
 
@@ -317,10 +307,9 @@ func (m Model) cycleGQLType(forward bool) (Model, tea.Cmd) {
 
 	// Focus search input when switching to Search tab
 	if m.nav.CurrentType() == navigation.SearchType {
-		m.searchFocused = true
 		m.updateKeybindings()
 		var cmd tea.Cmd
-		m.searchInput, cmd = m.searchInput.Focus()
+		m.search, cmd = m.search.Focus()
 		return m, cmd
 	}
 
@@ -329,32 +318,13 @@ func (m Model) cycleGQLType(forward bool) (Model, tea.Cmd) {
 
 // handleSearchFocused handles messages when the search input is focused
 func (m Model) handleSearchFocused(msg tea.Msg) (Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyPressMsg:
-		switch {
-		case key.Matches(msg, m.keymap.SearchSubmit):
-			// Execute search and transfer focus to results
-			query := m.searchInput.Value()
-			if query != "" {
-				m.searchFocused = false
-				m.searchInput = m.searchInput.Blur()
-				m.updateKeybindings()
-				return m, m.executeSearch(query)
-			}
-			return m, nil
-		case key.Matches(msg, m.keymap.SearchClear):
-			// Clear input and keep focus
-			m.searchInput = m.searchInput.SetValue("")
-			return m, nil
-		default:
-			// Pass message to search input
-			var cmd tea.Cmd
-			m.searchInput, cmd = m.searchInput.Update(msg)
-			return m, cmd
-		}
+	var cmd tea.Cmd
+	m.search, cmd = m.search.HandleMsg(msg)
+	if !m.search.IsFocused() {
+		// Search submitted or otherwise lost focus — update keybindings
+		m.updateKeybindings()
 	}
-
-	return m, nil
+	return m, cmd
 }
 
 // handleNormal handles messages in normal mode (when search is not focused)
@@ -365,11 +335,10 @@ func (m Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
 	}
 
 	// Handle Search tab specific keys - early return if handled
-	if m.nav.CurrentType() == navigation.SearchType && key.Matches(keyMsg, m.keymap.SearchFocus) && !m.searchFocused {
-		m.searchFocused = true
+	if m.nav.CurrentType() == navigation.SearchType && key.Matches(keyMsg, m.keymap.SearchFocus) && !m.search.IsFocused() {
 		m.updateKeybindings()
 		var cmd tea.Cmd
-		m.searchInput, cmd = m.searchInput.Focus()
+		m.search, cmd = m.search.Focus()
 		cmds = append(cmds, cmd)
 		return m, tea.Batch(cmds...)
 	}
@@ -469,7 +438,7 @@ func (m *Model) sizePanels() {
 
 // updateKeybindings enables or disables key bindings based on search focus state
 func (m *Model) updateKeybindings() {
-	if m.searchFocused {
+	if m.search.IsFocused() {
 		// When search is focused, disable panel navigation keys
 		m.keymap.NextPanel.SetEnabled(false)
 		m.keymap.PrevPanel.SetEnabled(false)
@@ -499,37 +468,7 @@ func (m *Model) handleOpenPanel(newPanel *components.Panel) {
 
 // SetSearchBaseDir sets the base directory for search indexes
 func (m *Model) SetSearchBaseDir(baseDir string) {
-	m.searchBaseDir = baseDir
-}
-
-// executeSearch performs a search query and updates the search results
-func (m *Model) executeSearch(query string) tea.Cmd {
-	if query == "" || m.SchemaID == "" || m.searchBaseDir == "" {
-		return nil
-	}
-
-	return func() tea.Msg {
-		searcher := search.NewSearcher(m.searchBaseDir)
-		defer searcher.Close()
-
-		results, err := searcher.Search(m.SchemaID, query, 50)
-		if err != nil {
-			return searchResultsMsg{results: nil, err: err}
-		}
-
-		return searchResultsMsg{results: results, err: nil}
-	}
-}
-
-// searchResultsMsg is sent when search results are ready
-type searchResultsMsg struct {
-	results []search.SearchResult
-	err     error
-}
-
-// convertSearchResultsToListItems converts search results to list items
-func (m *Model) convertSearchResultsToListItems(results []search.SearchResult) []components.ListItem {
-	return adapters.AdaptSearchResults(results, &m.schema)
+	m.search = m.search.SetBaseDir(baseDir)
 }
 
 // resetAndLoadMainPanel defines initial panels and loads currently selected GQL type.
@@ -568,8 +507,8 @@ func (m *Model) buildItemsForCurrentType() ([]components.ListItem, string) {
 	case navigation.DirectiveType:
 		return m.schema.GetDirectiveItems(), "Directive Types"
 	case navigation.SearchType:
-		if m.searchResults != nil {
-			return m.searchResults, "Search Results"
+		if results := m.search.Results(); results != nil {
+			return results, "Search Results"
 		}
 		return []components.ListItem{}, "Search Results"
 	}

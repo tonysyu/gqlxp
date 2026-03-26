@@ -33,7 +33,7 @@ func (m Model) View() string {
 	// Add search input if on Search tab
 	var mainView string
 	if m.nav.CurrentType() == navigation.SearchType {
-		searchInput := m.searchInput.View()
+		searchInput := m.search.View()
 		mainView = lipgloss.JoinVertical(0, navbar, breadcrumbs, panels, searchInput, help)
 	} else {
 		mainView = lipgloss.JoinVertical(0, navbar, breadcrumbs, panels, help)
@@ -42,14 +42,8 @@ func (m Model) View() string {
 }
 
 func (m Model) helpBindings() []key.Binding {
-	if m.searchFocused {
-		return []key.Binding{
-			m.keymap.SearchSubmit,
-			m.keymap.SearchClear,
-			m.keymap.NextGQLType,
-			m.keymap.PrevGQLType,
-			m.keymap.Quit,
-		}
+	if m.search.IsFocused() {
+		return m.search.HelpBindings()
 	}
 
 	helpBindings := []key.Binding{}
