@@ -3,6 +3,7 @@ package search
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/blevesearch/bleve/v2"
 )
@@ -70,9 +71,28 @@ func newSearchRequest(query string) *bleve.SearchRequest {
 	// QueryStringQuery provides flexible, user-defined search configuration.
 	// See https://blevesearch.com/docs/Query-String-Query/
 	queryStringQuery := bleve.NewQueryStringQuery(query)
+
 	searchRequest := bleve.NewSearchRequest(queryStringQuery)
+	if isSimpleTerm(query) {
+		// For bare single-word queries, also match name as a wildcard fragment so
+		// e.g. "org" finds "OrgFooBar" (indexed as the single token "orgfoobar").
+		nameWildcard := bleve.NewWildcardQuery("*" + strings.ToLower(query) + "*")
+		nameWildcard.SetField("name")
+		searchRequest = bleve.NewSearchRequest(bleve.NewDisjunctionQuery(queryStringQuery, nameWildcard))
+	}
 	searchRequest.Fields = []string{"type", "name", "description", "path"}
 	return searchRequest
+}
+
+// isSimpleTerm returns true for single bare words with no query operators or field specifiers.
+func isSimpleTerm(query string) bool {
+	for _, ch := range query {
+		switch ch {
+		case ' ', ':', '*', '?', '"', '+', '-', '(', ')', '~', '^', '\\':
+			return false
+		}
+	}
+	return true
 }
 
 // Close closes the searcher (no-op for BleveSearcher)

@@ -73,17 +73,23 @@ func TestIndexerAndSearcher(t *testing.T) {
 	is.True(len(results) > 0)                           // should find results
 	is.True(containsPath(results, "Query.searchUsers")) // should find searchUsers field
 
-	// Test 3: Search for non-existent term
+	// Test 3: Search for mid-word fragment should find searchUsers via wildcard on name
+	results, err = searcher.Search(schemaID, "Users", 10)
+	is.NoErr(err)                                       // should search successfully
+	is.True(len(results) > 0)                           // should find results
+	is.True(containsPath(results, "Query.searchUsers")) // should find searchUsers via fragment
+
+	// Test 4: Search for non-existent term
 	results, err = searcher.Search(schemaID, "nonexistent", 10)
 	is.NoErr(err)             // should search successfully
 	is.Equal(len(results), 0) // should find no results
 
-	// Test 4: Remove index
+	// Test 5: Remove index
 	err = indexer.Remove(schemaID)
 	is.NoErr(err)                      // should remove index
 	is.True(!indexer.Exists(schemaID)) // index should not exist
 
-	// Test 5: Search after removal should fail
+	// Test 6: Search after removal should fail
 	_, err = searcher.Search(schemaID, "user", 10)
 	is.True(err != nil) // should fail to search non-existent index
 }

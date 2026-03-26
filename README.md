@@ -179,7 +179,19 @@ $ gqlxp search "+type:/(Object|Interface)/ +name:repo*"
 $ gqlxp search "user -type:*Field"
 ```
 
+#### Searching Word Fragments
+
+By default, bleve does not search word fragments. The search syntax examples above show examples using a wild-card query (e.g. `*`) to search for word fragments. (Something similar can be done w/ regexes using `.*`.)
+
+Since searching for fragments of type names is common, logic in gqlxp special cases
+"simple searches" to search for fragments in the `name` field. For example, searching
+for `myterm` is roughly equivalent to searching for `myterm name:*myterm*`.
+
+This default word-fragment behavior is only applied to "simple" searches, which
+requires no whitespace is used and that none of the following characters are in the query `:`, `*`, `?`, `"`, `+`, `-`, `(`, `)`, `~`, `^`, '\\'.
+
 #### Search fields
+
 Each search document contains the following fields:
 - `type`: GraphQL type or field (see section below)
 - `name`: Name of the type or field
