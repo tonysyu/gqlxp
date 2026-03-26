@@ -25,6 +25,7 @@ Use the TUI interface to manage library schemas (remove, view, etc).`,
 		},
 		Commands: []*cli.Command{
 			appCommand(),
+			parseCommand(),
 			searchCommand(),
 			showCommand(),
 			library.Command(),

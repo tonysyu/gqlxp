@@ -1,0 +1,5 @@
+query MyUser {
+  user(login: "tonysyu") {
+    name
+  }
+}
