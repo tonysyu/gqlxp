@@ -22,7 +22,6 @@ Options:
 
 Environment variables:
     INSTALL_DIR          Installation directory (OPTIONAL; overridden by -b flag)
-    GITHUB_TOKEN         GitHub API token (OPTIONAL; helps avoid rate limits)
 EOF
 }
 
@@ -71,17 +70,12 @@ detect_architecture() {
 }
 
 get_latest_app_version() {
-    # Use GITHUB_TOKEN for authentication if available
-    auth_header=""
-    if [ -n "${GITHUB_TOKEN:-}" ]; then
-        auth_header="-H \"Authorization: Bearer ${GITHUB_TOKEN}\""
-    fi
-
-    version=$(eval curl -sSfL $auth_header "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-    if [ -z "$version" ]; then
+    releases_url="https://github.com/${REPO}/releases/latest"
+    final_url=$(curl -sSfL -o /dev/null -w '%{url_effective}' "$releases_url" 2>/dev/null)
+    version=$(basename "$final_url")
+    if [ -z "$version" ] || [ "$version" = "latest" ]; then
         echo "Error: Could not determine latest version" >&2
-        echo "Tip: If you're hitting rate limits (e.g. 403 error), set GITHUB_TOKEN environment variable" >&2
-        echo "Tip: Alternatively, download and extract the appropriate archive from https://github.com/${REPO}/releases/" >&2
+        echo "Tip: You can also download and extract the appropriate archive from https://github.com/${REPO}/releases/" >&2
         exit 1
     fi
     echo "$version"
