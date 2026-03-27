@@ -10,9 +10,9 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
-func parseCommand() *cli.Command {
+func validateCommand() *cli.Command {
 	return &cli.Command{
-		Name:      "parse",
+		Name:      "validate",
 		Usage:     "Validate a GraphQL operation against a schema",
 		ArgsUsage: "[<operation-file>]",
 		Description: `Validates a GraphQL operation against a schema.
@@ -24,10 +24,10 @@ Reads from a file argument if provided, or from stdin if omitted.
 Exits with code 0 if valid, code 1 if there are errors.
 
 Examples:
-  gqlxp parse examples/queries/github-user.graphql
-  gqlxp parse -s github examples/queries/github-user.graphql
-  cat examples/queries/github-user.graphql | gqlxp parse
-  cat << EOF | gqlxp parse -s github
+  gqlxp validate examples/queries/github-user.graphql
+  gqlxp validate -s github examples/queries/github-user.graphql
+  cat examples/queries/github-user.graphql | gqlxp validate
+  cat << EOF | gqlxp validate -s github
     query MyUser {
       user(login: "tonysyu") {
         name
@@ -47,12 +47,12 @@ Examples:
 			if cmd.Args().Len() > 0 {
 				filePath = cmd.Args().First()
 			}
-			return runParseCommand(schemaArg, filePath)
+			return runValidateCommand(schemaArg, filePath)
 		},
 	}
 }
 
-func runParseCommand(schemaArg, filePath string) error {
+func runValidateCommand(schemaArg, filePath string) error {
 	schema, err := resolveSchemaFromArgument(schemaArg)
 	if err != nil {
 		return err
