@@ -121,6 +121,7 @@ func NewFromSchemaLibrary(schema adapters.SchemaView, schemaID string, metadata 
 	m.schema = schema
 	m.SchemaID = schemaID
 	m.HasLibraryData = true
+	m.search = m.search.SetContext(&m.schema, schemaID)
 	m.resetAndLoadMainPanel()
 	return m
 }
@@ -216,6 +217,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.search = m.search.StoreResults(msg.Items)
 		if m.nav.CurrentType() == navigation.SearchType {
 			m.loadMainPanel()
+			m.sizePanels()
 		}
 		return m, nil
 	case tea.KeyPressMsg:
