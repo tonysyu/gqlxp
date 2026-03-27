@@ -20,59 +20,84 @@ Enter
 Sleep 1s
 
 # Run gqlxp on an example schema
-Type "gqlxp examples/github.graphqls"
+Type "gqlxp app -s examples/github.graphqls"
 Sleep 1s
 Enter
 
 # Wait for the TUI to load
 Sleep 2s
 
-# Navigate through the schema
+# Navigate through query types
 Type "j"
 Sleep 1s
 Type "j"
 Sleep 1s
 
-# Open overlay
+# Navigate into type panel
+Type "]"
+Sleep 2s
+
+# Open overlay for type, scroll down, then close overlay
 Space
+Sleep 1s
+Type "j"
+Type "j"
+Type "j"
+Type "j"
+Sleep 1s
+Type "q"
 Sleep 2s
 
-# Quit overlay
-Type "q"
-Sleep 1s
+# Navigate from Type to Inputs, then back
+Type "L"
+Sleep 2s
+Type "H"
+Sleep 2s
 
-# Navigate into and out of child type panels
-Type "l"
-Sleep 1s
+# Navigate into type's field panel, go to Usages
 Type "]"
 Sleep 1s
-Type "k"
+Type "L"
 Sleep 1s
-Type "]"
+Type "L"
+Sleep 2s
+
+# Navigate to Object type class
+Type "}"
+Sleep 1s
+Type "}"
+Sleep 2s
+
+# Search Object type class for org
+Type "/"
+Sleep 1s
+Type "org"
+Sleep 1s
+Enter
+Sleep 1s
+Enter
 Sleep 1s
 Type "j"
 Sleep 1s
-Type "]"
-Sleep 2s
-Type "["
-Sleep 1s
-Type "["
-Sleep 1s
-Type "["
+Type "j"
 Sleep 1s
 
-# Navigate through types
-Type "}"
-Sleep 1s
-Type "}"
-Sleep 1s
-Type "}"
-Sleep 1s
-Type "}"
-Sleep 1s
-Type "}"
-Sleep 1s
-Type "}"
+# Navigate to Search
+Type "{"
 Sleep 1s
 Type "{"
+Sleep 1s
+Type "{"
+Sleep 2s
+
+# Search for org
+Type "org"
+Sleep 1s
+Enter
+Sleep 1s
+Type "j"
+Sleep 1s
+Type "j"
+Sleep 1s
+Type "/"
 Sleep 1s
