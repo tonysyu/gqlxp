@@ -337,7 +337,7 @@ func (m Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
 	}
 
 	// Handle Search tab specific keys - early return if handled
-	if m.nav.CurrentType() == navigation.SearchType && key.Matches(keyMsg, m.keymap.SearchFocus) && !m.search.IsFocused() {
+	if m.nav.CurrentType() == navigation.SearchType && m.nav.IsAtTopLevelPanel() && key.Matches(keyMsg, m.keymap.SearchFocus) && !m.search.IsFocused() {
 		m.updateKeybindings()
 		var cmd tea.Cmd
 		m.search, cmd = m.search.Focus()
