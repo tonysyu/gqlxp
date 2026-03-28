@@ -103,7 +103,7 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 			want:    []map[string]any{},
 		},
 		{
-			name: "single result",
+			name: "single result without signature",
 			results: []search.SearchResult{
 				{
 					Type:        "Object",
@@ -120,6 +120,30 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 					"path":        "User",
 					"description": "A user",
 					"score":       1.5,
+					"signature":   "",
+				},
+			},
+		},
+		{
+			name: "result with signature",
+			results: []search.SearchResult{
+				{
+					Type:        "Query",
+					Name:        "getUser",
+					Path:        "Query.getUser",
+					Description: "Get a user by ID",
+					Score:       1.5,
+					Signature:   "getUser(id: ID!): User",
+				},
+			},
+			want: []map[string]any{
+				{
+					"type":        "Query",
+					"name":        "getUser",
+					"path":        "Query.getUser",
+					"description": "Get a user by ID",
+					"score":       1.5,
+					"signature":   "getUser(id: ID!): User",
 				},
 			},
 		},
@@ -134,11 +158,12 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 					Score:       2.0,
 				},
 				{
-					Type:        "Field",
+					Type:        "Query",
 					Name:        "userId",
 					Path:        "Query.userId",
 					Description: "Get user by ID",
 					Score:       1.5,
+					Signature:   "userId(id: ID!): User",
 				},
 			},
 			want: []map[string]any{
@@ -148,13 +173,15 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 					"path":        "User",
 					"description": "A user",
 					"score":       2.0,
+					"signature":   "",
 				},
 				{
-					"type":        "Field",
+					"type":        "Query",
 					"name":        "userId",
 					"path":        "Query.userId",
 					"description": "Get user by ID",
 					"score":       1.5,
+					"signature":   "userId(id: ID!): User",
 				},
 			},
 		},
@@ -194,6 +221,7 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 				is.Equal(got[i]["path"], wantItem["path"])
 				is.Equal(got[i]["description"], wantItem["description"])
 				is.Equal(got[i]["score"], wantItem["score"])
+				is.Equal(got[i]["signature"], wantItem["signature"])
 			}
 		})
 	}

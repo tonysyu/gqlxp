@@ -9,6 +9,7 @@ type SearchResult struct {
 	Path        string  `json:"path"`        // Full path (e.g., "Query.user.name")
 	Description string  `json:"description"` // Description text
 	Score       float64 `json:"score"`       // Relevance score from Bleve
+	Signature   string  `json:"signature"`   // Field signature (e.g., "getUser(id: ID!): User")
 }
 
 // Indexer manages schema indexing operations

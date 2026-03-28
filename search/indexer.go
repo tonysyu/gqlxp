@@ -17,6 +17,7 @@ type document struct {
 	Description string `json:"description"` // Description text
 	Path        string `json:"path"`        // Full path (e.g., "Query.user.name")
 	SchemaID    string `json:"schemaID"`    // Schema identifier
+	Signature   string `json:"signature"`   // Field signature (e.g., "getUser(id: ID!): User")
 }
 
 // BleveIndexer implements Indexer using Bleve
@@ -105,6 +106,7 @@ func buildIndexMapping() *mapping.IndexMappingImpl {
 	docMapping.AddFieldMappingsAt("description", textFieldMapping)
 	docMapping.AddFieldMappingsAt("path", textFieldMapping)
 	docMapping.AddFieldMappingsAt("schemaID", keywordFieldMapping)
+	docMapping.AddFieldMappingsAt("signature", keywordFieldMapping)
 
 	// Create index mapping
 	indexMapping := bleve.NewIndexMapping()
@@ -125,6 +127,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 			Description: field.Description(),
 			Path:        "Query." + name,
 			SchemaID:    schemaID,
+			Signature:   field.Signature(),
 		})
 	}
 
@@ -136,6 +139,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 			Description: field.Description(),
 			Path:        "Mutation." + name,
 			SchemaID:    schemaID,
+			Signature:   field.Signature(),
 		})
 	}
 
@@ -232,6 +236,7 @@ func extractObjectFieldDocuments(schemaID string, typeName string, obj *gql.Obje
 			Description: field.Description(),
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
 			SchemaID:    schemaID,
+			Signature:   field.Signature(),
 		})
 	}
 	return docs
@@ -247,6 +252,7 @@ func extractInputFieldDocuments(schemaID string, typeName string, input *gql.Inp
 			Description: field.Description(),
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
 			SchemaID:    schemaID,
+			Signature:   field.Signature(),
 		})
 	}
 	return docs
@@ -262,6 +268,7 @@ func extractInterfaceFieldDocuments(schemaID string, typeName string, iface *gql
 			Description: field.Description(),
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
 			SchemaID:    schemaID,
+			Signature:   field.Signature(),
 		})
 	}
 	return docs

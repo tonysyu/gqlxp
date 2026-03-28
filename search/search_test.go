@@ -79,17 +79,29 @@ func TestIndexerAndSearcher(t *testing.T) {
 	is.True(len(results) > 0)                           // should find results
 	is.True(containsPath(results, "Query.searchUsers")) // should find searchUsers via fragment
 
-	// Test 4: Search for non-existent term
+	// Test 4: Query fields should have signatures
+	results, err = searcher.Search(schemaID, "user", 10)
+	is.NoErr(err)
+	for _, r := range results {
+		if r.Path == "Query.user" {
+			is.Equal(r.Signature, "user(id: ID!): User") // Query field should have signature
+		}
+		if r.Path == "User.id" {
+			is.Equal(r.Signature, "id: ID!") // Object field should have signature
+		}
+	}
+
+	// Test 5: Search for non-existent term
 	results, err = searcher.Search(schemaID, "nonexistent", 10)
 	is.NoErr(err)             // should search successfully
 	is.Equal(len(results), 0) // should find no results
 
-	// Test 5: Remove index
+	// Test 6: Remove index
 	err = indexer.Remove(schemaID)
 	is.NoErr(err)                      // should remove index
 	is.True(!indexer.Exists(schemaID)) // index should not exist
 
-	// Test 6: Search after removal should fail
+	// Test 7: Search after removal should fail
 	_, err = searcher.Search(schemaID, "user", 10)
 	is.True(err != nil) // should fail to search non-existent index
 }
