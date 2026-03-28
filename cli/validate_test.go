@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -67,4 +68,40 @@ func TestValidateOperation_StdinSource(t *testing.T) {
 
 	is.True(len(errorLines) > 0)
 	is.True(strings.HasPrefix(errorLines[0], "<stdin>:")) // stdin input uses <stdin> as source in error messages
+}
+
+func TestValidationResultJSON_ValidOperation(t *testing.T) {
+	is := is.New(t)
+
+	result := buildValidationResult([]byte(parseTestSchema), `query { user(id: "1") { id name } }`, "query.graphql")
+
+	is.True(result.Valid)
+	is.Equal(len(result.Errors), 0)
+
+	// Ensure it marshals to valid JSON
+	jsonBytes, err := json.Marshal(result)
+	is.NoErr(err)
+	is.True(strings.Contains(string(jsonBytes), `"valid":true`))
+	is.True(!strings.Contains(string(jsonBytes), `"errors"`)) // omitempty: no errors field when valid
+}
+
+func TestValidationResultJSON_InvalidOperation(t *testing.T) {
+	is := is.New(t)
+
+	result := buildValidationResult([]byte(parseTestSchema), `query { user(id: "1") { badField } }`, "query.graphql")
+
+	is.True(!result.Valid)
+	is.True(len(result.Errors) > 0)
+	is.True(result.Errors[0].Line > 0)
+	is.True(result.Errors[0].Column > 0)
+	is.True(strings.Contains(result.Errors[0].Message, "badField"))
+}
+
+func TestValidationResultJSON_ParseError(t *testing.T) {
+	is := is.New(t)
+
+	result := buildValidationResult([]byte(parseTestSchema), `query { user(id: "1") { id `, "query.graphql")
+
+	is.True(!result.Valid)
+	is.True(len(result.Errors) > 0)
 }
