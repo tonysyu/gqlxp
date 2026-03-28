@@ -216,8 +216,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case searchmodel.ResultsReadyMsg:
 		m.search = m.search.StoreResults(msg.Items)
 		if m.nav.CurrentType() == navigation.SearchType {
-			m.loadMainPanel()
-			m.sizePanels()
+			m.resetAndLoadMainPanel()
 		}
 		return m, nil
 	case tea.KeyPressMsg:
@@ -514,20 +513,6 @@ func (m *Model) buildItemsForCurrentType() ([]components.ListItem, string) {
 		return []components.ListItem{}, "Search Results"
 	}
 	return []components.ListItem{}, ""
-}
-
-// loadMainPanel loads the currently selected GQL type in the main (left-most) panel.
-// Used when refreshing panel content without resetting the stack (e.g. search results update).
-func (m *Model) loadMainPanel() {
-	items, title := m.buildItemsForCurrentType()
-	m.nav = m.nav.Load(components.NewPanel(items, title))
-
-	// Auto-open detail panel for the first item if available (but not for Search tab)
-	if len(items) > 0 && m.nav.CurrentType() != navigation.SearchType {
-		if newPanel, ok := items[0].OpenPanel(); ok {
-			m.handleOpenPanel(newPanel)
-		}
-	}
 }
 
 // ApplySelection applies a selection target to the model

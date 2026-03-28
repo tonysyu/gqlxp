@@ -9,6 +9,7 @@ import (
 	"github.com/tonysyu/gqlxp/tui/config"
 	"github.com/tonysyu/gqlxp/tui/xplr/components"
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
+	"github.com/tonysyu/gqlxp/tui/xplr/searchmodel"
 )
 
 // Key messages for simulating user input
@@ -207,6 +208,41 @@ func TestModelWithEmptySchema(t *testing.T) {
 	// Should be able to cycle through types even with empty schema
 	model, _ = model.Update(tea.KeyPressMsg{Code: '}'})
 	is.Equal(model.nav.CurrentType(), navigation.MutationType)
+}
+
+func TestSearchResultsReadyClearsChildPanel(t *testing.T) {
+	is := is.New(t)
+
+	model := New(adapters.SchemaView{})
+	model.nav = model.nav.SwitchType(navigation.SearchType)
+
+	// Simulate a child panel opened from a previous search result
+	model.nav = model.nav.OpenPanel(components.NewEmptyPanel("previous result"))
+	is.Equal(model.nav.Stack().Next().Title(), "previous result")
+
+	// New search returns no results
+	model, _ = model.Update(searchmodel.ResultsReadyMsg{Items: nil})
+
+	// Child panel should be cleared
+	is.Equal(model.nav.Stack().Next().Title(), "")
+}
+
+func TestSearchResultsReadyClearsChildPanelWhenResultsExist(t *testing.T) {
+	is := is.New(t)
+
+	model := New(adapters.SchemaView{})
+	model.nav = model.nav.SwitchType(navigation.SearchType)
+
+	// Simulate a child panel opened from a previous search result
+	model.nav = model.nav.OpenPanel(components.NewEmptyPanel("previous result"))
+	is.Equal(model.nav.Stack().Next().Title(), "previous result")
+
+	// New search returns results
+	items := []components.ListItem{components.NewSimpleItem("new result")}
+	model, _ = model.Update(searchmodel.ResultsReadyMsg{Items: items})
+
+	// Child panel from the old search should still be cleared
+	is.Equal(model.nav.Stack().Next().Title(), "")
 }
 
 func TestModelOpenLibSelect(t *testing.T) {
