@@ -4,7 +4,8 @@ import "strings"
 
 // IncludeOptions specifies which optional sections to include in output
 type IncludeOptions struct {
-	Usages bool
+	Usages     bool
+	ReturnType bool
 }
 
 // ParseIncludeOptions parses a comma-separated string of include options
@@ -18,6 +19,8 @@ func ParseIncludeOptions(include string) IncludeOptions {
 		switch strings.TrimSpace(strings.ToLower(opt)) {
 		case "usages":
 			opts.Usages = true
+		case "return-type":
+			opts.ReturnType = true
 		}
 	}
 	return opts

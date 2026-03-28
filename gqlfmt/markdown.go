@@ -39,6 +39,9 @@ func generateQueryFieldMarkdown(schema gql.GraphQLSchema, typeName string, resol
 		return "", fmt.Errorf("query field %q not found in schema", fieldName)
 	}
 	md := GenerateFieldMarkdown(field, resolver)
+	if opts.ReturnType {
+		md = appendReturnTypeMarkdown(md, field, schema, resolver)
+	}
 	if opts.Usages {
 		md = appendUsagesMarkdown(md, resolver, field.ObjectTypeName())
 	}
@@ -53,10 +56,27 @@ func generateMutationFieldMarkdown(schema gql.GraphQLSchema, typeName string, re
 		return "", fmt.Errorf("mutation field %q not found in schema", fieldName)
 	}
 	md := GenerateFieldMarkdown(field, resolver)
+	if opts.ReturnType {
+		md = appendReturnTypeMarkdown(md, field, schema, resolver)
+	}
 	if opts.Usages {
 		md = appendUsagesMarkdown(md, resolver, field.ObjectTypeName())
 	}
 	return md, nil
+}
+
+// appendReturnTypeMarkdown appends the return type definition for Query/Mutation fields.
+// Skips scalars since they have no fields to show.
+func appendReturnTypeMarkdown(md string, field *gql.Field, schema gql.GraphQLSchema, resolver gql.TypeResolver) string {
+	typeDef, err := resolver.ResolveFieldType(field)
+	if err != nil {
+		return md
+	}
+	if _, isScalar := typeDef.(*gql.Scalar); isScalar {
+		return md
+	}
+	typeMd := GenerateTypeDefMarkdown(typeDef, resolver)
+	return text.JoinParagraphs(md, "## Return Type", typeMd)
 }
 
 // generateDirectiveMarkdownWithOpts generates markdown for a directive with options

@@ -13,6 +13,7 @@ func TestGenerateMarkdown(t *testing.T) {
 		name     string
 		schema   string
 		typeName string
+		opts     IncludeOptions
 		validate func(t *testing.T, md string)
 		wantErr  bool
 	}{
@@ -179,6 +180,58 @@ func TestGenerateMarkdown(t *testing.T) {
 			},
 		},
 		{
+			name: "Query field includes return type definition when requested",
+			schema: `
+				type Query {
+					"""Get user by ID"""
+					getUser(id: ID!): User
+				}
+				type User {
+					"""Unique identifier"""
+					id: ID!
+					name: String!
+				}
+			`,
+			typeName: "Query.getUser",
+			opts:     IncludeOptions{ReturnType: true},
+			validate: func(t *testing.T, md string) {
+				is := is.New(t)
+				is.True(strings.Contains(md, "## Return Type"))
+				is.True(strings.Contains(md, "# User"))
+				is.True(strings.Contains(md, "id: ID!"))
+			},
+		},
+		{
+			name: "Query field does not include return type by default",
+			schema: `
+				type Query {
+					"""Get user by ID"""
+					getUser(id: ID!): User
+				}
+				type User { id: ID! }
+			`,
+			typeName: "Query.getUser",
+			validate: func(t *testing.T, md string) {
+				is := is.New(t)
+				is.True(!strings.Contains(md, "## Return Type"))
+			},
+		},
+		{
+			name: "Query field with scalar return type has no return type section",
+			schema: `
+				type Query {
+					"""Get a greeting"""
+					greet(name: String!): String
+				}
+			`,
+			typeName: "Query.greet",
+			opts:     IncludeOptions{ReturnType: true},
+			validate: func(t *testing.T, md string) {
+				is := is.New(t)
+				is.True(!strings.Contains(md, "## Return Type"))
+			},
+		},
+		{
 			name: "Usages included when requested",
 			schema: `
 				type Query {
@@ -187,6 +240,7 @@ func TestGenerateMarkdown(t *testing.T) {
 				type User { id: ID! }
 			`,
 			typeName: "User",
+			opts:     IncludeOptions{Usages: true},
 			validate: func(t *testing.T, md string) {
 				is := is.New(t)
 				is.True(strings.Contains(md, "## Usages"))
@@ -228,12 +282,7 @@ func TestGenerateMarkdown(t *testing.T) {
 				t.Fatalf("Failed to parse schema: %v", err)
 			}
 
-			opts := IncludeOptions{}
-			if tt.name == "Usages included when requested" {
-				opts.Usages = true
-			}
-
-			got, err := GenerateMarkdown(schema, tt.typeName, opts)
+			got, err := GenerateMarkdown(schema, tt.typeName, tt.opts)
 			is.Equal((err != nil), tt.wantErr)
 
 			if tt.wantErr {

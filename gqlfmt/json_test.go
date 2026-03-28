@@ -14,6 +14,7 @@ func TestGenerateJSON(t *testing.T) {
 		name     string
 		schema   string
 		typeName string
+		opts     IncludeOptions
 		validate func(t *testing.T, jsonStr string)
 		wantErr  bool
 	}{
@@ -63,6 +64,66 @@ func TestGenerateJSON(t *testing.T) {
 				is.Equal(result.Kind, "Mutation")
 				is.Equal(result.Type, "User!")
 				is.Equal(result.Description, "Create a new user")
+			},
+		},
+		{
+			name: "Query field includes return type definition when requested",
+			schema: `
+				type Query {
+					"""Get user by ID"""
+					getUser(id: ID!): User
+				}
+				type User { id: ID! name: String! }
+			`,
+			typeName: "Query.getUser",
+			opts:     IncludeOptions{ReturnType: true},
+			validate: func(t *testing.T, jsonStr string) {
+				var result JSONField
+				if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+					t.Fatalf("Failed to parse JSON: %v", err)
+				}
+				is := is.New(t)
+				is.True(result.ReturnTypeDef != nil)
+				is.Equal(result.ReturnTypeDef.Name, "User")
+				is.Equal(result.ReturnTypeDef.Kind, "Object")
+				is.Equal(len(result.ReturnTypeDef.Fields), 2)
+			},
+		},
+		{
+			name: "Query field does not include return type by default",
+			schema: `
+				type Query {
+					"""Get user by ID"""
+					getUser(id: ID!): User
+				}
+				type User { id: ID! }
+			`,
+			typeName: "Query.getUser",
+			validate: func(t *testing.T, jsonStr string) {
+				var result JSONField
+				if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+					t.Fatalf("Failed to parse JSON: %v", err)
+				}
+				is := is.New(t)
+				is.True(result.ReturnTypeDef == nil)
+			},
+		},
+		{
+			name: "Query field with scalar return type has no returnTypeDef",
+			schema: `
+				type Query {
+					greet(name: String!): String
+				}
+			`,
+			typeName: "Query.greet",
+			opts:     IncludeOptions{ReturnType: true},
+			validate: func(t *testing.T, jsonStr string) {
+				var result JSONField
+				if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
+					t.Fatalf("Failed to parse JSON: %v", err)
+				}
+				is := is.New(t)
+				is.True(result.ReturnTypeDef == nil)
 			},
 		},
 		{
@@ -249,7 +310,7 @@ func TestGenerateJSON(t *testing.T) {
 				t.Fatalf("Failed to parse schema: %v", err)
 			}
 
-			got, err := GenerateJSON(schema, tt.typeName, IncludeOptions{})
+			got, err := GenerateJSON(schema, tt.typeName, tt.opts)
 			is.Equal((err != nil), tt.wantErr) // GenerateJSON() error status
 
 			if tt.wantErr {

@@ -39,6 +39,9 @@ func generateQueryFieldJSON(schema gql.GraphQLSchema, typeName string, resolver 
 		return "", fmt.Errorf("query field %q not found in schema", fieldName)
 	}
 	result := convertFieldToJSONWithKind(field, "Query")
+	if opts.ReturnType {
+		result.ReturnTypeDef = resolveReturnTypeJSON(resolver, field)
+	}
 	if opts.Usages {
 		result.Usages = getUsagesJSON(resolver, field.ObjectTypeName())
 	}
@@ -53,10 +56,27 @@ func generateMutationFieldJSON(schema gql.GraphQLSchema, typeName string, resolv
 		return "", fmt.Errorf("mutation field %q not found in schema", fieldName)
 	}
 	result := convertFieldToJSONWithKind(field, "Mutation")
+	if opts.ReturnType {
+		result.ReturnTypeDef = resolveReturnTypeJSON(resolver, field)
+	}
 	if opts.Usages {
 		result.Usages = getUsagesJSON(resolver, field.ObjectTypeName())
 	}
 	return marshalJSON(result), nil
+}
+
+// resolveReturnTypeJSON resolves the return type of a field and converts it to JSON.
+// Returns nil for scalars (built-in or custom) since they have no fields to show.
+func resolveReturnTypeJSON(resolver gql.TypeResolver, field *gql.Field) *JSONTypeDef {
+	typeDef, err := resolver.ResolveFieldType(field)
+	if err != nil {
+		return nil
+	}
+	if _, isScalar := typeDef.(*gql.Scalar); isScalar {
+		return nil
+	}
+	result := convertTypeDefToJSON(typeDef)
+	return &result
 }
 
 // generateDirectiveJSON generates JSON for a directive
@@ -107,13 +127,14 @@ func getUsagesJSON(resolver gql.TypeResolver, typeName string) []JSONUsage {
 
 // JSONField represents a field in JSON format
 type JSONField struct {
-	Name        string               `json:"name"`
-	Kind        string               `json:"kind,omitempty"`
-	Type        string               `json:"type"`
-	Description string               `json:"description,omitempty"`
-	Arguments   []JSONArgument       `json:"arguments,omitempty"`
-	Directives  []JSONDirectiveUsage `json:"directives,omitempty"`
-	Usages      []JSONUsage          `json:"usages,omitempty"`
+	Name          string               `json:"name"`
+	Kind          string               `json:"kind,omitempty"`
+	Type          string               `json:"type"`
+	Description   string               `json:"description,omitempty"`
+	Arguments     []JSONArgument       `json:"arguments,omitempty"`
+	Directives    []JSONDirectiveUsage `json:"directives,omitempty"`
+	Usages        []JSONUsage          `json:"usages,omitempty"`
+	ReturnTypeDef *JSONTypeDef         `json:"returnTypeDef,omitempty"`
 }
 
 // JSONArgument represents an argument in JSON format

@@ -51,7 +51,7 @@ Examples:
 			},
 			&cli.StringFlag{
 				Name:  "include",
-				Usage: "comma-separated list of additional sections to include (usages)",
+				Usage: "comma-separated list of additional sections to include (usages, return-type). return-type only applies to Query and Mutation fields",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
