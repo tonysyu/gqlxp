@@ -19,12 +19,28 @@ var (
 	codeStyle   = lipgloss.NewStyle().Foreground(terminal.ColorDimIndigo)
 )
 
+// canonicalSearchTypes maps lowercase type names to their canonical form.
+var canonicalSearchTypes = map[string]string{
+	"query":          "Query",
+	"mutation":       "Mutation",
+	"object":         "Object",
+	"input":          "Input",
+	"enum":           "Enum",
+	"scalar":         "Scalar",
+	"interface":      "Interface",
+	"union":          "Union",
+	"directive":      "Directive",
+	"objectfield":    "ObjectField",
+	"inputfield":     "InputField",
+	"interfacefield": "InterfaceField",
+}
+
 // searchCommand creates the search subcommand
 func searchCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "search",
 		Usage:     "Search for types and fields in a GraphQL schema",
-		ArgsUsage: "<query>",
+		ArgsUsage: "[query]",
 		Description: `Searches for types and fields matching the given query.
 
 Uses default schema when --schema is not specified.
@@ -34,7 +50,8 @@ Examples:
   gqlxp search user                      # Uses default schema
   gqlxp search -s examples/github.graphqls user # Uses specific file
   gqlxp search -s github-api user        # Uses library ID
-  gqlxp search -s github-api "mutation"`,
+  gqlxp search -s github-api "mutation"
+  gqlxp search -s github-api --type Query # List all queries`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "schema",
@@ -54,13 +71,34 @@ Examples:
 				Name:  "json",
 				Usage: "output results as JSON",
 			},
+			&cli.StringFlag{
+				Name:  "type",
+				Usage: "filter by document type (e.g. Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, ObjectField, InputField, InterfaceField)",
+			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
-			if cmd.Args().Len() != 1 {
-				return fmt.Errorf("requires exactly 1 argument: <query>")
+			typeFilter := cmd.String("type")
+			hasTypeFilter := typeFilter != ""
+
+			if hasTypeFilter {
+				if cmd.Args().Len() > 1 {
+					return fmt.Errorf("requires at most 1 argument when --type is set: [query]")
+				}
+			} else {
+				if cmd.Args().Len() != 1 {
+					return fmt.Errorf("requires exactly 1 argument: <query>")
+				}
 			}
 
 			query := cmd.Args().First()
+
+			if hasTypeFilter {
+				var err error
+				query, err = applyTypeFilter(typeFilter, query)
+				if err != nil {
+					return err
+				}
+			}
 			limit := cmd.Int("limit")
 			noPager := cmd.Bool("no-pager")
 			jsonOutput := cmd.Bool("json")
@@ -152,6 +190,22 @@ Examples:
 			return nil
 		},
 	}
+}
+
+// applyTypeFilter validates typeFilter and prepends a +type:<Canonical> clause to query.
+func applyTypeFilter(typeFilter, query string) (string, error) {
+	if strings.Contains(query, "type:") {
+		return "", fmt.Errorf("cannot use --type flag when query already contains a type: filter")
+	}
+	canonical, ok := canonicalSearchTypes[strings.ToLower(typeFilter)]
+	if !ok {
+		return "", fmt.Errorf("invalid --type value %q; valid values: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, ObjectField, InputField, InterfaceField", typeFilter)
+	}
+	typeClause := "+type:" + canonical
+	if query != "" {
+		return typeClause + " " + query, nil
+	}
+	return typeClause, nil
 }
 
 // printSearchResultsJSON outputs search results as pretty-printed JSON

@@ -5,11 +5,91 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/matryer/is"
 	"github.com/tonysyu/gqlxp/search"
 )
+
+func TestApplyTypeFilter(t *testing.T) {
+	tests := []struct {
+		name       string
+		typeFilter string
+		query      string
+		wantQuery  string
+		wantErr    string
+	}{
+		{
+			name:       "no query",
+			typeFilter: "Query",
+			query:      "",
+			wantQuery:  "+type:Query",
+		},
+		{
+			name:       "with query",
+			typeFilter: "Object",
+			query:      "user",
+			wantQuery:  "+type:Object user",
+		},
+		{
+			name:       "case insensitive",
+			typeFilter: "object",
+			query:      "",
+			wantQuery:  "+type:Object",
+		},
+		{
+			name:       "mixed case",
+			typeFilter: "MUTATION",
+			query:      "",
+			wantQuery:  "+type:Mutation",
+		},
+		{
+			name:       "ObjectField",
+			typeFilter: "objectfield",
+			query:      "email",
+			wantQuery:  "+type:ObjectField email",
+		},
+		{
+			name:       "invalid type",
+			typeFilter: "BadType",
+			query:      "",
+			wantErr:    `invalid --type value "BadType"`,
+		},
+		{
+			name:       "conflict with type: in query",
+			typeFilter: "Query",
+			query:      "+type:Object user",
+			wantErr:    "cannot use --type flag when query already contains a type: filter",
+		},
+		{
+			name:       "conflict with bare type: in query",
+			typeFilter: "Query",
+			query:      "type:Object",
+			wantErr:    "cannot use --type flag when query already contains a type: filter",
+		},
+		{
+			name:       "conflict with -type: exclusion in query",
+			typeFilter: "Query",
+			query:      "-type:*Field",
+			wantErr:    "cannot use --type flag when query already contains a type: filter",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			got, err := applyTypeFilter(tt.typeFilter, tt.query)
+			if tt.wantErr != "" {
+				is.True(err != nil)
+				is.True(strings.Contains(err.Error(), tt.wantErr))
+			} else {
+				is.NoErr(err)
+				is.Equal(got, tt.wantQuery)
+			}
+		})
+	}
+}
 
 func TestPrintSearchResultsJSON(t *testing.T) {
 	tests := []struct {
