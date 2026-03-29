@@ -28,6 +28,7 @@ Use the TUI interface to manage library schemas (remove, view, etc).`,
 			validateCommand(),
 			searchCommand(),
 			showCommand(),
+			generateCommand(),
 			library.Command(),
 		},
 	}
