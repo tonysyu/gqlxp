@@ -141,12 +141,12 @@ When building GraphQL queries or mutations:
 
 ## Search Syntax Reference
 
-For `gqlxp search`, use bleve query syntax:
-- `+type:Query +name:user` - Find Query field named "user"
+Common patterns:
+- `+type:Query +name:user` - Query field named "user"
 - `+type:Mutation +name:*create*` - Mutations with "create" in name
 - `user -type:*Field` - Types named "user", exclude fields
-- `type:/(Object|Interface)/ repo*` - Objects/Interfaces starting with "repo"
-- `description:authentication` - Search in descriptions
+
+Run `gqlxp search --syntax` for full syntax documentation.
 
 ## Response Format
 

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/tonysyu/gqlxp/docs"
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/search"
@@ -60,6 +61,10 @@ Examples:
   gqlxp search -s github --type Query                # List all queries
   gqlxp search -s examples/github.graphqls user      # Uses specific file`,
 		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "syntax",
+				Usage: "show search syntax documentation and exit",
+			},
 			&cli.StringFlag{
 				Name:    "schema",
 				Aliases: []string{"s"},
@@ -84,6 +89,11 @@ Examples:
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			if cmd.Bool("syntax") {
+				fmt.Print(docs.SearchSyntax)
+				return nil
+			}
+
 			typeFilter := cmd.String("type")
 			hasTypeFilter := typeFilter != ""
 
