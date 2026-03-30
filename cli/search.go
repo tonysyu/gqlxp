@@ -46,12 +46,19 @@ func searchCommand() *cli.Command {
 Uses default schema when --schema is not specified.
 Use 'gqlxp library default' to set the default schema.
 
+For AI/programmatic use, add --json --no-pager for machine-readable output.
+JSON output: [{"path":"Type.field","type":"Query|Object|...","description":"...","signature":"..."}]
+
+Query syntax:
+  Plain keyword   Matches names and descriptions
+  type:<Type>     Filter by type (e.g., type:Query, type:Object)
+  Combined        "+type:Query user" filters to Query type matching "user"
+
 Examples:
-  gqlxp search user                      # Uses default schema
-  gqlxp search -s examples/github.graphqls user # Uses specific file
-  gqlxp search -s github-api user        # Uses library ID
-  gqlxp search -s github-api "mutation"
-  gqlxp search -s github-api --type Query # List all queries`,
+  gqlxp search user                                  # Uses default schema
+  gqlxp search -s github user --json --no-pager      # JSON output for AI use
+  gqlxp search -s github --type Query                # List all queries
+  gqlxp search -s examples/github.graphqls user      # Uses specific file`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "schema",
@@ -65,15 +72,15 @@ Examples:
 			},
 			&cli.BoolFlag{
 				Name:  "no-pager",
-				Usage: "disable pager and show directly to stdout",
+				Usage: "disable pager; use for non-interactive/AI use",
 			},
 			&cli.BoolFlag{
 				Name:  "json",
-				Usage: "output results as JSON",
+				Usage: "output results as JSON (recommended for AI/programmatic use)",
 			},
 			&cli.StringFlag{
 				Name:  "type",
-				Usage: "filter by document type (e.g. Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, ObjectField, InputField, InterfaceField)",
+				Usage: "filter by document type: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, ObjectField, InputField, InterfaceField",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {

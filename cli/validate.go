@@ -24,17 +24,13 @@ Use 'gqlxp library default' to set the default schema.
 Reads from a file argument if provided, or from stdin if omitted.
 Exits with code 0 if valid, code 1 if there are errors.
 
+JSON output format: {"valid": true|false, "errors": [{"line": N, "column": N, "message": "..."}]}
+
 Examples:
   gqlxp validate examples/queries/github-user.graphql
   gqlxp validate -s github examples/queries/github-user.graphql
-  cat examples/queries/github-user.graphql | gqlxp validate
-  cat << EOF | gqlxp validate -s github
-    query MyUser {
-      user(login: "tonysyu") {
-        name
-      }
-    }
-  EOF`,
+  gqlxp validate --json examples/queries/github-user.graphql
+  cat examples/queries/github-user.graphql | gqlxp validate`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "schema",
@@ -43,7 +39,7 @@ Examples:
 			},
 			&cli.BoolFlag{
 				Name:  "json",
-				Usage: "output results as JSON",
+				Usage: "output results as JSON (recommended for AI/programmatic use)",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {

@@ -15,12 +15,18 @@ import (
 func NewApp() *cli.Command {
 	return &cli.Command{
 		Name:  "gqlxp",
-		Usage: "Explore GraphQL schemas interactively",
-		Description: `Schema files are automatically saved to your library on first use.
-When loading a previously imported file, you'll be prompted to update
-if changes are detected.
+		Usage: "Explore GraphQL schemas interactively or via CLI",
+		Description: `gqlxp helps you explore, search, and validate GraphQL schemas.
 
-Use the TUI interface to manage library schemas (remove, view, etc).`,
+For AI/programmatic use:
+  search    Find types and fields by keyword (--json --no-pager for structured output)
+  show      Display a full type definition (--json --no-pager for structured output)
+  validate  Validate a GraphQL operation against the schema (--json for structured output)
+  generate  Scaffold a skeleton GraphQL operation (prints to stdout)
+
+Schema files are saved to the library on first use.
+Use 'gqlxp library list' to see available schemas.
+Use 'gqlxp library default <id>' to set the default schema for all commands.`,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			return executeTUICommand(ctx, cmd)
 		},

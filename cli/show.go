@@ -16,25 +16,29 @@ func showCommand() *cli.Command {
 		Name:      "show",
 		Usage:     "Show a GraphQL type definition in the terminal",
 		ArgsUsage: "<type-name>",
-		Description: `Shows the details of a GraphQL type directly to the terminal.
+		Description: `Shows the full definition of a GraphQL type or field.
 
 Uses default schema when --schema is not specified.
 Use 'gqlxp library default' to set the default schema.
 
-The type-name can be:
-- A Query field name (prefix with "Query.")
-- A Mutation field name (prefix with "Mutation.")
-- A type name (Object, Input, Enum, Scalar, Interface, Union)
-- A directive name (prefix with "@")
+For AI/programmatic use, add --json --no-pager for machine-readable output.
+
+Type-name formats:
+  User                 Object, Input, Enum, Scalar, Interface, or Union type
+  Query.getUser        A query field
+  Mutation.createUser  A mutation field
+  @auth                A directive
+
+--include options (comma-separated):
+  usages       List all types and fields that reference this type
+  return-type  Show the full definition of the return type (Query/Mutation only)
 
 Examples:
-  gqlxp show User                        # Uses default schema
-  gqlxp show -s examples/github.graphqls User # Uses specific file
-  gqlxp show -s github-api User          # Uses library ID
-  gqlxp show -s github-api Query.getUser
-  gqlxp show Mutation.createUser
-  gqlxp show @auth
-  gqlxp show --json User                 # Output as JSON`,
+  gqlxp show User                                     # Uses default schema
+  gqlxp show -s github User --json --no-pager         # JSON output for AI use
+  gqlxp show -s github Query.getUser --include return-type
+  gqlxp show -s examples/github.graphqls User         # Uses specific file
+  gqlxp show @auth`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:    "schema",
@@ -43,15 +47,15 @@ Examples:
 			},
 			&cli.BoolFlag{
 				Name:  "no-pager",
-				Usage: "disable pager and show directly to stdout",
+				Usage: "disable pager; use for non-interactive/AI use",
 			},
 			&cli.BoolFlag{
 				Name:  "json",
-				Usage: "output as JSON instead of markdown",
+				Usage: "output as JSON (recommended for AI/programmatic use)",
 			},
 			&cli.StringFlag{
 				Name:  "include",
-				Usage: "comma-separated list of additional sections to include (usages, return-type). return-type only applies to Query and Mutation fields",
+				Usage: "comma-separated additional sections: usages (where this type is referenced), return-type (full return type definition; Query/Mutation only)",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {

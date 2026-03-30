@@ -15,14 +15,18 @@ func generateCommand() *cli.Command {
 		Usage:     "Generate a skeleton GraphQL operation",
 		ArgsUsage: "<Query.fieldName|Mutation.fieldName>",
 		Description: `Scaffolds a skeleton GraphQL operation for a Query or Mutation field.
+Output is a complete GraphQL operation document printed to stdout.
 
 Uses default schema when --schema is not specified.
 Use 'gqlxp library default' to set the default schema.
 
+--depth controls how many levels of nested object fields are expanded (default: 1).
+Use 'gqlxp show <type>' to inspect type definitions before generating.
+
 Examples:
   gqlxp generate Query.getUser
   gqlxp generate -s examples/github.graphqls Query.repository
-  gqlxp generate --depth 2 Query.getUser
+  gqlxp generate --depth 2 Query.getUser      # Expand nested fields 2 levels deep
   gqlxp generate Mutation.createUser`,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -32,7 +36,7 @@ Examples:
 			},
 			&cli.IntFlag{
 				Name:  "depth",
-				Usage: "depth to expand nested object fields",
+				Usage: "levels of nested object fields to expand (default: 1)",
 				Value: 1,
 			},
 			&cli.BoolFlag{
