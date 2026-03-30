@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/tonysyu/gqlxp/cli/prompt"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/urfave/cli/v3"
 )
@@ -68,7 +69,7 @@ func confirmSchemaRemoval(cmd *cli.Command, schemaID string, schema *library.Sch
 		return nil
 	}
 
-	confirm, err := promptYesNo(fmt.Sprintf("Remove schema '%s' (%s)?", schemaID, schema.Metadata.DisplayName))
+	confirm, err := prompt.YesNo(fmt.Sprintf("Remove schema '%s' (%s)?", schemaID, schema.Metadata.DisplayName))
 	if err != nil {
 		return fmt.Errorf("failed to get confirmation: %w", err)
 	}

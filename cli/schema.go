@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/tonysyu/gqlxp/cli/prompt"
 	"github.com/tonysyu/gqlxp/library"
 )
 
@@ -95,7 +96,7 @@ func resolveSchemaSource(filePath string) (schemaID string, content []byte, err 
 
 func handleSchemaUpdate(lib library.Library, existingSchema *library.Schema, newContent []byte) (string, []byte, error) {
 	fmt.Printf("Schema file has changed since last import.\n")
-	update, err := PromptYesNo("Update library")
+	update, err := prompt.YesNo("Update library")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to get user input: %w", err)
 	}
@@ -124,13 +125,13 @@ func registerSchema(filePath string, content []byte) (string, error) {
 	suggested := library.SanitizeSchemaID(filepath.Base(filePath[:len(filePath)-len(ext)]))
 
 	// Prompt for schema ID
-	schemaID, err := PromptSchemaID(suggested)
+	schemaID, err := prompt.SchemaID(suggested)
 	if err != nil {
 		return "", fmt.Errorf("failed to get schema ID: %w", err)
 	}
 
 	// Prompt for display name
-	displayName, err := PromptString("Enter display name", schemaID)
+	displayName, err := prompt.String("Enter display name", schemaID)
 	if err != nil {
 		return "", fmt.Errorf("failed to get display name: %w", err)
 	}

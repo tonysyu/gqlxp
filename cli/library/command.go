@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/tonysyu/gqlxp/cli/prompt"
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/gql/introspection"
 	"github.com/tonysyu/gqlxp/library"
@@ -48,8 +49,8 @@ type schemaSource struct {
 	FilePath string
 }
 
-// loadSchemaContent loads schema content from a file path or URL.
-func loadSchemaContent(ctx context.Context, source string, headers []string) ([]byte, schemaSource, error) {
+// LoadSchemaContent loads schema content from a file path or URL.
+func LoadSchemaContent(ctx context.Context, source string, headers []string) ([]byte, schemaSource, error) {
 	if introspection.IsURL(source) {
 		content, err := fetchSchemaFromURL(ctx, source, headers)
 		if err != nil {
@@ -100,6 +101,19 @@ func fetchSchemaFromURL(ctx context.Context, endpoint string, headers []string) 
 	return sdl, nil
 }
 
+// ExtractSuggestedID generates a suggested schema ID from a source path or URL.
+func ExtractSuggestedID(source string) string {
+	var suggested string
+	if introspection.IsURL(source) {
+		suggested = extractHostnameAsID(source)
+	} else {
+		basename := filepath.Base(source)
+		ext := filepath.Ext(basename)
+		suggested = strings.TrimSuffix(basename, ext)
+	}
+	return library.SanitizeSchemaID(suggested)
+}
+
 // getSchemaID returns schema ID from flag or prompts user.
 func getSchemaID(cmd *cli.Command, source string) (string, error) {
 	if flagID := cmd.String("id"); flagID != "" {
@@ -109,17 +123,9 @@ func getSchemaID(cmd *cli.Command, source string) (string, error) {
 		return flagID, nil
 	}
 
-	var suggested string
-	if introspection.IsURL(source) {
-		suggested = extractHostnameAsID(source)
-	} else {
-		basename := filepath.Base(source)
-		ext := filepath.Ext(basename)
-		suggested = strings.TrimSuffix(basename, ext)
-	}
-	suggested = library.SanitizeSchemaID(suggested)
+	suggested := ExtractSuggestedID(source)
 
-	schemaID, err := promptSchemaID(suggested)
+	schemaID, err := prompt.SchemaID(suggested)
 	if err != nil {
 		return "", fmt.Errorf("failed to get schema ID: %w", err)
 	}
@@ -149,7 +155,7 @@ func getDisplayName(cmd *cli.Command, defaultName string) (string, error) {
 		return flagName, nil
 	}
 
-	displayName, err := promptString("Enter display name", defaultName)
+	displayName, err := prompt.String("Enter display name", defaultName)
 	if err != nil {
 		return "", fmt.Errorf("failed to get display name: %w", err)
 	}
@@ -171,8 +177,8 @@ func schemaNotFoundError(lib library.Library, schemaID string) error {
 	return fmt.Errorf("schema '%s' not found in library. Available: %s", schemaID, strings.Join(ids, ", "))
 }
 
-// validateSchema parses content and returns error if invalid.
-func validateSchema(content []byte) error {
+// ValidateSchema parses content and returns error if invalid.
+func ValidateSchema(content []byte) error {
 	if _, err := gql.ParseSchema(content); err != nil {
 		return fmt.Errorf("invalid GraphQL schema: %w", err)
 	}

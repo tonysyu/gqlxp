@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	initcmd "github.com/tonysyu/gqlxp/cli/init"
 	"github.com/tonysyu/gqlxp/cli/library"
 	"github.com/tonysyu/gqlxp/tui"
 	"github.com/urfave/cli/v3"
@@ -25,6 +26,7 @@ Use the TUI interface to manage library schemas (remove, view, etc).`,
 		},
 		Commands: []*cli.Command{
 			appCommand(),
+			initcmd.Command(),
 			validateCommand(),
 			searchCommand(),
 			showCommand(),

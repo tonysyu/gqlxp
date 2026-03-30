@@ -61,7 +61,7 @@ func addCommand() *cli.Command {
 			}
 
 			// Validate it's a valid GraphQL schema
-			if err := validateSchema(content); err != nil {
+			if err := ValidateSchema(content); err != nil {
 				return err
 			}
 

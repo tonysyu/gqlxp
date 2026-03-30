@@ -50,7 +50,7 @@ Examples:
 			if cmd.Args().Len() > 0 {
 				// Source provided - load from file or URL
 				source := cmd.Args().First()
-				content, newSource, err = loadSchemaContent(ctx, source, cmd.StringSlice("header"))
+				content, newSource, err = LoadSchemaContent(ctx, source, cmd.StringSlice("header"))
 				if err != nil {
 					return err
 				}
@@ -67,7 +67,7 @@ Examples:
 			}
 
 			// Validate it's a valid GraphQL schema before making any changes
-			if err := validateSchema(content); err != nil {
+			if err := ValidateSchema(content); err != nil {
 				return err
 			}
 

@@ -1,4 +1,4 @@
-package cli
+package prompt
 
 import (
 	"bufio"
@@ -10,8 +10,8 @@ import (
 	"github.com/tonysyu/gqlxp/library"
 )
 
-// PromptString prompts the user for a string input with an optional default value.
-func PromptString(prompt string, defaultValue string) (string, error) {
+// String prompts the user for a string input with an optional default value.
+func String(prompt string, defaultValue string) (string, error) {
 	if defaultValue != "" {
 		fmt.Printf("%s [%s]: ", prompt, defaultValue)
 	} else {
@@ -35,8 +35,8 @@ func PromptString(prompt string, defaultValue string) (string, error) {
 	return input, nil
 }
 
-// PromptYesNo prompts the user for a yes/no confirmation.
-func PromptYesNo(prompt string) (bool, error) {
+// YesNo prompts the user for a yes/no confirmation.
+func YesNo(prompt string) (bool, error) {
 	fmt.Printf("%s (y/n): ", prompt)
 
 	reader := bufio.NewReader(os.Stdin)
@@ -52,11 +52,11 @@ func PromptYesNo(prompt string) (bool, error) {
 	return input == "y" || input == "yes", nil
 }
 
-// PromptSchemaID prompts the user for a schema ID with validation.
-func PromptSchemaID(suggestedID string) (string, error) {
+// SchemaID prompts the user for a schema ID with validation.
+func SchemaID(suggestedID string) (string, error) {
 	for {
-		prompt := "Enter schema ID (lowercase letters, numbers, hyphens)"
-		id, err := PromptString(prompt, suggestedID)
+		p := "Enter schema ID (lowercase letters, numbers, hyphens)"
+		id, err := String(p, suggestedID)
 		if err != nil {
 			return "", err
 		}
