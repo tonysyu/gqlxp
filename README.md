@@ -135,14 +135,17 @@ $ gqlxp app
 $ gqlxp app -s github-api
 ```
 
+👉 For more information about the schema library, see [docs/schema-library.md](docs/schema-library.md).
+
 ### Search
 
-Search for types and fields across your schema:
+You can search for types and fields across your schema within the TUI app, or from the
+CLI:
 ```sh
-# Search using schema defined by file path (-s is an alias for --schema)
+# Search for "user" in schema defined by file path (-s is an alias for --schema)
 $ gqlxp search -s examples/github.graphqls user
 
-# Search using schema in library named "github-api"
+# Search for "user" using schema in library named "github-api"
 $ gqlxp search -s github-api user
 
 # Search using default schema (omit --schema flag)
@@ -152,7 +155,9 @@ $ gqlxp search mutation
 $ gqlxp search --limit 5 repository
 ```
 
-The search command indexes your schema for fast full-text search across type names, field names, and descriptions. Indexes are automatically created when schemas are added to your library and rebuilt when schemas are updated.
+The search command indexes your schema for fast full-text search across type names, field names, and descriptions.
+
+👉 For search syntax, fields, and document types, see [docs/search.md](docs/search.md).
 
 #### Indexing
 
@@ -163,8 +168,6 @@ To rebuild an index manually:
 gqlxp library reindex <schema-id>
 gqlxp library reindex --all  # Rebuild all indexes
 ```
-
-For search syntax, fields, and document types, see [docs/search.md](docs/search.md).
 
 ### Local development
 For local development commands:
@@ -182,4 +185,4 @@ $ just verify  # Run tests, lint, and fix
     - [Architecture](docs/architecture.md)
     - [Coding Best Practices](docs/coding.md)
     - [Schema Library](docs/schema-library.md)
-    - [Schema Search](docs/search.md)
+    - [Search Syntax and Configuration](docs/search.md)
