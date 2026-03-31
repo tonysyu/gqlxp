@@ -26,13 +26,13 @@ func (m Model) View() string {
 		views = append(views, m.nav.NextPanel().View())
 	}
 
-	navbar := m.renderGQLTypeNavbar()
+	navbar := m.renderGQLKindNavbar()
 	breadcrumbs := m.renderBreadcrumbs()
 	panels := lipgloss.JoinHorizontal(lipgloss.Top, views...)
 
 	// Add search input if on Search tab
 	var mainView string
-	if m.nav.CurrentType() == navigation.SearchType {
+	if m.nav.CurrentKind() == navigation.SearchKind {
 		searchInput := m.search.View()
 		mainView = lipgloss.JoinVertical(0, navbar, breadcrumbs, panels, searchInput, help)
 	} else {
@@ -47,8 +47,8 @@ func (m Model) helpBindings() []key.Binding {
 	}
 
 	helpBindings := []key.Binding{}
-	if m.nav.CurrentType() == navigation.SearchType {
-		// Only display SearchFocus key when viewing SearchType, but not in searchFocused state
+	if m.nav.CurrentKind() == navigation.SearchKind {
+		// Only display SearchFocus key when viewing SearchKind, but not in searchFocused state
 		helpBindings = append(helpBindings, m.keymap.SearchFocus)
 	}
 	return append(
@@ -56,35 +56,35 @@ func (m Model) helpBindings() []key.Binding {
 		m.keymap.NextPanel,
 		m.keymap.PrevPanel,
 		m.keymap.ToggleOverlay,
-		m.keymap.NextGQLType,
-		m.keymap.PrevGQLType,
+		m.keymap.NextGQLKind,
+		m.keymap.PrevGQLKind,
 		m.keymap.Quit,
 	)
 }
 
-// renderGQLTypeNavbar creates the navbar showing GQL types
-func (m *Model) renderGQLTypeNavbar() string {
-	allTypes := m.nav.AllTypes()
-	if len(allTypes) == 0 {
+// renderGQLKindNavbar creates the navbar showing GQL kinds
+func (m *Model) renderGQLKindNavbar() string {
+	allKinds := m.nav.AllKinds()
+	if len(allKinds) == 0 {
 		return ""
 	}
 
 	// Calculate max width per tab to fit all tabs in available width
 	// Account for padding in tab styles by using a small buffer
 	const styleOverhead = 2 // Approximate horizontal padding per tab
-	availableWidth := max(m.width-(len(allTypes)*styleOverhead), len(allTypes))
-	maxTabWidth := availableWidth / len(allTypes)
+	availableWidth := max(m.width-(len(allKinds)*styleOverhead), len(allKinds))
+	maxTabWidth := availableWidth / len(allKinds)
 
 	var tabs []string
-	for _, fieldType := range allTypes {
+	for _, fieldKind := range allKinds {
 		var style lipgloss.Style
-		if m.nav.CurrentType() == fieldType {
+		if m.nav.CurrentKind() == fieldKind {
 			style = m.Styles.ActiveTab
 		} else {
 			style = m.Styles.InactiveTab
 		}
 		// Truncate label to fit within calculated max width
-		label := text.Truncate(string(fieldType), maxTabWidth)
+		label := text.Truncate(string(fieldKind), maxTabWidth)
 		tabs = append(tabs, style.Render(label))
 	}
 

@@ -19,7 +19,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.overlay.OpenForType(navigation.QueryType)
+		h.overlay.OpenForKind(navigation.QueryKind)
 
 		h.assert.OverlayContains(`
 			# getUser
@@ -38,7 +38,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.overlay.OpenForType(navigation.MutationType)
+		h.overlay.OpenForKind(navigation.MutationKind)
 
 		h.assert.OverlayContains(`
 			# createPost
@@ -71,7 +71,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.overlay.OpenForType(navigation.ObjectType)
+		h.overlay.OpenForKind(navigation.ObjectKind)
 
 		h.assert.OverlayContains(`
 			# User
@@ -110,7 +110,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.overlay.OpenForType(navigation.InputType)
+		h.overlay.OpenForKind(navigation.InputKind)
 
 		h.assert.OverlayContains(`
 			# CreateUserInput
@@ -146,7 +146,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.overlay.OpenForType(navigation.EnumType)
+		h.overlay.OpenForKind(navigation.EnumKind)
 
 		h.assert.OverlayContains(`
 			# Role
@@ -172,7 +172,7 @@ func TestOverlayRendering(t *testing.T) {
 			scalar DateTime
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.overlay.OpenForType(navigation.ScalarType)
+		h.overlay.OpenForKind(navigation.ScalarKind)
 
 		h.assert.OverlayContains(`
 			# DateTime
@@ -196,7 +196,7 @@ func TestOverlayRendering(t *testing.T) {
 			}
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.overlay.OpenForType(navigation.InterfaceType)
+		h.overlay.OpenForKind(navigation.InterfaceKind)
 
 		h.assert.OverlayContains(`
 			# Node
@@ -220,7 +220,7 @@ func TestOverlayRendering(t *testing.T) {
 			type Post { id: ID! }
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.overlay.OpenForType(navigation.UnionType)
+		h.overlay.OpenForKind(navigation.UnionKind)
 
 		h.assert.OverlayContains(`
 			# SearchResult
@@ -242,7 +242,7 @@ func TestOverlayRendering(t *testing.T) {
 			) on FIELD_DEFINITION | OBJECT
 		`
 		h := New(t, schema, WithWindowSize(80, 60), WithoutOverlayBorders())
-		h.overlay.OpenForType(navigation.DirectiveType)
+		h.overlay.OpenForKind(navigation.DirectiveKind)
 
 		h.assert.OverlayContains(`
 			# @auth

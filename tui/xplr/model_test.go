@@ -50,7 +50,7 @@ func TestNewModel(t *testing.T) {
 	// Test initial state
 	is.Equal(len(model.nav.Stack().All()), config.VisiblePanelCount)
 	is.Equal(model.nav.Stack().Position(), 0)
-	is.Equal(model.nav.CurrentType(), navigation.QueryType)
+	is.Equal(model.nav.CurrentKind(), navigation.QueryKind)
 	is.Equal(len(model.schema.GetQueryItems()), 2)    // getAllPosts, getPostById
 	is.Equal(len(model.schema.GetMutationItems()), 1) // createPost
 
@@ -63,7 +63,7 @@ func TestNewModel(t *testing.T) {
 	is.True(model.keymap.NextPanel.Enabled())
 	is.True(model.keymap.PrevPanel.Enabled())
 	is.True(model.keymap.Quit.Enabled())
-	is.True(model.keymap.NextGQLType.Enabled())
+	is.True(model.keymap.NextGQLKind.Enabled())
 }
 
 func TestModelPanelNavigation(t *testing.T) {
@@ -161,24 +161,24 @@ func TestModelGQLTypeSwitching(t *testing.T) {
 	model := New(schemaView)
 
 	// Test initial type
-	is.Equal(model.nav.CurrentType(), navigation.QueryType)
+	is.Equal(model.nav.CurrentKind(), navigation.QueryKind)
 
 	// Test forward cycling through types
-	expectedTypes := []navigation.GQLType{
-		navigation.MutationType, navigation.ObjectType, navigation.InputType,
-		navigation.EnumType, navigation.ScalarType, navigation.InterfaceType,
-		navigation.UnionType, navigation.DirectiveType, navigation.SearchType, navigation.QueryType,
+	expectedTypes := []navigation.GQLKind{
+		navigation.MutationKind, navigation.ObjectKind, navigation.InputKind,
+		navigation.EnumKind, navigation.ScalarKind, navigation.InterfaceKind,
+		navigation.UnionKind, navigation.DirectiveKind, navigation.SearchKind, navigation.QueryKind,
 	}
 
 	for _, expectedType := range expectedTypes {
 		model, _ = model.Update(keyNextType)
-		is.Equal(model.nav.CurrentType(), expectedType)
+		is.Equal(model.nav.CurrentKind(), expectedType)
 		is.Equal(model.nav.Stack().Position(), 0) // Stack position should reset to 0
 	}
 
 	// Test reverse cycling
 	model, _ = model.Update(keyPrevType)
-	is.Equal(model.nav.CurrentType(), navigation.SearchType)
+	is.Equal(model.nav.CurrentKind(), navigation.SearchKind)
 }
 
 func TestModelWindowResize(t *testing.T) {
@@ -203,18 +203,18 @@ func TestModelWithEmptySchema(t *testing.T) {
 	// Model should still initialize properly
 	is.Equal(len(model.nav.Stack().All()), config.VisiblePanelCount)
 	is.Equal(model.nav.Stack().Position(), 0)
-	is.Equal(model.nav.CurrentType(), navigation.QueryType)
+	is.Equal(model.nav.CurrentKind(), navigation.QueryKind)
 
 	// Should be able to cycle through types even with empty schema
 	model, _ = model.Update(tea.KeyPressMsg{Code: '}'})
-	is.Equal(model.nav.CurrentType(), navigation.MutationType)
+	is.Equal(model.nav.CurrentKind(), navigation.MutationKind)
 }
 
 func TestSearchResultsReadyClearsChildPanel(t *testing.T) {
 	is := is.New(t)
 
 	model := New(adapters.SchemaView{})
-	model.nav = model.nav.SwitchType(navigation.SearchType)
+	model.nav = model.nav.SwitchKind(navigation.SearchKind)
 
 	// Simulate a child panel opened from a previous search result
 	model.nav = model.nav.OpenPanel(components.NewEmptyPanel("previous result"))
@@ -231,7 +231,7 @@ func TestSearchResultsReadyClearsChildPanelWhenResultsExist(t *testing.T) {
 	is := is.New(t)
 
 	model := New(adapters.SchemaView{})
-	model.nav = model.nav.SwitchType(navigation.SearchType)
+	model.nav = model.nav.SwitchKind(navigation.SearchKind)
 
 	// Simulate a child panel opened from a previous search result
 	model.nav = model.nav.OpenPanel(components.NewEmptyPanel("previous result"))
@@ -294,14 +294,14 @@ func TestModelKeyboardShortcuts(t *testing.T) {
 			name: "next GQL type cycles forward",
 			key:  keyNextType,
 			verify: func(t *testing.T, m Model) {
-				is.New(t).Equal(m.nav.CurrentType(), navigation.MutationType)
+				is.New(t).Equal(m.nav.CurrentKind(), navigation.MutationKind)
 			},
 		},
 		{
 			name: "prev GQL type wraps to last type",
 			key:  keyPrevType,
 			verify: func(t *testing.T, m Model) {
-				is.New(t).Equal(m.nav.CurrentType(), navigation.SearchType)
+				is.New(t).Equal(m.nav.CurrentKind(), navigation.SearchKind)
 			},
 		},
 		{

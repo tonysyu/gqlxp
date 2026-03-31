@@ -3,20 +3,20 @@
 ## Purpose
 TBD - created by archiving change add-search-tab. Update Purpose after archive.
 ## Requirements
-### Requirement: Search Tab Type
-The TUI SHALL include "Search" as a navigable GraphQL type tab, positioned after "Directive" in the type cycle.
+### Requirement: Search Tab Kind
+The TUI SHALL include "Search" as a navigable GraphQL kind tab, positioned after "Directive" in the kind cycle.
 
-#### Scenario: Search in type cycle
-- **WHEN** cycling through types with Ctrl+T from "Directive"
-- **THEN** the next type SHALL be "Search"
+#### Scenario: Search in kind cycle
+- **WHEN** cycling through kinds with Ctrl+T from "Directive"
+- **THEN** the next kind SHALL be "Search"
 
 #### Scenario: Reverse cycle to Search
 - **WHEN** cycling backwards with Ctrl+R from "Query"
-- **THEN** the previous type SHALL be "Search"
+- **THEN** the previous kind SHALL be "Search"
 
-#### Scenario: Search type constant
-- **WHEN** the Search tab type is defined in code
-- **THEN** it SHALL be added as a `SearchType` constant in `navigation.GQLType`
+#### Scenario: Search kind constant
+- **WHEN** the Search tab kind is defined in code
+- **THEN** it SHALL be added as a `SearchKind` constant in `navigation.GQLKind`
 
 ### Requirement: Search Input Display
 The TUI SHALL display a text input field at the bottom of the screen when the Search tab is active.
@@ -61,7 +61,7 @@ The TUI SHALL display search results as a list of selectable items in the main p
 #### Scenario: Result list format
 - **WHEN** search results are displayed
 - **THEN** each result SHALL show the path (e.g., "User.email")
-- **AND** the type category (e.g., "Field")
+- **AND** the kind (e.g., "Field")
 - **AND** the description excerpt if available
 
 #### Scenario: Empty results

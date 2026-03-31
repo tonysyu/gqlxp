@@ -13,8 +13,8 @@ import (
 func TestSelectTypeByName(t *testing.T) {
 	h := New(t, testSchema, WithSelection("Object1", ""))
 
-	// Should switch to Object type category
-	h.assert.CurrentType(navigation.ObjectType)
+	// Should switch to Object kind
+	h.assert.CurrentKind(navigation.ObjectKind)
 	// Should have Object1 selected
 	h.assert.ViewContains("Object1")
 }
@@ -22,8 +22,8 @@ func TestSelectTypeByName(t *testing.T) {
 func TestSelectInputTypeByName(t *testing.T) {
 	h := New(t, testSchema, WithSelection("Mutation1Input", ""))
 
-	// Should switch to Input type category
-	h.assert.CurrentType(navigation.InputType)
+	// Should switch to Input kind
+	h.assert.CurrentKind(navigation.InputKind)
 	// Should have Mutation1Input selected
 	h.assert.ViewContains("Mutation1Input")
 }
@@ -31,8 +31,8 @@ func TestSelectInputTypeByName(t *testing.T) {
 func TestSelectEnumTypeByName(t *testing.T) {
 	h := New(t, testSchema, WithSelection("Enum1", ""))
 
-	// Should switch to Enum type category
-	h.assert.CurrentType(navigation.EnumType)
+	// Should switch to Enum kind
+	h.assert.CurrentKind(navigation.EnumKind)
 	// Should have Enum1 selected
 	h.assert.ViewContains("Enum1")
 }
@@ -40,8 +40,8 @@ func TestSelectEnumTypeByName(t *testing.T) {
 func TestSelectFieldWithinType(t *testing.T) {
 	h := New(t, testSchema, WithSelection("Query", "query1"))
 
-	// Should be in Query type category
-	h.assert.CurrentType(navigation.QueryType)
+	// Should be in Query kind
+	h.assert.CurrentKind(navigation.QueryKind)
 	// Query type shows fields directly, so query1 should be selected
 	// After selection, we navigate forward which adds the breadcrumb
 	h.assert.ViewContains("query1")
@@ -53,8 +53,8 @@ func TestSelectFieldWithinType(t *testing.T) {
 func TestSelectFieldWithinMutation(t *testing.T) {
 	h := New(t, testSchema, WithSelection("Mutation", "mutation1"))
 
-	// Should be in Mutation type category
-	h.assert.CurrentType(navigation.MutationType)
+	// Should be in Mutation kind
+	h.assert.CurrentKind(navigation.MutationKind)
 	// Mutation type shows fields directly, so mutation1 should be selected
 	h.assert.ViewContains("mutation1")
 	// The breadcrumb will show once we navigate to the detail panel
@@ -65,7 +65,7 @@ func TestSelectNonExistentType(t *testing.T) {
 	h := New(t, testSchema, WithSelection("NonExistent", ""))
 
 	// Should gracefully fallback to default (Query type)
-	h.assert.CurrentType(navigation.QueryType)
+	h.assert.CurrentKind(navigation.QueryKind)
 	// Should have no special selection
 	h.assert.BreadcrumbsEquals("")
 }
@@ -73,8 +73,8 @@ func TestSelectNonExistentType(t *testing.T) {
 func TestSelectNonExistentField(t *testing.T) {
 	h := New(t, testSchema, WithSelection("Query", "nonExistentField"))
 
-	// Should be in Query type category
-	h.assert.CurrentType(navigation.QueryType)
+	// Should be in Query kind
+	h.assert.CurrentKind(navigation.QueryKind)
 	// Should have Query selected but field not found - no breadcrumbs for missing field
 	// The exact behavior is graceful fallback - no error, just Query selected
 	h.assert.ViewContains("query1") // Query type should still be visible
@@ -84,7 +84,7 @@ func TestSelectWithEmptyTarget(t *testing.T) {
 	h := New(t, testSchema, WithSelection("", ""))
 
 	// Should gracefully handle empty selection and default to Query
-	h.assert.CurrentType(navigation.QueryType)
+	h.assert.CurrentKind(navigation.QueryKind)
 	h.assert.BreadcrumbsEquals("")
 }
 
@@ -92,7 +92,7 @@ func TestSelectObjectTypeAndNavigate(t *testing.T) {
 	h := New(t, testSchema, WithSelection("Object1", ""))
 
 	// Verify Object1 is selected
-	h.assert.CurrentType(navigation.ObjectType)
+	h.assert.CurrentKind(navigation.ObjectKind)
 
 	// Navigate to the detail panel
 	h.nav.NextPanel()

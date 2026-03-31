@@ -59,7 +59,6 @@ func runInitWizard(ctx context.Context) error {
 	return nil
 }
 
-
 func addNewSchema(ctx context.Context, lib library.Library) (string, error) {
 	source, err := prompt.String("Enter schema file path or URL", "")
 	if err != nil {

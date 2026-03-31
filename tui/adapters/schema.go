@@ -71,11 +71,11 @@ func (p *SchemaView) Schema() *gql.GraphQLSchema {
 	return &p.schema
 }
 
-// FindTypeCategory returns the GQL type category for the given type name
-// Returns (category, true) if found, ("", false) if not found
-func (p *SchemaView) FindTypeCategory(typeName string) (navigation.GQLType, bool) {
-	if category, ok := p.schema.NameToType[typeName]; ok {
-		return navigation.GQLType(category), true
+// FindKind returns the GQL kind for the given type name.
+// Returns (kind, true) if found, ("", false) if not found
+func (p *SchemaView) FindKind(typeName string) (navigation.GQLKind, bool) {
+	if category, ok := p.schema.NameToKind[typeName]; ok {
+		return navigation.GQLKind(category), true
 	}
 	return "", false
 }

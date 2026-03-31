@@ -7,7 +7,7 @@ import (
 	"github.com/tonysyu/gqlxp/tui/xplr/navigation"
 )
 
-func TestSchemaView_FindTypeCategory(t *testing.T) {
+func TestSchemaView_FindKind(t *testing.T) {
 	schemaContent := `
 		type Query {
 			user: User
@@ -50,61 +50,61 @@ func TestSchemaView_FindTypeCategory(t *testing.T) {
 	tests := []struct {
 		name         string
 		typeName     string
-		wantCategory navigation.GQLType
+		wantCategory navigation.GQLKind
 		wantFound    bool
 	}{
 		{
 			name:         "Query type",
 			typeName:     "Query",
-			wantCategory: navigation.QueryType,
+			wantCategory: navigation.QueryKind,
 			wantFound:    true,
 		},
 		{
 			name:         "Mutation type",
 			typeName:     "Mutation",
-			wantCategory: navigation.MutationType,
+			wantCategory: navigation.MutationKind,
 			wantFound:    true,
 		},
 		{
 			name:         "Object type",
 			typeName:     "User",
-			wantCategory: navigation.ObjectType,
+			wantCategory: navigation.ObjectKind,
 			wantFound:    true,
 		},
 		{
 			name:         "Input type",
 			typeName:     "UserInput",
-			wantCategory: navigation.InputType,
+			wantCategory: navigation.InputKind,
 			wantFound:    true,
 		},
 		{
 			name:         "Enum type",
 			typeName:     "Status",
-			wantCategory: navigation.EnumType,
+			wantCategory: navigation.EnumKind,
 			wantFound:    true,
 		},
 		{
 			name:         "Scalar type",
 			typeName:     "DateTime",
-			wantCategory: navigation.ScalarType,
+			wantCategory: navigation.ScalarKind,
 			wantFound:    true,
 		},
 		{
 			name:         "Interface type",
 			typeName:     "Node",
-			wantCategory: navigation.InterfaceType,
+			wantCategory: navigation.InterfaceKind,
 			wantFound:    true,
 		},
 		{
 			name:         "Union type",
 			typeName:     "SearchResult",
-			wantCategory: navigation.UnionType,
+			wantCategory: navigation.UnionKind,
 			wantFound:    true,
 		},
 		{
 			name:         "Directive type",
 			typeName:     "auth",
-			wantCategory: navigation.DirectiveType,
+			wantCategory: navigation.DirectiveKind,
 			wantFound:    true,
 		},
 		{
@@ -119,9 +119,9 @@ func TestSchemaView_FindTypeCategory(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
 
-			gotCategory, gotFound := schema.FindTypeCategory(tt.typeName)
-			is.Equal(gotCategory, tt.wantCategory) // FindTypeCategory() category
-			is.Equal(gotFound, tt.wantFound)       // FindTypeCategory() found
+			gotCategory, gotFound := schema.FindKind(tt.typeName)
+			is.Equal(gotCategory, tt.wantCategory) // FindKind() category
+			is.Equal(gotFound, tt.wantFound)       // FindKind() found
 		})
 	}
 }

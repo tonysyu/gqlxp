@@ -9,13 +9,13 @@ The system SHALL provide a `--select` flag on the `app` command to open the TUI 
 #### Scenario: Select type by name
 - **GIVEN** a schema file with a type named "User"
 - **WHEN** user runs `gqlxp app schema.graphqls --select User`
-- **THEN** the TUI opens with the "User" type selected in the appropriate type category (Object, Input, etc.)
+- **THEN** the TUI opens with the "User" type selected in the appropriate kind (Object, Input, etc.)
 - **AND** the type's detail panel is displayed
 
 #### Scenario: Select field within type
 - **GIVEN** a schema file with type "Query" containing field "user"
 - **WHEN** user runs `gqlxp app schema.graphqls --select Query.user`
-- **THEN** the TUI opens with the Query type category active
+- **THEN** the TUI opens with the Query kind active
 - **AND** the "user" field is selected in the Query panel
 - **AND** the field's detail panel is displayed
 
@@ -32,7 +32,7 @@ The system SHALL provide a `--select` flag on the `app` command to open the TUI 
 #### Scenario: Invalid field name
 - **GIVEN** a schema with type "Query" that does not contain field "missing"
 - **WHEN** user runs `gqlxp app schema.graphqls --select Query.missing`
-- **THEN** the TUI opens with Query type category active
+- **THEN** the TUI opens with Query kind active
 - **AND** the Query type is selected but the field is not found
 - **AND** no error is displayed to the user
 
@@ -40,25 +40,25 @@ The system SHALL provide a `--select` flag on the `app` command to open the TUI 
 - **WHEN** user runs `gqlxp app --help`
 - **THEN** the help text shows the `--select` flag with usage description
 
-### Requirement: Type Category Detection
-The system SHALL automatically determine the correct GQL type category (Query, Mutation, Object, etc.) for a selected type.
+### Requirement: Kind Detection
+The system SHALL automatically determine the correct GQL kind (Query, Mutation, Object, etc.) for a selected type.
 
 #### Scenario: Detect object type
 - **GIVEN** a schema with an Object type named "User"
 - **WHEN** user selects "User" via `--select User`
-- **THEN** the TUI switches to the Object type category
+- **THEN** the TUI switches to the Object kind
 - **AND** "User" is selected in the Object panel
 
 #### Scenario: Detect input type
 - **GIVEN** a schema with an Input type named "UserInput"
 - **WHEN** user selects "UserInput" via `--select UserInput`
-- **THEN** the TUI switches to the Input type category
+- **THEN** the TUI switches to the Input kind
 - **AND** "UserInput" is selected in the Input panel
 
 #### Scenario: Detect enum type
 - **GIVEN** a schema with an Enum type named "Status"
 - **WHEN** user selects "Status" via `--select Status`
-- **THEN** the TUI switches to the Enum type category
+- **THEN** the TUI switches to the Enum kind
 - **AND** "Status" is selected in the Enum panel
 
 ### Requirement: Initial Selection State

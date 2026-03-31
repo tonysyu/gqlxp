@@ -75,8 +75,8 @@ func (m Model) HelpBindings() []key.Binding {
 	return []key.Binding{
 		m.keymap.SearchSubmit,
 		m.keymap.SearchClear,
-		m.keymap.NextGQLType,
-		m.keymap.PrevGQLType,
+		m.keymap.NextGQLKind,
+		m.keymap.PrevGQLKind,
 		m.keymap.Quit,
 	}
 }

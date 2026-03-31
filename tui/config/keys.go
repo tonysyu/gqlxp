@@ -34,7 +34,7 @@ func newGlobalKeymaps() GlobalKeymaps {
 // MainKeymaps contains keymaps for the main xplr model
 type MainKeymaps struct {
 	GlobalKeymaps
-	NextPanel, PrevPanel, NextGQLType, PrevGQLType, ToggleOverlay key.Binding
+	NextPanel, PrevPanel, NextGQLKind, PrevGQLKind, ToggleOverlay key.Binding
 	SearchFocus, SearchSubmit, SearchClear                        key.Binding
 	OpenLibSelect                                                 key.Binding
 }
@@ -51,13 +51,13 @@ func NewMainKeymaps() MainKeymaps {
 			key.WithKeys("[", "shift+tab"),
 			key.WithHelp("[/⇧+tab", "prev"),
 		),
-		NextGQLType: key.NewBinding(
+		NextGQLKind: key.NewBinding(
 			key.WithKeys("}"),
-			key.WithHelp("}", "next type"),
+			key.WithHelp("}", "next kind"),
 		),
-		PrevGQLType: key.NewBinding(
+		PrevGQLKind: key.NewBinding(
 			key.WithKeys("{"),
-			key.WithHelp("{", "prev type"),
+			key.WithHelp("{", "prev kind"),
 		),
 		ToggleOverlay: key.NewBinding(
 			key.WithKeys(toggleOverlayKey),

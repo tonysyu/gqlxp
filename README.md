@@ -8,7 +8,7 @@
 
 ```
                  ┌─────────────────────────────────────────────────────────────────────┐
- Type Class Nav  │ ▸ Query | Mutation | Object | Input | Enum | Scalar | Interface | … │
+       Kind Nav  │ ▸ Query | Mutation | Object | Input | Enum | Scalar | Interface | … │
                  │                                                                     │
     Breadcrumbs  │ Query > user > User                                                 │
                  ├────────────────────────────────────┬────────────────────────────────┤
@@ -28,13 +28,13 @@ Type/Field Name  │ User                               │ email               
                   Active Panel                         Detail Panel
 ```
 
-- **Type Class Nav**: Navbar for GraphQL Type Classes + Search-mode
-  - GraphQL Type Classes: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive
+- **Kind Nav**: Navbar for GraphQL kinds + Search-mode
+  - GraphQL kinds: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive
   - Search: Search all GraphQL types and fields by name, description. See [[#Search Syntax]] below
-  - Currently focused Type Class will be displayed in the Active Panel
+  - Currently focused kind will be displayed in the Active Panel
   - Keymaps:
-    - `}`: Focus on next type
-    - `{`: Focus on previous type
+    - `}`: Focus on next kind
+    - `{`: Focus on previous kind
 - **Active Panel**: Left panel displaying currently focused Type or Field
   - Keymaps:
     - `]`/`Tab`: Make next panel the Active Panel
@@ -157,7 +157,7 @@ $ gqlxp search --limit 5 repository
 
 The search command indexes your schema for fast full-text search across type names, field names, and descriptions.
 
-👉 For search syntax, fields, and document types, see [docs/search.md](docs/search.md).
+👉 For search syntax, fields, and GQL kinds, see [docs/search.md](docs/search.md).
 
 #### Indexing
 

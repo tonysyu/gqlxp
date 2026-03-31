@@ -12,74 +12,74 @@ import (
 	"github.com/tonysyu/gqlxp/search"
 )
 
-func TestApplyTypeFilter(t *testing.T) {
+func TestApplyKindFilter(t *testing.T) {
 	tests := []struct {
 		name       string
-		typeFilter string
+		kindFilter string
 		query      string
 		wantQuery  string
 		wantErr    string
 	}{
 		{
 			name:       "no query",
-			typeFilter: "Query",
+			kindFilter: "Query",
 			query:      "",
-			wantQuery:  "+type:Query",
+			wantQuery:  "+kind:Query",
 		},
 		{
 			name:       "with query",
-			typeFilter: "Object",
+			kindFilter: "Object",
 			query:      "user",
-			wantQuery:  "+type:Object user",
+			wantQuery:  "+kind:Object user",
 		},
 		{
 			name:       "case insensitive",
-			typeFilter: "object",
+			kindFilter: "object",
 			query:      "",
-			wantQuery:  "+type:Object",
+			wantQuery:  "+kind:Object",
 		},
 		{
 			name:       "mixed case",
-			typeFilter: "MUTATION",
+			kindFilter: "MUTATION",
 			query:      "",
-			wantQuery:  "+type:Mutation",
+			wantQuery:  "+kind:Mutation",
 		},
 		{
 			name:       "ObjectField",
-			typeFilter: "objectfield",
+			kindFilter: "objectfield",
 			query:      "email",
-			wantQuery:  "+type:ObjectField email",
+			wantQuery:  "+kind:ObjectField email",
 		},
 		{
-			name:       "invalid type",
-			typeFilter: "BadType",
+			name:       "invalid kind",
+			kindFilter: "BadType",
 			query:      "",
-			wantErr:    `invalid --type value "BadType"`,
+			wantErr:    `invalid --kind value "BadType"`,
 		},
 		{
-			name:       "conflict with type: in query",
-			typeFilter: "Query",
-			query:      "+type:Object user",
-			wantErr:    "cannot use --type flag when query already contains a type: filter",
+			name:       "conflict with kind: in query",
+			kindFilter: "Query",
+			query:      "+kind:Object user",
+			wantErr:    "cannot use --kind flag when query already contains a kind: filter",
 		},
 		{
-			name:       "conflict with bare type: in query",
-			typeFilter: "Query",
-			query:      "type:Object",
-			wantErr:    "cannot use --type flag when query already contains a type: filter",
+			name:       "conflict with bare kind: in query",
+			kindFilter: "Query",
+			query:      "kind:Object",
+			wantErr:    "cannot use --kind flag when query already contains a kind: filter",
 		},
 		{
-			name:       "conflict with -type: exclusion in query",
-			typeFilter: "Query",
-			query:      "-type:*Field",
-			wantErr:    "cannot use --type flag when query already contains a type: filter",
+			name:       "conflict with -kind: exclusion in query",
+			kindFilter: "Query",
+			query:      "-kind:*Field",
+			wantErr:    "cannot use --kind flag when query already contains a kind: filter",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			is := is.New(t)
-			got, err := applyTypeFilter(tt.typeFilter, tt.query)
+			got, err := applyKindFilter(tt.kindFilter, tt.query)
 			if tt.wantErr != "" {
 				is.True(err != nil)
 				is.True(strings.Contains(err.Error(), tt.wantErr))
@@ -106,7 +106,7 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 			name: "single result without signature",
 			results: []search.SearchResult{
 				{
-					Type:        "Object",
+					Kind:        "Object",
 					Name:        "User",
 					Path:        "User",
 					Description: "A user",
@@ -115,7 +115,7 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 			},
 			want: []map[string]any{
 				{
-					"type":        "Object",
+					"kind":        "Object",
 					"name":        "User",
 					"path":        "User",
 					"description": "A user",
@@ -128,7 +128,7 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 			name: "result with signature",
 			results: []search.SearchResult{
 				{
-					Type:        "Query",
+					Kind:        "Query",
 					Name:        "getUser",
 					Path:        "Query.getUser",
 					Description: "Get a user by ID",
@@ -138,7 +138,7 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 			},
 			want: []map[string]any{
 				{
-					"type":        "Query",
+					"kind":        "Query",
 					"name":        "getUser",
 					"path":        "Query.getUser",
 					"description": "Get a user by ID",
@@ -151,14 +151,14 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 			name: "multiple results",
 			results: []search.SearchResult{
 				{
-					Type:        "Object",
+					Kind:        "Object",
 					Name:        "User",
 					Path:        "User",
 					Description: "A user",
 					Score:       2.0,
 				},
 				{
-					Type:        "Query",
+					Kind:        "Query",
 					Name:        "userId",
 					Path:        "Query.userId",
 					Description: "Get user by ID",
@@ -168,7 +168,7 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 			},
 			want: []map[string]any{
 				{
-					"type":        "Object",
+					"kind":        "Object",
 					"name":        "User",
 					"path":        "User",
 					"description": "A user",
@@ -176,7 +176,7 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 					"signature":   "",
 				},
 				{
-					"type":        "Query",
+					"kind":        "Query",
 					"name":        "userId",
 					"path":        "Query.userId",
 					"description": "Get user by ID",
@@ -216,7 +216,7 @@ func TestPrintSearchResultsJSON(t *testing.T) {
 			// Verify the output matches expected
 			is.Equal(len(got), len(tt.want))
 			for i, wantItem := range tt.want {
-				is.Equal(got[i]["type"], wantItem["type"])
+				is.Equal(got[i]["kind"], wantItem["kind"])
 				is.Equal(got[i]["name"], wantItem["name"])
 				is.Equal(got[i]["path"], wantItem["path"])
 				is.Equal(got[i]["description"], wantItem["description"])
@@ -232,7 +232,7 @@ func TestPrintSearchResultsJSON_PrettyPrinted(t *testing.T) {
 
 	results := []search.SearchResult{
 		{
-			Type:        "Object",
+			Kind:        "Object",
 			Name:        "User",
 			Path:        "User",
 			Description: "A user",

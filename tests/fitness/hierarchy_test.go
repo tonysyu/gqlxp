@@ -27,7 +27,7 @@ var PACKAGE_HIERARCHY = []string{
 	"gqlfmt",
 	"gql",
 	"utils", // lowest level: Cannot import from any other internal package
-	"docs", // package used for embedding some docs
+	"docs",  // package used for embedding some docs
 }
 
 // TestPackageHierarchy enforces that top-level packages can only import

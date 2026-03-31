@@ -19,7 +19,7 @@ The system SHALL create and maintain Bleve indexes for each schema in the librar
 - **THEN** the index is stored at `~/.config/gqlxp/schemas/github-api.bleve/`
 
 ### Requirement: Document Structure and Indexing
-The system SHALL index GraphQL types and fields with searchable fields for type category, name, description, and path.
+The system SHALL index GraphQL types and fields with searchable fields for kind, name, description, and path.
 
 #### Scenario: Index type definition
 - **WHEN** indexing a GraphQL Object type named "User" with description "Represents a user account"

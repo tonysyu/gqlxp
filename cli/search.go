@@ -20,8 +20,8 @@ var (
 	codeStyle   = lipgloss.NewStyle().Foreground(terminal.ColorDimIndigo)
 )
 
-// canonicalSearchTypes maps lowercase type names to their canonical form.
-var canonicalSearchTypes = map[string]string{
+// canonicalSearchKinds maps lowercase kind names to their canonical form.
+var canonicalSearchKinds = map[string]string{
 	"query":          "Query",
 	"mutation":       "Mutation",
 	"object":         "Object",
@@ -48,17 +48,17 @@ Uses default schema when --schema is not specified.
 Use 'gqlxp library default' to set the default schema.
 
 For AI/programmatic use, add --json --no-pager for machine-readable output.
-JSON output: [{"path":"Type.field","type":"Query|Object|...","description":"...","signature":"..."}]
+JSON output: [{"path":"Type.field","kind":"Query|Object|...","description":"...","signature":"..."}]
 
 Query syntax:
   Plain keyword   Matches names and descriptions
-  type:<Type>     Filter by type (e.g., type:Query, type:Object)
-  Combined        "+type:Query user" filters to Query type matching "user"
+  kind:<Kind>     Filter by kind (e.g., kind:Query, kind:Object)
+  Combined        "+kind:Query user" filters to Query kind matching "user"
 
 Examples:
   gqlxp search user                                  # Uses default schema
   gqlxp search -s github user --json --no-pager      # JSON output for AI use
-  gqlxp search -s github --type Query                # List all queries
+  gqlxp search -s github --kind Query                # List all queries
   gqlxp search -s examples/github.graphqls user      # Uses specific file`,
 		Flags: []cli.Flag{
 			&cli.BoolFlag{
@@ -84,8 +84,8 @@ Examples:
 				Usage: "output results as JSON (recommended for AI/programmatic use)",
 			},
 			&cli.StringFlag{
-				Name:  "type",
-				Usage: "filter by document type: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, ObjectField, InputField, InterfaceField",
+				Name:  "kind",
+				Usage: "filter by document kind: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, ObjectField, InputField, InterfaceField",
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
@@ -94,12 +94,12 @@ Examples:
 				return nil
 			}
 
-			typeFilter := cmd.String("type")
-			hasTypeFilter := typeFilter != ""
+			kindFilter := cmd.String("kind")
+			hasKindFilter := kindFilter != ""
 
-			if hasTypeFilter {
+			if hasKindFilter {
 				if cmd.Args().Len() > 1 {
-					return fmt.Errorf("requires at most 1 argument when --type is set: [query]")
+					return fmt.Errorf("requires at most 1 argument when --kind is set: [query]")
 				}
 			} else {
 				if cmd.Args().Len() != 1 {
@@ -109,9 +109,9 @@ Examples:
 
 			query := cmd.Args().First()
 
-			if hasTypeFilter {
+			if hasKindFilter {
 				var err error
-				query, err = applyTypeFilter(typeFilter, query)
+				query, err = applyKindFilter(kindFilter, query)
 				if err != nil {
 					return err
 				}
@@ -191,7 +191,7 @@ Examples:
 			fmt.Fprintf(&output, "Found %d results for %q%s:\n\n", len(results), query, maxLimitInfo)
 			for i, result := range results {
 				// Highlight the type in pink
-				fmt.Fprintf(&output, "%d. %s %s\n", i+1, headerStyle.Render(result.Path), "("+result.Type+")")
+				fmt.Fprintf(&output, "%d. %s %s\n", i+1, headerStyle.Render(result.Path), "("+result.Kind+")")
 				if result.Description != "" {
 					fmt.Fprintf(&output, "   %s\n", result.Description)
 				}
@@ -209,20 +209,20 @@ Examples:
 	}
 }
 
-// applyTypeFilter validates typeFilter and prepends a +type:<Canonical> clause to query.
-func applyTypeFilter(typeFilter, query string) (string, error) {
-	if strings.Contains(query, "type:") {
-		return "", fmt.Errorf("cannot use --type flag when query already contains a type: filter")
+// applyKindFilter validates kindFilter and prepends a +kind:<Canonical> clause to query.
+func applyKindFilter(kindFilter, query string) (string, error) {
+	if strings.Contains(query, "kind:") {
+		return "", fmt.Errorf("cannot use --kind flag when query already contains a kind: filter")
 	}
-	canonical, ok := canonicalSearchTypes[strings.ToLower(typeFilter)]
+	canonical, ok := canonicalSearchKinds[strings.ToLower(kindFilter)]
 	if !ok {
-		return "", fmt.Errorf("invalid --type value %q; valid values: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, ObjectField, InputField, InterfaceField", typeFilter)
+		return "", fmt.Errorf("invalid --kind value %q; valid values: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, ObjectField, InputField, InterfaceField", kindFilter)
 	}
-	typeClause := "+type:" + canonical
+	kindClause := "+kind:" + canonical
 	if query != "" {
-		return typeClause + " " + query, nil
+		return kindClause + " " + query, nil
 	}
-	return typeClause, nil
+	return kindClause, nil
 }
 
 // printSearchResultsJSON outputs search results as pretty-printed JSON

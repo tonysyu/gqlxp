@@ -48,8 +48,8 @@ func (b *BleveSearcher) Search(schemaID string, query string, limit int) ([]Sear
 		}
 
 		// Extract fields from hit
-		if typeVal, ok := hit.Fields["type"].(string); ok {
-			result.Type = typeVal
+		if kindVal, ok := hit.Fields["kind"].(string); ok {
+			result.Kind = kindVal
 		}
 		if nameVal, ok := hit.Fields["name"].(string); ok {
 			result.Name = nameVal
@@ -83,7 +83,7 @@ func newSearchRequest(query string) *bleve.SearchRequest {
 		nameWildcard.SetField("name")
 		searchRequest = bleve.NewSearchRequest(bleve.NewDisjunctionQuery(queryStringQuery, nameWildcard))
 	}
-	searchRequest.Fields = []string{"type", "name", "description", "path", "signature"}
+	searchRequest.Fields = []string{"kind", "name", "description", "path", "signature"}
 	return searchRequest
 }
 

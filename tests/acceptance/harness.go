@@ -1,7 +1,7 @@
 // Package acceptance provides functional, domain-specific helpers for acceptance testing of the TUI.
 //
 // The test harness simplifies writing high-level tests that verify complete user workflows
-// by providing explorer helpers (navigation, type cycling, item selection) and screen
+// by providing explorer helpers (navigation, kind cycling, item selection) and screen
 // verification helpers (panel assertions, breadcrumb checks, overlay verification).
 //
 // Example usage:
@@ -34,8 +34,8 @@ import (
 var (
 	keyNextPanel = tea.KeyPressMsg{Code: ']'}
 	keyPrevPanel = tea.KeyPressMsg{Code: '['}
-	keyNextType  = tea.KeyPressMsg{Code: '}'}
-	keyPrevType  = tea.KeyPressMsg{Code: '{'}
+	keyNextKind  = tea.KeyPressMsg{Code: '}'}
+	keyPrevKind  = tea.KeyPressMsg{Code: '{'}
 	keySpace     = tea.KeyPressMsg{Code: ' '}
 	keyEscape    = tea.KeyPressMsg{Code: tea.KeyEsc}
 )
@@ -151,9 +151,9 @@ func (e *Explorer) View() string {
 	return e.model.View()
 }
 
-// CurrentType returns the currently selected GraphQL type
-func (e *Explorer) CurrentType() navigation.GQLType {
-	return navigation.GQLType(e.model.CurrentType())
+// CurrentKind returns the currently selected GraphQL kind
+func (e *Explorer) CurrentKind() navigation.GQLKind {
+	return navigation.GQLKind(e.model.CurrentKind())
 }
 
 // ============================================================================
@@ -170,10 +170,10 @@ func (o *Overlay) Close() {
 	o.explorer.Update(keyEscape)
 }
 
-// OpenForType switches to the specified type and opens the overlay for the first item
+// OpenForKind switches to the specified GQL knd and opens the overlay for the first item
 // This is a convenience method for testing overlay content for different GraphQL types
-func (o *Overlay) OpenForType(gqlType navigation.GQLType) {
-	o.nav.GoToGqlType(gqlType)
+func (o *Overlay) OpenForKind(gqlKind navigation.GQLKind) {
+	o.nav.GoToGqlKind(gqlKind)
 	o.Open()
 }
 
@@ -191,19 +191,19 @@ func (n *Navigator) PrevPanel() {
 	n.explorer.Update(keyPrevPanel)
 }
 
-// NextGqlType cycles to the next GraphQL type (} key)
-func (n *Navigator) NextGqlType() {
-	n.explorer.Update(keyNextType)
+// NextGqlKind cycles to the next GraphQL kind (} key)
+func (n *Navigator) NextGqlKind() {
+	n.explorer.Update(keyNextKind)
 }
 
-// PrevGqlType cycles to the previous GraphQL type ({ key)
-func (n *Navigator) PrevGqlType() {
-	n.explorer.Update(keyPrevType)
+// PrevGqlKind cycles to the previous GraphQL kind ({ key)
+func (n *Navigator) PrevGqlKind() {
+	n.explorer.Update(keyPrevKind)
 }
 
-// GoToGqlType switches directly to a specific GraphQL type
-func (n *Navigator) GoToGqlType(gqlType navigation.GQLType) {
-	n.explorer.model.SwitchToType(string(gqlType))
+// GoToGqlKind switches directly to a specific GraphQL kind
+func (n *Navigator) GoToGqlKind(gqlKind navigation.GQLKind) {
+	n.explorer.model.SwitchToKind(string(gqlKind))
 }
 
 // SelectItemAtIndex moves the cursor to the item at the given index (0-based)
@@ -294,10 +294,10 @@ func (a *Assert) ViewContains(expectedStrings ...string) {
 	}
 }
 
-// CurrentType checks if the current GraphQL type matches the expected type
-func (a *Assert) CurrentType(expected navigation.GQLType) {
+// CurrentKind checks if the current GraphQL kind matches the expected kind
+func (a *Assert) CurrentKind(expected navigation.GQLKind) {
 	a.t.Helper()
-	if expected != a.explorer.CurrentType() {
-		a.t.Errorf("current type is not %q", expected)
+	if expected != a.explorer.CurrentKind() {
+		a.t.Errorf("current kind is not %q", expected)
 	}
 }

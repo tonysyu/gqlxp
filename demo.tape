@@ -62,13 +62,13 @@ Sleep 1s
 Type "L"
 Sleep 2s
 
-# Navigate to Object type class
+# Navigate to Object kind
 Type "}"
 Sleep 1s
 Type "}"
 Sleep 2s
 
-# Search Object type class for org
+# Search Object kind for org
 Type "/"
 Sleep 1s
 Type "org"

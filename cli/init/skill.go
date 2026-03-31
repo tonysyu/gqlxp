@@ -37,4 +37,3 @@ func renderSkillTemplate(runtimeSelection bool, selectedSchemaID string) (string
 
 	return buf.String(), nil
 }
-

@@ -4,7 +4,7 @@ import "github.com/tonysyu/gqlxp/gql"
 
 // SearchResult represents a single search result with ranking information
 type SearchResult struct {
-	Type        string  `json:"type"`        // Type of result (Object, Field, Enum, etc.)
+	Kind        string  `json:"kind"`        // Structural kind of result (Object, Query, ObjectField, etc.)
 	Name        string  `json:"name"`        // Name of the type or field
 	Path        string  `json:"path"`        // Full path (e.g., "Query.user.name")
 	Description string  `json:"description"` // Description text

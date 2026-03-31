@@ -19,7 +19,7 @@ type GraphQLSchema struct {
 	Interface  map[string]*Interface
 	Union      map[string]*Union
 	Directive  map[string]*DirectiveDef
-	NameToType map[string]string
+	NameToKind map[string]string
 	Usages     map[string][]*Usage
 }
 
@@ -34,11 +34,11 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 		Interface:  make(map[string]*Interface),
 		Union:      make(map[string]*Union),
 		Directive:  make(map[string]*DirectiveDef),
-		NameToType: make(map[string]string),
+		NameToKind: make(map[string]string),
 		Usages:     make(map[string][]*Usage),
 	}
 
-	// Process Query type
+	// Process Query types
 	if schema.Query != nil {
 		for _, field := range schema.Query.Fields {
 			// Skip introspection fields (start with __)
@@ -47,10 +47,10 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 			}
 			gqlSchema.Query[field.Name] = newField(field)
 		}
-		gqlSchema.NameToType["Query"] = "Query"
+		gqlSchema.NameToKind["Query"] = "Query"
 	}
 
-	// Process Mutation type
+	// Process Mutation types
 	if schema.Mutation != nil {
 		for _, field := range schema.Mutation.Fields {
 			// Skip introspection fields (start with __)
@@ -59,7 +59,7 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 			}
 			gqlSchema.Mutation[field.Name] = newField(field)
 		}
-		gqlSchema.NameToType["Mutation"] = "Mutation"
+		gqlSchema.NameToKind["Mutation"] = "Mutation"
 	}
 
 	// Process all other types
@@ -83,23 +83,23 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 			// Skip Query and Mutation as they're handled above
 			if name != "Query" && name != "Mutation" {
 				gqlSchema.Object[name] = newObject(typeDef)
-				gqlSchema.NameToType[name] = "Object"
+				gqlSchema.NameToKind[name] = "Object"
 			}
 		case ast.InputObject:
 			gqlSchema.Input[name] = newInputObject(typeDef)
-			gqlSchema.NameToType[name] = "Input"
+			gqlSchema.NameToKind[name] = "Input"
 		case ast.Enum:
 			gqlSchema.Enum[name] = newEnum(typeDef)
-			gqlSchema.NameToType[name] = "Enum"
+			gqlSchema.NameToKind[name] = "Enum"
 		case ast.Scalar:
 			gqlSchema.Scalar[name] = newScalar(typeDef)
-			gqlSchema.NameToType[name] = "Scalar"
+			gqlSchema.NameToKind[name] = "Scalar"
 		case ast.Interface:
 			gqlSchema.Interface[name] = newInterface(typeDef)
-			gqlSchema.NameToType[name] = "Interface"
+			gqlSchema.NameToKind[name] = "Interface"
 		case ast.Union:
 			gqlSchema.Union[name] = newUnion(typeDef)
-			gqlSchema.NameToType[name] = "Union"
+			gqlSchema.NameToKind[name] = "Union"
 		default:
 			fmt.Printf("Unknown type kind: %s for type %s\n", typeDef.Kind, name)
 		}
@@ -113,7 +113,7 @@ func buildGraphQLTypes(schema *ast.Schema) GraphQLSchema {
 			continue
 		}
 		gqlSchema.Directive[name] = newDirectiveDef(directive)
-		gqlSchema.NameToType[name] = "Directive"
+		gqlSchema.NameToKind[name] = "Directive"
 	}
 
 	// Build usage index after all types are loaded
@@ -178,12 +178,12 @@ func (s *GraphQLSchema) NamedToTypeDef(typeName string) (TypeDef, error) {
 		return nil, fmt.Errorf("empty type name not supported")
 	}
 
-	typeCategory, ok := s.NameToType[typeName]
+	kind, ok := s.NameToKind[typeName]
 	if !ok {
 		return nil, fmt.Errorf("type %q not found in schema", typeName)
 	}
 
-	switch typeCategory {
+	switch kind {
 	case "Query":
 		return nil, fmt.Errorf("query type not supported")
 	case "Mutation":
@@ -204,6 +204,6 @@ func (s *GraphQLSchema) NamedToTypeDef(typeName string) (TypeDef, error) {
 		// Directive definitions don't implement NamedTypeDef interface
 		return nil, fmt.Errorf("directive type not supported")
 	default:
-		return nil, fmt.Errorf("unknown type category %q for type %q", typeCategory, typeName)
+		return nil, fmt.Errorf("unknown kind %q for type %q", kind, typeName)
 	}
 }

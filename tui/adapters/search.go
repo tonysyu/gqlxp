@@ -49,10 +49,10 @@ func (i searchResultItem) FilterValue() string {
 	// Use wrapped item's filter value for better searching
 	return i.wrappedItem.FilterValue()
 }
-func (i searchResultItem) TypeName() string { return i.result.Type }
+func (i searchResultItem) TypeName() string { return i.result.Kind }
 func (i searchResultItem) RefName() string {
 	// For field types, use the full path (Type.field) for breadcrumbs
-	switch i.result.Type {
+	switch i.result.Kind {
 	case "Query", "Mutation", "ObjectField", "InputField", "InterfaceField":
 		if i.result.Path != "" {
 			return i.result.Path
@@ -68,7 +68,7 @@ func (i searchResultItem) Details() string     { return i.wrappedItem.Details() 
 // or delegates to the wrapped item for non-field types
 func (i searchResultItem) OpenPanel() (*components.Panel, bool) {
 	// For field types, show the parent type's panel with the field highlighted
-	switch i.result.Type {
+	switch i.result.Kind {
 	case "ObjectField", "InputField", "InterfaceField":
 		if i.resolver != nil && i.parentType != "" && i.fieldName != "" {
 			typeDef, err := i.resolver.ResolveType(i.parentType)
@@ -101,7 +101,7 @@ func findFieldByName(fields []*gql.Field, name string) *gql.Field {
 // support when possible, falling back to SimpleItem if resolution fails.
 func AdaptSearchResult(result search.SearchResult, schemaView *SchemaView) components.ListItem {
 	// Try to resolve the search result to a proper item type
-	switch result.Type {
+	switch result.Kind {
 	case "Query", "Mutation":
 		// Format: "Query.fieldName" or "Mutation.fieldName"
 		return adaptQueryOrMutationField(result, schemaView)
@@ -144,7 +144,7 @@ func adaptQueryOrMutationField(result search.SearchResult, schemaView *SchemaVie
 	fieldName := parts[1]
 	var field *gql.Field
 
-	if result.Type == "Query" {
+	if result.Kind == "Query" {
 		field = schemaView.schema.Query[fieldName]
 	} else {
 		field = schemaView.schema.Mutation[fieldName]
@@ -267,9 +267,9 @@ func createFallbackItem(result search.SearchResult) components.ListItem {
 	if title == "" {
 		title = result.Name
 	}
-	description := result.Type
+	description := result.Kind
 	if result.Description != "" {
-		description = result.Type + ": " + result.Description
+		description = result.Kind + ": " + result.Description
 	}
 
 	return components.NewSimpleItem(

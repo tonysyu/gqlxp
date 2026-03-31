@@ -33,7 +33,7 @@ func TestApplySelection_TypeOnly(t *testing.T) {
 	}
 	m.ApplySelection(target)
 
-	is.Equal(m.CurrentType(), string(navigation.ObjectType))
+	is.Equal(m.CurrentKind(), string(navigation.ObjectKind))
 }
 
 func TestApplySelection_FieldSelection(t *testing.T) {
@@ -57,7 +57,7 @@ func TestApplySelection_FieldSelection(t *testing.T) {
 	// Debug: Check stack after
 	t.Logf("Stack length after: %d, position: %d", m.nav.Stack().Len(), m.nav.Stack().Position())
 
-	is.Equal(m.CurrentType(), string(navigation.QueryType))
+	is.Equal(m.CurrentKind(), string(navigation.QueryKind))
 
 	// Check breadcrumbs
 	breadcrumbs := m.nav.Breadcrumbs()

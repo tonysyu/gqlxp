@@ -166,13 +166,13 @@ func buildCommandItems(keymaps CommandKeymaps) []list.Item {
 	))
 	items = append(items, newCommandItem(
 		"Main",
-		"Go to next GQL type class",
-		keymaps.Main.NextGQLType,
+		"Go to next GQL kind",
+		keymaps.Main.NextGQLKind,
 	))
 	items = append(items, newCommandItem(
 		"Main",
-		"Go to previous GQL type class",
-		keymaps.Main.PrevGQLType,
+		"Go to previous GQL kind",
+		keymaps.Main.PrevGQLKind,
 	))
 	items = append(items, newCommandItem(
 		"Main",

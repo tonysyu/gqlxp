@@ -12,7 +12,7 @@ import (
 
 // document represents a searchable item in the schema
 type document struct {
-	Type        string `json:"type"`        // Object, Field, Enum, etc.
+	Kind        string `json:"kind"`        // Structural kind: Object, Query, ObjectField, etc.
 	Name        string `json:"name"`        // Type or field name
 	Description string `json:"description"` // Description text
 	Path        string `json:"path"`        // Full path (e.g., "Query.user.name")
@@ -101,7 +101,7 @@ func buildIndexMapping() *mapping.IndexMappingImpl {
 
 	// Create document mapping
 	docMapping := bleve.NewDocumentMapping()
-	docMapping.AddFieldMappingsAt("type", keywordFieldMapping)
+	docMapping.AddFieldMappingsAt("kind", keywordFieldMapping)
 	docMapping.AddFieldMappingsAt("name", textFieldMapping)
 	docMapping.AddFieldMappingsAt("description", textFieldMapping)
 	docMapping.AddFieldMappingsAt("path", textFieldMapping)
@@ -122,7 +122,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Query fields
 	for name, field := range schema.Query {
 		docs = append(docs, document{
-			Type:        "Query",
+			Kind:        "Query",
 			Name:        name,
 			Description: field.Description(),
 			Path:        "Query." + name,
@@ -134,7 +134,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Mutation fields
 	for name, field := range schema.Mutation {
 		docs = append(docs, document{
-			Type:        "Mutation",
+			Kind:        "Mutation",
 			Name:        name,
 			Description: field.Description(),
 			Path:        "Mutation." + name,
@@ -146,7 +146,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Objects
 	for name, obj := range schema.Object {
 		docs = append(docs, document{
-			Type:        "Object",
+			Kind:        "Object",
 			Name:        name,
 			Description: obj.Description(),
 			Path:        name,
@@ -158,7 +158,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Input Objects
 	for name, input := range schema.Input {
 		docs = append(docs, document{
-			Type:        "Input",
+			Kind:        "Input",
 			Name:        name,
 			Description: input.Description(),
 			Path:        name,
@@ -170,7 +170,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Enums
 	for name, enum := range schema.Enum {
 		docs = append(docs, document{
-			Type:        "Enum",
+			Kind:        "Enum",
 			Name:        name,
 			Description: enum.Description(),
 			Path:        name,
@@ -181,7 +181,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Scalars
 	for name, scalar := range schema.Scalar {
 		docs = append(docs, document{
-			Type:        "Scalar",
+			Kind:        "Scalar",
 			Name:        name,
 			Description: scalar.Description(),
 			Path:        name,
@@ -192,7 +192,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Interfaces
 	for name, iface := range schema.Interface {
 		docs = append(docs, document{
-			Type:        "Interface",
+			Kind:        "Interface",
 			Name:        name,
 			Description: iface.Description(),
 			Path:        name,
@@ -204,7 +204,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Unions
 	for name, union := range schema.Union {
 		docs = append(docs, document{
-			Type:        "Union",
+			Kind:        "Union",
 			Name:        name,
 			Description: union.Description(),
 			Path:        name,
@@ -215,7 +215,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 	// Index Directives
 	for name, directive := range schema.Directive {
 		docs = append(docs, document{
-			Type:        "Directive",
+			Kind:        "Directive",
 			Name:        name,
 			Description: directive.Description(),
 			Path:        "@" + name,
@@ -231,7 +231,7 @@ func extractObjectFieldDocuments(schemaID string, typeName string, obj *gql.Obje
 	docs := []document{}
 	for _, field := range obj.Fields() {
 		docs = append(docs, document{
-			Type:        "ObjectField",
+			Kind:        "ObjectField",
 			Name:        field.Name(),
 			Description: field.Description(),
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
@@ -247,7 +247,7 @@ func extractInputFieldDocuments(schemaID string, typeName string, input *gql.Inp
 	docs := []document{}
 	for _, field := range input.Fields() {
 		docs = append(docs, document{
-			Type:        "InputField",
+			Kind:        "InputField",
 			Name:        field.Name(),
 			Description: field.Description(),
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
@@ -263,7 +263,7 @@ func extractInterfaceFieldDocuments(schemaID string, typeName string, iface *gql
 	docs := []document{}
 	for _, field := range iface.Fields() {
 		docs = append(docs, document{
-			Type:        "InterfaceField",
+			Kind:        "InterfaceField",
 			Name:        field.Name(),
 			Description: field.Description(),
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),

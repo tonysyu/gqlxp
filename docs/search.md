@@ -18,7 +18,7 @@ gqlxp search mutation
 gqlxp search --limit 5 user    # Limit results (default: 30)
 ```
 
-Results show type, name, path, and description ranked by relevance.
+Results show kind, name, path, and description ranked by relevance.
 
 ## Search Syntax
 
@@ -27,22 +27,22 @@ Search is implemented using [bleve](https://github.com/blevesearch/bleve) and su
 The following examples assume a default schema has been set using `gqlxp library default`:
 ```sh
 # Search for Query related to "user"
-$ gqlxp search "type:Query user"
+$ gqlxp search "kind:Query user"
 
-# Search for Query with name "user" (results match _either_ type or name)
-$ gqlxp search "type:Query name:user"
+# Search for Query with name "user" (results match _either_ kind or name)
+$ gqlxp search "kind:Query name:user"
 
-# Search for Query with name "user" (results match _both_ type and name)
-$ gqlxp search "+type:Query +name:user"
+# Search for Query with name "user" (results match _both_ kind and name)
+$ gqlxp search "+kind:Query +name:user"
 
 # Search for Mutation with name _containing_ "user"
-$ gqlxp search "+type:Mutation +name:*user*"
+$ gqlxp search "+kind:Mutation +name:*user*"
 
 # Search for Object or Interface with name starting with "repo" (slashes denote regex)
-$ gqlxp search "+type:/(Object|Interface)/ +name:repo*"
+$ gqlxp search "+kind:/(Object|Interface)/ +name:repo*"
 
-# Search for "user" in all GraphQL types and exclude all fields
-$ gqlxp search "user -type:*Field"
+# Search for "user" in all GraphQL kinds and exclude all fields
+$ gqlxp search "user -kind:*Field"
 ```
 
 ### Searching Word Fragments
@@ -59,16 +59,16 @@ requires no whitespace is used and that none of the following characters are in 
 ### Search fields
 
 Each search document contains the following fields:
-- `type`: GraphQL type or field (see section below)
+- `kind`: Type category of the definition (see section below)
 - `name`: Name of the type or field
 - `description`: Description/docstring of type or field
 - `path`: Qualified name, which matches `name` for types and `<parent-name>.<name>` for fields
     - Queries and mutations will have fixed paths `Query.<name>` and `Mutation.<name>`,
       respectively
 
-### Document `type`s
+### GraphQL `kind`s
 
-You can specify the standard GraphQL types for the `type` field in your query:
+You can specify the standard GraphQL kinds (type categories) for the `kind` field in your query:
 - `Query`
 - `Mutation`
 - `Object`
@@ -79,7 +79,7 @@ You can specify the standard GraphQL types for the `type` field in your query:
 - `Union`
 - `Directive`
 
-In addition to the standard types, the following field types are defined:
+In addition to the standard kinds, the following field kinds are defined:
 - `ObjectField`
 - `InputField`
 - `InterfaceField`

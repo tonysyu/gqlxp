@@ -9,7 +9,7 @@ import (
 type NavigationManager struct {
 	stack         panelStack
 	breadcrumbs   breadcrumbsModel
-	typeSelector  typeSelector
+	kindSelector  kindSelector
 	visiblePanels int
 }
 
@@ -17,7 +17,7 @@ func NewNavigationManager(visiblePanels int) NavigationManager {
 	return NavigationManager{
 		stack:         newPanelStack(visiblePanels),
 		breadcrumbs:   newBreadcrumbsModel(),
-		typeSelector:  newTypeSelector(),
+		kindSelector:  newKindSelector(),
 		visiblePanels: visiblePanels,
 	}
 }
@@ -112,26 +112,26 @@ func (nm NavigationManager) OpenPanel(panel *components.Panel) NavigationManager
 	return nm
 }
 
-// SwitchType changes selected GQL type and resets breadcrumbs
-func (nm NavigationManager) SwitchType(gqlType GQLType) NavigationManager {
-	nm.typeSelector = nm.typeSelector.Set(gqlType)
+// SwitchKind changes selected GQL type and resets breadcrumbs
+func (nm NavigationManager) SwitchKind(gqlType GQLKind) NavigationManager {
+	nm.kindSelector = nm.kindSelector.Set(gqlType)
 	nm.breadcrumbs = nm.breadcrumbs.Reset()
 	return nm
 }
 
-// CycleTypeForward moves to next GQL type and resets breadcrumbs
-func (nm NavigationManager) CycleTypeForward() (NavigationManager, GQLType) {
+// CycleKindForward moves to next GQL type and resets breadcrumbs
+func (nm NavigationManager) CycleKindForward() (NavigationManager, GQLKind) {
 	nm.breadcrumbs = nm.breadcrumbs.Reset()
-	var t GQLType
-	nm.typeSelector, t = nm.typeSelector.Next()
+	var t GQLKind
+	nm.kindSelector, t = nm.kindSelector.Next()
 	return nm, t
 }
 
-// CycleTypeBackward moves to previous GQL type and resets breadcrumbs
-func (nm NavigationManager) CycleTypeBackward() (NavigationManager, GQLType) {
+// CycleKindBackward moves to previous GQL type and resets breadcrumbs
+func (nm NavigationManager) CycleKindBackward() (NavigationManager, GQLKind) {
 	nm.breadcrumbs = nm.breadcrumbs.Reset()
-	var t GQLType
-	nm.typeSelector, t = nm.typeSelector.Previous()
+	var t GQLKind
+	nm.kindSelector, t = nm.kindSelector.Previous()
 	return nm, t
 }
 
@@ -158,14 +158,14 @@ func (nm NavigationManager) NextPanel() *components.Panel {
 	return nm.stack.Next()
 }
 
-// CurrentType returns currently selected GQL type
-func (nm NavigationManager) CurrentType() GQLType {
-	return nm.typeSelector.Current()
+// CurrentKind returns currently selected GQL type
+func (nm NavigationManager) CurrentKind() GQLKind {
+	return nm.kindSelector.Current()
 }
 
-// AllTypes returns all available GQL types
-func (nm NavigationManager) AllTypes() []GQLType {
-	return nm.typeSelector.All()
+// AllKinds returns all available GQL types
+func (nm NavigationManager) AllKinds() []GQLKind {
+	return nm.kindSelector.All()
 }
 
 // Breadcrumbs returns the breadcrumb trail

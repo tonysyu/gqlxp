@@ -12,7 +12,7 @@ func TestNavigationManager_NewNavigationManager(t *testing.T) {
 	nm := NewNavigationManager(2)
 
 	is.Equal(nm.Stack().Len(), 0)
-	is.Equal(nm.CurrentType(), QueryType)
+	is.Equal(nm.CurrentKind(), QueryKind)
 	is.Equal(nm.Breadcrumbs(), nil)
 }
 
@@ -154,7 +154,7 @@ func TestNavigationManager_OpenPanel(t *testing.T) {
 	is.Equal(nm.CurrentPanel(), p1)
 }
 
-func TestNavigationManager_SwitchType(t *testing.T) {
+func TestNavigationManager_SwitchKind(t *testing.T) {
 	is := is.New(t)
 	nm := NewNavigationManager(2)
 
@@ -169,42 +169,42 @@ func TestNavigationManager_SwitchType(t *testing.T) {
 	nm = nm.OpenPanel(p3)        // Add p3 at position 2
 	nm, _ = nm.NavigateForward() // Move to position 2
 
-	nm = nm.SwitchType(MutationType)
+	nm = nm.SwitchKind(MutationKind)
 
-	is.Equal(nm.CurrentType(), MutationType)
+	is.Equal(nm.CurrentKind(), MutationKind)
 	breadcrumbs := nm.Breadcrumbs()
 	is.Equal(breadcrumbs, nil)
 }
 
-func TestNavigationManager_CycleTypeForward(t *testing.T) {
+func TestNavigationManager_CycleKindForward(t *testing.T) {
 	is := is.New(t)
 	nm := NewNavigationManager(2)
 
-	is.Equal(nm.CurrentType(), QueryType)
+	is.Equal(nm.CurrentKind(), QueryKind)
 
-	var newType GQLType
-	nm, newType = nm.CycleTypeForward()
-	is.Equal(newType, MutationType)
-	is.Equal(nm.CurrentType(), MutationType)
+	var newKind GQLKind
+	nm, newKind = nm.CycleKindForward()
+	is.Equal(newKind, MutationKind)
+	is.Equal(nm.CurrentKind(), MutationKind)
 }
 
-func TestNavigationManager_CycleTypeBackward(t *testing.T) {
+func TestNavigationManager_CycleKindBackward(t *testing.T) {
 	is := is.New(t)
 	nm := NewNavigationManager(2)
 
-	is.Equal(nm.CurrentType(), QueryType)
+	is.Equal(nm.CurrentKind(), QueryKind)
 
-	var newType GQLType
-	nm, newType = nm.CycleTypeBackward()
-	is.Equal(newType, SearchType) // Updated: SearchType is now last
-	is.Equal(nm.CurrentType(), SearchType)
+	var newKind GQLKind
+	nm, newKind = nm.CycleKindBackward()
+	is.Equal(newKind, SearchKind) // Updated: SearchKind is now last
+	is.Equal(nm.CurrentKind(), SearchKind)
 }
 
-func TestNavigationManager_AllTypes(t *testing.T) {
+func TestNavigationManager_AllKinds(t *testing.T) {
 	is := is.New(t)
 	nm := NewNavigationManager(2)
 
-	allTypes := nm.AllTypes()
-	is.Equal(len(allTypes), 10) // Updated to include SearchType
-	is.Equal(allTypes[0], QueryType)
+	allTypes := nm.AllKinds()
+	is.Equal(len(allTypes), 10) // Updated to include SearchKind
+	is.Equal(allTypes[0], QueryKind)
 }

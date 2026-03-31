@@ -96,8 +96,8 @@ func NewEmpty() Model {
 		m.keymap.NextPanel,
 		m.keymap.PrevPanel,
 		m.keymap.Quit,
-		m.keymap.NextGQLType,
-		m.keymap.PrevGQLType,
+		m.keymap.NextGQLKind,
+		m.keymap.PrevGQLKind,
 		m.keymap.ToggleOverlay,
 		m.keymap.CommandPalette,
 		m.keymap.OpenLibSelect,
@@ -136,15 +136,15 @@ func (m Model) Height() int {
 	return m.height
 }
 
-// CurrentType returns the currently selected GraphQL type
-func (m Model) CurrentType() string {
-	return string(m.nav.CurrentType())
+// CurrentKind returns the currently selected GraphQL kind
+func (m Model) CurrentKind() string {
+	return string(m.nav.CurrentKind())
 }
 
-// SwitchToType switches to the specified GraphQL type
+// SwitchToKind switches to the specified GraphQL kind
 // This is primarily used for testing
-func (m *Model) SwitchToType(typeName string) {
-	m.nav = m.nav.SwitchType(navigation.GQLType(typeName))
+func (m *Model) SwitchToKind(kindName string) {
+	m.nav = m.nav.SwitchKind(navigation.GQLKind(kindName))
 	m.resetAndLoadMainPanel()
 }
 
@@ -215,7 +215,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		return m, nil
 	case searchmodel.ResultsReadyMsg:
 		m.search = m.search.StoreResults(msg.Items)
-		if m.nav.CurrentType() == navigation.SearchType {
+		if m.nav.CurrentKind() == navigation.SearchKind {
 			m.resetAndLoadMainPanel()
 		}
 		return m, nil
@@ -227,21 +227,21 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case key.Matches(msg, m.keymap.OpenLibSelect):
 			return m, func() tea.Msg { return OpenLibSelectMsg{} }
 		case key.Matches(msg, m.keymap.CommandPalette):
-			searchActive := m.nav.CurrentType() == navigation.SearchType
+			searchActive := m.nav.CurrentKind() == navigation.SearchKind
 			m.commandPalette = m.commandPalette.Show(m.width, m.height, searchActive)
 			m.state = xplrCmdPaletteView
 			return m, nil
-		case key.Matches(msg, m.keymap.NextGQLType):
+		case key.Matches(msg, m.keymap.NextGQLKind):
 			var cmd tea.Cmd
-			m, cmd = m.cycleGQLType(true)
+			m, cmd = m.cycleGQLKind(true)
 			cmds = append(cmds, cmd)
-		case key.Matches(msg, m.keymap.PrevGQLType):
+		case key.Matches(msg, m.keymap.PrevGQLKind):
 			var cmd tea.Cmd
-			m, cmd = m.cycleGQLType(false)
+			m, cmd = m.cycleGQLKind(false)
 			cmds = append(cmds, cmd)
 		default:
 			// Delegate to appropriate handler based on search focus state
-			if m.nav.CurrentType() == navigation.SearchType && m.search.IsFocused() {
+			if m.nav.CurrentKind() == navigation.SearchKind && m.search.IsFocused() {
 				return m.handleSearchFocused(msg)
 			}
 			return m.handleNormal(msg, cmds)
@@ -290,24 +290,24 @@ func (m Model) openOverlayForSelectedItem() Model {
 	return m
 }
 
-// cycleGQLType handles cycling between GQL types (forward or backward)
-func (m Model) cycleGQLType(forward bool) (Model, tea.Cmd) {
+// cycleGQLKind handles cycling between GQL kinds (forward or backward)
+func (m Model) cycleGQLKind(forward bool) (Model, tea.Cmd) {
 	// Blur search input when switching away from Search tab
 	if m.search.IsFocused() {
 		m.search = m.search.Blur()
 		m.updateKeybindings()
 	}
 
-	// Cycle type
+	// Cycle kind
 	if forward {
-		m.nav, _ = m.nav.CycleTypeForward()
+		m.nav, _ = m.nav.CycleKindForward()
 	} else {
-		m.nav, _ = m.nav.CycleTypeBackward()
+		m.nav, _ = m.nav.CycleKindBackward()
 	}
 	m.resetAndLoadMainPanel()
 
 	// Focus search input when switching to Search tab
-	if m.nav.CurrentType() == navigation.SearchType {
+	if m.nav.CurrentKind() == navigation.SearchKind {
 		m.updateKeybindings()
 		var cmd tea.Cmd
 		m.search, cmd = m.search.Focus()
@@ -336,7 +336,7 @@ func (m Model) handleNormal(msg tea.Msg, cmds []tea.Cmd) (Model, tea.Cmd) {
 	}
 
 	// Handle Search tab specific keys - early return if handled
-	if m.nav.CurrentType() == navigation.SearchType && m.nav.IsAtTopLevelPanel() && key.Matches(keyMsg, m.keymap.SearchFocus) && !m.search.IsFocused() {
+	if m.nav.CurrentKind() == navigation.SearchKind && m.nav.IsAtTopLevelPanel() && key.Matches(keyMsg, m.keymap.SearchFocus) && !m.search.IsFocused() {
 		m.updateKeybindings()
 		var cmd tea.Cmd
 		m.search, cmd = m.search.Focus()
@@ -417,7 +417,7 @@ func (m *Model) sizePanels() {
 
 	// Reserve space for search input if on Search tab
 	const searchInputHeight = 3 // Height for search input field
-	if m.nav.CurrentType() == navigation.SearchType {
+	if m.nav.CurrentKind() == navigation.SearchKind {
 		panelHeight -= searchInputHeight
 	}
 
@@ -444,18 +444,18 @@ func (m *Model) updateKeybindings() {
 		m.keymap.NextPanel.SetEnabled(false)
 		m.keymap.PrevPanel.SetEnabled(false)
 		m.keymap.ToggleOverlay.SetEnabled(false)
-		// Keep global keys enabled (Quit, ToggleGQLType, etc.)
+		// Keep global keys enabled (Quit, ToggleGQLKind, etc.)
 		m.keymap.Quit.SetEnabled(true)
-		m.keymap.NextGQLType.SetEnabled(true)
-		m.keymap.PrevGQLType.SetEnabled(true)
+		m.keymap.NextGQLKind.SetEnabled(true)
+		m.keymap.PrevGQLKind.SetEnabled(true)
 	} else {
 		// Normal mode: enable all keys
 		m.keymap.NextPanel.SetEnabled(true)
 		m.keymap.PrevPanel.SetEnabled(true)
 		m.keymap.ToggleOverlay.SetEnabled(true)
 		m.keymap.Quit.SetEnabled(true)
-		m.keymap.NextGQLType.SetEnabled(true)
-		m.keymap.PrevGQLType.SetEnabled(true)
+		m.keymap.NextGQLKind.SetEnabled(true)
+		m.keymap.PrevGQLKind.SetEnabled(true)
 	}
 }
 
@@ -472,41 +472,41 @@ func (m *Model) SetSearchBaseDir(baseDir string) {
 }
 
 // resetAndLoadMainPanel defines initial panels and loads currently selected GQL type.
-// This method is called on initilization and when switching types, so that detail panels get
+// This method is called on initilization and when switching GQL kinds, so that detail panels get
 // cleared out to avoid inconsistencies across panels.
 func (m *Model) resetAndLoadMainPanel() {
-	items, title := m.buildItemsForCurrentType()
+	items, title := m.buildItemsForCurrentKind()
 	mainPanel := components.NewPanel(items, title)
 	var childPanel *components.Panel
-	if len(items) > 0 && m.nav.CurrentType() != navigation.SearchType {
+	if len(items) > 0 && m.nav.CurrentKind() != navigation.SearchKind {
 		childPanel, _ = items[0].OpenPanel()
 	}
 	m.nav = m.nav.ResetAndLoad(mainPanel, childPanel)
 	m.sizePanels()
 }
 
-// buildItemsForCurrentType returns the list items and title for the currently selected GQL type.
-func (m *Model) buildItemsForCurrentType() ([]components.ListItem, string) {
-	switch m.nav.CurrentType() {
-	case navigation.QueryType:
+// buildItemsForCurrentKind returns the list items and title for the currently selected GQL kind.
+func (m *Model) buildItemsForCurrentKind() ([]components.ListItem, string) {
+	switch m.nav.CurrentKind() {
+	case navigation.QueryKind:
 		return m.schema.GetQueryItems(), "Query Fields"
-	case navigation.MutationType:
+	case navigation.MutationKind:
 		return m.schema.GetMutationItems(), "Mutation Fields"
-	case navigation.ObjectType:
+	case navigation.ObjectKind:
 		return m.schema.GetObjectItems(), "Object Types"
-	case navigation.InputType:
+	case navigation.InputKind:
 		return m.schema.GetInputItems(), "Input Types"
-	case navigation.EnumType:
+	case navigation.EnumKind:
 		return m.schema.GetEnumItems(), "Enum Types"
-	case navigation.ScalarType:
+	case navigation.ScalarKind:
 		return m.schema.GetScalarItems(), "Scalar Types"
-	case navigation.InterfaceType:
+	case navigation.InterfaceKind:
 		return m.schema.GetInterfaceItems(), "Interface Types"
-	case navigation.UnionType:
+	case navigation.UnionKind:
 		return m.schema.GetUnionItems(), "Union Types"
-	case navigation.DirectiveType:
+	case navigation.DirectiveKind:
 		return m.schema.GetDirectiveItems(), "Directive Types"
-	case navigation.SearchType:
+	case navigation.SearchKind:
 		if results := m.search.Results(); results != nil {
 			return results, "Search Results"
 		}
@@ -516,20 +516,20 @@ func (m *Model) buildItemsForCurrentType() ([]components.ListItem, string) {
 }
 
 // ApplySelection applies a selection target to the model
-// This navigates to the specified type category and selects the item
+// This navigates to the specified kind and selects the item
 func (m *Model) ApplySelection(target SelectionTarget) {
 	if target.TypeName == "" {
 		return
 	}
 
-	// Find which GQL type category contains the target type
-	gqlType, found := m.schema.FindTypeCategory(target.TypeName)
+	// Find which GQL kind contains the target type
+	gqlKind, found := m.schema.FindKind(target.TypeName)
 	if !found {
 		return
 	}
 
-	// Switch to that type category
-	m.nav = m.nav.SwitchType(gqlType)
+	// Switch to that kind
+	m.nav = m.nav.SwitchKind(gqlKind)
 	m.resetAndLoadMainPanel()
 
 	currentPanel := m.nav.CurrentPanel()
@@ -537,9 +537,9 @@ func (m *Model) ApplySelection(target SelectionTarget) {
 		return
 	}
 
-	// For Query and Mutation types, the fields are shown directly in the first panel
+	// For Query and Mutation kinds, the fields are shown directly in the first panel
 	// So if target.TypeName is "Query" or "Mutation", we skip selecting it and go straight to the field
-	if gqlType == navigation.QueryType || gqlType == navigation.MutationType {
+	if gqlKind == navigation.QueryKind || gqlKind == navigation.MutationKind {
 		m.selectQueryOrMutationField(currentPanel, target.FieldName)
 		return
 	}
