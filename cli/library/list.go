@@ -3,6 +3,7 @@ package library
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/urfave/cli/v3"
@@ -33,7 +34,18 @@ func listCommand() *cli.Command {
 				if schema.ID == defaultID {
 					marker = "*"
 				}
-				fmt.Printf("%s %s (%s)\n", marker, schema.ID, schema.DisplayName)
+				var parts []string
+				if schema.DisplayName != "" {
+					parts = append(parts, schema.DisplayName)
+				}
+				if !schema.UpdatedAt.IsZero() {
+					parts = append(parts, "last-updated: "+schema.UpdatedAt.Format("2006-01-02 15:04"))
+				}
+				if len(parts) > 0 {
+					fmt.Printf("%s %s (%s)\n", marker, schema.ID, strings.Join(parts, "; "))
+				} else {
+					fmt.Printf("%s %s\n", marker, schema.ID)
+				}
 			}
 
 			return nil

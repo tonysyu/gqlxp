@@ -21,13 +21,8 @@ func Command() *cli.Command {
 		Usage: "Manage schema library",
 		Description: `Centralized interface for managing the schema library.
 
-Available subcommands:
-  list     - List all schemas in the library
-  add      - Add a schema to the library
-  update   - Update a schema in the library
-  remove   - Remove a schema from the library
-  default  - Set or show the default schema
-  reindex  - Rebuild search indexes`,
+Run 'gqlxp library list' to see all schemas and their last-updated timestamps.
+If any schema is out of date, run 'gqlxp library update <schema-id>' to refresh it.`,
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// Default action is to list schemas
 			return listCommand().Run(ctx, []string{})
