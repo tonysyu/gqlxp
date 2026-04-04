@@ -59,19 +59,19 @@ Examples:
 			},
 		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
+			jsonOutput := cmd.Bool("json")
 			if cmd.Args().Len() != 1 {
-				return fmt.Errorf("requires exactly 1 argument: <type-name>")
+				return handleError(fmt.Errorf("requires exactly 1 argument: <type-name>"), jsonOutput)
 			}
 
 			typeName := cmd.Args().First()
 			noPager := cmd.Bool("no-pager")
-			jsonOutput := cmd.Bool("json")
 			include := cmd.String("include")
 
 			// Get schema (empty string for default when no flag specified)
 			schemaArg := cmd.String("schema")
 
-			return printType(schemaArg, typeName, noPager, jsonOutput, include)
+			return handleError(printType(schemaArg, typeName, noPager, jsonOutput, include), jsonOutput)
 		},
 	}
 }

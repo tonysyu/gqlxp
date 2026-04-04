@@ -49,7 +49,7 @@ Examples:
 			if cmd.Args().Len() > 0 {
 				filePath = cmd.Args().First()
 			}
-			return runValidateCommand(schemaArg, filePath, jsonOutput)
+			return handleError(runValidateCommand(schemaArg, filePath, jsonOutput), jsonOutput)
 		},
 	}
 }
@@ -125,13 +125,7 @@ func buildValidationResult(schemaContent []byte, operationContent, sourceName st
 
 func printValidationResultJSON(schemaContent []byte, operationContent, sourceName string) error {
 	result := buildValidationResult(schemaContent, operationContent, sourceName)
-	if err := printJSON(result); err != nil {
-		return err
-	}
-	if !result.Valid {
-		os.Exit(1)
-	}
-	return nil
+	return printJSON(result)
 }
 
 func printJSON(v any) error {
@@ -141,6 +135,24 @@ func printJSON(v any) error {
 	}
 	fmt.Println(string(jsonBytes))
 	return nil
+}
+
+func printJSONError(err error) {
+	type jsonErr struct {
+		Error string `json:"error"`
+	}
+	_ = printJSON(jsonErr{Error: err.Error()})
+}
+
+func handleError(err error, jsonOutput bool) error {
+	if err == nil {
+		return nil
+	}
+	if jsonOutput {
+		printJSONError(err)
+		return nil
+	}
+	return err
 }
 
 func validateOperation(schemaContent []byte, operationContent, sourceName string) []string {

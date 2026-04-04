@@ -94,119 +94,123 @@ Examples:
 				return nil
 			}
 
-			kindFilter := cmd.String("kind")
-			hasKindFilter := kindFilter != ""
-
-			if hasKindFilter {
-				if cmd.Args().Len() > 1 {
-					return fmt.Errorf("requires at most 1 argument when --kind is set: [query]")
-				}
-			} else {
-				if cmd.Args().Len() != 1 {
-					return fmt.Errorf("requires exactly 1 argument: <query>")
-				}
-			}
-
-			query := cmd.Args().First()
-
-			if hasKindFilter {
-				var err error
-				query, err = applyKindFilter(kindFilter, query)
-				if err != nil {
-					return err
-				}
-			}
-			limit := cmd.Int("limit")
-			noPager := cmd.Bool("no-pager")
 			jsonOutput := cmd.Bool("json")
-
-			// Get schema (empty string for default when no flag specified)
-			schemaArg := cmd.String("schema")
-
-			// Resolve schema argument (path, ID, or default)
-			schema, err := resolveSchemaFromArgument(schemaArg)
-			if err != nil {
-				return err
-			}
-
-			schemaID := schema.ID
-			content := schema.Content
-
-			// Get schemas directory for indexing
-			schemasDir, err := library.GetSchemasDir()
-			if err != nil {
-				return fmt.Errorf("failed to get schemas directory: %w", err)
-			}
-
-			indexer := search.NewIndexer(schemasDir)
-			defer indexer.Close()
-
-			// Create index if it doesn't exist
-			if !indexer.Exists(schemaID) {
-				schema, err := gql.ParseSchema(content)
-				if err != nil {
-					return fmt.Errorf("failed to parse schema: %w", err)
-				}
-
-				fmt.Printf("Indexing schema '%s'...\n", schemaID)
-				if err := indexer.Index(schemaID, &schema); err != nil {
-					return fmt.Errorf("failed to index schema: %w", err)
-				}
-			}
-
-			// Search
-			searcher := search.NewSearcher(schemasDir)
-			defer searcher.Close()
-
-			results, err := searcher.Search(schemaID, query, limit)
-			if err != nil {
-				return fmt.Errorf("search failed: %w (try using 'gqlxp library reindex %s')", err, schemaID)
-			}
-
-			// Handle JSON output
-			if jsonOutput {
-				return printSearchResultsJSON(results)
-			}
-
-			// Display results
-			if len(results) == 0 {
-				fmt.Printf("No results found for query: %q\n", query)
-				return nil
-			}
-
-			var maxLimitInfo string
-			if len(results) == limit {
-				maxLimitInfo = fmt.Sprintf(" (increase search %s for more)", codeStyle.Render("--limit N"))
-			}
-			// Multiple results - show list and let user choose
-			var output strings.Builder
-
-			// Show command suggestions in header
-			pathArg := headerStyle.Render("<object>.<field>")
-			fmt.Fprintf(&output, "To display more info about a result, run: \n\t%s %s\n",
-				codeStyle.Render("gqlxp show --schema "+schemaID), pathArg)
-			fmt.Fprintf(&output, "To open result in TUI app, run: \n\t%s --select %s\n\n",
-				codeStyle.Render("gqlxp app --schema "+schemaID), pathArg)
-
-			fmt.Fprintf(&output, "Found %d results for %q%s:\n\n", len(results), query, maxLimitInfo)
-			for i, result := range results {
-				// Highlight the type in pink
-				fmt.Fprintf(&output, "%d. %s %s\n", i+1, headerStyle.Render(result.Path), "("+result.Kind+")")
-				if result.Description != "" {
-					fmt.Fprintf(&output, "   %s\n", result.Description)
-				}
-			}
-
-			// Use pager if content is long enough and not disabled
-			rendered := output.String()
-			if terminal.ShouldUsePager(rendered, noPager) {
-				return terminal.ShowInPager(rendered)
-			}
-
-			fmt.Print(rendered)
-			return nil
+			return handleError(runSearchCommand(cmd, jsonOutput), jsonOutput)
 		},
 	}
+}
+
+func runSearchCommand(cmd *cli.Command, jsonOutput bool) error {
+	kindFilter := cmd.String("kind")
+	hasKindFilter := kindFilter != ""
+
+	if hasKindFilter {
+		if cmd.Args().Len() > 1 {
+			return fmt.Errorf("requires at most 1 argument when --kind is set: [query]")
+		}
+	} else {
+		if cmd.Args().Len() != 1 {
+			return fmt.Errorf("requires exactly 1 argument: <query>")
+		}
+	}
+
+	query := cmd.Args().First()
+
+	if hasKindFilter {
+		var err error
+		query, err = applyKindFilter(kindFilter, query)
+		if err != nil {
+			return err
+		}
+	}
+	limit := cmd.Int("limit")
+	noPager := cmd.Bool("no-pager")
+
+	// Get schema (empty string for default when no flag specified)
+	schemaArg := cmd.String("schema")
+
+	// Resolve schema argument (path, ID, or default)
+	schema, err := resolveSchemaFromArgument(schemaArg)
+	if err != nil {
+		return err
+	}
+
+	schemaID := schema.ID
+	content := schema.Content
+
+	// Get schemas directory for indexing
+	schemasDir, err := library.GetSchemasDir()
+	if err != nil {
+		return fmt.Errorf("failed to get schemas directory: %w", err)
+	}
+
+	indexer := search.NewIndexer(schemasDir)
+	defer indexer.Close()
+
+	// Create index if it doesn't exist
+	if !indexer.Exists(schemaID) {
+		schema, err := gql.ParseSchema(content)
+		if err != nil {
+			return fmt.Errorf("failed to parse schema: %w", err)
+		}
+
+		fmt.Printf("Indexing schema '%s'...\n", schemaID)
+		if err := indexer.Index(schemaID, &schema); err != nil {
+			return fmt.Errorf("failed to index schema: %w", err)
+		}
+	}
+
+	// Search
+	searcher := search.NewSearcher(schemasDir)
+	defer searcher.Close()
+
+	results, err := searcher.Search(schemaID, query, limit)
+	if err != nil {
+		return fmt.Errorf("search failed: %w (try using 'gqlxp library reindex %s')", err, schemaID)
+	}
+
+	// Handle JSON output
+	if jsonOutput {
+		return printSearchResultsJSON(results)
+	}
+
+	// Display results
+	if len(results) == 0 {
+		fmt.Printf("No results found for query: %q\n", query)
+		return nil
+	}
+
+	var maxLimitInfo string
+	if len(results) == limit {
+		maxLimitInfo = fmt.Sprintf(" (increase search %s for more)", codeStyle.Render("--limit N"))
+	}
+	// Multiple results - show list and let user choose
+	var output strings.Builder
+
+	// Show command suggestions in header
+	pathArg := headerStyle.Render("<object>.<field>")
+	fmt.Fprintf(&output, "To display more info about a result, run: \n\t%s %s\n",
+		codeStyle.Render("gqlxp show --schema "+schemaID), pathArg)
+	fmt.Fprintf(&output, "To open result in TUI app, run: \n\t%s --select %s\n\n",
+		codeStyle.Render("gqlxp app --schema "+schemaID), pathArg)
+
+	fmt.Fprintf(&output, "Found %d results for %q%s:\n\n", len(results), query, maxLimitInfo)
+	for i, result := range results {
+		// Highlight the type in pink
+		fmt.Fprintf(&output, "%d. %s %s\n", i+1, headerStyle.Render(result.Path), "("+result.Kind+")")
+		if result.Description != "" {
+			fmt.Fprintf(&output, "   %s\n", result.Description)
+		}
+	}
+
+	// Use pager if content is long enough and not disabled
+	rendered := output.String()
+	if terminal.ShouldUsePager(rendered, noPager) {
+		return terminal.ShowInPager(rendered)
+	}
+
+	fmt.Print(rendered)
+	return nil
 }
 
 // applyKindFilter validates kindFilter and prepends a +kind:<Canonical> clause to query.

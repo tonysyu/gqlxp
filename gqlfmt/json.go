@@ -98,7 +98,7 @@ func generateDirectiveJSON(schema gql.GraphQLSchema, typeName string, resolver g
 func generateTypeJSON(schema gql.GraphQLSchema, typeName string, resolver gql.TypeResolver, opts IncludeOptions) (string, error) {
 	typeDef, err := schema.NamedToTypeDef(typeName)
 	if err != nil {
-		return "", fmt.Errorf("type %q not found in schema: %w", typeName, err)
+		return "", err
 	}
 	result := convertTypeDefToJSON(typeDef)
 	if opts.Usages {
