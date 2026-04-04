@@ -2,9 +2,11 @@ package library
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 
+	"github.com/tonysyu/gqlxp/cli/prompt"
 	"github.com/tonysyu/gqlxp/gql/introspection"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/urfave/cli/v3"
@@ -78,8 +80,39 @@ func addCommand() *cli.Command {
 			}
 
 			// Add to library
-			if err := lib.AddFromContent(schemaID, displayName, content, sourceInfo); err != nil {
-				return err
+			err = lib.AddFromContent(schemaID, displayName, content, sourceInfo)
+			if err != nil {
+				if !errors.Is(err, library.ErrSchemaExists) {
+					return err
+				}
+
+				// Schema already exists — ask user whether to overwrite
+				overwrite, promptErr := prompt.YesNo(fmt.Sprintf("Schema '%s' already exists. Overwrite?", schemaID))
+				if promptErr != nil {
+					return promptErr
+				}
+				if !overwrite {
+					return nil
+				}
+
+				if err := lib.UpdateContent(schemaID, content); err != nil {
+					return err
+				}
+
+				// Update display name if it differs from existing
+				existing, err := lib.Get(schemaID)
+				if err != nil {
+					return err
+				}
+				if existing.Metadata.DisplayName != displayName {
+					existing.Metadata.DisplayName = displayName
+					if err := lib.UpdateMetadata(schemaID, existing.Metadata); err != nil {
+						return err
+					}
+				}
+
+				fmt.Printf("Updated schema '%s' (%s) in library\n", schemaID, displayName)
+				return nil
 			}
 
 			fmt.Printf("Added schema '%s' (%s) to library\n", schemaID, displayName)

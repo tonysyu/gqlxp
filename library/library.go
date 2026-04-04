@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,6 +15,9 @@ import (
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/search"
 )
+
+// ErrSchemaExists is returned when trying to add a schema with an ID that already exists.
+var ErrSchemaExists = errors.New("schema already exists")
 
 // Library manages schema storage and metadata.
 type Library interface {
@@ -189,7 +193,7 @@ func (l *FileLibrary) Add(id string, displayName string, sourcePath string) erro
 	}
 
 	if _, err := os.Stat(schemaFile); err == nil {
-		return fmt.Errorf("schema with ID '%s' already exists", id)
+		return fmt.Errorf("%w: '%s'", ErrSchemaExists, id)
 	}
 
 	// Read source schema file
@@ -260,7 +264,7 @@ func (l *FileLibrary) AddFromContent(id, displayName string, content []byte, sou
 	}
 
 	if _, err := os.Stat(schemaFile); err == nil {
-		return fmt.Errorf("schema with ID '%s' already exists", id)
+		return fmt.Errorf("%w: '%s'", ErrSchemaExists, id)
 	}
 
 	// Calculate content hash
