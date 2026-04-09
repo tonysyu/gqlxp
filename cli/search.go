@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"regexp"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -12,6 +14,7 @@ import (
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/search"
 	"github.com/tonysyu/gqlxp/utils/terminal"
+	"github.com/tonysyu/gqlxp/utils/text"
 	"github.com/urfave/cli/v3"
 )
 
@@ -34,6 +37,46 @@ var canonicalSearchKinds = map[string]string{
 	"objectfield":    "ObjectField",
 	"inputfield":     "InputField",
 	"interfacefield": "InterfaceField",
+}
+
+// validSearchFields are the valid field names in search queries.
+var validSearchFields = []string{"kind", "name", "description", "path", "usage", "implements"}
+
+// searchFieldPattern matches fieldname: patterns in bleve query strings.
+var searchFieldPattern = regexp.MustCompile(`\b([a-zA-Z][a-zA-Z0-9]*):\S`)
+
+// extractQueryFields returns unique field names found in a bleve query string.
+func extractQueryFields(query string) []string {
+	seen := map[string]bool{}
+	var fields []string
+	for _, m := range searchFieldPattern.FindAllStringSubmatch(query, -1) {
+		f := m[1]
+		if !seen[f] {
+			seen[f] = true
+			fields = append(fields, f)
+		}
+	}
+	return fields
+}
+
+// unknownFieldWarnings returns warning messages for unrecognized field names in query.
+func unknownFieldWarnings(query string) []string {
+	validSet := make(map[string]bool, len(validSearchFields))
+	for _, f := range validSearchFields {
+		validSet[f] = true
+	}
+	var warnings []string
+	for _, field := range extractQueryFields(query) {
+		if validSet[field] {
+			continue
+		}
+		msg := fmt.Sprintf("⚠️ unknown search field %q", field)
+		if suggestions := text.SuggestSimilarWords(field, validSearchFields); len(suggestions) > 0 {
+			msg += fmt.Sprintf(" — did you mean: %s?", strings.Join(suggestions, " or "))
+		}
+		warnings = append(warnings, msg)
+	}
+	return warnings
 }
 
 // searchCommand creates the search subcommand
@@ -171,12 +214,19 @@ func runSearchCommand(cmd *cli.Command, jsonOutput bool) error {
 
 	// Handle JSON output
 	if jsonOutput {
-		return printSearchResultsJSON(results)
+		err := printSearchResultsJSON(results)
+		for _, w := range unknownFieldWarnings(query) {
+			fmt.Fprintln(os.Stderr, w)
+		}
+		return err
 	}
 
 	// Display results
 	if len(results) == 0 {
 		fmt.Printf("No results found for query: %q\n", query)
+		for _, w := range unknownFieldWarnings(query) {
+			fmt.Println(w)
+		}
 		return nil
 	}
 
@@ -206,10 +256,19 @@ func runSearchCommand(cmd *cli.Command, jsonOutput bool) error {
 	// Use pager if content is long enough and not disabled
 	rendered := output.String()
 	if terminal.ShouldUsePager(rendered, noPager) {
-		return terminal.ShowInPager(rendered)
+		if err := terminal.ShowInPager(rendered); err != nil {
+			return err
+		}
+		for _, w := range unknownFieldWarnings(query) {
+			fmt.Println(w)
+		}
+		return nil
 	}
 
 	fmt.Print(rendered)
+	for _, w := range unknownFieldWarnings(query) {
+		fmt.Println(w)
+	}
 	return nil
 }
 

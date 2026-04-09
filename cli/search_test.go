@@ -12,6 +12,78 @@ import (
 	"github.com/tonysyu/gqlxp/search"
 )
 
+func TestUnknownFieldWarnings(t *testing.T) {
+	tests := []struct {
+		name     string
+		query    string
+		wantMsgs []string
+	}{
+		{
+			name:     "no field specifiers",
+			query:    "user",
+			wantMsgs: nil,
+		},
+		{
+			name:     "field with space after colon is not a field specifier",
+			query:    "kind: Query",
+			wantMsgs: nil,
+		},
+		{
+			name:     "valid field",
+			query:    "kind:Query",
+			wantMsgs: nil,
+		},
+		{
+			name:     "all valid fields",
+			query:    "+kind:Query +name:user +usage:User",
+			wantMsgs: nil,
+		},
+		{
+			name:     "unknown field with suggestion",
+			query:    "naem:user",
+			wantMsgs: []string{`⚠️ unknown search field "naem" — did you mean: name?`},
+		},
+		{
+			name:     "unknown field no suggestion",
+			query:    "foo:bar",
+			wantMsgs: []string{`⚠️ unknown search field "foo"`},
+		},
+		{
+			name:     "typo in kind",
+			query:    "knd:Query",
+			wantMsgs: []string{`⚠️ unknown search field "knd" — did you mean: kind?`},
+		},
+		{
+			name:     "typo in description",
+			query:    "descripton:hello",
+			wantMsgs: []string{`⚠️ unknown search field "descripton" — did you mean: description?`},
+		},
+		{
+			name:     "multiple unknown fields",
+			query:    "knd:Query naem:user",
+			wantMsgs: []string{`⚠️ unknown search field "knd" — did you mean: kind?`, `⚠️ unknown search field "naem" — did you mean: name?`},
+		},
+		{
+			name:     "duplicate unknown field only warned once",
+			query:    "foo:a foo:b",
+			wantMsgs: []string{`⚠️ unknown search field "foo"`},
+		},
+		{
+			name:     "field name casing must match exactly",
+			query:    "Kind:Query",
+			wantMsgs: []string{`⚠️ unknown search field "Kind" — did you mean: kind?`},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := is.New(t)
+			got := unknownFieldWarnings(tt.query)
+			is.Equal(got, tt.wantMsgs)
+		})
+	}
+}
+
 func TestApplyKindFilter(t *testing.T) {
 	tests := []struct {
 		name       string
