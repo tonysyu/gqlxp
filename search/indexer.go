@@ -12,12 +12,14 @@ import (
 
 // document represents a searchable item in the schema
 type document struct {
-	Kind        string `json:"kind"`        // Structural kind: Object, Query, ObjectField, etc.
-	Name        string `json:"name"`        // Type or field name
-	Description string `json:"description"` // Description text
-	Path        string `json:"path"`        // Full path (e.g., "Query.user.name")
-	SchemaID    string `json:"schemaID"`    // Schema identifier
-	Signature   string `json:"signature"`   // Field signature (e.g., "getUser(id: ID!): User")
+	Kind        string   `json:"kind"`        // Structural kind: Object, Query, ObjectField, etc.
+	Name        string   `json:"name"`        // Type or field name
+	Description string   `json:"description"` // Description text
+	Path        string   `json:"path"`        // Full path (e.g., "Query.user.name")
+	SchemaID    string   `json:"schemaID"`    // Schema identifier
+	Signature   string   `json:"signature"`   // Field signature (e.g., "getUser(id: ID!): User")
+	Usage       []string `json:"usage"`       // ParentKinds of types/fields that reference this type
+	Implements  []string `json:"implements"`  // Interface names this type implements (Object/Interface only)
 }
 
 // BleveIndexer implements Indexer using Bleve
@@ -107,6 +109,8 @@ func buildIndexMapping() *mapping.IndexMappingImpl {
 	docMapping.AddFieldMappingsAt("path", textFieldMapping)
 	docMapping.AddFieldMappingsAt("schemaID", keywordFieldMapping)
 	docMapping.AddFieldMappingsAt("signature", keywordFieldMapping)
+	docMapping.AddFieldMappingsAt("usage", keywordFieldMapping)
+	docMapping.AddFieldMappingsAt("implements", keywordFieldMapping)
 
 	// Create index mapping
 	indexMapping := bleve.NewIndexMapping()
@@ -128,6 +132,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 			Path:        "Query." + name,
 			SchemaID:    schemaID,
 			Signature:   field.Signature(),
+			Usage:       fieldUsage(field),
 		})
 	}
 
@@ -140,6 +145,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 			Path:        "Mutation." + name,
 			SchemaID:    schemaID,
 			Signature:   field.Signature(),
+			Usage:       fieldUsage(field),
 		})
 	}
 
@@ -151,6 +157,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 			Description: obj.Description(),
 			Path:        name,
 			SchemaID:    schemaID,
+			Implements:  obj.Interfaces(),
 		})
 		docs = append(docs, extractObjectFieldDocuments(schemaID, name, obj)...)
 	}
@@ -197,6 +204,7 @@ func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
 			Description: iface.Description(),
 			Path:        name,
 			SchemaID:    schemaID,
+			Implements:  iface.Interfaces(),
 		})
 		docs = append(docs, extractInterfaceFieldDocuments(schemaID, name, iface)...)
 	}
@@ -237,6 +245,7 @@ func extractObjectFieldDocuments(schemaID string, typeName string, obj *gql.Obje
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
 			SchemaID:    schemaID,
 			Signature:   field.Signature(),
+			Usage:       fieldUsage(field),
 		})
 	}
 	return docs
@@ -253,9 +262,20 @@ func extractInputFieldDocuments(schemaID string, typeName string, input *gql.Inp
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
 			SchemaID:    schemaID,
 			Signature:   field.Signature(),
+			Usage:       fieldUsage(field),
 		})
 	}
 	return docs
+}
+
+// fieldUsage returns a slice containing the field's return type name, or nil if the type is a
+// built-in scalar (no object type name).
+func fieldUsage(field *gql.Field) []string {
+	typeName := field.ObjectTypeName()
+	if typeName == "" {
+		return nil
+	}
+	return []string{typeName}
 }
 
 // extractInterfaceFieldDocuments extracts documents for fields of an interface
@@ -269,6 +289,7 @@ func extractInterfaceFieldDocuments(schemaID string, typeName string, iface *gql
 			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
 			SchemaID:    schemaID,
 			Signature:   field.Signature(),
+			Usage:       fieldUsage(field),
 		})
 	}
 	return docs

@@ -172,6 +172,116 @@ func TestSearchResultOrdering(t *testing.T) {
 	}
 }
 
+const indexTestSchema = `
+	interface Node {
+		id: ID!
+	}
+
+	interface Timestamped implements Node {
+		id: ID!
+		createdAt: String!
+	}
+
+	type User implements Node & Timestamped {
+		id: ID!
+		createdAt: String!
+		name: String!
+		role: UserRole!
+	}
+
+	enum UserRole {
+		ADMIN
+		MEMBER
+	}
+
+	type Query {
+		user(id: ID!): User
+		users: [User!]!
+	}
+
+	type Mutation {
+		createUser(name: String!): User
+	}
+`
+
+func TestUsageIndex(t *testing.T) {
+	is := is.New(t)
+
+	tmpDir, err := os.MkdirTemp("", "gqlxp-usage-test-*")
+	is.NoErr(err)
+	defer os.RemoveAll(tmpDir)
+
+	schema, err := gql.ParseSchema([]byte(indexTestSchema))
+	is.NoErr(err)
+
+	indexer := search.NewIndexer(tmpDir)
+	defer indexer.Close()
+
+	schemaID := "usage-test"
+	err = indexer.Index(schemaID, &schema)
+	is.NoErr(err)
+
+	searcher := search.NewSearcher(tmpDir)
+	defer searcher.Close()
+
+	// Query fields that return User
+	results, err := searcher.Search(schemaID, "+usage:User +kind:Query", 10)
+	is.NoErr(err)
+	is.True(containsPath(results, "Query.user"))
+	is.True(containsPath(results, "Query.users"))
+
+	// Mutation fields that return User
+	results, err = searcher.Search(schemaID, "+usage:User +kind:Mutation", 10)
+	is.NoErr(err)
+	is.True(containsPath(results, "Mutation.createUser"))
+
+	// Object fields that reference UserRole
+	results, err = searcher.Search(schemaID, "+usage:UserRole", 10)
+	is.NoErr(err)
+	is.True(containsPath(results, "User.role"))
+}
+
+func TestImplementsIndex(t *testing.T) {
+	is := is.New(t)
+
+	tmpDir, err := os.MkdirTemp("", "gqlxp-implements-test-*")
+	is.NoErr(err)
+	defer os.RemoveAll(tmpDir)
+
+	schema, err := gql.ParseSchema([]byte(indexTestSchema))
+	is.NoErr(err)
+
+	indexer := search.NewIndexer(tmpDir)
+	defer indexer.Close()
+
+	schemaID := "implements-test"
+	err = indexer.Index(schemaID, &schema)
+	is.NoErr(err)
+
+	searcher := search.NewSearcher(tmpDir)
+	defer searcher.Close()
+
+	// User implements Node
+	results, err := searcher.Search(schemaID, "+implements:Node +kind:Object", 10)
+	is.NoErr(err)
+	is.True(containsPath(results, "User"))
+
+	// User implements Timestamped
+	results, err = searcher.Search(schemaID, "+implements:Timestamped", 10)
+	is.NoErr(err)
+	is.True(containsPath(results, "User"))
+
+	// Timestamped interface extends Node
+	results, err = searcher.Search(schemaID, "+implements:Node +kind:Interface", 10)
+	is.NoErr(err)
+	is.True(containsPath(results, "Timestamped"))
+
+	// Searching for a non-existent interface returns no results
+	results, err = searcher.Search(schemaID, "+implements:NonExistent", 10)
+	is.NoErr(err)
+	is.Equal(len(results), 0)
+}
+
 // containsPath checks if any result has the given path
 func containsPath(results []search.SearchResult, path string) bool {
 	for _, result := range results {

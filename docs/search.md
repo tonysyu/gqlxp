@@ -65,6 +65,8 @@ Each search document contains the following fields:
 - `path`: Qualified name, which matches `name` for types and `<parent-name>.<name>` for fields
     - Queries and mutations will have fixed paths `Query.<name>` and `Mutation.<name>`,
       respectively
+- `usage`: Return type referenced by a field (e.g. `+usage:User` finds fields that return `User`; applies to `Query`, `Mutation`, `ObjectField`, `InputField`, and `InterfaceField` kinds)
+- `implements`: Interface names a type implements (e.g. `+implements:Node`); applies to `Object` and `Interface` kinds only
 
 ### GraphQL `kind`s
 
