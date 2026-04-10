@@ -19,15 +19,16 @@ import (
 
 // Model is the TUI for selecting a schema from the library
 type Model struct {
-	list       list.Model
-	lib        library.Library
-	styles     config.Styles
-	width      int
-	height     int
-	keymap     config.LibSelectKeymaps
-	errMsg     string
-	spinner    spinner.Model
-	isUpdating bool
+	list         list.Model
+	lib          library.Library
+	styles       config.Styles
+	width        int
+	height       int
+	keymap       config.LibSelectKeymaps
+	errMsg       string
+	spinner      spinner.Model
+	isUpdating   bool
+	isReindexing bool
 }
 
 type schemaListItem struct {
@@ -82,6 +83,16 @@ type schemaUpdateErrMsg struct {
 	err error
 }
 
+// SchemaReindexedMsg is sent when a schema's search index is successfully rebuilt
+type SchemaReindexedMsg struct {
+	SchemaID string
+}
+
+// schemaReindexErrMsg carries an error from a reindex attempt
+type schemaReindexErrMsg struct {
+	err error
+}
+
 // New creates a new library selection model
 func New(lib library.Library) (Model, error) {
 	styles := config.DefaultStyles()
@@ -125,10 +136,10 @@ func New(lib library.Library) (Model, error) {
 	listModel.Title = "Select a Schema"
 	listModel.SetShowStatusBar(false)
 	listModel.AdditionalShortHelpKeys = func() []key.Binding {
-		return []key.Binding{keymap.Select, keymap.SetDefault, keymap.UpdateSchema}
+		return []key.Binding{keymap.Select, keymap.SetDefault, keymap.UpdateSchema, keymap.ReindexSchema}
 	}
 	listModel.AdditionalFullHelpKeys = func() []key.Binding {
-		return []key.Binding{keymap.Select, keymap.SetDefault, keymap.UpdateSchema}
+		return []key.Binding{keymap.Select, keymap.SetDefault, keymap.UpdateSchema, keymap.ReindexSchema}
 	}
 
 	s := spinner.New()
@@ -171,9 +182,16 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 				m.list.SetSize(m.width, m.height-3)
 				return m, tea.Batch(m.updateSchema(item.id), m.spinner.Tick)
 			}
+		case key.Matches(msg, m.keymap.ReindexSchema):
+			if item, ok := m.list.SelectedItem().(schemaListItem); ok {
+				m.errMsg = ""
+				m.isReindexing = true
+				m.list.SetSize(m.width, m.height-3)
+				return m, tea.Batch(m.reindexSchema(item.id), m.spinner.Tick)
+			}
 		}
 	case spinner.TickMsg:
-		if m.isUpdating {
+		if m.isUpdating || m.isReindexing {
 			var cmd tea.Cmd
 			m.spinner, cmd = m.spinner.Update(msg)
 			return m, cmd
@@ -205,11 +223,20 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.errMsg = msg.err.Error()
 		m.list.SetSize(m.width, m.height-3)
 		return m, nil
+	case SchemaReindexedMsg:
+		m.isReindexing = false
+		m.list.SetSize(m.width, m.height-2)
+		return m, nil
+	case schemaReindexErrMsg:
+		m.isReindexing = false
+		m.errMsg = msg.err.Error()
+		m.list.SetSize(m.width, m.height-3)
+		return m, nil
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 		listHeight := msg.Height - 2
-		if m.errMsg != "" || m.isUpdating {
+		if m.errMsg != "" || m.isUpdating || m.isReindexing {
 			listHeight--
 		}
 		m.list.SetSize(msg.Width, listHeight)
@@ -258,6 +285,15 @@ func (m Model) updateSchema(schemaID string) tea.Cmd {
 	}
 }
 
+func (m Model) reindexSchema(schemaID string) tea.Cmd {
+	return func() tea.Msg {
+		if err := m.lib.Reindex(schemaID); err != nil {
+			return schemaReindexErrMsg{fmt.Errorf("failed to reindex schema: %w", err)}
+		}
+		return SchemaReindexedMsg{SchemaID: schemaID}
+	}
+}
+
 func (m Model) loadSchema(schemaID string) tea.Cmd {
 	return func() tea.Msg {
 		schema, err := m.lib.Get(schemaID)
@@ -291,6 +327,10 @@ func (m Model) View() string {
 	}
 	if m.isUpdating {
 		statusLine := m.spinner.View() + " Updating schema..."
+		return lipgloss.JoinVertical(lipgloss.Left, m.list.View(), statusLine)
+	}
+	if m.isReindexing {
+		statusLine := m.spinner.View() + " Reindexing schema..."
 		return lipgloss.JoinVertical(lipgloss.Left, m.list.View(), statusLine)
 	}
 	if m.errMsg != "" {

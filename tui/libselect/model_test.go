@@ -25,6 +25,8 @@ type mockLibrary struct {
 	sourceURL        string
 	updateContentID  string
 	updateContentErr error
+	reindexID        string
+	reindexErr       error
 }
 
 func (m *mockLibrary) Add(id, displayName, sourcePath string) error {
@@ -88,7 +90,10 @@ func (m *mockLibrary) SetDefaultSchema(id string) error {
 
 func (m *mockLibrary) EnsureIndex(_ string, _ *gql.GraphQLSchema) error { return nil }
 
-func (m *mockLibrary) Reindex(_ string) error { return nil }
+func (m *mockLibrary) Reindex(id string) error {
+	m.reindexID = id
+	return m.reindexErr
+}
 
 func TestModel_Init(t *testing.T) {
 	is := is.New(t)
@@ -359,4 +364,83 @@ func TestModel_Update_SchemaUpdatedMsg(t *testing.T) {
 
 	is.True(!strings.Contains(model.View(), "Updating schema...")) // Loading indicator should be gone
 	assert.StringContains(testx.NormalizeView(model.View()), "last updated: 2024-03-15 10:30")
+}
+
+func TestModel_Update_ReindexKey_ShowsLoadingIndicator(t *testing.T) {
+	assert := assert.New(t)
+
+	lib := &mockLibrary{
+		schemas: []library.SchemaInfo{
+			{ID: "schema1", DisplayName: "Schema One"},
+		},
+	}
+
+	model, err := libselect.New(lib)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	model, _ = model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+
+	// Press "r" to reindex — before any cmd completes
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'r'})
+
+	assert.StringContains(model.View(), "Reindexing schema...")
+}
+
+func TestModel_Update_SchemaReindexedMsg(t *testing.T) {
+	is := is.New(t)
+
+	lib := &mockLibrary{
+		schemas: []library.SchemaInfo{
+			{ID: "schema1", DisplayName: "Schema One"},
+		},
+	}
+
+	model, err := libselect.New(lib)
+	is.NoErr(err)
+
+	model, _ = model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+
+	// Start reindex to set isReindexing = true
+	model, _ = model.Update(tea.KeyPressMsg{Code: 'r'})
+	is.True(strings.Contains(model.View(), "Reindexing schema...")) // Loading indicator should be shown
+
+	// Send SchemaReindexedMsg — loading indicator should clear
+	model, _ = model.Update(libselect.SchemaReindexedMsg{SchemaID: "schema1"})
+
+	is.True(!strings.Contains(model.View(), "Reindexing schema...")) // Loading indicator should be gone
+}
+
+func TestModel_Update_ReindexKey_Error(t *testing.T) {
+	is := is.New(t)
+	assert := assert.New(t)
+
+	lib := &mockLibrary{
+		schemas: []library.SchemaInfo{
+			{ID: "schema1", DisplayName: "Schema One"},
+		},
+		reindexErr: fmt.Errorf("index write failure"),
+	}
+
+	model, err := libselect.New(lib)
+	is.NoErr(err)
+
+	model, _ = model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+
+	// Press "r" to reindex
+	model, cmd := model.Update(tea.KeyPressMsg{Code: 'r'})
+	is.True(cmd != nil)
+
+	// Execute the batch cmd and process each sub-cmd result
+	batchMsg, ok := cmd().(tea.BatchMsg)
+	is.True(ok)
+	for _, subCmd := range batchMsg {
+		result := subCmd()
+		model, _ = model.Update(result)
+	}
+
+	is.True(!strings.Contains(model.View(), "Reindexing schema...")) // Loading indicator should be gone
+	assert.StringContains(model.View(), "index write failure")
+	is.Equal(lib.reindexID, "schema1") // Library should be called with the correct ID
 }
