@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/gqlfmt"
 	"github.com/tonysyu/gqlxp/utils/terminal"
 	"github.com/urfave/cli/v3"
@@ -77,16 +76,9 @@ Examples:
 }
 
 func printType(schemaArg, typeName string, noPager bool, jsonOutput bool, include string) error {
-	// Resolve schema argument (path, ID, or default)
-	schema, err := resolveSchemaFromArgument(schemaArg)
+	schema, err := LoadSchema(schemaArg)
 	if err != nil {
 		return err
-	}
-
-	// Parse schema
-	parsedSchema, err := gql.ParseSchema(schema.Content)
-	if err != nil {
-		return fmt.Errorf("error parsing schema: %w", err)
 	}
 
 	// Parse include options
@@ -94,7 +86,7 @@ func printType(schemaArg, typeName string, noPager bool, jsonOutput bool, includ
 
 	// Handle JSON output
 	if jsonOutput {
-		jsonStr, err := gqlfmt.GenerateJSON(parsedSchema, typeName, opts)
+		jsonStr, err := gqlfmt.GenerateJSON(schema.GQLSchema, typeName, opts)
 		if err != nil {
 			return err
 		}
@@ -103,7 +95,7 @@ func printType(schemaArg, typeName string, noPager bool, jsonOutput bool, includ
 	}
 
 	// Generate markdown content based on type name
-	markdown, err := gqlfmt.GenerateMarkdown(parsedSchema, typeName, opts)
+	markdown, err := gqlfmt.GenerateMarkdown(schema.GQLSchema, typeName, opts)
 	if err != nil {
 		return err
 	}

@@ -55,7 +55,7 @@ Examples:
 }
 
 func runValidateCommand(schemaArg, filePath string, jsonOutput bool) error {
-	schema, err := resolveSchemaFromArgument(schemaArg)
+	schema, err := LoadSchema(schemaArg)
 	if err != nil {
 		return err
 	}

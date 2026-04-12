@@ -10,7 +10,6 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"github.com/tonysyu/gqlxp/docs"
-	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/search"
 	"github.com/tonysyu/gqlxp/utils/terminal"
@@ -173,13 +172,10 @@ func runSearchCommand(cmd *cli.Command, jsonOutput bool) error {
 	schemaArg := cmd.String("schema")
 
 	// Resolve schema argument (path, ID, or default)
-	schema, err := resolveSchemaFromArgument(schemaArg)
+	schema, err := LoadSchema(schemaArg)
 	if err != nil {
 		return err
 	}
-
-	schemaID := schema.ID
-	content := schema.Content
 
 	// Get schemas directory for indexing
 	schemasDir, err := library.GetSchemasDir()
@@ -191,14 +187,9 @@ func runSearchCommand(cmd *cli.Command, jsonOutput bool) error {
 	defer indexer.Close()
 
 	// Create index if it doesn't exist
-	if !indexer.Exists(schemaID) {
-		schema, err := gql.ParseSchema(content)
-		if err != nil {
-			return fmt.Errorf("failed to parse schema: %w", err)
-		}
-
-		fmt.Printf("Indexing schema '%s'...\n", schemaID)
-		if err := indexer.Index(schemaID, &schema); err != nil {
+	if !indexer.Exists(schema.ID) {
+		fmt.Printf("Indexing schema '%s'...\n", schema.ID)
+		if err := indexer.Index(schema.ID, &schema.GQLSchema); err != nil {
 			return fmt.Errorf("failed to index schema: %w", err)
 		}
 	}
@@ -207,9 +198,9 @@ func runSearchCommand(cmd *cli.Command, jsonOutput bool) error {
 	searcher := search.NewSearcher(schemasDir)
 	defer searcher.Close()
 
-	results, err := searcher.Search(schemaID, query, limit)
+	results, err := searcher.Search(schema.ID, query, limit)
 	if err != nil {
-		return fmt.Errorf("search failed: %w (try using 'gqlxp library reindex %s')", err, schemaID)
+		return fmt.Errorf("search failed: %w (try using 'gqlxp library reindex %s')", err, schema.ID)
 	}
 
 	// Handle JSON output
@@ -240,9 +231,9 @@ func runSearchCommand(cmd *cli.Command, jsonOutput bool) error {
 	// Show command suggestions in header
 	pathArg := headerStyle.Render("<object>.<field>")
 	fmt.Fprintf(&output, "To display more info about a result, run: \n\t%s %s\n",
-		codeStyle.Render("gqlxp show --schema "+schemaID), pathArg)
+		codeStyle.Render("gqlxp show --schema "+schema.ID), pathArg)
 	fmt.Fprintf(&output, "To open result in TUI app, run: \n\t%s --select %s\n\n",
-		codeStyle.Render("gqlxp app --schema "+schemaID), pathArg)
+		codeStyle.Render("gqlxp app --schema "+schema.ID), pathArg)
 
 	fmt.Fprintf(&output, "Found %d results for %q%s:\n\n", len(results), query, maxLimitInfo)
 	for i, result := range results {

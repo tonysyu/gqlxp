@@ -6,83 +6,130 @@ import (
 	"path/filepath"
 
 	"github.com/tonysyu/gqlxp/cli/prompt"
+	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/library"
 )
 
-func loadSchemaFromFile(path string) ([]byte, error) {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read schema file: %w", err)
-	}
-	return content, nil
+// Prompter abstracts interactive terminal prompts for schema resolution.
+type Prompter interface {
+	YesNo(prompt string) (bool, error)
+	SchemaID(suggested string) (string, error)
+	String(prompt, defaultValue string) (string, error)
 }
 
-// resolveSchemaFromArgument resolves a schema argument to a Schema.
-// The argument can be:
-// 1. Empty string - use default schema from config
-// 2. A schema ID that exists in the library
-// 3. A file path (will be added to library if needed)
-func resolveSchemaFromArgument(arg string) (*library.Schema, error) {
-	lib := library.NewLibrary()
+// terminalPrompter is the real implementation that delegates to the prompt package.
+type terminalPrompter struct{}
 
+func (terminalPrompter) YesNo(p string) (bool, error) {
+	return prompt.YesNo(p)
+}
+
+func (terminalPrompter) SchemaID(suggested string) (string, error) {
+	return prompt.SchemaID(suggested)
+}
+
+func (terminalPrompter) String(p, defaultValue string) (string, error) {
+	return prompt.String(p, defaultValue)
+}
+
+// LoadedSchema is the ready-to-use result of schema resolution.
+type LoadedSchema struct {
+	ID        string
+	Content   []byte
+	GQLSchema gql.GraphQLSchema
+}
+
+// SchemaLoader resolves a CLI schema argument into a LoadedSchema.
+type SchemaLoader struct {
+	lib      library.Library
+	prompter Prompter
+}
+
+// NewSchemaLoader creates a SchemaLoader with injected dependencies.
+func NewSchemaLoader(lib library.Library, p Prompter) *SchemaLoader {
+	return &SchemaLoader{lib: lib, prompter: p}
+}
+
+// NewDefaultSchemaLoader creates a SchemaLoader backed by the real filesystem library
+// and real terminal prompter. This is the one-liner for CLI commands.
+func NewDefaultSchemaLoader() *SchemaLoader {
+	return NewSchemaLoader(library.NewLibrary(), terminalPrompter{})
+}
+
+// LoadSchema is a convenience wrapper around NewDefaultSchemaLoader().Load(arg).
+func LoadSchema(arg string) (LoadedSchema, error) {
+	return NewDefaultSchemaLoader().Load(arg)
+}
+
+// Load resolves a schema argument and returns a LoadedSchema with a parsed schema.
+// arg can be:
+//   - Empty string: use default schema from config
+//   - A schema ID that exists in the library
+//   - A file path (will be added to library if needed)
+func (l *SchemaLoader) Load(arg string) (LoadedSchema, error) {
 	var schemaID string
+	var content []byte
 
-	// Empty argument - use default schema
 	if arg == "" {
-		defaultSchemaID, err := lib.GetDefaultSchema()
+		defaultSchemaID, err := l.lib.GetDefaultSchema()
 		if err != nil {
-			return nil, fmt.Errorf("error getting default schema: %w", err)
+			return LoadedSchema{}, fmt.Errorf("error getting default schema: %w", err)
 		}
 		if defaultSchemaID == "" {
-			return nil, fmt.Errorf("no schema specified and no default schema set. Use 'gqlxp library default' to set one")
+			return LoadedSchema{}, fmt.Errorf("no schema specified and no default schema set. Use 'gqlxp library default' to set one")
 		}
 		schemaID = defaultSchemaID
 	} else {
 		// First check if it's an existing schema ID
-		if _, err := lib.Get(arg); err == nil {
+		if _, err := l.lib.Get(arg); err == nil {
 			schemaID = arg
 		} else {
 			// Not a schema ID - try as file path
-			resolvedID, _, err := resolveSchemaSource(arg)
+			resolvedID, resolvedContent, err := l.resolveFilePath(arg)
 			if err != nil {
-				return nil, fmt.Errorf("invalid schema argument '%s': %w", arg, err)
+				return LoadedSchema{}, fmt.Errorf("invalid schema argument '%s': %w", arg, err)
 			}
 			schemaID = resolvedID
+			content = resolvedContent
 		}
 	}
 
-	// Load schema from library
-	schema, err := lib.Get(schemaID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load schema '%s': %w", schemaID, err)
+	// Load content from library if not already resolved from file path
+	if content == nil {
+		schema, err := l.lib.Get(schemaID)
+		if err != nil {
+			return LoadedSchema{}, fmt.Errorf("failed to load schema '%s': %w", schemaID, err)
+		}
+		content = schema.Content
 	}
 
-	return schema, nil
+	parsedSchema, err := gql.ParseSchema(content)
+	if err != nil {
+		return LoadedSchema{}, fmt.Errorf("error parsing schema: %w", err)
+	}
+
+	return LoadedSchema{ID: schemaID, Content: content, GQLSchema: parsedSchema}, nil
 }
 
-func resolveSchemaSource(filePath string) (schemaID string, content []byte, err error) {
-	lib := library.NewLibrary()
-
-	// Normalize to absolute path
+// resolveFilePath handles the case where arg is a file path.
+func (l *SchemaLoader) resolveFilePath(filePath string) (schemaID string, content []byte, err error) {
 	absPath, err := filepath.Abs(filePath)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to resolve absolute path: %w", err)
 	}
 
-	// Load file content
-	content, err = loadSchemaFromFile(absPath)
+	content, err = os.ReadFile(absPath)
 	if err != nil {
-		return "", nil, err
+		return "", nil, fmt.Errorf("failed to read schema file: %w", err)
 	}
 
-	// Calculate file hash
 	fileHash := library.CalculateFileHash(content)
-	existingSchema, err := lib.FindByPath(absPath)
+	existingSchema, err := l.lib.FindByPath(absPath)
 
 	// No match - register new schema
 	if err != nil {
-		schemaID, err := registerSchema(absPath, content)
-		return schemaID, content, err
+		id, err := l.registerSchema(absPath, content)
+		return id, content, err
 	}
 
 	// Hash matches - use existing schema
@@ -91,24 +138,22 @@ func resolveSchemaSource(filePath string) (schemaID string, content []byte, err 
 	}
 
 	// Hash mismatch - handle update workflow
-	return handleSchemaUpdate(lib, existingSchema, content)
+	return l.handleSchemaUpdate(existingSchema, content)
 }
 
-func handleSchemaUpdate(lib library.Library, existingSchema *library.Schema, newContent []byte) (string, []byte, error) {
+func (l *SchemaLoader) handleSchemaUpdate(existingSchema *library.Schema, newContent []byte) (string, []byte, error) {
 	fmt.Printf("Schema file has changed since last import.\n")
-	update, err := prompt.YesNo("Update library")
+	update, err := l.prompter.YesNo("Update library")
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to get user input: %w", err)
 	}
 
-	// User chose not to update
 	if !update {
 		fmt.Printf("Using existing library version\n")
 		return existingSchema.ID, existingSchema.Content, nil
 	}
 
-	// Update library content
-	if err := lib.UpdateContent(existingSchema.ID, newContent); err != nil {
+	if err := l.lib.UpdateContent(existingSchema.ID, newContent); err != nil {
 		return "", nil, fmt.Errorf("failed to update library: %w", err)
 	}
 
@@ -116,28 +161,22 @@ func handleSchemaUpdate(lib library.Library, existingSchema *library.Schema, new
 	return existingSchema.ID, newContent, nil
 }
 
-func registerSchema(filePath string, content []byte) (string, error) {
-	lib := library.NewLibrary()
-
-	// Generate suggested ID from filename
+func (l *SchemaLoader) registerSchema(filePath string, content []byte) (string, error) {
 	basename := filepath.Base(filePath)
 	ext := filepath.Ext(basename)
-	suggested := library.SanitizeSchemaID(filepath.Base(filePath[:len(filePath)-len(ext)]))
+	suggested := library.SanitizeSchemaID(basename[:len(basename)-len(ext)])
 
-	// Prompt for schema ID
-	schemaID, err := prompt.SchemaID(suggested)
+	schemaID, err := l.prompter.SchemaID(suggested)
 	if err != nil {
 		return "", fmt.Errorf("failed to get schema ID: %w", err)
 	}
 
-	// Prompt for display name
-	displayName, err := prompt.String("Enter display name", schemaID)
+	displayName, err := l.prompter.String("Enter display name", schemaID)
 	if err != nil {
 		return "", fmt.Errorf("failed to get display name: %w", err)
 	}
 
-	// Add to library
-	if err := lib.Add(schemaID, displayName, filePath); err != nil {
+	if err := l.lib.Add(schemaID, displayName, filePath); err != nil {
 		return "", fmt.Errorf("failed to add schema to library: %w", err)
 	}
 

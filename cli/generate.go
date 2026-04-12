@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/gqlfmt"
 	"github.com/urfave/cli/v3"
 )
@@ -54,14 +53,9 @@ Examples:
 			depth := int(cmd.Int("depth"))
 			includeDeprecated := cmd.Bool("include-deprecated")
 
-			schema, err := resolveSchemaFromArgument(schemaArg)
+			schema, err := LoadSchema(schemaArg)
 			if err != nil {
 				return err
-			}
-
-			parsedSchema, err := gql.ParseSchema(schema.Content)
-			if err != nil {
-				return fmt.Errorf("error parsing schema: %w", err)
 			}
 
 			opts := gqlfmt.GenerateOptions{
@@ -69,7 +63,7 @@ Examples:
 				IncludeDeprecated: includeDeprecated,
 			}
 
-			operation, err := gqlfmt.GenerateOperation(parsedSchema, fieldPath, opts)
+			operation, err := gqlfmt.GenerateOperation(schema.GQLSchema, fieldPath, opts)
 			if err != nil {
 				return err
 			}
