@@ -106,6 +106,12 @@ Query syntax:
 			}
 
 			jsonOutput, _ := cmd.Flags().GetBool("json")
+			aiMode, _ := cmd.Flags().GetBool("ai")
+			if aiMode {
+				jsonOutput = true
+				cmd.Flags().Set("no-pager", "true")
+				os.Setenv("NO_COLOR", "1")
+			}
 			return handleError(runSearchCommand(cmd, args, jsonOutput), jsonOutput)
 		},
 		SilenceErrors: true,
@@ -116,6 +122,7 @@ Query syntax:
 	cmd.Flags().Int("limit", 30, "maximum number of results to return")
 	cmd.Flags().Bool("no-pager", false, "disable pager; use for non-interactive/AI use")
 	cmd.Flags().Bool("json", false, "output results as JSON (recommended for AI/programmatic use)")
+	cmd.Flags().Bool("ai", false, "AI/programmatic mode: JSON output, no pager, no color")
 	cmd.Flags().String("kind", "", "filter by document kind: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, ObjectField, InputField, InterfaceField")
 
 	return cmd

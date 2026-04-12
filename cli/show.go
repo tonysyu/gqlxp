@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/tonysyu/gqlxp/gqlfmt"
@@ -41,6 +42,12 @@ Type-name formats:
 			noPager, _ := cmd.Flags().GetBool("no-pager")
 			include, _ := cmd.Flags().GetString("include")
 			schemaArg, _ := cmd.Flags().GetString("schema")
+			aiMode, _ := cmd.Flags().GetBool("ai")
+			if aiMode {
+				jsonOutput = true
+				noPager = true
+				os.Setenv("NO_COLOR", "1")
+			}
 
 			return handleError(printType(schemaArg, typeName, noPager, jsonOutput, include), jsonOutput)
 		},
@@ -50,6 +57,7 @@ Type-name formats:
 
 	cmd.Flags().Bool("no-pager", false, "disable pager; use for non-interactive/AI use")
 	cmd.Flags().Bool("json", false, "output as JSON (recommended for AI/programmatic use)")
+	cmd.Flags().Bool("ai", false, "AI/programmatic mode: JSON output, no pager, no color")
 	cmd.Flags().String("include", "", "comma-separated additional sections: usages (where this type is referenced), return-type (full return type definition; Query/Mutation only)")
 
 	return cmd

@@ -17,10 +17,10 @@ func NewRootCmd() *cobra.Command {
 		Short: "Explore GraphQL schemas interactively or via CLI",
 		Long: `gqlxp helps you explore, search, and validate GraphQL schemas.
 
-For AI/programmatic use:
-  search    Find types and fields by keyword (--json --no-pager for structured output)
-  show      Display a full type definition (--json --no-pager for structured output)
-  validate  Validate a GraphQL operation against the schema (--json for structured output)
+For AI/programmatic use (use --ai flag for JSON output, no pager, no color):
+  search    Find types and fields by keyword
+  show      Display a full type definition
+  validate  Validate a GraphQL operation against the schema
   generate  Scaffold a skeleton GraphQL operation (prints to stdout)
 
 Schema files are saved to the library on first use.

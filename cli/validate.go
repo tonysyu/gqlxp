@@ -30,6 +30,11 @@ JSON output format: {"valid": true|false, "errors": [{"line": N, "column": N, "m
 		RunE: func(cmd *cobra.Command, args []string) error {
 			schemaArg, _ := cmd.Flags().GetString("schema")
 			jsonOutput, _ := cmd.Flags().GetBool("json")
+			aiMode, _ := cmd.Flags().GetBool("ai")
+			if aiMode {
+				jsonOutput = true
+				os.Setenv("NO_COLOR", "1")
+			}
 			var filePath string
 			if len(args) > 0 {
 				filePath = args[0]
@@ -41,6 +46,7 @@ JSON output format: {"valid": true|false, "errors": [{"line": N, "column": N, "m
 	}
 
 	cmd.Flags().Bool("json", false, "output results as JSON (recommended for AI/programmatic use)")
+	cmd.Flags().Bool("ai", false, "AI/programmatic mode: JSON output, no pager, no color")
 
 	return cmd
 }
