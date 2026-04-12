@@ -101,7 +101,12 @@ Query syntax:
 		RunE: func(cmd *cobra.Command, args []string) error {
 			showSyntax, _ := cmd.Flags().GetBool("syntax")
 			if showSyntax {
-				fmt.Print(docs.SearchSyntax)
+				aiMode, _ := cmd.Flags().GetBool("ai")
+				var renderer terminal.Renderer
+				if !aiMode {
+					renderer, _ = terminal.NewMarkdownRenderer()
+				}
+				fmt.Print(terminal.RenderMarkdownOrPlain(renderer, docs.SearchSyntax))
 				return nil
 			}
 
