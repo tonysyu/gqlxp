@@ -1,22 +1,20 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 
+	"github.com/spf13/cobra"
 	"github.com/tonysyu/gqlxp/gql"
-	"github.com/urfave/cli/v3"
 )
 
-func validateCommand() *cli.Command {
-	return &cli.Command{
-		Name:      "validate",
-		Usage:     "Validate a GraphQL operation against a schema",
-		ArgsUsage: "[<operation-file>]",
-		Description: `Validates a GraphQL operation against a schema.
+func validateCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "validate [<operation-file>]",
+		Short: "Validate a GraphQL operation against a schema",
+		Long: `Validates a GraphQL operation against a schema.
 
 Uses default schema when --schema is not specified.
 Use 'gqlxp library default' to set the default schema.
@@ -24,34 +22,27 @@ Use 'gqlxp library default' to set the default schema.
 Reads from a file argument if provided, or from stdin if omitted.
 Exits with code 0 if valid, code 1 if there are errors.
 
-JSON output format: {"valid": true|false, "errors": [{"line": N, "column": N, "message": "..."}]}
-
-Examples:
-  gqlxp validate examples/queries/github-user.graphql
+JSON output format: {"valid": true|false, "errors": [{"line": N, "column": N, "message": "..."}]}`,
+		Example: `  gqlxp validate examples/queries/github-user.graphql
   gqlxp validate -s github examples/queries/github-user.graphql
   gqlxp validate --json examples/queries/github-user.graphql
   cat examples/queries/github-user.graphql | gqlxp validate`,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "schema",
-				Aliases: []string{"s"},
-				Usage:   "Schema file path or library ID to use",
-			},
-			&cli.BoolFlag{
-				Name:  "json",
-				Usage: "output results as JSON (recommended for AI/programmatic use)",
-			},
-		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			schemaArg := cmd.String("schema")
-			jsonOutput := cmd.Bool("json")
+		RunE: func(cmd *cobra.Command, args []string) error {
+			schemaArg, _ := cmd.Flags().GetString("schema")
+			jsonOutput, _ := cmd.Flags().GetBool("json")
 			var filePath string
-			if cmd.Args().Len() > 0 {
-				filePath = cmd.Args().First()
+			if len(args) > 0 {
+				filePath = args[0]
 			}
 			return handleError(runValidateCommand(schemaArg, filePath, jsonOutput), jsonOutput)
 		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
+
+	cmd.Flags().Bool("json", false, "output results as JSON (recommended for AI/programmatic use)")
+
+	return cmd
 }
 
 func runValidateCommand(schemaArg, filePath string, jsonOutput bool) error {

@@ -1,35 +1,26 @@
 package library
 
 import (
-	"context"
 	"fmt"
 
+	"github.com/spf13/cobra"
 	"github.com/tonysyu/gqlxp/library"
-	"github.com/urfave/cli/v3"
 )
 
-func defaultCommand() *cli.Command {
-	return &cli.Command{
-		Name:      "default",
-		Usage:     "Set or show the default schema",
-		ArgsUsage: "[schema-id]",
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "clear",
-				Usage: "clear the default schema setting",
-			},
-		},
-		Description: `Sets or displays the default schema to use when no schema is specified.
-
-Examples:
-  gqlxp library default           # Show current default
+func defaultCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "default [schema-id]",
+		Short: "Set or show the default schema",
+		Long:  "Sets or displays the default schema to use when no schema is specified.",
+		Example: `  gqlxp library default           # Show current default
   gqlxp library default github    # Set default to 'github'
   gqlxp library default --clear   # Clear default setting`,
-		Action: func(ctx context.Context, cmd *cli.Command) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			lib := library.NewLibrary()
 
 			// Clear default if --clear is used
-			if cmd.Bool("clear") {
+			clear, _ := cmd.Flags().GetBool("clear")
+			if clear {
 				if err := lib.SetDefaultSchema(""); err != nil {
 					return fmt.Errorf("failed to clear default schema: %w", err)
 				}
@@ -38,7 +29,7 @@ Examples:
 			}
 
 			// No arguments - show current default
-			if cmd.Args().Len() == 0 {
+			if len(args) == 0 {
 				defaultID, err := lib.GetDefaultSchema()
 				if err != nil {
 					return fmt.Errorf("failed to get default schema: %w", err)
@@ -59,7 +50,7 @@ Examples:
 			}
 
 			// Set default schema
-			schemaID := cmd.Args().First()
+			schemaID := args[0]
 
 			// Verify schema exists
 			schema, err := lib.Get(schemaID)
@@ -74,5 +65,11 @@ Examples:
 			fmt.Printf("Default schema set to: %s (%s)\n", schemaID, schema.Metadata.DisplayName)
 			return nil
 		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
+
+	cmd.Flags().Bool("clear", false, "clear the default schema setting")
+
+	return cmd
 }

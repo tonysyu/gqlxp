@@ -1,59 +1,48 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/tui"
 	"github.com/tonysyu/gqlxp/tui/adapters"
-	"github.com/urfave/cli/v3"
 )
 
 // appCommand creates the app subcommand for launching the TUI.
-func appCommand() *cli.Command {
-	return &cli.Command{
-		Name:  "app",
-		Usage: "Launch the GraphQL schema explorer TUI",
-		Description: `Opens the interactive TUI for exploring GraphQL schemas.
+func appCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "app",
+		Short: "Launch the GraphQL schema explorer TUI",
+		Long: `Opens the interactive TUI for exploring GraphQL schemas.
 
 With no schema flag, opens the library selector to choose from saved schemas.
-Use --schema/-s to open a specific schema file or library ID.
-
-Examples:
-  gqlxp app                             # Open library selector
+Use --schema/-s to open a specific schema file or library ID.`,
+		Example: `  gqlxp app                             # Open library selector
   gqlxp app -s examples/github.graphqls # Open specific schema file
   gqlxp app -s github-api               # Open schema from library`,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "schema",
-				Aliases: []string{"s"},
-				Usage:   "Schema file path or library ID to open",
-			},
-			&cli.StringFlag{
-				Name:    "log-file",
-				Aliases: []string{"l"},
-				Usage:   "Enable debug logging to `FILE`",
-			},
-			&cli.StringFlag{
-				Name:  "select",
-				Usage: "Pre-select TYPE or TYPE.FIELD in TUI",
-			},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return executeTUICommand(cmd)
 		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			return executeTUICommand(ctx, cmd)
-		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
+
+	cmd.Flags().StringP("log-file", "l", "", "Enable debug logging to `FILE`")
+	cmd.Flags().String("select", "", "Pre-select TYPE or TYPE.FIELD in TUI")
+
+	return cmd
 }
 
 // executeTUICommand is the shared logic for launching the TUI,
 // used by both the root command and app subcommand.
-func executeTUICommand(ctx context.Context, cmd *cli.Command) error {
-	setupLogging(cmd.String("log-file"))
+func executeTUICommand(cmd *cobra.Command) error {
+	logFile, _ := cmd.Flags().GetString("log-file")
+	setupLogging(logFile)
 
-	schemaArg := cmd.String("schema")
-	selectTarget := cmd.String("select")
+	schemaArg, _ := cmd.Flags().GetString("schema")
+	selectTarget, _ := cmd.Flags().GetString("select")
 
 	// No schema specified - open library selector
 	if schemaArg == "" {

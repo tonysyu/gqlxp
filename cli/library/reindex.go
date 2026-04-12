@@ -1,34 +1,25 @@
 package library
 
 import (
-	"context"
 	"fmt"
 
+	"github.com/spf13/cobra"
 	"github.com/tonysyu/gqlxp/library"
-	"github.com/urfave/cli/v3"
 )
 
-func reindexCommand() *cli.Command {
-	return &cli.Command{
-		Name:      "reindex",
-		Usage:     "Rebuild search indexes",
-		ArgsUsage: "[schema-id]",
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "all",
-				Usage: "reindex all schemas in the library",
-			},
-		},
-		Description: `Rebuilds search indexes for schemas in the library.
-
-Examples:
-  gqlxp library reindex github    # Reindex 'github' schema
+func reindexCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "reindex [schema-id]",
+		Short: "Rebuild search indexes",
+		Long:  "Rebuilds search indexes for schemas in the library.",
+		Example: `  gqlxp library reindex github    # Reindex 'github' schema
   gqlxp library reindex --all     # Reindex all schemas`,
-		Action: func(ctx context.Context, cmd *cli.Command) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			lib := library.NewLibrary()
 
 			// Reindex all schemas
-			if cmd.Bool("all") {
+			all, _ := cmd.Flags().GetBool("all")
+			if all {
 				schemas, err := lib.List()
 				if err != nil {
 					return fmt.Errorf("failed to list schemas: %w", err)
@@ -51,14 +42,20 @@ Examples:
 			}
 
 			// Reindex single schema
-			if cmd.Args().Len() != 1 {
+			if len(args) != 1 {
 				return fmt.Errorf("requires exactly 1 argument: <schema-id>, or use --all flag")
 			}
 
-			schemaID := cmd.Args().First()
+			schemaID := args[0]
 			return reindexSchema(lib, schemaID)
 		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
+
+	cmd.Flags().Bool("all", false, "reindex all schemas in the library")
+
+	return cmd
 }
 
 func reindexSchema(lib library.Library, schemaID string) error {

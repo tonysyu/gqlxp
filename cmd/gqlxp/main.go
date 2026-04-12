@@ -2,15 +2,14 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 
+	"github.com/charmbracelet/fang"
 	"github.com/tonysyu/gqlxp/cli"
 )
 
 func main() {
-	if err := cli.NewApp().Run(context.Background(), os.Args); err != nil {
-		fmt.Println(err)
+	if err := fang.Execute(context.Background(), cli.NewRootCmd()); err != nil {
 		os.Exit(1)
 	}
 }

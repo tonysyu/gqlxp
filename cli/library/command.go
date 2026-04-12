@@ -7,35 +7,40 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"github.com/tonysyu/gqlxp/cli/prompt"
 	"github.com/tonysyu/gqlxp/gql"
 	"github.com/tonysyu/gqlxp/gql/introspection"
 	"github.com/tonysyu/gqlxp/library"
-	"github.com/urfave/cli/v3"
 )
 
 // Command creates the library subcommand.
-func Command() *cli.Command {
-	return &cli.Command{
-		Name:  "library",
-		Usage: "Manage schema library",
-		Description: `Centralized interface for managing the schema library.
+func Command() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "library",
+		Short: "Manage schema library",
+		Long: `Centralized interface for managing the schema library.
 
 Run 'gqlxp library list' to see all schemas and their last-updated timestamps.
 If any schema is out of date, run 'gqlxp library update <schema-id>' to refresh it.`,
-		Action: func(ctx context.Context, cmd *cli.Command) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			// Default action is to list schemas
-			return listCommand().Run(ctx, []string{})
+			return runLibraryList()
 		},
-		Commands: []*cli.Command{
-			listCommand(),
-			addCommand(),
-			updateCommand(),
-			removeCommand(),
-			defaultCommand(),
-			reindexCommand(),
-		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
+
+	cmd.AddCommand(
+		listCommand(),
+		addCommand(),
+		updateCommand(),
+		removeCommand(),
+		defaultCommand(),
+		reindexCommand(),
+	)
+
+	return cmd
 }
 
 // schemaSource represents the source of a schema (either URL or file path).
@@ -110,8 +115,9 @@ func ExtractSuggestedID(source string) string {
 }
 
 // getSchemaID returns schema ID from flag or prompts user.
-func getSchemaID(cmd *cli.Command, source string) (string, error) {
-	if flagID := cmd.String("id"); flagID != "" {
+func getSchemaID(cmd *cobra.Command, source string) (string, error) {
+	flagID, _ := cmd.Flags().GetString("id")
+	if flagID != "" {
 		if err := library.ValidateSchemaID(flagID); err != nil {
 			return "", err
 		}
@@ -145,8 +151,9 @@ func extractHostnameAsID(urlStr string) string {
 }
 
 // getDisplayName returns display name from flag or prompts user.
-func getDisplayName(cmd *cli.Command, defaultName string) (string, error) {
-	if flagName := cmd.String("name"); flagName != "" {
+func getDisplayName(cmd *cobra.Command, defaultName string) (string, error) {
+	flagName, _ := cmd.Flags().GetString("name")
+	if flagName != "" {
 		return flagName, nil
 	}
 

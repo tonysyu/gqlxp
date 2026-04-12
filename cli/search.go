@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,12 +8,12 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/spf13/cobra"
 	"github.com/tonysyu/gqlxp/docs"
 	"github.com/tonysyu/gqlxp/library"
 	"github.com/tonysyu/gqlxp/search"
 	"github.com/tonysyu/gqlxp/utils/terminal"
 	"github.com/tonysyu/gqlxp/utils/text"
-	"github.com/urfave/cli/v3"
 )
 
 var (
@@ -79,12 +78,11 @@ func unknownFieldWarnings(query string) []string {
 }
 
 // searchCommand creates the search subcommand
-func searchCommand() *cli.Command {
-	return &cli.Command{
-		Name:      "search",
-		Usage:     "Search for types and fields in a GraphQL schema",
-		ArgsUsage: "[query]",
-		Description: `Searches for types and fields matching the given query.
+func searchCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "search [query]",
+		Short: "Search for types and fields in a GraphQL schema",
+		Long: `Searches for types and fields matching the given query.
 
 Uses default schema when --schema is not specified.
 Use 'gqlxp library default' to set the default schema.
@@ -95,68 +93,52 @@ JSON output: [{"path":"Type.field","kind":"Query|Object|...","description":"..."
 Query syntax:
   Plain keyword   Matches names and descriptions
   kind:<Kind>     Filter by kind (e.g., kind:Query, kind:Object)
-  Combined        "+kind:Query user" filters to Query kind matching "user"
-
-Examples:
-  gqlxp search user                                  # Uses default schema
+  Combined        "+kind:Query user" filters to Query kind matching "user"`,
+		Example: `  gqlxp search user                                  # Uses default schema
   gqlxp search -s github user --json --no-pager      # JSON output for AI use
   gqlxp search -s github --kind Query                # List all queries
   gqlxp search -s examples/github.graphqls user      # Uses specific file`,
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "syntax",
-				Usage: "show search syntax documentation and exit",
-			},
-			&cli.StringFlag{
-				Name:    "schema",
-				Aliases: []string{"s"},
-				Usage:   "Schema file path or library ID to search",
-			},
-			&cli.IntFlag{
-				Name:  "limit",
-				Usage: "maximum number of results to return",
-				Value: 30,
-			},
-			&cli.BoolFlag{
-				Name:  "no-pager",
-				Usage: "disable pager; use for non-interactive/AI use",
-			},
-			&cli.BoolFlag{
-				Name:  "json",
-				Usage: "output results as JSON (recommended for AI/programmatic use)",
-			},
-			&cli.StringFlag{
-				Name:  "kind",
-				Usage: "filter by document kind: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, ObjectField, InputField, InterfaceField",
-			},
-		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			if cmd.Bool("syntax") {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			showSyntax, _ := cmd.Flags().GetBool("syntax")
+			if showSyntax {
 				fmt.Print(docs.SearchSyntax)
 				return nil
 			}
 
-			jsonOutput := cmd.Bool("json")
-			return handleError(runSearchCommand(cmd, jsonOutput), jsonOutput)
+			jsonOutput, _ := cmd.Flags().GetBool("json")
+			return handleError(runSearchCommand(cmd, args, jsonOutput), jsonOutput)
 		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
+
+	cmd.Flags().Bool("syntax", false, "show search syntax documentation and exit")
+	cmd.Flags().Int("limit", 30, "maximum number of results to return")
+	cmd.Flags().Bool("no-pager", false, "disable pager; use for non-interactive/AI use")
+	cmd.Flags().Bool("json", false, "output results as JSON (recommended for AI/programmatic use)")
+	cmd.Flags().String("kind", "", "filter by document kind: Query, Mutation, Object, Input, Enum, Scalar, Interface, Union, Directive, ObjectField, InputField, InterfaceField")
+
+	return cmd
 }
 
-func runSearchCommand(cmd *cli.Command, jsonOutput bool) error {
-	kindFilter := cmd.String("kind")
+func runSearchCommand(cmd *cobra.Command, args []string, jsonOutput bool) error {
+	kindFilter, _ := cmd.Flags().GetString("kind")
 	hasKindFilter := kindFilter != ""
 
 	if hasKindFilter {
-		if cmd.Args().Len() > 1 {
+		if len(args) > 1 {
 			return fmt.Errorf("requires at most 1 argument when --kind is set: [query]")
 		}
 	} else {
-		if cmd.Args().Len() != 1 {
+		if len(args) != 1 {
 			return fmt.Errorf("requires exactly 1 argument: <query>")
 		}
 	}
 
-	query := cmd.Args().First()
+	var query string
+	if len(args) > 0 {
+		query = args[0]
+	}
 
 	if hasKindFilter {
 		var err error
@@ -165,11 +147,11 @@ func runSearchCommand(cmd *cli.Command, jsonOutput bool) error {
 			return err
 		}
 	}
-	limit := cmd.Int("limit")
-	noPager := cmd.Bool("no-pager")
+	limit, _ := cmd.Flags().GetInt("limit")
+	noPager, _ := cmd.Flags().GetBool("no-pager")
 
 	// Get schema (empty string for default when no flag specified)
-	schemaArg := cmd.String("schema")
+	schemaArg, _ := cmd.Flags().GetString("schema")
 
 	// Resolve schema argument (path, ID, or default)
 	schema, err := LoadSchema(schemaArg)

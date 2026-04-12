@@ -1,31 +1,20 @@
 package library
 
 import (
-	"context"
 	"fmt"
 
+	"github.com/spf13/cobra"
 	"github.com/tonysyu/gqlxp/cli/prompt"
 	"github.com/tonysyu/gqlxp/library"
-	"github.com/urfave/cli/v3"
 )
 
-func removeCommand() *cli.Command {
-	return &cli.Command{
-		Name:      "remove",
-		Usage:     "Remove a schema from the library",
-		ArgsUsage: "<schema-id>",
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:  "force",
-				Usage: "skip confirmation prompt",
-			},
-		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			if cmd.Args().Len() != 1 {
-				return fmt.Errorf("requires exactly 1 argument: <schema-id>")
-			}
-
-			schemaID := cmd.Args().First()
+func removeCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "remove <schema-id>",
+		Short: "Remove a schema from the library",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			schemaID := args[0]
 			lib := library.NewLibrary()
 
 			// Verify schema exists
@@ -61,11 +50,18 @@ func removeCommand() *cli.Command {
 
 			return nil
 		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
+
+	cmd.Flags().Bool("force", false, "skip confirmation prompt")
+
+	return cmd
 }
 
-func confirmSchemaRemoval(cmd *cli.Command, schemaID string, schema *library.Schema) error {
-	if cmd.Bool("force") {
+func confirmSchemaRemoval(cmd *cobra.Command, schemaID string, schema *library.Schema) error {
+	force, _ := cmd.Flags().GetBool("force")
+	if force {
 		return nil
 	}
 

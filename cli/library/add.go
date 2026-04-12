@@ -1,51 +1,34 @@
 package library
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"path/filepath"
 
+	"github.com/spf13/cobra"
 	"github.com/tonysyu/gqlxp/cli/prompt"
 	"github.com/tonysyu/gqlxp/gql/introspection"
 	"github.com/tonysyu/gqlxp/library"
-	"github.com/urfave/cli/v3"
 )
 
-func addCommand() *cli.Command {
-	return &cli.Command{
-		Name:      "add",
-		Usage:     "Add a schema to the library from a file or URL",
-		ArgsUsage: "<schema-file-or-url>",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:  "id",
-				Usage: "schema ID (lowercase letters, numbers, hyphens)",
-			},
-			&cli.StringFlag{
-				Name:  "name",
-				Usage: "display name for the schema",
-			},
-			&cli.StringSliceFlag{
-				Name:    "header",
-				Aliases: []string{"H"},
-				Usage:   "HTTP header for URL requests (e.g., 'Authorization: Bearer token')",
-			},
-		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			if cmd.Args().Len() != 1 {
-				return fmt.Errorf("requires exactly 1 argument: <schema-file-or-url>")
-			}
-
-			source := cmd.Args().First()
+func addCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "add <schema-file-or-url>",
+		Short: "Add a schema to the library from a file or URL",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			source := args[0]
 			lib := library.NewLibrary()
 
 			var content []byte
 			var sourceInfo string
 			var err error
 
+			headers, _ := cmd.Flags().GetStringArray("header")
+
 			if introspection.IsURL(source) {
-				content, err = fetchSchemaFromURL(ctx, source, cmd.StringSlice("header"))
+				content, err = fetchSchemaFromURL(ctx, source, headers)
 				if err != nil {
 					return err
 				}
@@ -118,5 +101,13 @@ func addCommand() *cli.Command {
 			fmt.Printf("Added schema '%s' (%s) to library\n", schemaID, displayName)
 			return nil
 		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
+
+	cmd.Flags().String("id", "", "schema ID (lowercase letters, numbers, hyphens)")
+	cmd.Flags().String("name", "", "display name for the schema")
+	cmd.Flags().StringArrayP("header", "H", nil, "HTTP header for URL requests (e.g., 'Authorization: Bearer token')")
+
+	return cmd
 }

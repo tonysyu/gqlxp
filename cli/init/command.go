@@ -8,22 +8,24 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/spf13/cobra"
 	clilib "github.com/tonysyu/gqlxp/cli/library"
 	"github.com/tonysyu/gqlxp/cli/prompt"
 	"github.com/tonysyu/gqlxp/library"
-	"github.com/urfave/cli/v3"
 )
 
 // Command creates the init subcommand.
-func Command() *cli.Command {
-	return &cli.Command{
-		Name:  "init",
-		Usage: "Interactive setup wizard for gqlxp",
-		Description: `Walks you through configuring a schema and optionally
+func Command() *cobra.Command {
+	return &cobra.Command{
+		Use:   "init",
+		Short: "Interactive setup wizard for gqlxp",
+		Long: `Walks you through configuring a schema and optionally
 installing the /gqlxp skill for AI assistants like Claude Code.`,
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			return runInitWizard(ctx)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runInitWizard(cmd.Context())
 		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
 }
 

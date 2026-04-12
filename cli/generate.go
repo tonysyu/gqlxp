@@ -1,57 +1,34 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 
+	"github.com/spf13/cobra"
 	"github.com/tonysyu/gqlxp/gqlfmt"
-	"github.com/urfave/cli/v3"
 )
 
-func generateCommand() *cli.Command {
-	return &cli.Command{
-		Name:      "generate",
-		Usage:     "Generate a skeleton GraphQL operation",
-		ArgsUsage: "<Query.fieldName|Mutation.fieldName>",
-		Description: `Scaffolds a skeleton GraphQL operation for a Query or Mutation field.
+func generateCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "generate <Query.fieldName|Mutation.fieldName>",
+		Short: "Generate a skeleton GraphQL operation",
+		Args:  cobra.ExactArgs(1),
+		Long: `Scaffolds a skeleton GraphQL operation for a Query or Mutation field.
 Output is a complete GraphQL operation document printed to stdout.
 
 Uses default schema when --schema is not specified.
 Use 'gqlxp library default' to set the default schema.
 
 --depth controls how many levels of nested object fields are expanded (default: 1).
-Use 'gqlxp show <type>' to inspect type definitions before generating.
-
-Examples:
-  gqlxp generate Query.getUser
+Use 'gqlxp show <type>' to inspect type definitions before generating.`,
+		Example: `  gqlxp generate Query.getUser
   gqlxp generate -s examples/github.graphqls Query.repository
   gqlxp generate --depth 2 Query.getUser      # Expand nested fields 2 levels deep
   gqlxp generate Mutation.createUser`,
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:    "schema",
-				Aliases: []string{"s"},
-				Usage:   "Schema file path or library ID to use",
-			},
-			&cli.IntFlag{
-				Name:  "depth",
-				Usage: "levels of nested object fields to expand (default: 1)",
-				Value: 1,
-			},
-			&cli.BoolFlag{
-				Name:  "include-deprecated",
-				Usage: "include deprecated fields in the generated operation",
-			},
-		},
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			if cmd.Args().Len() != 1 {
-				return fmt.Errorf("requires exactly 1 argument: <Query.fieldName|Mutation.fieldName>")
-			}
-
-			fieldPath := cmd.Args().First()
-			schemaArg := cmd.String("schema")
-			depth := int(cmd.Int("depth"))
-			includeDeprecated := cmd.Bool("include-deprecated")
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fieldPath := args[0]
+			schemaArg, _ := cmd.Flags().GetString("schema")
+			depth, _ := cmd.Flags().GetInt("depth")
+			includeDeprecated, _ := cmd.Flags().GetBool("include-deprecated")
 
 			schema, err := LoadSchema(schemaArg)
 			if err != nil {
@@ -71,5 +48,12 @@ Examples:
 			fmt.Println(operation)
 			return nil
 		},
+		SilenceErrors: true,
+		SilenceUsage:  true,
 	}
+
+	cmd.Flags().Int("depth", 1, "levels of nested object fields to expand")
+	cmd.Flags().Bool("include-deprecated", false, "include deprecated fields in the generated operation")
+
+	return cmd
 }
