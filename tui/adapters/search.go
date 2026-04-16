@@ -86,146 +86,33 @@ func (i searchResultItem) OpenPanel() (*components.Panel, bool) {
 	return i.wrappedItem.OpenPanel()
 }
 
-// findFieldByName searches for a field by name in a slice of fields
-func findFieldByName(fields []*gql.Field, name string) *gql.Field {
-	for _, field := range fields {
-		if field.Name() == name {
-			return field
-		}
-	}
-	return nil
-}
-
 // AdaptSearchResult converts a search.SearchResult to an appropriate ListItem
 // based on the result type and path. Returns a fully-functional item with OpenPanel
 // support when possible, falling back to SimpleItem if resolution fails.
 func AdaptSearchResult(result search.SearchResult, schemaView *SchemaView) components.ListItem {
-	// Try to resolve the search result to a proper item type
 	switch result.Kind {
-	case "Query", "Mutation":
-		// Format: "Query.fieldName" or "Mutation.fieldName"
-		return adaptQueryOrMutationField(result, schemaView)
-
-	case "ObjectField":
-		// Format: "TypeName.fieldName"
-		return adaptObjectField(result, schemaView)
-
-	case "InputField":
-		// Format: "TypeName.fieldName"
-		return adaptInputField(result, schemaView)
-
-	case "InterfaceField":
-		// Format: "TypeName.fieldName"
-		return adaptInterfaceField(result, schemaView)
-
+	case "Query", "Mutation", "ObjectField", "InputField", "InterfaceField":
+		return adaptField(result, schemaView)
 	case "Object", "Input", "Enum", "Scalar", "Interface", "Union":
-		// Format: just the type name
 		return adaptType(result, schemaView)
-
 	case "Directive":
-		// Format: "@directiveName"
 		return adaptDirective(result, schemaView)
-
 	default:
-		// Unknown type - fallback to SimpleItem
 		return createFallbackItem(result)
 	}
 }
 
-// adaptQueryOrMutationField handles Query and Mutation field results
-func adaptQueryOrMutationField(result search.SearchResult, schemaView *SchemaView) components.ListItem {
-	// Parse "Query.fieldName" or "Mutation.fieldName"
+// adaptField handles all field-bearing search result kinds.
+// Path format: "ParentType.fieldName" (e.g. "Query.user", "User.email")
+func adaptField(result search.SearchResult, schemaView *SchemaView) components.ListItem {
 	parts := strings.SplitN(result.Path, ".", 2)
 	if len(parts) != 2 {
 		return createFallbackItem(result)
 	}
+	typeName, fieldName := parts[0], parts[1]
 
-	parentType := parts[0]
-	fieldName := parts[1]
-	var field *gql.Field
-
-	if result.Kind == "Query" {
-		field = schemaView.schema.Query[fieldName]
-	} else {
-		field = schemaView.schema.Mutation[fieldName]
-	}
-
-	if field == nil {
-		return createFallbackItem(result)
-	}
-
-	wrappedItem := newFieldItem(field, schemaView.resolver)
-	return newSearchResultItem(result, wrappedItem, schemaView.resolver, parentType, fieldName)
-}
-
-// adaptObjectField handles ObjectField results
-func adaptObjectField(result search.SearchResult, schemaView *SchemaView) components.ListItem {
-	// Parse "TypeName.fieldName"
-	parts := strings.SplitN(result.Path, ".", 2)
-	if len(parts) != 2 {
-		return createFallbackItem(result)
-	}
-
-	typeName := parts[0]
-	fieldName := parts[1]
-
-	obj := schemaView.schema.Object[typeName]
-	if obj == nil {
-		return createFallbackItem(result)
-	}
-
-	field := findFieldByName(obj.Fields(), fieldName)
-	if field == nil {
-		return createFallbackItem(result)
-	}
-
-	wrappedItem := newFieldItem(field, schemaView.resolver)
-	return newSearchResultItem(result, wrappedItem, schemaView.resolver, typeName, fieldName)
-}
-
-// adaptInputField handles InputField results
-func adaptInputField(result search.SearchResult, schemaView *SchemaView) components.ListItem {
-	// Parse "TypeName.fieldName"
-	parts := strings.SplitN(result.Path, ".", 2)
-	if len(parts) != 2 {
-		return createFallbackItem(result)
-	}
-
-	typeName := parts[0]
-	fieldName := parts[1]
-
-	input := schemaView.schema.Input[typeName]
-	if input == nil {
-		return createFallbackItem(result)
-	}
-
-	field := findFieldByName(input.Fields(), fieldName)
-	if field == nil {
-		return createFallbackItem(result)
-	}
-
-	wrappedItem := newFieldItem(field, schemaView.resolver)
-	return newSearchResultItem(result, wrappedItem, schemaView.resolver, typeName, fieldName)
-}
-
-// adaptInterfaceField handles InterfaceField results
-func adaptInterfaceField(result search.SearchResult, schemaView *SchemaView) components.ListItem {
-	// Parse "TypeName.fieldName"
-	parts := strings.SplitN(result.Path, ".", 2)
-	if len(parts) != 2 {
-		return createFallbackItem(result)
-	}
-
-	typeName := parts[0]
-	fieldName := parts[1]
-
-	iface := schemaView.schema.Interface[typeName]
-	if iface == nil {
-		return createFallbackItem(result)
-	}
-
-	field := findFieldByName(iface.Fields(), fieldName)
-	if field == nil {
+	field, err := schemaView.ResolveField(result.Kind, typeName, fieldName)
+	if err != nil {
 		return createFallbackItem(result)
 	}
 
