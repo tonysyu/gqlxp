@@ -121,150 +121,120 @@ func buildIndexMapping() *mapping.IndexMappingImpl {
 
 // extractDocuments extracts searchable documents from a schema
 func extractDocuments(schemaID string, schema *gql.GraphQLSchema) []document {
-	docs := []document{}
+	var docs []document
 
-	// Index Query fields
-	for name, field := range schema.Query {
-		docs = append(docs, document{
-			Kind:        "Query",
-			Name:        name,
-			Description: field.Description(),
-			Path:        "Query." + name,
-			SchemaID:    schemaID,
-			Signature:   field.Signature(),
-			Usage:       fieldUsage(field),
-		})
-	}
+	schema.Walk(gql.SchemaVisitor{
+		VisitField: func(ctx gql.VisitContext, name string, field *gql.Field) {
+			docs = append(docs, document{
+				Kind:        ctx.Kind,
+				Name:        name,
+				Description: field.Description(),
+				Path:        ctx.Kind + "." + name,
+				SchemaID:    schemaID,
+				Signature:   field.Signature(),
+				Usage:       fieldUsage(field),
+			})
+		},
+		VisitObject: func(ctx gql.VisitContext, name string, obj *gql.Object) {
+			docs = append(docs, document{
+				Kind:        "Object",
+				Name:        name,
+				Description: obj.Description(),
+				Path:        name,
+				SchemaID:    schemaID,
+				Implements:  obj.Interfaces(),
+			})
+		},
+		VisitObjectField: func(ctx gql.VisitContext, field *gql.Field) {
+			docs = append(docs, document{
+				Kind:        "ObjectField",
+				Name:        field.Name(),
+				Description: field.Description(),
+				Path:        ctx.ParentName + "." + field.Name(),
+				SchemaID:    schemaID,
+				Signature:   field.Signature(),
+				Usage:       fieldUsage(field),
+			})
+		},
+		VisitInterface: func(ctx gql.VisitContext, name string, iface *gql.Interface) {
+			docs = append(docs, document{
+				Kind:        "Interface",
+				Name:        name,
+				Description: iface.Description(),
+				Path:        name,
+				SchemaID:    schemaID,
+				Implements:  iface.Interfaces(),
+			})
+		},
+		VisitInterfaceField: func(ctx gql.VisitContext, field *gql.Field) {
+			docs = append(docs, document{
+				Kind:        "InterfaceField",
+				Name:        field.Name(),
+				Description: field.Description(),
+				Path:        ctx.ParentName + "." + field.Name(),
+				SchemaID:    schemaID,
+				Signature:   field.Signature(),
+				Usage:       fieldUsage(field),
+			})
+		},
+		VisitInput: func(ctx gql.VisitContext, name string, input *gql.InputObject) {
+			docs = append(docs, document{
+				Kind:        "Input",
+				Name:        name,
+				Description: input.Description(),
+				Path:        name,
+				SchemaID:    schemaID,
+			})
+		},
+		VisitInputField: func(ctx gql.VisitContext, field *gql.Field) {
+			docs = append(docs, document{
+				Kind:        "InputField",
+				Name:        field.Name(),
+				Description: field.Description(),
+				Path:        ctx.ParentName + "." + field.Name(),
+				SchemaID:    schemaID,
+				Signature:   field.Signature(),
+				Usage:       fieldUsage(field),
+			})
+		},
+		VisitEnum: func(ctx gql.VisitContext, name string, enum *gql.Enum) {
+			docs = append(docs, document{
+				Kind:        "Enum",
+				Name:        name,
+				Description: enum.Description(),
+				Path:        name,
+				SchemaID:    schemaID,
+			})
+		},
+		VisitScalar: func(ctx gql.VisitContext, name string, scalar *gql.Scalar) {
+			docs = append(docs, document{
+				Kind:        "Scalar",
+				Name:        name,
+				Description: scalar.Description(),
+				Path:        name,
+				SchemaID:    schemaID,
+			})
+		},
+		VisitUnion: func(ctx gql.VisitContext, name string, union *gql.Union) {
+			docs = append(docs, document{
+				Kind:        "Union",
+				Name:        name,
+				Description: union.Description(),
+				Path:        name,
+				SchemaID:    schemaID,
+			})
+		},
+		VisitDirective: func(ctx gql.VisitContext, name string, directive *gql.DirectiveDef) {
+			docs = append(docs, document{
+				Kind:        "Directive",
+				Name:        name,
+				Description: directive.Description(),
+				Path:        "@" + name,
+				SchemaID:    schemaID,
+			})
+		},
+	})
 
-	// Index Mutation fields
-	for name, field := range schema.Mutation {
-		docs = append(docs, document{
-			Kind:        "Mutation",
-			Name:        name,
-			Description: field.Description(),
-			Path:        "Mutation." + name,
-			SchemaID:    schemaID,
-			Signature:   field.Signature(),
-			Usage:       fieldUsage(field),
-		})
-	}
-
-	// Index Objects
-	for name, obj := range schema.Object {
-		docs = append(docs, document{
-			Kind:        "Object",
-			Name:        name,
-			Description: obj.Description(),
-			Path:        name,
-			SchemaID:    schemaID,
-			Implements:  obj.Interfaces(),
-		})
-		docs = append(docs, extractObjectFieldDocuments(schemaID, name, obj)...)
-	}
-
-	// Index Input Objects
-	for name, input := range schema.Input {
-		docs = append(docs, document{
-			Kind:        "Input",
-			Name:        name,
-			Description: input.Description(),
-			Path:        name,
-			SchemaID:    schemaID,
-		})
-		docs = append(docs, extractInputFieldDocuments(schemaID, name, input)...)
-	}
-
-	// Index Enums
-	for name, enum := range schema.Enum {
-		docs = append(docs, document{
-			Kind:        "Enum",
-			Name:        name,
-			Description: enum.Description(),
-			Path:        name,
-			SchemaID:    schemaID,
-		})
-	}
-
-	// Index Scalars
-	for name, scalar := range schema.Scalar {
-		docs = append(docs, document{
-			Kind:        "Scalar",
-			Name:        name,
-			Description: scalar.Description(),
-			Path:        name,
-			SchemaID:    schemaID,
-		})
-	}
-
-	// Index Interfaces
-	for name, iface := range schema.Interface {
-		docs = append(docs, document{
-			Kind:        "Interface",
-			Name:        name,
-			Description: iface.Description(),
-			Path:        name,
-			SchemaID:    schemaID,
-			Implements:  iface.Interfaces(),
-		})
-		docs = append(docs, extractInterfaceFieldDocuments(schemaID, name, iface)...)
-	}
-
-	// Index Unions
-	for name, union := range schema.Union {
-		docs = append(docs, document{
-			Kind:        "Union",
-			Name:        name,
-			Description: union.Description(),
-			Path:        name,
-			SchemaID:    schemaID,
-		})
-	}
-
-	// Index Directives
-	for name, directive := range schema.Directive {
-		docs = append(docs, document{
-			Kind:        "Directive",
-			Name:        name,
-			Description: directive.Description(),
-			Path:        "@" + name,
-			SchemaID:    schemaID,
-		})
-	}
-
-	return docs
-}
-
-// extractObjectFieldDocuments extracts documents for fields of an object
-func extractObjectFieldDocuments(schemaID string, typeName string, obj *gql.Object) []document {
-	docs := []document{}
-	for _, field := range obj.Fields() {
-		docs = append(docs, document{
-			Kind:        "ObjectField",
-			Name:        field.Name(),
-			Description: field.Description(),
-			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
-			SchemaID:    schemaID,
-			Signature:   field.Signature(),
-			Usage:       fieldUsage(field),
-		})
-	}
-	return docs
-}
-
-// extractInputFieldDocuments extracts documents for fields of an input object
-func extractInputFieldDocuments(schemaID string, typeName string, input *gql.InputObject) []document {
-	docs := []document{}
-	for _, field := range input.Fields() {
-		docs = append(docs, document{
-			Kind:        "InputField",
-			Name:        field.Name(),
-			Description: field.Description(),
-			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
-			SchemaID:    schemaID,
-			Signature:   field.Signature(),
-			Usage:       fieldUsage(field),
-		})
-	}
 	return docs
 }
 
@@ -276,21 +246,4 @@ func fieldUsage(field *gql.Field) []string {
 		return nil
 	}
 	return []string{typeName}
-}
-
-// extractInterfaceFieldDocuments extracts documents for fields of an interface
-func extractInterfaceFieldDocuments(schemaID string, typeName string, iface *gql.Interface) []document {
-	docs := []document{}
-	for _, field := range iface.Fields() {
-		docs = append(docs, document{
-			Kind:        "InterfaceField",
-			Name:        field.Name(),
-			Description: field.Description(),
-			Path:        fmt.Sprintf("%s.%s", typeName, field.Name()),
-			SchemaID:    schemaID,
-			Signature:   field.Signature(),
-			Usage:       fieldUsage(field),
-		})
-	}
-	return docs
 }

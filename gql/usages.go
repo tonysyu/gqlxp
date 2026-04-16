@@ -12,117 +12,76 @@ type Usage struct {
 func buildUsageIndex(schema *GraphQLSchema) {
 	usages := make(map[string][]*Usage)
 
-	// Index Query fields (return types and argument types)
-	for fieldName, field := range schema.Query {
-		recordFieldUsage(usages, field, "Query", "Query", fieldName)
-		recordArgumentUsages(usages, field.Arguments(), "Query", "Query", fieldName)
-		recordArgumentDirectiveUsages(usages, field.Arguments(), "Query", "Query", fieldName)
-		recordDirectiveUsages(usages, field.Directives(), "Query", "Query", fieldName)
-	}
-
-	// Index Mutation fields (return types and argument types)
-	for fieldName, field := range schema.Mutation {
-		recordFieldUsage(usages, field, "Mutation", "Mutation", fieldName)
-		recordArgumentUsages(usages, field.Arguments(), "Mutation", "Mutation", fieldName)
-		recordArgumentDirectiveUsages(usages, field.Arguments(), "Mutation", "Mutation", fieldName)
-		recordDirectiveUsages(usages, field.Directives(), "Mutation", "Mutation", fieldName)
-	}
-
-	// Index Object fields (return types and argument types)
-	for objName, obj := range schema.Object {
-		// Track directives on the object type itself
-		recordDirectiveUsages(usages, obj.Directives(), objName, "Object", "")
-
-		for _, field := range obj.Fields() {
-			recordFieldUsage(usages, field, objName, "Object", field.Name())
-			recordArgumentUsages(usages, field.Arguments(), objName, "Object", field.Name())
-			recordArgumentDirectiveUsages(usages, field.Arguments(), objName, "Object", field.Name())
-			recordDirectiveUsages(usages, field.Directives(), objName, "Object", field.Name())
-		}
-		// Track interface implementations
-		for _, ifaceName := range obj.Interfaces() {
-			usage := &Usage{
-				ParentType: objName,
-				ParentKind: "Object",
-				FieldName:  "",
-				Path:       objName,
+	schema.Walk(SchemaVisitor{
+		VisitField: func(ctx VisitContext, name string, field *Field) {
+			recordFieldUsage(usages, field, ctx.Kind, ctx.Kind, name)
+			recordArgumentUsages(usages, field.Arguments(), ctx.Kind, ctx.Kind, name)
+			recordArgumentDirectiveUsages(usages, field.Arguments(), ctx.Kind, ctx.Kind, name)
+			recordDirectiveUsages(usages, field.Directives(), ctx.Kind, ctx.Kind, name)
+		},
+		VisitObject: func(ctx VisitContext, name string, obj *Object) {
+			recordDirectiveUsages(usages, obj.Directives(), name, "Object", "")
+			for _, ifaceName := range obj.Interfaces() {
+				usages[ifaceName] = append(usages[ifaceName], &Usage{
+					ParentType: name,
+					ParentKind: "Object",
+					Path:       name,
+				})
 			}
-			usages[ifaceName] = append(usages[ifaceName], usage)
-		}
-	}
-
-	// Index Interface fields (return types and argument types)
-	for ifName, iface := range schema.Interface {
-		// Track directives on the interface type itself
-		recordDirectiveUsages(usages, iface.Directives(), ifName, "Interface", "")
-
-		for _, field := range iface.Fields() {
-			recordFieldUsage(usages, field, ifName, "Interface", field.Name())
-			recordArgumentUsages(usages, field.Arguments(), ifName, "Interface", field.Name())
-			recordArgumentDirectiveUsages(usages, field.Arguments(), ifName, "Interface", field.Name())
-			recordDirectiveUsages(usages, field.Directives(), ifName, "Interface", field.Name())
-		}
-		// Track interface-to-interface implementations
-		for _, parentIfaceName := range iface.Interfaces() {
-			usage := &Usage{
-				ParentType: ifName,
-				ParentKind: "Interface",
-				FieldName:  "",
-				Path:       ifName,
+		},
+		VisitObjectField: func(ctx VisitContext, field *Field) {
+			recordFieldUsage(usages, field, ctx.ParentName, "Object", field.Name())
+			recordArgumentUsages(usages, field.Arguments(), ctx.ParentName, "Object", field.Name())
+			recordArgumentDirectiveUsages(usages, field.Arguments(), ctx.ParentName, "Object", field.Name())
+			recordDirectiveUsages(usages, field.Directives(), ctx.ParentName, "Object", field.Name())
+		},
+		VisitInterface: func(ctx VisitContext, name string, iface *Interface) {
+			recordDirectiveUsages(usages, iface.Directives(), name, "Interface", "")
+			for _, parentIfaceName := range iface.Interfaces() {
+				usages[parentIfaceName] = append(usages[parentIfaceName], &Usage{
+					ParentType: name,
+					ParentKind: "Interface",
+					Path:       name,
+				})
 			}
-			usages[parentIfaceName] = append(usages[parentIfaceName], usage)
-		}
-	}
-
-	// Index InputObject field types
-	for inputName, input := range schema.Input {
-		// Track directives on the input type itself
-		recordDirectiveUsages(usages, input.Directives(), inputName, "Input", "")
-
-		for _, field := range input.Fields() {
-			recordFieldUsage(usages, field, inputName, "Input", field.Name())
-			recordDirectiveUsages(usages, field.Directives(), inputName, "Input", field.Name())
-		}
-	}
-
-	// Index Union member types
-	for unionName, union := range schema.Union {
-		// Track directives on the union type itself
-		recordDirectiveUsages(usages, union.Directives(), unionName, "Union", "")
-
-		for _, memberType := range union.Types() {
-			usage := &Usage{
-				ParentType: unionName,
-				ParentKind: "Union",
-				FieldName:  "",
-				Path:       unionName,
+		},
+		VisitInterfaceField: func(ctx VisitContext, field *Field) {
+			recordFieldUsage(usages, field, ctx.ParentName, "Interface", field.Name())
+			recordArgumentUsages(usages, field.Arguments(), ctx.ParentName, "Interface", field.Name())
+			recordArgumentDirectiveUsages(usages, field.Arguments(), ctx.ParentName, "Interface", field.Name())
+			recordDirectiveUsages(usages, field.Directives(), ctx.ParentName, "Interface", field.Name())
+		},
+		VisitInput: func(ctx VisitContext, name string, input *InputObject) {
+			recordDirectiveUsages(usages, input.Directives(), name, "Input", "")
+		},
+		VisitInputField: func(ctx VisitContext, field *Field) {
+			recordFieldUsage(usages, field, ctx.ParentName, "Input", field.Name())
+			recordDirectiveUsages(usages, field.Directives(), ctx.ParentName, "Input", field.Name())
+		},
+		VisitEnum: func(ctx VisitContext, name string, enum *Enum) {
+			recordDirectiveUsages(usages, enum.Directives(), name, "Enum", "")
+		},
+		VisitEnumValue: func(ctx VisitContext, value *EnumValue) {
+			recordDirectiveUsages(usages, value.Directives(), ctx.ParentName, "Enum", value.Name())
+		},
+		VisitScalar: func(ctx VisitContext, name string, scalar *Scalar) {
+			recordDirectiveUsages(usages, scalar.Directives(), name, "Scalar", "")
+		},
+		VisitUnion: func(ctx VisitContext, name string, union *Union) {
+			recordDirectiveUsages(usages, union.Directives(), name, "Union", "")
+			for _, memberType := range union.Types() {
+				usages[memberType] = append(usages[memberType], &Usage{
+					ParentType: name,
+					ParentKind: "Union",
+					Path:       name,
+				})
 			}
-			usages[memberType] = append(usages[memberType], usage)
-		}
-	}
-
-	// Index Enum types and values
-	for enumName, enum := range schema.Enum {
-		// Track directives on the enum type itself
-		recordDirectiveUsages(usages, enum.Directives(), enumName, "Enum", "")
-
-		// Track directives on enum values
-		for _, enumValue := range enum.Values() {
-			recordDirectiveUsages(usages, enumValue.Directives(), enumName, "Enum", enumValue.Name())
-		}
-	}
-
-	// Index Scalar types
-	for scalarName, scalar := range schema.Scalar {
-		// Track directives on the scalar type itself
-		recordDirectiveUsages(usages, scalar.Directives(), scalarName, "Scalar", "")
-	}
-
-	// Index Directive argument types
-	for directiveName, directive := range schema.Directive {
-		recordArgumentUsages(usages, directive.Arguments(), directiveName, "Directive", "")
-		recordArgumentDirectiveUsages(usages, directive.Arguments(), directiveName, "Directive", "")
-	}
+		},
+		VisitDirective: func(ctx VisitContext, name string, directive *DirectiveDef) {
+			recordArgumentUsages(usages, directive.Arguments(), name, "Directive", "")
+			recordArgumentDirectiveUsages(usages, directive.Arguments(), name, "Directive", "")
+		},
+	})
 
 	schema.Usages = usages
 }
