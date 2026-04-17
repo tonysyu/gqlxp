@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/charmbracelet/fang"
+	"charm.land/fang/v2"
 	"github.com/tonysyu/gqlxp/cli"
 )
 
